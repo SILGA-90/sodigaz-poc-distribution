@@ -1,0 +1,50 @@
+{% extends "supervision/base.html" %}
+{% block title %}Programmes{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3">Programmes du {{ date_filter|date:"j F Y" }}</h1>
+    <form method="get" class="d-flex gap-2">
+        <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}" class="form-control">
+        <button type="submit" class="btn btn-primary">Filtrer</button>
+    </form>
+</div>
+
+{% if programmes %}
+<table class="table table-hover bg-white">
+    <thead>
+        <tr>
+            <th>Numero X3</th>
+            <th>Livreur</th>
+            <th>Type</th>
+            <th>Vehicule</th>
+            <th>Statut</th>
+            <th>Progression</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in programmes %}
+        <tr>
+            <td><code>{{ p.numero_x3 }}</code></td>
+            <td>{{ p.utilisateur.code_livreur }} - {{ p.utilisateur.get_full_name }}</td>
+            <td>{{ p.get_type_programme_display }}</td>
+            <td>{{ p.vehicule.immatriculation|default:"-" }}</td>
+            <td><span class="badge badge-statut-{{ p.statut }}">{{ p.get_statut_display }}</span></td>
+            <td>
+                {{ p.etapes_visitees }} / {{ p.total_etapes }} etapes
+                {% if p.total_etapes > 0 %}
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar" role="progressbar"
+                         style="width: {% widthratio p.etapes_visitees p.total_etapes 100 %}%"></div>
+                </div>
+                {% endif %}
+            </td>
+            <td><a href="{% url 'supervision:programme-detail' p.id %}" class="btn btn-sm btn-outline-primary">Detail</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-info">Aucun programme pour cette date.</div>
+{% endif %}
+{% endblock %}
