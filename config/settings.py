@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "mock_x3",
     "rest_framework_simplejwt.token_blacklist",
     "auth_api",
+    "sync_api",
 ]
 
 MIDDLEWARE = [
