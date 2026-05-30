@@ -25,6 +25,8 @@ INSTALLED_APPS = [
     "accounts",
     "distribution",
     "mock_x3",
+    "rest_framework_simplejwt.token_blacklist",
+    "auth_api",
 ]
 
 MIDDLEWARE = [
@@ -86,10 +88,37 @@ CORS_ALLOW_ALL_ORIGINS = DEBUG
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+}
+
+
+# ============================================================================
+# Configuration JWT (djangorestframework-simplejwt)
+# ============================================================================
+# - ACCESS_TOKEN courte vie (60 min) : envoye a chaque requete API
+# - REFRESH_TOKEN longue vie (30 j) : echange contre un nouvel access token
+# - ROTATE_REFRESH_TOKENS : on emet un nouveau refresh a chaque refresh
+# - BLACKLIST_AFTER_ROTATION : l'ancien refresh devient invalide (anti-replay)
+#
+# En production, SIGNING_KEY doit etre une valeur secrete distincte de
+# SECRET_KEY (ici on utilise SECRET_KEY pour simplifier le POC).
+# ============================================================================
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
 }
