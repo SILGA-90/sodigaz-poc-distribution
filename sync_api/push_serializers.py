@@ -71,3 +71,32 @@ class PushPayloadSerializer(serializers.Serializer):
     """Format complet du push : { changes: { table: TableChanges, ... }, lastPulledAt }."""
     changes = serializers.DictField(child=TableChangesSerializer())
     lastPulledAt = serializers.IntegerField(required=False, default=0)
+
+
+class PhotoPushSerializer(serializers.Serializer):
+    """
+    Pour le push JSON de l'enregistrement Photo (metadonnees uniquement).
+    Le fichier binaire est upload separement via POST /api/sync/photos/<uuid>/upload.
+
+    Contrainte : operation_uuid OU anomalie_uuid renseigne, jamais les deux.
+    """
+    uuid = serializers.UUIDField()
+    operation_uuid = serializers.UUIDField(required=False, allow_null=True)
+    anomalie_uuid = serializers.UUIDField(required=False, allow_null=True)
+    type_photo = serializers.ChoiceField(
+        choices=["BORDEREAU", "LIVRAISON", "ETAT_PLV", "ANOMALIE"]
+    )
+    date_heure = serializers.DateTimeField()
+    latitude = serializers.FloatField(required=False, allow_null=True)
+    longitude = serializers.FloatField(required=False, allow_null=True)
+    taille_octets = serializers.IntegerField(required=False, allow_null=True)
+
+    def validate(self, attrs):
+        op = attrs.get("operation_uuid")
+        an = attrs.get("anomalie_uuid")
+        if bool(op) == bool(an):
+            raise serializers.ValidationError(
+                "Une photo doit etre rattachee soit a une operation, soit "
+                "a une anomalie, mais pas aux deux."
+            )
+        return attrs

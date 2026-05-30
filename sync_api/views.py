@@ -16,7 +16,7 @@ import time
 from contextlib import suppress
 
 from django.contrib.gis.geos import Point
-from django.db import transaction
+from django.db import models, transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -31,6 +31,7 @@ from distribution.models import (
     LigneOperation,
     LigneProgramme,
     Operation,
+    Photo,
     Plv,
     Produit,
     Programme,
@@ -41,6 +42,7 @@ from .push_serializers import (
     AnomaliePushSerializer,
     LigneOperationPushSerializer,
     OperationPushSerializer,
+    PhotoPushSerializer,
     PushPayloadSerializer,
 )
 from .serializers import (
@@ -251,6 +253,7 @@ def sync_push(request):
         "operation": {"created": 0, "updated": 0, "deleted": 0},
         "ligne_operation": {"created": 0, "updated": 0, "deleted": 0},
         "anomalie": {"created": 0, "updated": 0, "deleted": 0},
+        "photo": {"created": 0, "updated": 0, "deleted": 0},
     }
 
     try:
@@ -393,6 +396,74 @@ def sync_push(request):
                 ).update(is_deleted=True)
                 applied["anomalie"]["deleted"] += updated
 
+
+            # ----- PHOTOS (metadonnees uniquement, fichier binaire upload separement) -----
+            for photo_data in (
+                changes.get("photo", {}).get("created", [])
+                + changes.get("photo", {}).get("updated", [])
+            ):
+                ph_serializer = PhotoPushSerializer(data=photo_data)
+                ph_serializer.is_valid(raise_exception=True)
+                d = ph_serializer.validated_data
+
+                operation_id = None
+                anomalie_id = None
+                if d.get("operation_uuid"):
+                    op = Operation.objects.filter(
+                        uuid=d["operation_uuid"],
+                        etape__programme__utilisateur=user,
+                    ).first()
+                    if op is None:
+                        raise PermissionError(
+                            f"Operation {d['operation_uuid']} introuvable ou non autorisee."
+                        )
+                    operation_id = op.id
+                else:
+                    an = Anomalie.objects.filter(
+                        uuid=d["anomalie_uuid"],
+                        programme__utilisateur=user,
+                    ).first()
+                    if an is None:
+                        raise PermissionError(
+                            f"Anomalie {d['anomalie_uuid']} introuvable ou non autorisee."
+                        )
+                    anomalie_id = an.id
+
+                # update_or_create : le fichier reste vide pour l'instant,
+                # il sera renseigne par l'endpoint d'upload binaire dedie.
+                # On preserve un eventuel fichier deja upload (par un cycle precedent).
+                existing = Photo.objects.filter(uuid=d["uuid"]).first()
+                defaults = {
+                    "operation_id": operation_id,
+                    "anomalie_id": anomalie_id,
+                    "type_photo": d["type_photo"],
+                    "date_heure": d["date_heure"],
+                    "taille_octets": d.get("taille_octets"),
+                    "is_deleted": False,
+                }
+                if d.get("latitude") is not None and d.get("longitude") is not None:
+                    defaults["localisation"] = Point(d["longitude"], d["latitude"], srid=4326)
+
+                if existing:
+                    for k, v in defaults.items():
+                        setattr(existing, k, v)
+                    existing.save()
+                    applied["photo"]["updated"] += 1
+                else:
+                    # fichier est requis par le modele (ImageField sans null=True),
+                    # on cree un nom de placeholder le temps que l'upload arrive.
+                    Photo.objects.create(uuid=d["uuid"], fichier="placeholder.bin", **defaults)
+                    applied["photo"]["created"] += 1
+
+            for uuid_to_delete in changes.get("photo", {}).get("deleted", []):
+                # On filtre sur le user via la chaine soit operation, soit anomalie
+                photos = Photo.objects.filter(uuid=uuid_to_delete).filter(
+                    models.Q(operation__etape__programme__utilisateur=user)
+                    | models.Q(anomalie__programme__utilisateur=user)
+                )
+                updated = photos.update(is_deleted=True)
+                applied["photo"]["deleted"] += updated
+
     except PermissionError as e:
         return Response(
             {"status": "error", "detail": str(e)},
@@ -400,3 +471,50 @@ def sync_push(request):
         )
 
     return Response({"status": "ok", "applied": applied}, status=status.HTTP_200_OK)
+
+
+# ===========================================================================
+# UPLOAD DU FICHIER BINAIRE D'UNE PHOTO
+# ===========================================================================
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def upload_photo(request, uuid):
+    """
+    Upload du fichier binaire d'une photo dont l'enregistrement existe deja
+    cote serveur (cree au prealable via sync_push).
+
+    URL : POST /api/sync/photos/<uuid>/upload/
+    Body : multipart/form-data, champ 'fichier'
+
+    Le livreur ne peut uploader que sur ses propres photos.
+    """
+    if "fichier" not in request.FILES:
+        return Response(
+            {"detail": "Champ 'fichier' manquant dans le multipart."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Recherche de la photo, en filtrant par autorisation utilisateur
+    photo = Photo.objects.filter(uuid=uuid).filter(
+        models.Q(operation__etape__programme__utilisateur=request.user)
+        | models.Q(anomalie__programme__utilisateur=request.user)
+    ).first()
+
+    if photo is None:
+        return Response(
+            {"detail": "Photo introuvable ou non autorisee."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    fichier = request.FILES["fichier"]
+    photo.fichier = fichier
+    photo.taille_octets = fichier.size
+    photo.save()
+
+    return Response({
+        "status": "ok",
+        "uuid": str(photo.uuid),
+        "url": request.build_absolute_uri(photo.fichier.url),
+        "taille_octets": photo.taille_octets,
+    }, status=status.HTTP_200_OK)

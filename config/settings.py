@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "auth_api",
     "sync_api",
+    "supervision",
 ]
 
 MIDDLEWARE = [
@@ -123,3 +124,15 @@ SIMPLE_JWT = {
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
 }
+
+
+# Redirections d'authentification pour la supervision web
+LOGIN_URL = "/supervision/login/"
+LOGIN_REDIRECT_URL = "/supervision/"
+LOGOUT_REDIRECT_URL = "/supervision/login/"
+
+
+# Limite de taille pour les uploads (5 Mo par photo, plus que suffisant
+# pour une photo compressee cote mobile)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5 Mo
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10 Mo (pour le JSON sync)
