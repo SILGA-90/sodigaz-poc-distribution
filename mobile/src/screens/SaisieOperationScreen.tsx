@@ -20,6 +20,8 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import SignaturePad from '../components/SignaturePad';
+import PhotosSection, { PhotoEnAttente } from '../components/PhotosSection';
+import { ajouterPhotoOperation } from '../db/repositories/photoRepository';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import {
@@ -61,6 +63,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
   const [signatureClient, setSignatureClient] = useState<string>('');
   const [nomSignataire, setNomSignataire] = useState<string>('');
   const [padVisible, setPadVisible] = useState<null | 'LIVREUR' | 'CLIENT'>(null);
+  const [photos, setPhotos] = useState<PhotoEnAttente[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
 
@@ -121,7 +124,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
     setSaving(true);
     try {
       const typeOp = etapeInfo.type_programme === 'COLLECTE' ? 'COLLECTE' : 'RESTITUTION';
-      await enregistrerOperation({
+      const opUuid = await enregistrerOperation({
         etape_uuid: etapeInfo.uuid,
         type_operation: typeOp,
         sous_type: typeOp === 'COLLECTE' ? 'BCR' : null,
@@ -135,9 +138,17 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         nom_signataire_client: nomSignataire,
         lignes: lignesSaisies,
       });
+
+      // Persister les photos rattachees a l'operation
+      for (const ph of photos) {
+        await ajouterPhotoOperation(
+          opUuid, ph.uri, ph.type_photo, ph.tailleOctets, null, null,
+        );
+      }
+
       Alert.alert(
         'Operation enregistree',
-        'L\'operation est enregistree localement. Elle sera remontee a la prochaine synchronisation.',
+        `L'operation${photos.length > 0 ? ' et ' + photos.length + ' photo(s)' : ''} enregistree(s) localement. Remontee a la prochaine synchronisation.`,
         [{ text: 'OK', onPress: () => navigation.goBack() }],
       );
     } catch (e: any) {
@@ -260,6 +271,8 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         </View>
       </View>
 
+      <Text style={styles.sectionTitle}>Photos</Text>
+      <PhotosSection photos={photos} onChange={setPhotos} />
       <Text style={styles.sectionTitle}>Commentaire (optionnel)</Text>
       <TextInput
         style={styles.commentaire}

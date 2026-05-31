@@ -39,6 +39,30 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     // Migrations futures : ajouter ici des blocs if (currentVersion < N)
   }
 
+  // Migration v1 -> v2 : ajout de la table photo
+  if (currentVersion < 2) {
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS photo (
+        uuid TEXT PRIMARY KEY,
+        operation_uuid TEXT,
+        anomalie_uuid TEXT,
+        local_uri TEXT NOT NULL,
+        type_photo TEXT NOT NULL,
+        date_heure TEXT NOT NULL,
+        latitude REAL,
+        longitude REAL,
+        taille_octets INTEGER,
+        sync_status TEXT DEFAULT 'PENDING',
+        upload_status TEXT DEFAULT 'PENDING',
+        last_modified INTEGER DEFAULT 0,
+        is_deleted INTEGER DEFAULT 0
+      );
+      CREATE INDEX IF NOT EXISTS idx_photo_operation ON photo(operation_uuid);
+      CREATE INDEX IF NOT EXISTS idx_photo_sync ON photo(sync_status, upload_status);
+    `);
+    await db.execAsync('PRAGMA user_version = 2;');
+  }
+
   dbInstance = db;
   return db;
 }

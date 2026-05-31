@@ -28,6 +28,15 @@ import {
   markLignesSynced,
   markAnomaliesSynced,
 } from '../db/repositories/operationRepository';
+import {
+  getPhotosPendingMeta,
+  getPhotosPendingUpload,
+  markPhotoMetaSynced,
+  markPhotoUploaded,
+} from '../db/repositories/photoRepository';
+import * as FileSystem from 'expo-file-system/legacy';
+import { API_BASE_URL } from '../config/api';
+import { getItem, STORAGE_KEYS } from '../storage/secureStorage';
 
 interface TableChanges {
   created: any[];
@@ -236,11 +245,13 @@ export async function push(): Promise<PushResult> {
   const operations = await getPendingOperations();
   const lignes = await getPendingLignesOperation();
   const anomalies = await getPendingAnomalies();
+  const photosMeta = await getPhotosPendingMeta();
 
   const empty = { operation: 0, ligne_operation: 0, anomalie: 0 };
 
-  // Rien a pousser : succes immediat
-  if (operations.length === 0 && lignes.length === 0 && anomalies.length === 0) {
+  // Rien a pousser en meta : on tente quand meme les uploads binaires en attente
+  if (operations.length === 0 && lignes.length === 0 && anomalies.length === 0 && photosMeta.length === 0) {
+    await uploaderPhotosBinaires();
     return { success: true, pushed: empty };
   }
 
@@ -300,6 +311,20 @@ export async function push(): Promise<PushResult> {
         updated: [],
         deleted: [],
       },
+      photo: {
+        created: photosMeta.map((p) => ({
+          uuid: p.uuid,
+          operation_uuid: p.operation_uuid,
+          anomalie_uuid: p.anomalie_uuid,
+          type_photo: p.type_photo,
+          date_heure: p.date_heure,
+          latitude: p.latitude,
+          longitude: p.longitude,
+          taille_octets: p.taille_octets,
+        })),
+        updated: [],
+        deleted: [],
+      },
     },
   };
 
@@ -317,6 +342,10 @@ export async function push(): Promise<PushResult> {
   await markOperationsSynced(operations.map((o) => o.uuid));
   await markLignesSynced(lignes.map((l) => l.uuid));
   await markAnomaliesSynced(anomalies.map((a) => a.uuid));
+  await markPhotoMetaSynced(photosMeta.map((p) => p.uuid));
+
+  // Etape 2 : upload des fichiers binaires (best-effort)
+  await uploaderPhotosBinaires();
 
   return {
     success: true,
@@ -335,4 +364,38 @@ export async function syncAll(): Promise<{ pull: PullResult; push: PushResult }>
   const pullResult = await pull();
   const pushResult = await push();
   return { pull: pullResult, push: pushResult };
+}
+
+
+/**
+ * Upload des fichiers binaires des photos dont la metadonnee est deja
+ * remontee (sync_status SYNCED) mais le fichier pas encore (upload_status PENDING).
+ *
+ * Best-effort : si un upload echoue, on continue ; la photo reste PENDING
+ * et sera retentee a la prochaine sync.
+ */
+async function uploaderPhotosBinaires(): Promise<void> {
+  const photos = await getPhotosPendingUpload();
+  if (photos.length === 0) return;
+
+  const token = await getItem(STORAGE_KEYS.ACCESS_TOKEN);
+
+  for (const photo of photos) {
+    try {
+      const uploadUrl = `${API_BASE_URL}/api/sync/photos/${photo.uuid}/upload/`;
+      const result = await FileSystem.uploadAsync(uploadUrl, photo.local_uri, {
+        httpMethod: 'POST',
+        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+        fieldName: 'fichier',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (result.status === 200) {
+        await markPhotoUploaded(photo.uuid);
+      }
+    } catch (e) {
+      console.warn('Upload photo echoue :', photo.uuid, e);
+    }
+  }
 }

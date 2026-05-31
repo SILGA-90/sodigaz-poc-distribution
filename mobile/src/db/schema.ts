@@ -11,7 +11,7 @@
  *   - les timestamps last_modified en INTEGER (epoch ms)
  */
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const CREATE_TABLES_SQL = `
 -- Table de metadonnees de synchronisation
@@ -144,6 +144,22 @@ CREATE TABLE IF NOT EXISTS anomalie (
   is_deleted INTEGER DEFAULT 0
 );
 
+CREATE TABLE IF NOT EXISTS photo (
+  uuid TEXT PRIMARY KEY,
+  operation_uuid TEXT,
+  anomalie_uuid TEXT,
+  local_uri TEXT NOT NULL,
+  type_photo TEXT NOT NULL,
+  date_heure TEXT NOT NULL,
+  latitude REAL,
+  longitude REAL,
+  taille_octets INTEGER,
+  sync_status TEXT DEFAULT 'PENDING',
+  upload_status TEXT DEFAULT 'PENDING',
+  last_modified INTEGER DEFAULT 0,
+  is_deleted INTEGER DEFAULT 0
+);
+
 -- Index utiles
 CREATE INDEX IF NOT EXISTS idx_etape_programme ON etape(programme_id);
 CREATE INDEX IF NOT EXISTS idx_ligne_prog_etape ON ligne_programme(etape_id);
@@ -151,4 +167,6 @@ CREATE INDEX IF NOT EXISTS idx_operation_etape ON operation(etape_uuid);
 CREATE INDEX IF NOT EXISTS idx_operation_sync ON operation(sync_status);
 CREATE INDEX IF NOT EXISTS idx_ligne_op_operation ON ligne_operation(operation_uuid);
 CREATE INDEX IF NOT EXISTS idx_anomalie_programme ON anomalie(programme_uuid);
+CREATE INDEX IF NOT EXISTS idx_photo_operation ON photo(operation_uuid);
+CREATE INDEX IF NOT EXISTS idx_photo_sync ON photo(sync_status, upload_status);
 `;
