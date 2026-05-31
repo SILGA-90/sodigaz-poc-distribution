@@ -6,5 +6,7 @@
 export type RootStackParamList = {
   Login: undefined;
   Dashboard: undefined;
+  Programme: { programmeId: number };
+  Debug: undefined;
   // Sprint 2 ajoutera : Programme, Etape, Operation, etc.
 };
