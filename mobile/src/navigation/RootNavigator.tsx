@@ -11,6 +11,7 @@ import LoginScreen from '../screens/LoginScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import DebugScreen from '../screens/DebugScreen';
 import ProgrammeScreen from '../screens/ProgrammeScreen';
+import SaisieOperationScreen from '../screens/SaisieOperationScreen';
 import { isAuthenticated } from '../api/authService';
 import { RootStackParamList } from '../types/navigation';
 
@@ -42,6 +43,7 @@ export default function RootNavigator(): React.ReactElement {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Dashboard" component={DashboardScreen} />
         <Stack.Screen name="Programme" component={ProgrammeScreen} options={{ headerShown: true, title: "Programme" }} />
+        <Stack.Screen name="SaisieOperation" component={SaisieOperationScreen} options={{ headerShown: true, title: "Saisie operation" }} />
         <Stack.Screen name="Debug" component={DebugScreen} options={{ headerShown: true, title: "Debug BDD" }} />
       </Stack.Navigator>
     </NavigationContainer>

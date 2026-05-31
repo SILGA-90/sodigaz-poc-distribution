@@ -7,6 +7,7 @@ import {
   FlatList,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -21,7 +22,7 @@ import { RootStackParamList } from '../types/navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Programme'>;
 
-export default function ProgrammeScreen({ route }: Props): React.ReactElement {
+export default function ProgrammeScreen({ route, navigation }: Props): React.ReactElement {
   const { programmeId } = route.params;
   const [programme, setProgramme] = useState<Programme | null>(null);
   const [etapes, setEtapes] = useState<EtapeAvecPlv[]>([]);
@@ -48,7 +49,10 @@ export default function ProgrammeScreen({ route }: Props): React.ReactElement {
   function renderEtape({ item }: { item: EtapeAvecPlv }): React.ReactElement {
     const visite = item.statut_visite === 'VISITEE';
     return (
-      <View style={styles.card}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => navigation.navigate('SaisieOperation', { etapeId: item.id })}
+      >
         <View style={styles.ordreCircle}>
           <Text style={styles.ordreText}>{item.ordre_prevu}</Text>
         </View>
@@ -62,7 +66,7 @@ export default function ProgrammeScreen({ route }: Props): React.ReactElement {
         <View style={[styles.statutBadge, visite ? styles.visitee : styles.aVisiter]}>
           <Text style={styles.statutText}>{visite ? 'Visitee' : 'A visiter'}</Text>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   }
 
