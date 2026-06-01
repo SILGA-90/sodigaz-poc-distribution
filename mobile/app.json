@@ -23,7 +23,13 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "L'application utilise votre position pour geolocaliser les operations de livraison."
+        }
+      ]
     ]
   }
 }

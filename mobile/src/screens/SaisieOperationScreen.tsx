@@ -10,6 +10,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   ScrollView,
   StyleSheet,
   Switch,
@@ -22,6 +23,7 @@ import { Picker } from '@react-native-picker/picker';
 import SignaturePad from '../components/SignaturePad';
 import PhotosSection, { PhotoEnAttente } from '../components/PhotosSection';
 import { ajouterPhotoOperation } from '../db/repositories/photoRepository';
+import { acquerirPositionProbante } from '../services/locationService';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import {
@@ -64,6 +66,11 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
   const [nomSignataire, setNomSignataire] = useState<string>('');
   const [padVisible, setPadVisible] = useState<null | 'LIVREUR' | 'CLIENT'>(null);
   const [photos, setPhotos] = useState<PhotoEnAttente[]>([]);
+  const [gpsLat, setGpsLat] = useState<number | null>(null);
+  const [gpsLon, setGpsLon] = useState<number | null>(null);
+  const [gpsPrecision, setGpsPrecision] = useState<number | null>(null);
+  const [gpsHorodatage, setGpsHorodatage] = useState<string | null>(null);
+  const [gpsStatus, setGpsStatus] = useState<'a capturer' | 'fiable' | 'degradee' | 'absente'>('a capturer');
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
 
@@ -86,6 +93,9 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
       setLoading(false);
     })();
   }, [etapeId, navigation]);
+
+  // La position est acquise au moment de l'enregistrement (valeur probante),
+  // pas a l'ouverture de l'ecran.
 
   // Montant calcule automatiquement
   const montantCalcule = useMemo(() => {
@@ -123,6 +133,27 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
 
     setSaving(true);
     try {
+      // Acquisition de la position au moment de l'enregistrement (valeur probante)
+      const pos = await acquerirPositionProbante();
+      setGpsLat(pos.latitude);
+      setGpsLon(pos.longitude);
+      setGpsPrecision(pos.precision);
+      setGpsHorodatage(pos.horodatage);
+      setGpsStatus(pos.qualite);
+
+      if (pos.qualite !== 'fiable') {
+        const msg = pos.qualite === 'absente'
+          ? 'Aucune position GPS fiable n\'a pu etre obtenue. L\'operation sera enregistree SANS position. Continuer ?'
+          : `Position GPS peu precise (${pos.precision ? Math.round(pos.precision) + ' m' : 'inconnue'}). Enregistrer quand meme ?`;
+        const confirme = await new Promise<boolean>((resolve) => {
+          Alert.alert('Position GPS', msg, [
+            { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
+            { text: 'Enregistrer', onPress: () => resolve(true) },
+          ]);
+        });
+        if (!confirme) { setSaving(false); return; }
+      }
+
       const typeOp = etapeInfo.type_programme === 'COLLECTE' ? 'COLLECTE' : 'RESTITUTION';
       const opUuid = await enregistrerOperation({
         etape_uuid: etapeInfo.uuid,
@@ -132,6 +163,10 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         montant_total: montantFinal,
         montant_encaisse: estEncaissee ? montantFinal : 0,
         est_encaissee: estEncaissee,
+        latitude: pos.latitude,
+        longitude: pos.longitude,
+        gps_precision: pos.precision,
+        gps_horodatage: pos.horodatage,
         commentaire,
         signature_livreur: signatureLivreur,
         signature_client: signatureClient,
@@ -142,7 +177,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
       // Persister les photos rattachees a l'operation
       for (const ph of photos) {
         await ajouterPhotoOperation(
-          opUuid, ph.uri, ph.type_photo, ph.tailleOctets, null, null,
+          opUuid, ph.uri, ph.type_photo, ph.tailleOctets, pos.latitude, pos.longitude,
         );
       }
 
@@ -173,6 +208,18 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
           <Text style={styles.typeOp}>{etapeInfo.type_programme}</Text>
           <Text style={styles.plvName}>{etapeInfo.plv_libelle}</Text>
           <Text style={styles.clientName}>{etapeInfo.client_raison_sociale}</Text>
+          <View style={styles.headerRow}>
+            <Text style={styles.gpsStatus}>Position : {gpsStatus}</Text>
+            <TouchableOpacity
+              style={styles.itineraireBtn}
+              onPress={() => {
+                const url = `https://www.google.com/maps/dir/?api=1&destination=${etapeInfo.plv_latitude},${etapeInfo.plv_longitude}`;
+                Linking.openURL(url).catch(() => Alert.alert('Erreur', 'Impossible d\'ouvrir la navigation.'));
+              }}
+            >
+              <Text style={styles.itineraireText}>Itineraire</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -355,6 +402,10 @@ const styles = StyleSheet.create({
     borderRadius: 10, alignItems: 'center',
   },
   saveDisabled: { opacity: 0.6 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
+  gpsStatus: { color: '#cbe2ff', fontSize: 12 },
+  itineraireBtn: { backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
+  itineraireText: { color: '#0d6efd', fontWeight: '700', fontSize: 12 },
   nomInput: {
     borderWidth: 1, borderColor: '#ccc', borderRadius: 8,
     padding: 10, marginTop: 6, marginBottom: 12, backgroundColor: '#fff',

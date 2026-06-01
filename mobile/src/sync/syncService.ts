@@ -19,7 +19,7 @@
  *   }
  */
 import apiClient from '../api/client';
-import { getDatabase, getLastPulledAt, setLastPulledAt } from '../db/database';
+import { getDatabase, getLastPulledAt, setLastPulledAt, getCloturesPending, clearCloturesPending } from '../db/database';
 import {
   getPendingOperations,
   getPendingLignesOperation,
@@ -269,6 +269,8 @@ export async function push(): Promise<PushResult> {
           date_heure: o.date_heure,
           latitude: o.latitude,
           longitude: o.longitude,
+          gps_precision: o.gps_precision ?? null,
+          gps_horodatage: o.gps_horodatage ?? null,
           mode_paiement: o.mode_paiement ?? null,
           montant_total: o.montant_total,
           montant_encaisse: o.montant_encaisse,
@@ -361,9 +363,29 @@ export async function push(): Promise<PushResult> {
  * Synchronisation complete : pull PUIS push.
  */
 export async function syncAll(): Promise<{ pull: PullResult; push: PushResult }> {
+  // Les clotures sont poussees AVANT le pull : ainsi le pull qui suit
+  // ramene un statut coherent (CLOTURE) et n'ecrase pas une cloture locale.
+  await pushClotures();
   const pullResult = await pull();
   const pushResult = await push();
   return { pull: pullResult, push: pushResult };
+}
+
+/**
+ * Remonte au serveur les programmes clotures localement (file sync_meta).
+ * Best-effort : en cas d'echec reseau, la cloture reste en attente et
+ * sera retentee au prochain cycle.
+ */
+async function pushClotures(): Promise<void> {
+  const uuids = await getCloturesPending();
+  if (uuids.length === 0) return;
+  try {
+    await apiClient.post('/api/sync/programmes/cloturer/', { uuids });
+    await clearCloturesPending(uuids);
+  } catch (e) {
+    // on laisse en attente, retry au prochain cycle
+    console.warn('Push cloture echoue :', e);
+  }
 }
 
 

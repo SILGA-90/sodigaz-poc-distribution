@@ -11,7 +11,7 @@
  *   - les timestamps last_modified en INTEGER (epoch ms)
  */
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export const CREATE_TABLES_SQL = `
 -- Table de metadonnees de synchronisation
@@ -105,6 +105,8 @@ CREATE TABLE IF NOT EXISTS operation (
   montant_total REAL DEFAULT 0,
   montant_encaisse REAL DEFAULT 0,
   est_encaissee INTEGER DEFAULT 0,
+  gps_precision REAL,
+  gps_horodatage TEXT,
   signature_livreur TEXT DEFAULT '',
   signature_client TEXT DEFAULT '',
   nom_signataire_client TEXT DEFAULT '',

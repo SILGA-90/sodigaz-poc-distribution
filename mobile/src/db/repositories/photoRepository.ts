@@ -1,5 +1,6 @@
 /**
  * Repository des photos.
+ * Une photo est rattachee soit a une operation, soit a une anomalie.
  */
 import * as Crypto from 'expo-crypto';
 
@@ -21,8 +22,9 @@ export interface PhotoLocale {
   is_deleted: number;
 }
 
-export async function ajouterPhotoOperation(
-  operationUuid: string,
+async function insertPhoto(
+  operationUuid: string | null,
+  anomalieUuid: string | null,
   localUri: string,
   typePhoto: string,
   tailleOctets: number,
@@ -37,11 +39,32 @@ export async function ajouterPhotoOperation(
      (uuid, operation_uuid, anomalie_uuid, local_uri, type_photo, date_heure,
       latitude, longitude, taille_octets, sync_status, upload_status,
       last_modified, is_deleted)
-     VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?, 'PENDING', 'PENDING', ?, 0);`,
-    [uuid, operationUuid, localUri, typePhoto, new Date().toISOString(),
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 'PENDING', ?, 0);`,
+    [uuid, operationUuid, anomalieUuid, localUri, typePhoto, new Date().toISOString(),
      latitude, longitude, tailleOctets, ts],
   );
   return uuid;
+}
+
+export function ajouterPhotoOperation(
+  operationUuid: string,
+  localUri: string,
+  typePhoto: string,
+  tailleOctets: number,
+  latitude: number | null,
+  longitude: number | null,
+): Promise<string> {
+  return insertPhoto(operationUuid, null, localUri, typePhoto, tailleOctets, latitude, longitude);
+}
+
+export function ajouterPhotoAnomalie(
+  anomalieUuid: string,
+  localUri: string,
+  tailleOctets: number,
+  latitude: number | null,
+  longitude: number | null,
+): Promise<string> {
+  return insertPhoto(null, anomalieUuid, localUri, 'ANOMALIE', tailleOctets, latitude, longitude);
 }
 
 export async function getPhotosOperation(operationUuid: string): Promise<PhotoLocale[]> {

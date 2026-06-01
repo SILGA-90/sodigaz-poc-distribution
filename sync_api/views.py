@@ -18,6 +18,7 @@ from contextlib import suppress
 from django.contrib.gis.geos import Point
 from django.db import models, transaction
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -293,6 +294,8 @@ def sync_push(request):
                         "signature_client": d.get("signature_client", ""),
                         "nom_signataire_client": d.get("nom_signataire_client", ""),
                         "commentaire": d.get("commentaire", ""),
+                        "gps_precision": d.get("gps_precision"),
+                        "gps_horodatage": d.get("gps_horodatage"),
                         "is_deleted": False,
                     },
                 )
@@ -518,3 +521,37 @@ def upload_photo(request, uuid):
         "url": request.build_absolute_uri(photo.fichier.url),
         "taille_octets": photo.taille_octets,
     }, status=status.HTTP_200_OK)
+
+
+# ===========================================================================
+# CLOTURE DE PROGRAMMES
+# ===========================================================================
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def cloturer_programmes(request):
+    """
+    Cloture un ou plusieurs programmes du livreur connecte.
+
+    URL  : POST /api/sync/programmes/cloturer/
+    Body : { "uuids": ["<uuid1>", "<uuid2>", ...] }
+
+    Le statut passe a CLOTURE et l'heure de fin est horodatee cote serveur
+    (evite tout probleme de format de date entre mobile et serveur).
+    Filtre de securite : un livreur ne peut cloturer que SES programmes.
+    """
+    uuids = request.data.get("uuids", [])
+    if not isinstance(uuids, list):
+        return Response(
+            {"status": "error", "detail": "Le champ 'uuids' doit etre une liste."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    heure_fin = timezone.localtime().time()
+    count = 0
+    for u in uuids:
+        count += Programme.objects.filter(
+            uuid=u, utilisateur=request.user, is_deleted=False,
+        ).update(statut="CLOTURE", heure_fin=heure_fin)
+
+    return Response({"status": "ok", "clotures": count}, status=status.HTTP_200_OK)

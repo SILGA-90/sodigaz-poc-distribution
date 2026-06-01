@@ -22,6 +22,8 @@ class OperationPushSerializer(serializers.Serializer):
     date_heure = serializers.DateTimeField()
     latitude = serializers.FloatField(required=False, allow_null=True)
     longitude = serializers.FloatField(required=False, allow_null=True)
+    gps_precision = serializers.FloatField(required=False, allow_null=True)
+    gps_horodatage = serializers.DateTimeField(required=False, allow_null=True)
     mode_paiement = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     montant_total = serializers.DecimalField(max_digits=12, decimal_places=2, default=0)
     montant_encaisse = serializers.DecimalField(max_digits=12, decimal_places=2, default=0)

@@ -1,6 +1,6 @@
 /**
  * Repository pour la saisie d'operation.
- * Fournit les donnees necessaires au formulaire et enregistre l'operation.
+ * Fournit les donnees du formulaire et enregistre l'operation en local.
  */
 import * as Crypto from 'expo-crypto';
 
@@ -17,10 +17,12 @@ export interface EtapeInfo {
   type_programme: 'COLLECTE' | 'RESTITUTION';
   plv_libelle: string;
   client_raison_sociale: string;
+  plv_latitude: number;
+  plv_longitude: number;
 }
 
 /**
- * Infos de l'etape (avec le type de programme parent et le PLV).
+ * Infos de l'etape (type de programme parent, PLV et ses coordonnees).
  */
 export async function getEtapeInfo(etapeId: number): Promise<EtapeInfo | null> {
   const db = await getDatabase();
@@ -30,7 +32,9 @@ export async function getEtapeInfo(etapeId: number): Promise<EtapeInfo | null> {
         pr.uuid AS programme_uuid,
         pr.type_programme AS type_programme,
         p.libelle AS plv_libelle,
-        c.raison_sociale AS client_raison_sociale
+        c.raison_sociale AS client_raison_sociale,
+        p.latitude AS plv_latitude,
+        p.longitude AS plv_longitude
      FROM etape e
      JOIN programme pr ON pr.id = e.programme_id
      JOIN plv p ON p.id = e.plv_id
@@ -41,9 +45,8 @@ export async function getEtapeInfo(etapeId: number): Promise<EtapeInfo | null> {
 }
 
 /**
- * Produits saisissables pour une etape donnee.
- *   - RESTITUTION : uniquement les produits prevus (lignes_programme),
- *     avec leur quantite prevue.
+ * Produits saisissables :
+ *   - RESTITUTION : produits prevus (lignes_programme) avec quantite prevue.
  *   - COLLECTE : tous les produits actifs, quantite_prevue = null.
  */
 export async function getProduitsSaisissables(
@@ -65,7 +68,6 @@ export async function getProduitsSaisissables(
     );
   }
 
-  // COLLECTE : tous les produits actifs
   return db.getAllAsync<ProduitSaisie>(
     `SELECT *, NULL AS quantite_prevue
      FROM produit
@@ -88,6 +90,10 @@ export interface OperationSaisie {
   montant_total: number;
   montant_encaisse: number;
   est_encaissee: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+  gps_precision?: number | null;
+  gps_horodatage?: string | null;
   commentaire: string;
   signature_livreur?: string;
   signature_client?: string;
@@ -96,7 +102,7 @@ export interface OperationSaisie {
 }
 
 /**
- * Verifie s'il existe deja une operation PENDING pour cette etape (pour edition).
+ * Operation PENDING existante pour cette etape (pour edition) ?
  */
 export async function getOperationPendingPourEtape(
   etapeUuid: string,
@@ -113,31 +119,33 @@ export async function getOperationPendingPourEtape(
 
 /**
  * Enregistre une operation en local (PENDING).
- * Si une operation PENDING existe deja pour l'etape, on la remplace
- * (mise a jour, pas duplication).
+ * Si une operation PENDING existe deja pour l'etape, on la met a jour
+ * (pas de duplication). Marque l'etape comme VISITEE.
  */
 export async function enregistrerOperation(data: OperationSaisie): Promise<string> {
   const db = await getDatabase();
   const ts = Date.now();
   const nowIso = new Date().toISOString();
+  const lat = data.latitude ?? null;
+  const lon = data.longitude ?? null;
 
-  // Edition d'une operation PENDING existante ?
   const existant = await getOperationPendingPourEtape(data.etape_uuid);
   const opUuid = existant ?? Crypto.randomUUID();
 
   await db.withTransactionAsync(async () => {
     if (existant) {
-      // Supprimer les anciennes lignes PENDING de cette operation
       await db.runAsync('DELETE FROM ligne_operation WHERE operation_uuid = ?;', [opUuid]);
       await db.runAsync(
         `UPDATE operation SET
            type_operation = ?, sous_type = ?, mode_paiement = ?,
+           latitude = ?, longitude = ?, gps_precision = ?, gps_horodatage = ?,
            montant_total = ?, montant_encaisse = ?, est_encaissee = ?,
            signature_livreur = ?, signature_client = ?, nom_signataire_client = ?,
            commentaire = ?, date_heure = ?, last_modified = ?
          WHERE uuid = ?;`,
         [
           data.type_operation, data.sous_type ?? null, data.mode_paiement ?? null,
+          lat, lon, data.gps_precision ?? null, data.gps_horodatage ?? null,
           data.montant_total, data.montant_encaisse, data.est_encaissee ? 1 : 0,
           data.signature_livreur ?? '', data.signature_client ?? '',
           data.nom_signataire_client ?? '',
@@ -148,12 +156,14 @@ export async function enregistrerOperation(data: OperationSaisie): Promise<strin
       await db.runAsync(
         `INSERT INTO operation
          (uuid, etape_uuid, type_operation, sous_type, date_heure,
-          latitude, longitude, mode_paiement, montant_total, montant_encaisse,
+          latitude, longitude, gps_precision, gps_horodatage,
+          mode_paiement, montant_total, montant_encaisse,
           est_encaissee, signature_livreur, signature_client, nom_signataire_client,
           commentaire, sync_status, last_modified, is_deleted)
-         VALUES (?, ?, ?, ?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, 0);`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, 0);`,
         [
           opUuid, data.etape_uuid, data.type_operation, data.sous_type ?? null, nowIso,
+          lat, lon, data.gps_precision ?? null, data.gps_horodatage ?? null,
           data.mode_paiement ?? null, data.montant_total, data.montant_encaisse,
           data.est_encaissee ? 1 : 0,
           data.signature_livreur ?? '', data.signature_client ?? '',
@@ -162,9 +172,8 @@ export async function enregistrerOperation(data: OperationSaisie): Promise<strin
       );
     }
 
-    // (Re)creer les lignes
     for (const ligne of data.lignes) {
-      if (ligne.quantite_realisee <= 0) continue; // on ignore les lignes a 0
+      if (ligne.quantite_realisee <= 0) continue;
       await db.runAsync(
         `INSERT INTO ligne_operation
          (uuid, operation_uuid, produit_code_x3, quantite_realisee,
@@ -176,7 +185,6 @@ export async function enregistrerOperation(data: OperationSaisie): Promise<strin
       );
     }
 
-    // Marquer l'etape comme visitee
     await db.runAsync(
       `UPDATE etape SET statut_visite = 'VISITEE', last_modified = ?
        WHERE uuid = ?;`,

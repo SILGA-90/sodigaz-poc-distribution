@@ -78,6 +78,18 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
           <Text style={styles.meta}>
             {programme.type_programme} - {programme.date_programme}
           </Text>
+          <TouchableOpacity
+            style={styles.anomalieBtn}
+            onPress={() => navigation.navigate('Anomalie', { programmeUuid: programme.uuid })}
+          >
+            <Text style={styles.anomalieBtnText}>Signaler une anomalie</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.clotureBtn}
+            onPress={() => navigation.navigate('Cloture', { programmeId: programme.id })}
+          >
+            <Text style={styles.clotureBtnText}>Cloturer le programme</Text>
+          </TouchableOpacity>
         </View>
       )}
       <FlatList
@@ -99,6 +111,18 @@ const styles = StyleSheet.create({
   header: { backgroundColor: '#fff', padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee' },
   numero: { fontSize: 18, fontWeight: '700', color: '#333' },
   meta: { fontSize: 14, color: '#888', marginTop: 4 },
+  anomalieBtn: {
+    marginTop: 12, padding: 10, borderRadius: 8,
+    backgroundColor: '#fff3cd', borderWidth: 1, borderColor: '#ffc107',
+    alignItems: 'center',
+  },
+  anomalieBtnText: { color: '#664d03', fontWeight: '700' },
+  clotureBtn: {
+    marginTop: 8, padding: 10, borderRadius: 8,
+    backgroundColor: '#d1e7dd', borderWidth: 1, borderColor: '#198754',
+    alignItems: 'center',
+  },
+  clotureBtnText: { color: '#0f5132', fontWeight: '700' },
   list: { padding: 12 },
   card: {
     backgroundColor: '#fff',

@@ -103,6 +103,8 @@ export interface Operation {
   montant_total: number;
   montant_encaisse: number;
   est_encaissee: number;
+  gps_precision: number | null;
+  gps_horodatage: string | null;
   signature_livreur: string;
   signature_client: string;
   nom_signataire_client: string;

@@ -1,5 +1,7 @@
 /**
- * Section de gestion des photos d'une operation.
+ * Section de gestion des photos (capture camera / galerie + miniatures).
+ * Les types de photo sont configurables via la prop `types`
+ * (defaut : types d'operation ; pour une anomalie on passe le type ANOMALIE).
  */
 import React, { useState } from 'react';
 import {
@@ -21,20 +23,26 @@ export interface PhotoEnAttente {
   type_photo: string;
 }
 
+interface TypeOption {
+  label: string;
+  value: string;
+}
+
 interface Props {
   photos: PhotoEnAttente[];
   onChange: (photos: PhotoEnAttente[]) => void;
+  types?: TypeOption[];
 }
 
-const TYPES = [
+const DEFAULT_TYPES: TypeOption[] = [
   { label: 'Bordereau', value: 'BORDEREAU' },
   { label: 'Livraison', value: 'LIVRAISON' },
   { label: 'Etat PLV', value: 'ETAT_PLV' },
 ];
 
-export default function PhotosSection({ photos, onChange }: Props): React.ReactElement {
+export default function PhotosSection({ photos, onChange, types = DEFAULT_TYPES }: Props): React.ReactElement {
   const [busy, setBusy] = useState<boolean>(false);
-  const [typeChoisi, setTypeChoisi] = useState<string>('LIVRAISON');
+  const [typeChoisi, setTypeChoisi] = useState<string>(types[0].value);
 
   async function ajouter(capture: () => Promise<PhotoCapturee | null>): Promise<void> {
     setBusy(true);
@@ -56,19 +64,21 @@ export default function PhotosSection({ photos, onChange }: Props): React.ReactE
 
   return (
     <View style={styles.container}>
-      <View style={styles.typeRow}>
-        {TYPES.map((t) => (
-          <TouchableOpacity
-            key={t.value}
-            style={[styles.typeChip, typeChoisi === t.value && styles.typeChipActive]}
-            onPress={() => setTypeChoisi(t.value)}
-          >
-            <Text style={[styles.typeChipText, typeChoisi === t.value && styles.typeChipTextActive]}>
-              {t.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {types.length > 1 && (
+        <View style={styles.typeRow}>
+          {types.map((t) => (
+            <TouchableOpacity
+              key={t.value}
+              style={[styles.typeChip, typeChoisi === t.value && styles.typeChipActive]}
+              onPress={() => setTypeChoisi(t.value)}
+            >
+              <Text style={[styles.typeChipText, typeChoisi === t.value && styles.typeChipTextActive]}>
+                {t.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       <View style={styles.actionsRow}>
         <TouchableOpacity style={styles.actionButton} onPress={() => ajouter(prendrePhoto)} disabled={busy}>

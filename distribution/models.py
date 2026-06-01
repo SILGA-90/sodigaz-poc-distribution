@@ -299,6 +299,14 @@ class Operation(SyncableModel):
     )
     date_heure = models.DateTimeField()
     localisation_saisie = gis_models.PointField(geography=True, srid=4326, null=True, blank=True)
+    gps_precision = models.FloatField(
+        null=True, blank=True,
+        help_text="Rayon d'incertitude de la position GPS en metres (valeur probante).",
+    )
+    gps_horodatage = models.DateTimeField(
+        null=True, blank=True,
+        help_text="Horodatage de l'acquisition GPS au moment de l'enregistrement.",
+    )
     # Reglement
     mode_paiement = models.CharField(
         max_length=20, choices=ModePaiement.choices, null=True, blank=True

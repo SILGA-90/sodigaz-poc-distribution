@@ -1,7 +1,7 @@
 /**
- * Repository des programmes : acces en lecture aux programmes locaux.
+ * Repository des programmes : lecture, recap, cloture locale.
  */
-import { getDatabase } from '../database';
+import { getDatabase, addCloturePending } from '../database';
 import { Programme, Etape } from '../../types/models';
 
 export interface EtapeAvecPlv extends Etape {
@@ -16,11 +16,14 @@ export interface ProgrammeAvecProgression extends Programme {
   etapes_visitees: number;
 }
 
-/**
- * Programmes des 7 derniers jours, avec leur progression (etapes visitees).
- * On ne filtre pas strictement sur "aujourd'hui" pour eviter qu'un programme
- * genere un autre jour n'apparaisse pas pendant le developpement.
- */
+export interface RecapProgramme {
+  total_etapes: number;
+  etapes_visitees: number;
+  nb_operations: number;
+  montant_encaisse: number;
+  nb_anomalies: number;
+}
+
 export async function getProgrammesRecents(): Promise<ProgrammeAvecProgression[]> {
   const db = await getDatabase();
   return db.getAllAsync<ProgrammeAvecProgression>(
@@ -60,4 +63,63 @@ export async function getEtapesDuProgramme(programmeId: number): Promise<EtapeAv
      ORDER BY e.ordre_prevu;`,
     [programmeId],
   );
+}
+
+/**
+ * Recapitulatif d'un programme pour l'ecran de cloture.
+ */
+export async function getRecapProgramme(
+  programmeId: number,
+  programmeUuid: string,
+): Promise<RecapProgramme> {
+  const db = await getDatabase();
+
+  const etapes = await db.getFirstAsync<{ total: number; visitees: number }>(
+    `SELECT
+        COUNT(*) AS total,
+        SUM(CASE WHEN statut_visite = 'VISITEE' THEN 1 ELSE 0 END) AS visitees
+     FROM etape WHERE programme_id = ? AND is_deleted = 0;`,
+    [programmeId],
+  );
+
+  const ops = await db.getFirstAsync<{ nb: number; montant: number }>(
+    `SELECT
+        COUNT(DISTINCT o.uuid) AS nb,
+        COALESCE(SUM(o.montant_encaisse), 0) AS montant
+     FROM operation o
+     JOIN etape e ON e.uuid = o.etape_uuid
+     WHERE e.programme_id = ? AND o.is_deleted = 0;`,
+    [programmeId],
+  );
+
+  const anomalies = await db.getFirstAsync<{ n: number }>(
+    `SELECT COUNT(*) AS n FROM anomalie WHERE programme_uuid = ? AND is_deleted = 0;`,
+    [programmeUuid],
+  );
+
+  return {
+    total_etapes: etapes?.total ?? 0,
+    etapes_visitees: etapes?.visitees ?? 0,
+    nb_operations: ops?.nb ?? 0,
+    montant_encaisse: ops?.montant ?? 0,
+    nb_anomalies: anomalies?.n ?? 0,
+  };
+}
+
+/**
+ * Cloture un programme localement : statut CLOTURE + heure de fin locale,
+ * et inscription dans la file d'attente de remontee (sync_meta).
+ */
+export async function cloturerProgrammeLocal(
+  programmeUuid: string,
+): Promise<void> {
+  const db = await getDatabase();
+  const ts = Date.now();
+  const heureFin = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  await db.runAsync(
+    `UPDATE programme SET statut = 'CLOTURE', heure_fin = ?, last_modified = ?
+     WHERE uuid = ?;`,
+    [heureFin, ts, programmeUuid],
+  );
+  await addCloturePending(programmeUuid);
 }
