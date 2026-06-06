@@ -10,7 +10,6 @@ export interface AnomalieSaisie {
   programme_uuid: string;
   plv_id: number | null;
   type_anomalie: string;
-  gravite: 'FAIBLE' | 'MOYENNE' | 'ELEVEE';
   description: string;
   latitude: number | null;
   longitude: number | null;
@@ -20,13 +19,14 @@ export async function creerAnomalie(data: AnomalieSaisie): Promise<string> {
   const db = await getDatabase();
   const uuid = Crypto.randomUUID();
   const ts = Date.now();
+  // gravite = 'MOYENNE' par defaut ; le superviseur la reclassifie cote serveur.
   await db.runAsync(
     `INSERT INTO anomalie
      (uuid, programme_uuid, plv_id, type_anomalie, gravite, description, statut,
       date_heure, latitude, longitude, sync_status, last_modified, is_deleted)
-     VALUES (?, ?, ?, ?, ?, ?, 'OUVERTE', ?, ?, ?, 'PENDING', ?, 0);`,
+     VALUES (?, ?, ?, ?, 'MOYENNE', ?, 'OUVERTE', ?, ?, ?, 'PENDING', ?, 0);`,
     [
-      uuid, data.programme_uuid, data.plv_id, data.type_anomalie, data.gravite,
+      uuid, data.programme_uuid, data.plv_id, data.type_anomalie,
       data.description, new Date().toISOString(), data.latitude, data.longitude, ts,
     ],
   );

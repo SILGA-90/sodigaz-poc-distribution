@@ -66,6 +66,35 @@
             </div>
         </div>
 
+        {# ── Panneau de classification de la gravite ── #}
+        <div class="card mb-3 {% if anomalie.gravite == 'ELEVEE' %}border-danger{% elif anomalie.gravite == 'FAIBLE' %}border-success{% else %}border-warning{% endif %}">
+            <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+                <span>Classification superviseur</span>
+                {% if anomalie.gravite == "ELEVEE" %}
+                <span class="badge bg-danger">&#9888; Elevee</span>
+                {% elif anomalie.gravite == "FAIBLE" %}
+                <span class="badge bg-success">Faible</span>
+                {% else %}
+                <span class="badge bg-warning text-dark">Moyenne</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">
+                    La gravite est determinee par le superviseur apres evaluation.
+                </p>
+                <form method="post" action="{% url 'supervision:anomalie-gravite' anomalie.id %}"
+                      class="d-flex gap-2">
+                    {% csrf_token %}
+                    <select name="gravite" class="form-select form-select-sm">
+                        <option value="FAIBLE"  {% if anomalie.gravite == "FAIBLE"  %}selected{% endif %}>Faible — impact limite</option>
+                        <option value="MOYENNE" {% if anomalie.gravite == "MOYENNE" %}selected{% endif %}>Moyenne — a surveiller</option>
+                        <option value="ELEVEE"  {% if anomalie.gravite == "ELEVEE"  %}selected{% endif %}>Elevee — action requise</option>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary text-nowrap">Appliquer</button>
+                </form>
+            </div>
+        </div>
+
         {% if anomalie.localisation %}
         <div class="card mb-3">
             <div class="card-header fw-semibold">Localisation GPS</div>

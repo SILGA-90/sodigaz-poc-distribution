@@ -13,16 +13,6 @@ import { RootStackParamList } from '../types/navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MesAnomalies'>;
 
-const GRAVITE_COLOR: Record<string, string> = {
-  ELEVEE: '#dc3545',
-  MOYENNE: '#ffc107',
-  FAIBLE: '#198754',
-};
-const GRAVITE_TEXT_COLOR: Record<string, string> = {
-  ELEVEE: '#fff',
-  MOYENNE: '#000',
-  FAIBLE: '#fff',
-};
 
 export default function MesAnomaliesScreen({ route }: Props): React.ReactElement {
   const { programmeUuid, programmeNumero } = route.params;
@@ -41,8 +31,6 @@ export default function MesAnomaliesScreen({ route }: Props): React.ReactElement
   }
 
   function renderItem({ item }: { item: AnomalieLocale }): React.ReactElement {
-    const bg = GRAVITE_COLOR[item.gravite] ?? '#6c757d';
-    const tc = GRAVITE_TEXT_COLOR[item.gravite] ?? '#fff';
     const synced = item.sync_status === 'SYNCED';
     const date = new Date(item.date_heure).toLocaleString('fr-FR', {
       day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
@@ -52,8 +40,8 @@ export default function MesAnomaliesScreen({ route }: Props): React.ReactElement
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Text style={styles.typeText}>{item.type_anomalie}</Text>
-          <View style={[styles.graviteBadge, { backgroundColor: bg }]}>
-            <Text style={[styles.graviteText, { color: tc }]}>{item.gravite}</Text>
+          <View style={styles.aClasSerBadge}>
+            <Text style={styles.aClasserText}>A classer</Text>
           </View>
         </View>
         {item.description ? (
@@ -106,8 +94,11 @@ const styles = StyleSheet.create({
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   typeText: { fontSize: 14, fontWeight: '700', color: '#333', flex: 1, marginRight: 8 },
-  graviteBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10 },
-  graviteText: { fontSize: 11, fontWeight: '700' },
+  aClasSerBadge: {
+    paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10,
+    backgroundColor: '#e9ecef',
+  },
+  aClasserText: { fontSize: 11, fontWeight: '600', color: '#6c757d' },
   description: { fontSize: 13, color: '#555', lineHeight: 18, marginBottom: 10 },
   footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   date: { fontSize: 12, color: '#aaa' },

@@ -1,6 +1,7 @@
 /**
  * Ecran de signalement d'une anomalie sur un programme.
- * Type + gravite + description + photo(s) optionnelle(s) + geolocalisation.
+ * Type + description + photo(s) optionnelle(s) + geolocalisation.
+ * La gravite est fixee a MOYENNE par defaut ; le superviseur la reclassifie.
  * Enregistrement local PENDING (offline-first), remonte a la sync.
  */
 import React, { useEffect, useState } from 'react';
@@ -35,17 +36,11 @@ const TYPES_ANOMALIE = [
   'Autre',
 ];
 
-const GRAVITES: { label: string; value: 'FAIBLE' | 'MOYENNE' | 'ELEVEE'; color: string }[] = [
-  { label: 'Faible', value: 'FAIBLE', color: '#198754' },
-  { label: 'Moyenne', value: 'MOYENNE', color: '#ffc107' },
-  { label: 'Elevee', value: 'ELEVEE', color: '#dc3545' },
-];
 
 export default function AnomalieScreen({ route, navigation }: Props): React.ReactElement {
   const { programmeUuid, programmeId } = route.params;
 
   const [typeAnomalie, setTypeAnomalie] = useState<string>(TYPES_ANOMALIE[0]);
-  const [gravite, setGravite] = useState<'FAIBLE' | 'MOYENNE' | 'ELEVEE'>('MOYENNE');
   const [description, setDescription] = useState<string>('');
   const [photos, setPhotos] = useState<PhotoEnAttente[]>([]);
   const [gpsLat, setGpsLat] = useState<number | null>(null);
@@ -93,7 +88,6 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
         programme_uuid: programmeUuid,
         plv_id: selectedPlvId,
         type_anomalie: typeAnomalie,
-        gravite,
         description: description.trim(),
         latitude: gpsLat,
         longitude: gpsLon,
@@ -159,24 +153,6 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
         </>
       )}
 
-      <Text style={styles.sectionTitle}>Gravite</Text>
-      <View style={styles.graviteRow}>
-        {GRAVITES.map((g) => (
-          <TouchableOpacity
-            key={g.value}
-            style={[
-              styles.graviteChip,
-              gravite === g.value && { backgroundColor: g.color, borderColor: g.color },
-            ]}
-            onPress={() => setGravite(g.value)}
-          >
-            <Text style={[styles.graviteText, gravite === g.value && styles.graviteTextActive]}>
-              {g.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
       <Text style={styles.sectionTitle}>Description</Text>
       <TextInput
         style={styles.description}
@@ -223,13 +199,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', marginHorizontal: 12,
     borderRadius: 8, borderWidth: 1, borderColor: '#ccc',
   },
-  graviteRow: { flexDirection: 'row', gap: 8, marginHorizontal: 12 },
-  graviteChip: {
-    flex: 1, padding: 12, borderRadius: 8, alignItems: 'center',
-    backgroundColor: '#fff', borderWidth: 1, borderColor: '#ccc',
-  },
-  graviteText: { fontWeight: '600', color: '#333' },
-  graviteTextActive: { color: '#fff' },
   description: {
     backgroundColor: '#fff', marginHorizontal: 12, padding: 12,
     borderRadius: 10, minHeight: 90, textAlignVertical: 'top',

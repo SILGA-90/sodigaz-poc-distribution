@@ -399,6 +399,19 @@ def anomalies_list(request):
 
 
 @superviseur_required
+def changer_gravite_anomalie(request, anomalie_id):
+    """Reclassifie la gravite d'une anomalie (action superviseur uniquement)."""
+    if request.method == "POST":
+        nouvelle_gravite = request.POST.get("gravite", "")
+        if nouvelle_gravite in ("FAIBLE", "MOYENNE", "ELEVEE"):
+            Anomalie.objects.filter(id=anomalie_id, is_deleted=False).update(
+                gravite=nouvelle_gravite
+            )
+    referer = request.META.get("HTTP_REFERER")
+    return redirect(referer if referer else "supervision:anomalies")
+
+
+@superviseur_required
 def changer_statut_anomalie(request, anomalie_id):
     """Met à jour le statut d'une anomalie (action superviseur)."""
     if request.method == "POST":

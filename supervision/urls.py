@@ -25,4 +25,5 @@ urlpatterns = [
     path("anomalies/", views.anomalies_list, name="anomalies"),
     path("anomalies/<int:anomalie_id>/", views.anomalie_detail, name="anomalie-detail"),
     path("anomalies/<int:anomalie_id>/statut/", views.changer_statut_anomalie, name="anomalie-statut"),
+    path("anomalies/<int:anomalie_id>/gravite/", views.changer_gravite_anomalie, name="anomalie-gravite"),
 ]
