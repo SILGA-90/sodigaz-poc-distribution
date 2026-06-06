@@ -46,7 +46,11 @@
             </tbody>
         </table>
         {% else %}
+        {% if programme.type_programme == "COLLECTE" %}
+        <p class="text-muted mb-0">Programme de collecte : les quantites prevues ne sont pas connues a l'avance. Les realisations s'afficheront apres le push des operations.</p>
+        {% else %}
         <p class="text-muted mb-0">Aucune ligne prevue ni realisee.</p>
+        {% endif %}
         {% endif %}
 
         {% for op in r.etape.operations.all %}
@@ -61,6 +65,20 @@
                     <span class="text-muted small">&#8594; BCR : <span class="font-monospace">{{ doc.bcr.numero_x3 }}</span></span>
                     {% endif %}
                     <span class="text-muted small ms-auto">{{ doc.created_at|date:"d/m/Y H:i" }}</span>
+                </div>
+                {% endif %}
+                {% endwith %}
+                {% with photos=op.photos.all %}
+                {% if photos %}
+                <div class="mt-2 d-flex flex-wrap gap-2">
+                    {% for photo in photos %}
+                    {% if not photo.is_deleted and photo.fichier %}
+                    <a href="{{ photo.fichier.url }}" target="_blank" title="{{ photo.type_photo }} — {{ photo.date_heure|date:'d/m H:i' }}">
+                        <img src="{{ photo.fichier.url }}"
+                             style="height:64px;width:64px;object-fit:cover;border-radius:6px;border:1px solid #ccc;">
+                    </a>
+                    {% endif %}
+                    {% endfor %}
                 </div>
                 {% endif %}
                 {% endwith %}

@@ -42,4 +42,5 @@ export async function removeItem(key: string): Promise<void> {
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'access_token',
   REFRESH_TOKEN: 'refresh_token',
+  USER_ID: 'user_id',
 } as const;

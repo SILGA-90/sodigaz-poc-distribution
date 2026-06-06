@@ -84,6 +84,16 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
   }
 
   function renderProgramme({ item }: { item: ProgrammeAvecProgression }): React.ReactElement {
+    const pct = item.total_etapes > 0
+      ? Math.round((item.etapes_visitees / item.total_etapes) * 100)
+      : 0;
+    const statutColor =
+      item.statut === 'CLOTURE' ? '#198754' :
+      item.statut === 'EN_COURS' ? '#0d6efd' : '#6c757d';
+    const statutLabel =
+      item.statut === 'CLOTURE' ? 'Cloture' :
+      item.statut === 'EN_COURS' ? 'En cours' : 'Planifie';
+
     return (
       <TouchableOpacity
         style={styles.progCard}
@@ -91,17 +101,27 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       >
         <View style={styles.progHeader}>
           <Text style={styles.progNumero}>{item.numero_x3}</Text>
-          <View style={[
-            styles.badge,
-            item.type_programme === 'COLLECTE' ? styles.badgeCollecte : styles.badgeRestitution,
-          ]}>
-            <Text style={styles.badgeText}>{item.type_programme}</Text>
+          <View style={styles.badgesRow}>
+            <View style={[
+              styles.badge,
+              item.type_programme === 'COLLECTE' ? styles.badgeCollecte : styles.badgeRestitution,
+            ]}>
+              <Text style={styles.badgeText}>{item.type_programme}</Text>
+            </View>
+            <View style={[styles.badge, { backgroundColor: statutColor }]}>
+              <Text style={[styles.badgeText, { color: '#fff' }]}>{statutLabel}</Text>
+            </View>
           </View>
         </View>
         <Text style={styles.progDate}>{item.date_programme}</Text>
-        <Text style={styles.progProgress}>
-          {item.etapes_visitees} / {item.total_etapes} etapes visitees
-        </Text>
+        <View style={styles.progressRow}>
+          <View style={styles.progressBar}>
+            <View style={[styles.progressFill, { width: `${pct}%` as any, backgroundColor: statutColor }]} />
+          </View>
+          <Text style={[styles.progProgress, { color: statutColor }]}>
+            {item.etapes_visitees}/{item.total_etapes} etapes
+          </Text>
+        </View>
       </TouchableOpacity>
     );
   }
@@ -159,16 +179,16 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       />
 
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.debugButton}
-          onPress={() => navigation.navigate('Debug')}
-        >
-          <Text style={styles.footerText}>Debug BDD</Text>
-        </TouchableOpacity>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.footerText}>Deconnexion</Text>
         </TouchableOpacity>
       </View>
+      <TouchableOpacity
+        style={styles.debugLink}
+        onPress={() => navigation.navigate('Debug')}
+      >
+        <Text style={styles.debugLinkText}>Debug BDD</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -212,21 +232,28 @@ const styles = StyleSheet.create({
   },
   progHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   progNumero: { fontSize: 15, fontWeight: '700', color: '#333' },
-  badge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 },
+  badgesRow: { flexDirection: 'row', gap: 6 },
+  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
   badgeCollecte: { backgroundColor: '#cfe2ff' },
   badgeRestitution: { backgroundColor: '#d1e7dd' },
-  badgeText: { fontSize: 11, fontWeight: '700', color: '#333' },
-  progDate: { color: '#888', fontSize: 13, marginTop: 4 },
-  progProgress: { color: '#0d6efd', fontSize: 13, marginTop: 6, fontWeight: '600' },
+  badgeText: { fontSize: 10, fontWeight: '700', color: '#333' },
+  progDate: { color: '#aaa', fontSize: 12, marginTop: 4 },
+  progressRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
+  progressBar: {
+    flex: 1, height: 6, backgroundColor: '#e9ecef',
+    borderRadius: 3, overflow: 'hidden',
+  },
+  progressFill: { height: 6, borderRadius: 3 },
+  progProgress: { fontSize: 12, fontWeight: '700', minWidth: 70, textAlign: 'right' },
   empty: { padding: 32, alignItems: 'center' },
   emptyText: { color: '#888', textAlign: 'center', lineHeight: 22 },
   footer: {
-    flexDirection: 'row',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
     backgroundColor: '#fff',
   },
-  debugButton: { flex: 1, padding: 14, alignItems: 'center', backgroundColor: '#6c757d' },
-  logoutButton: { flex: 1, padding: 14, alignItems: 'center', backgroundColor: '#dc3545' },
+  logoutButton: { padding: 14, alignItems: 'center', backgroundColor: '#dc3545' },
   footerText: { color: '#fff', fontWeight: '600' },
+  debugLink: { padding: 8, alignItems: 'center' },
+  debugLinkText: { color: '#ccc', fontSize: 11 },
 });

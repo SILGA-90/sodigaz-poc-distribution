@@ -12,8 +12,11 @@ POST /api/sync/push
 Authentification : JWT. Le livreur connecte est identifie par request.user.
 Filtre de securite : un livreur ne voit / ne pousse QUE ses propres donnees.
 """
+import logging
 import time
 from contextlib import suppress
+
+logger = logging.getLogger(__name__)
 
 from django.contrib.gis.geos import Point
 from django.db import models, transaction
@@ -230,6 +233,7 @@ def sync_push(request):
     serializer = PushPayloadSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     changes = serializer.validated_data["changes"]
+    echec_etapes = serializer.validated_data.get("echec_etapes", [])
     user = request.user
 
     # Securite : verifier que le livreur connecte n'agit que sur SES propres
@@ -242,6 +246,12 @@ def sync_push(request):
         str(e.uuid): e.id for e in
         Etape.objects.filter(programme__utilisateur=user).only("id", "uuid")
     }
+    # UUIDs d'etapes appartenant a d'AUTRES utilisateurs (detection de tentative
+    # d'usurpation, distincte d'une etape simplement inconnue).
+    etapes_autres_users = set(
+        str(u) for u in
+        Etape.objects.exclude(programme__utilisateur=user).values_list("uuid", flat=True)
+    )
 
     applied = {
         "operation": {"created": 0, "updated": 0, "deleted": 0},
@@ -250,9 +260,9 @@ def sync_push(request):
         "photo": {"created": 0, "updated": 0, "deleted": 0},
     }
     pushed_op_uuids: list[str] = []
+    touched_etape_ids: set[int] = set()
 
-    try:
-        with transaction.atomic():
+    with transaction.atomic():
             # ----- OPERATIONS -----
             for op_data in (
                 changes.get("operation", {}).get("created", [])
@@ -262,17 +272,28 @@ def sync_push(request):
                 op_serializer.is_valid(raise_exception=True)
                 d = op_serializer.validated_data
 
-                etape_id = etapes_user_ids_by_uuid.get(str(d["etape_uuid"]))
+                etape_uuid_str = str(d["etape_uuid"])
+                etape_id = etapes_user_ids_by_uuid.get(etape_uuid_str)
                 if etape_id is None:
-                    raise PermissionError(
-                        f"Etape {d['etape_uuid']} introuvable ou non autorisee."
+                    if etape_uuid_str in etapes_autres_users:
+                        # Etape connue mais appartenant a un autre livreur : refus strict.
+                        return Response(
+                            {"status": "error", "detail": f"Etape {etape_uuid_str} non autorisee."},
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
+                    # Etape inconnue du serveur (donnee de test, bug client) : on ignore.
+                    logger.warning(
+                        "push: operation %s ignoree — etape %s inconnue pour %s",
+                        d["uuid"], etape_uuid_str, user.code_livreur,
                     )
+                    continue
 
                 localisation = None
                 if d.get("latitude") is not None and d.get("longitude") is not None:
                     localisation = Point(d["longitude"], d["latitude"], srid=4326)
 
                 pushed_op_uuids.append(str(d["uuid"]))
+                touched_etape_ids.add(etape_id)
                 op, created = Operation.objects.update_or_create(
                     uuid=d["uuid"],
                     defaults={
@@ -314,13 +335,17 @@ def sync_push(request):
                 lo_serializer.is_valid(raise_exception=True)
                 d = lo_serializer.validated_data
 
-                operation = Operation.objects.filter(
-                    uuid=d["operation_uuid"],
-                    etape__programme__utilisateur=user,
-                ).first()
+                operation = Operation.objects.filter(uuid=d["operation_uuid"]).first()
                 if operation is None:
-                    raise PermissionError(
-                        f"Operation {d['operation_uuid']} introuvable ou non autorisee."
+                    logger.warning(
+                        "push: ligne %s ignoree — operation %s inconnue pour %s",
+                        d["uuid"], d["operation_uuid"], user.code_livreur,
+                    )
+                    continue
+                if operation.etape.programme.utilisateur_id != user.id:
+                    return Response(
+                        {"status": "error", "detail": f"Operation {d['operation_uuid']} non autorisee."},
+                        status=status.HTTP_403_FORBIDDEN,
                     )
 
                 produit = get_object_or_404(Produit, code_x3=d["produit_code_x3"])
@@ -362,9 +387,17 @@ def sync_push(request):
                     utilisateur=user,
                 ).first()
                 if programme is None:
-                    raise PermissionError(
-                        f"Programme {d['programme_uuid']} introuvable ou non autorise."
+                    autre = Programme.objects.filter(uuid=d["programme_uuid"]).exists()
+                    if autre:
+                        return Response(
+                            {"status": "error", "detail": f"Programme {d['programme_uuid']} non autorise."},
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
+                    logger.warning(
+                        "push: anomalie %s ignoree — programme %s inconnu pour %s",
+                        d["uuid"], d["programme_uuid"], user.code_livreur,
                     )
+                    continue
 
                 localisation = None
                 if d.get("latitude") is not None and d.get("longitude") is not None:
@@ -412,18 +445,29 @@ def sync_push(request):
                         etape__programme__utilisateur=user,
                     ).first()
                     if op is None:
-                        raise PermissionError(
-                            f"Operation {d['operation_uuid']} introuvable ou non autorisee."
+                        logger.warning(
+                            "push: photo %s ignoree — operation %s inconnue pour %s",
+                            d["uuid"], d["operation_uuid"], user.code_livreur,
+                        )
+                        continue
+                    if op.etape.programme.utilisateur_id != user.id:
+                        return Response(
+                            {"status": "error", "detail": f"Operation {d['operation_uuid']} non autorisee."},
+                            status=status.HTTP_403_FORBIDDEN,
                         )
                     operation_id = op.id
                 else:
-                    an = Anomalie.objects.filter(
-                        uuid=d["anomalie_uuid"],
-                        programme__utilisateur=user,
-                    ).first()
+                    an = Anomalie.objects.filter(uuid=d["anomalie_uuid"]).first()
                     if an is None:
-                        raise PermissionError(
-                            f"Anomalie {d['anomalie_uuid']} introuvable ou non autorisee."
+                        logger.warning(
+                            "push: photo %s ignoree — anomalie %s inconnue pour %s",
+                            d["uuid"], d["anomalie_uuid"], user.code_livreur,
+                        )
+                        continue
+                    if an.programme.utilisateur_id != user.id:
+                        return Response(
+                            {"status": "error", "detail": f"Anomalie {d['anomalie_uuid']} non autorisee."},
+                            status=status.HTTP_403_FORBIDDEN,
                         )
                     anomalie_id = an.id
 
@@ -462,11 +506,29 @@ def sync_push(request):
                 updated = photos.update(is_deleted=True)
                 applied["photo"]["deleted"] += updated
 
-    except PermissionError as e:
-        return Response(
-            {"status": "error", "detail": str(e)},
-            status=status.HTTP_403_FORBIDDEN,
-        )
+            # ----- MISE A JOUR STATUTS (apres traitement de toutes les entites) -----
+            if touched_etape_ids:
+                Etape.objects.filter(
+                    id__in=touched_etape_ids,
+                ).update(statut_visite="VISITEE")
+                # Passer le programme EN_COURS si encore PLANIFIE
+                prog_ids = list(
+                    Etape.objects.filter(id__in=touched_etape_ids)
+                    .values_list("programme_id", flat=True)
+                    .distinct()
+                )
+                Programme.objects.filter(
+                    id__in=prog_ids, statut="PLANIFIE",
+                ).update(statut="EN_COURS")
+
+            # ----- ETAPES EN ECHEC -----
+            if echec_etapes:
+                echec_uuids = [str(u) for u in echec_etapes]
+                Etape.objects.filter(
+                    uuid__in=echec_uuids,
+                    programme__utilisateur=user,
+                    is_deleted=False,
+                ).update(statut_visite="ECHEC")
 
     # Simulation remontée Sage X3 (best-effort : n'impacte pas la réponse push)
     if pushed_op_uuids:

@@ -18,8 +18,9 @@ import { Picker } from '@react-native-picker/picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { creerAnomalie } from '../db/repositories/anomalieRepository';
+import { getEtapesDuProgramme } from '../db/repositories/programmeRepository';
 import { ajouterPhotoAnomalie } from '../db/repositories/photoRepository';
-import { getCurrentPosition } from '../services/locationService';
+import { acquerirPositionProbante } from '../services/locationService';
 import PhotosSection, { PhotoEnAttente } from '../components/PhotosSection';
 import { RootStackParamList } from '../types/navigation';
 
@@ -41,7 +42,7 @@ const GRAVITES: { label: string; value: 'FAIBLE' | 'MOYENNE' | 'ELEVEE'; color: 
 ];
 
 export default function AnomalieScreen({ route, navigation }: Props): React.ReactElement {
-  const { programmeUuid } = route.params;
+  const { programmeUuid, programmeId } = route.params;
 
   const [typeAnomalie, setTypeAnomalie] = useState<string>(TYPES_ANOMALIE[0]);
   const [gravite, setGravite] = useState<'FAIBLE' | 'MOYENNE' | 'ELEVEE'>('MOYENNE');
@@ -49,25 +50,37 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
   const [photos, setPhotos] = useState<PhotoEnAttente[]>([]);
   const [gpsLat, setGpsLat] = useState<number | null>(null);
   const [gpsLon, setGpsLon] = useState<number | null>(null);
-  const [gpsStatus, setGpsStatus] = useState<'en cours' | 'ok' | 'indisponible'>('en cours');
+  const [gpsStatus, setGpsStatus] = useState<'en cours' | 'fiable' | 'degradee' | 'indisponible'>('en cours');
   const [saving, setSaving] = useState<boolean>(false);
+  const [plvOptions, setPlvOptions] = useState<{ id: number; libelle: string }[]>([]);
+  const [selectedPlvId, setSelectedPlvId] = useState<number | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const pos = await getCurrentPosition();
-        if (pos) {
-          setGpsLat(pos.latitude);
-          setGpsLon(pos.longitude);
-          setGpsStatus('ok');
-        } else {
-          setGpsStatus('indisponible');
-        }
+        const pos = await acquerirPositionProbante();
+        setGpsLat(pos.latitude);
+        setGpsLon(pos.longitude);
+        setGpsStatus(pos.qualite === 'absente' ? 'indisponible' : pos.qualite);
       } catch {
         setGpsStatus('indisponible');
       }
     })();
   }, []);
+
+  useEffect(() => {
+    getEtapesDuProgramme(programmeId).then((etapes) => {
+      const seen = new Set<number>();
+      const opts: { id: number; libelle: string }[] = [];
+      for (const e of etapes) {
+        if (!seen.has(e.plv_id)) {
+          seen.add(e.plv_id);
+          opts.push({ id: e.plv_id, libelle: e.plv_libelle });
+        }
+      }
+      setPlvOptions(opts);
+    });
+  }, [programmeId]);
 
   async function handleSave(): Promise<void> {
     if (!description.trim()) {
@@ -78,7 +91,7 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
     try {
       const anomalieUuid = await creerAnomalie({
         programme_uuid: programmeUuid,
-        plv_id: null,
+        plv_id: selectedPlvId,
         type_anomalie: typeAnomalie,
         gravite,
         description: description.trim(),
@@ -106,7 +119,18 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Signaler une anomalie</Text>
-        <Text style={styles.gpsStatus}>Position GPS : {gpsStatus}</Text>
+        <View style={styles.gpsRow}>
+          <View style={[styles.gpsDot, {
+            backgroundColor:
+              gpsStatus === 'fiable' ? '#34d399' :
+              gpsStatus === 'degradee' ? '#fbbf24' : '#f87171',
+          }]} />
+          <Text style={styles.gpsStatus}>
+            {gpsStatus === 'fiable' ? 'GPS fiable' :
+             gpsStatus === 'degradee' ? 'GPS imprecis' :
+             gpsStatus === 'indisponible' ? 'GPS absent' : 'Acquisition...'}
+          </Text>
+        </View>
       </View>
 
       <Text style={styles.sectionTitle}>Type d'anomalie</Text>
@@ -117,6 +141,23 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
           ))}
         </Picker>
       </View>
+
+      {plvOptions.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>PLV concernee (optionnel)</Text>
+          <View style={styles.pickerWrap}>
+            <Picker
+              selectedValue={selectedPlvId}
+              onValueChange={(v) => setSelectedPlvId(v)}
+            >
+              <Picker.Item label="-- Aucune PLV specifique --" value={null} />
+              {plvOptions.map((p) => (
+                <Picker.Item key={p.id} label={p.libelle} value={p.id} />
+              ))}
+            </Picker>
+          </View>
+        </>
+      )}
 
       <Text style={styles.sectionTitle}>Gravite</Text>
       <View style={styles.graviteRow}>
@@ -171,7 +212,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
   header: { backgroundColor: '#dc3545', padding: 16 },
   headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  gpsStatus: { color: '#ffd9dd', fontSize: 12, marginTop: 4 },
+  gpsRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
+  gpsDot: { width: 8, height: 8, borderRadius: 4 },
+  gpsStatus: { color: '#ffd9dd', fontSize: 12 },
   sectionTitle: {
     fontSize: 15, fontWeight: '700', color: '#333',
     marginHorizontal: 16, marginTop: 16, marginBottom: 8,

@@ -2,7 +2,8 @@
 from datetime import date as date_cls
 
 from django.contrib.auth import logout as django_logout
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Exists, OuterRef, Q, Sum, DecimalField
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -73,13 +74,26 @@ def dashboard_carte_data(request):
     today = date_cls.today()
 
     plvs = []
-    for plv in Plv.objects.filter(statut="ACTIF").select_related("client"):
+    for plv in (
+        Plv.objects.filter(statut="ACTIF")
+        .select_related("client")
+        .annotate(
+            visite=Exists(
+                Operation.objects.filter(
+                    etape__plv=OuterRef("pk"),
+                    etape__programme__date_programme=today,
+                    is_deleted=False,
+                )
+            )
+        )
+    ):
         plvs.append({
             "id": plv.id,
             "libelle": plv.libelle,
             "client": plv.client.raison_sociale,
             "latitude": plv.localisation.y,
             "longitude": plv.localisation.x,
+            "visite": plv.visite,
         })
 
     operations = []
@@ -164,6 +178,10 @@ def programmes_list(request):
                 "etapes",
                 filter=Q(etapes__is_deleted=False, etapes__statut_visite=StatutVisite.VISITEE),
             ),
+            etapes_echec=Count(
+                "etapes",
+                filter=Q(etapes__is_deleted=False, etapes__statut_visite="ECHEC"),
+            ),
         )
         .order_by("type_programme", "utilisateur__code_livreur")
     )
@@ -188,6 +206,7 @@ def programme_detail(request, programme_id):
         .prefetch_related(
             "operations__lignes__produit",
             "operations__document_x3__bcr",
+            "operations__photos",
             "lignes_prevues__produit",
         )
         .order_by("ordre_prevu")
@@ -257,11 +276,16 @@ def operations_list(request):
 
     livreurs = Utilisateur.objects.filter(role=Role.LIVREUR, is_active=True).order_by("code_livreur")
 
+    total_montant = operations.aggregate(
+        total=Coalesce(Sum("montant_total"), 0, output_field=DecimalField())
+    )["total"]
+
     return render(request, "supervision/operations_list.html", {
         "operations": operations,
         "date_filter": date_filter,
         "livreur_code": livreur_code,
         "livreurs": livreurs,
+        "total_montant": total_montant,
     })
 
 
@@ -281,6 +305,18 @@ def anomalies_list(request):
         "anomalies": anomalies_qs,
         "statut_filter": statut_filter,
     })
+
+
+@superviseur_required
+def changer_statut_anomalie(request, anomalie_id):
+    """Met à jour le statut d'une anomalie (action superviseur)."""
+    if request.method == "POST":
+        nouveau_statut = request.POST.get("statut", "")
+        if nouveau_statut in ("OUVERTE", "EN_TRAITEMENT", "RESOLUE"):
+            Anomalie.objects.filter(id=anomalie_id, is_deleted=False).update(
+                statut=nouveau_statut
+            )
+    return redirect("supervision:anomalies")
 
 
 def logout_view(request):

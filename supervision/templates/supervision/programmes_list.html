@@ -19,6 +19,7 @@
             <th>Vehicule</th>
             <th>Statut</th>
             <th>Progression</th>
+            <th>Echecs</th>
             <th></th>
         </tr>
     </thead>
@@ -26,17 +27,32 @@
         {% for p in programmes %}
         <tr>
             <td><code>{{ p.numero_x3 }}</code></td>
-            <td>{{ p.utilisateur.code_livreur }} - {{ p.utilisateur.get_full_name }}</td>
-            <td>{{ p.get_type_programme_display }}</td>
+            <td>{{ p.utilisateur.code_livreur }} — {{ p.utilisateur.get_full_name }}</td>
+            <td>
+                {% if p.type_programme == "COLLECTE" %}
+                <span class="badge bg-primary">Collecte</span>
+                {% else %}
+                <span class="badge bg-success">Restitution</span>
+                {% endif %}
+            </td>
             <td>{{ p.vehicule.immatriculation|default:"-" }}</td>
             <td><span class="badge badge-statut-{{ p.statut }}">{{ p.get_statut_display }}</span></td>
             <td>
-                {{ p.etapes_visitees }} / {{ p.total_etapes }} etapes
-                {% if p.total_etapes > 0 %}
-                <div class="progress" style="height: 6px;">
-                    <div class="progress-bar" role="progressbar"
-                         style="width: {% widthratio p.etapes_visitees p.total_etapes 100 %}%"></div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-grow-1" style="height: 8px;" title="{{ p.etapes_visitees }}/{{ p.total_etapes }} etapes visitees">
+                        {% if p.total_etapes > 0 %}
+                        <div class="progress-bar {% if p.statut == 'CLOTURE' %}bg-success{% endif %}" role="progressbar"
+                             style="width: {% widthratio p.etapes_visitees p.total_etapes 100 %}%"></div>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted text-nowrap">{{ p.etapes_visitees }}/{{ p.total_etapes }}</small>
                 </div>
+            </td>
+            <td>
+                {% if p.etapes_echec > 0 %}
+                <span class="badge bg-danger">{{ p.etapes_echec }} echec{% if p.etapes_echec > 1 %}s{% endif %}</span>
+                {% else %}
+                <span class="text-muted">—</span>
                 {% endif %}
             </td>
             <td><a href="{% url 'supervision:programme-detail' p.id %}" class="btn btn-sm btn-outline-primary">Detail</a></td>

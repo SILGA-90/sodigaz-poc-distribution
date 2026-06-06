@@ -8,7 +8,7 @@ export type RootStackParamList = {
   Dashboard: undefined;
   Programme: { programmeId: number };
   SaisieOperation: { etapeId: number };
-  Anomalie: { programmeUuid: string };
+  Anomalie: { programmeUuid: string; programmeId: number };
   Cloture: { programmeId: number };
   Debug: undefined;
   // Sprint 2 ajoutera : Programme, Etape, Operation, etc.

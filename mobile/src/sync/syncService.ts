@@ -241,16 +241,29 @@ export interface PushResult {
  *     }
  *   }
  */
+async function getEchecEtapeUuids(): Promise<string[]> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<{ uuid: string }>(
+    `SELECT uuid FROM etape WHERE statut_visite = 'ECHEC' AND is_deleted = 0;`,
+  );
+  return rows.map((r) => r.uuid);
+}
+
 export async function push(): Promise<PushResult> {
   const operations = await getPendingOperations();
   const lignes = await getPendingLignesOperation();
   const anomalies = await getPendingAnomalies();
   const photosMeta = await getPhotosPendingMeta();
+  const echecEtapeUuids = await getEchecEtapeUuids();
 
   const empty = { operation: 0, ligne_operation: 0, anomalie: 0 };
 
   // Rien a pousser en meta : on tente quand meme les uploads binaires en attente
-  if (operations.length === 0 && lignes.length === 0 && anomalies.length === 0 && photosMeta.length === 0) {
+  if (
+    operations.length === 0 && lignes.length === 0 &&
+    anomalies.length === 0 && photosMeta.length === 0 &&
+    echecEtapeUuids.length === 0
+  ) {
     await uploaderPhotosBinaires();
     return { success: true, pushed: empty };
   }
@@ -259,6 +272,7 @@ export async function push(): Promise<PushResult> {
 
   const payload = {
     lastPulledAt,
+    echec_etapes: echecEtapeUuids,
     changes: {
       operation: {
         created: operations.map((o) => ({

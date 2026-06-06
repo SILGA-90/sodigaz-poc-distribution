@@ -8,6 +8,7 @@
 import * as Crypto from 'expo-crypto';
 
 import { getDatabase } from '../database';
+import { getItem, STORAGE_KEYS } from '../../storage/secureStorage';
 import { Operation, LigneOperation, Anomalie } from '../../types/models';
 
 function nowMs(): number {
@@ -25,9 +26,17 @@ function nowIso(): string {
 export async function createOperationTest(): Promise<string> {
   const db = await getDatabase();
 
-  // Prendre la premiere etape disponible
+  const userIdStr = await getItem(STORAGE_KEYS.USER_ID);
+  const utilisateurId = userIdStr ? parseInt(userIdStr, 10) : null;
+
+  // Prendre une etape appartenant a l'utilisateur connecte
   const etape = await db.getFirstAsync<{ uuid: string }>(
-    'SELECT uuid FROM etape WHERE is_deleted = 0 LIMIT 1;',
+    `SELECT e.uuid FROM etape e
+     JOIN programme p ON p.id = e.programme_id
+     WHERE e.is_deleted = 0
+       ${utilisateurId ? 'AND p.utilisateur_id = ?' : ''}
+     LIMIT 1;`,
+    utilisateurId ? [utilisateurId] : [],
   );
   if (!etape) {
     throw new Error('Aucune etape en local. Synchronise d\'abord (pull).');
@@ -75,15 +84,22 @@ export async function createOperationTest(): Promise<string> {
 
 export async function getPendingOperations(): Promise<Operation[]> {
   const db = await getDatabase();
+  // JOIN etape : exclut les operations orphelines dont l'etape n'existe pas en
+  // local (ex. operations de test creees sous un autre compte).
   return db.getAllAsync<Operation>(
-    "SELECT * FROM operation WHERE sync_status = 'PENDING' AND is_deleted = 0;",
+    `SELECT o.* FROM operation o
+     JOIN etape e ON e.uuid = o.etape_uuid AND e.is_deleted = 0
+     WHERE o.sync_status = 'PENDING' AND o.is_deleted = 0;`,
   );
 }
 
 export async function getPendingLignesOperation(): Promise<LigneOperation[]> {
   const db = await getDatabase();
   return db.getAllAsync<LigneOperation>(
-    "SELECT * FROM ligne_operation WHERE sync_status = 'PENDING' AND is_deleted = 0;",
+    `SELECT lo.* FROM ligne_operation lo
+     JOIN operation o ON o.uuid = lo.operation_uuid AND o.is_deleted = 0
+     JOIN etape e ON e.uuid = o.etape_uuid AND e.is_deleted = 0
+     WHERE lo.sync_status = 'PENDING' AND lo.is_deleted = 0;`,
   );
 }
 

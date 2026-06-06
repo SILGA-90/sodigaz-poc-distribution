@@ -25,6 +25,7 @@
             <th>Description</th>
             <th>PLV</th>
             <th>Statut</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -36,10 +37,35 @@
                 <small class="text-muted">{{ a.programme.utilisateur.code_livreur }}</small>
             </td>
             <td>{{ a.type_anomalie }}</td>
-            <td>{{ a.get_gravite_display }}</td>
+            <td>
+                {% if a.gravite == "ELEVEE" %}
+                <span class="badge bg-danger">Elevee</span>
+                {% elif a.gravite == "MOYENNE" %}
+                <span class="badge bg-warning text-dark">Moyenne</span>
+                {% else %}
+                <span class="badge bg-success">Faible</span>
+                {% endif %}
+            </td>
             <td>{{ a.description|truncatewords:15 }}</td>
             <td>{{ a.plv.libelle|default:"-" }}</td>
             <td><span class="badge badge-statut-{{ a.statut }}">{{ a.get_statut_display }}</span></td>
+            <td>
+                {% if a.statut == "OUVERTE" %}
+                <form method="post" action="{% url 'supervision:anomalie-statut' a.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="statut" value="EN_TRAITEMENT">
+                    <button type="submit" class="btn btn-sm btn-warning">Prendre en charge</button>
+                </form>
+                {% elif a.statut == "EN_TRAITEMENT" %}
+                <form method="post" action="{% url 'supervision:anomalie-statut' a.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="statut" value="RESOLUE">
+                    <button type="submit" class="btn btn-sm btn-success">Marquer resolue</button>
+                </form>
+                {% else %}
+                <span class="text-muted small">-</span>
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </tbody>

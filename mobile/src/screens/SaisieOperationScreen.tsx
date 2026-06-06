@@ -209,7 +209,18 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
           <Text style={styles.plvName}>{etapeInfo.plv_libelle}</Text>
           <Text style={styles.clientName}>{etapeInfo.client_raison_sociale}</Text>
           <View style={styles.headerRow}>
-            <Text style={styles.gpsStatus}>Position : {gpsStatus}</Text>
+            <View style={styles.gpsRow}>
+              <View style={[styles.gpsDot, {
+                backgroundColor:
+                  gpsStatus === 'fiable' ? '#34d399' :
+                  gpsStatus === 'degradee' ? '#fbbf24' : '#f87171',
+              }]} />
+              <Text style={styles.gpsStatus}>
+                {gpsStatus === 'fiable' ? 'GPS fiable' :
+                 gpsStatus === 'degradee' ? 'GPS imprecis' :
+                 gpsStatus === 'absente' ? 'GPS absent' : 'Acquisition...'}
+              </Text>
+            </View>
             <TouchableOpacity
               style={styles.itineraireBtn}
               onPress={() => {
@@ -403,6 +414,8 @@ const styles = StyleSheet.create({
   },
   saveDisabled: { opacity: 0.6 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
+  gpsRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  gpsDot: { width: 8, height: 8, borderRadius: 4 },
   gpsStatus: { color: '#cbe2ff', fontSize: 12 },
   itineraireBtn: { backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
   itineraireText: { color: '#0d6efd', fontWeight: '700', fontSize: 12 },

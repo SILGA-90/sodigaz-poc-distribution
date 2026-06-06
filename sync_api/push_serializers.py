@@ -73,6 +73,9 @@ class PushPayloadSerializer(serializers.Serializer):
     """Format complet du push : { changes: { table: TableChanges, ... }, lastPulledAt }."""
     changes = serializers.DictField(child=TableChangesSerializer())
     lastPulledAt = serializers.IntegerField(required=False, default=0)
+    echec_etapes = serializers.ListField(
+        child=serializers.UUIDField(), required=False, default=list
+    )
 
 
 class PhotoPushSerializer(serializers.Serializer):

@@ -2,6 +2,7 @@
  * Repository des programmes : lecture, recap, cloture locale.
  */
 import { getDatabase, addCloturePending } from '../database';
+import { getItem, STORAGE_KEYS } from '../../storage/secureStorage';
 import { Programme, Etape } from '../../types/models';
 
 export interface EtapeAvecPlv extends Etape {
@@ -14,6 +15,7 @@ export interface EtapeAvecPlv extends Etape {
 export interface ProgrammeAvecProgression extends Programme {
   total_etapes: number;
   etapes_visitees: number;
+  etapes_echec: number;
 }
 
 export interface RecapProgramme {
@@ -26,15 +28,36 @@ export interface RecapProgramme {
 
 export async function getProgrammesRecents(): Promise<ProgrammeAvecProgression[]> {
   const db = await getDatabase();
+  const userIdStr = await getItem(STORAGE_KEYS.USER_ID);
+  const utilisateurId = userIdStr ? parseInt(userIdStr, 10) : null;
+
+  if (utilisateurId) {
+    return db.getAllAsync<ProgrammeAvecProgression>(
+      `SELECT
+          pr.*,
+          (SELECT COUNT(*) FROM etape e WHERE e.programme_id = pr.id AND e.is_deleted = 0) AS total_etapes,
+          (SELECT COUNT(*) FROM etape e WHERE e.programme_id = pr.id AND e.is_deleted = 0 AND e.statut_visite = 'VISITEE') AS etapes_visitees,
+          (SELECT COUNT(*) FROM etape e WHERE e.programme_id = pr.id AND e.is_deleted = 0 AND e.statut_visite = 'ECHEC') AS etapes_echec
+       FROM programme pr
+       WHERE pr.is_deleted = 0
+         AND pr.utilisateur_id = ?
+         AND date(pr.date_programme) = date('now')
+       ORDER BY pr.type_programme;`,
+      [utilisateurId],
+    );
+  }
+
+  // Fallback si l'id n'est pas encore en cache (premier lancement avant login complet)
   return db.getAllAsync<ProgrammeAvecProgression>(
     `SELECT
         pr.*,
         (SELECT COUNT(*) FROM etape e WHERE e.programme_id = pr.id AND e.is_deleted = 0) AS total_etapes,
-        (SELECT COUNT(*) FROM etape e WHERE e.programme_id = pr.id AND e.is_deleted = 0 AND e.statut_visite = 'VISITEE') AS etapes_visitees
+        (SELECT COUNT(*) FROM etape e WHERE e.programme_id = pr.id AND e.is_deleted = 0 AND e.statut_visite = 'VISITEE') AS etapes_visitees,
+        (SELECT COUNT(*) FROM etape e WHERE e.programme_id = pr.id AND e.is_deleted = 0 AND e.statut_visite = 'ECHEC') AS etapes_echec
      FROM programme pr
      WHERE pr.is_deleted = 0
-       AND date(pr.date_programme) >= date('now', '-7 days')
-     ORDER BY pr.date_programme DESC, pr.type_programme;`,
+       AND date(pr.date_programme) = date('now')
+     ORDER BY pr.type_programme;`,
   );
 }
 

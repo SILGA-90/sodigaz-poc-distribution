@@ -194,3 +194,16 @@ export async function enregistrerOperation(data: OperationSaisie): Promise<strin
 
   return opUuid;
 }
+
+/**
+ * Marque une etape comme ECHEC (visite impossible).
+ * N'ecrase pas un statut VISITEE deja enregistre.
+ */
+export async function marquerEtapeEchec(etapeUuid: string): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    `UPDATE etape SET statut_visite = 'ECHEC', last_modified = ?
+     WHERE uuid = ? AND statut_visite = 'A_VISITER';`,
+    [Date.now(), etapeUuid],
+  );
+}

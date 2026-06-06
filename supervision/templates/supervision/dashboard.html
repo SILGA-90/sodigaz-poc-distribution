@@ -96,9 +96,14 @@ const blueIcon = L.divIcon({
     iconSize: [18, 18],
 });
 const greenIcon = L.divIcon({
-    className: 'op-icon',
+    className: 'plv-icon',
     html: '<div style="background:#198754;width:14px;height:14px;border-radius:50%;border:2px solid white;"></div>',
     iconSize: [18, 18],
+});
+const opIcon = L.divIcon({
+    className: 'op-icon',
+    html: '<div style="background:#fd7e14;width:10px;height:10px;border-radius:50%;border:2px solid white;"></div>',
+    iconSize: [14, 14],
 });
 
 // Cache des marqueurs deja affiches, indexe par cle stable
@@ -116,13 +121,16 @@ function refreshCarte() {
             data.plvs.forEach(plv => {
                 const key = String(plv.id);
                 seenPlvIds.add(key);
+                const icon = plv.visite ? greenIcon : blueIcon;
                 const popup = '<strong>' + escapeHtml(plv.libelle) + '</strong><br>' +
-                              escapeHtml(plv.client);
+                              escapeHtml(plv.client) +
+                              (plv.visite ? '<br><em style="color:#198754">Visite aujourd\'hui</em>' : '');
                 if (plvMarkers.has(key)) {
-                    // Maj du popup si change (le PLV peut avoir change de libelle)
-                    plvMarkers.get(key).setPopupContent(popup);
+                    const marker = plvMarkers.get(key);
+                    marker.setIcon(icon);
+                    marker.setPopupContent(popup);
                 } else {
-                    const m = L.marker([plv.latitude, plv.longitude], { icon: blueIcon })
+                    const m = L.marker([plv.latitude, plv.longitude], { icon })
                         .bindPopup(popup)
                         .addTo(map);
                     plvMarkers.set(key, m);
@@ -141,14 +149,15 @@ function refreshCarte() {
             data.operations.forEach(op => {
                 const key = op.uuid;
                 seenOpUuids.add(key);
+                const typeColor = op.type === 'COLLECTE' ? '#fd7e14' : '#198754';
                 const popup =
-                    '<strong>' + escapeHtml(op.type) + '</strong><br>' +
+                    '<strong style="color:' + typeColor + '">' + escapeHtml(op.type) + '</strong><br>' +
                     'Livreur ' + escapeHtml(op.livreur) + '<br>' +
                     'PLV : ' + escapeHtml(op.plv);
                 if (opMarkers.has(key)) {
                     opMarkers.get(key).setPopupContent(popup);
                 } else {
-                    const m = L.marker([op.latitude, op.longitude], { icon: greenIcon })
+                    const m = L.marker([op.latitude, op.longitude], { icon: opIcon })
                         .bindPopup(popup)
                         .addTo(map);
                     opMarkers.set(key, m);

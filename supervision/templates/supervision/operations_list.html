@@ -33,19 +33,35 @@
     <tbody>
         {% for op in operations %}
         <tr>
-            <td>{{ op.date_heure|date:"H:i" }}</td>
-            <td>{{ op.etape.programme.utilisateur.code_livreur }}</td>
+            <td class="text-muted small">{{ op.date_heure|date:"H:i" }}</td>
+            <td><span class="fw-semibold">{{ op.etape.programme.utilisateur.code_livreur }}</span></td>
             <td>
-                {{ op.get_type_operation_display }}
-                {% if op.sous_type %}<small class="text-muted">({{ op.sous_type }})</small>{% endif %}
+                {% if op.type_operation == "COLLECTE" %}
+                <span class="badge bg-primary">Collecte</span>
+                {% elif op.type_operation == "RESTITUTION" %}
+                <span class="badge bg-success">Restitution</span>
+                {% else %}
+                <span class="badge bg-secondary">{{ op.get_type_operation_display }}</span>
+                {% endif %}
+                {% if op.sous_type %}<small class="text-muted ms-1">{{ op.sous_type }}</small>{% endif %}
             </td>
-            <td>{{ op.etape.plv.client.raison_sociale }} <br><small class="text-muted">{{ op.etape.plv.libelle }}</small></td>
-            <td class="text-end">{{ op.montant_total|floatformat:0 }}</td>
-            <td>{{ op.get_mode_paiement_display|default:"-" }}</td>
-            <td>{{ op.nom_signataire_client|default:"-" }}</td>
+            <td>
+                {{ op.etape.plv.client.raison_sociale }}
+                <br><small class="text-muted">{{ op.etape.plv.libelle }}</small>
+            </td>
+            <td class="text-end fw-semibold">{{ op.montant_total|floatformat:0 }} <small class="text-muted fw-normal">FCFA</small></td>
+            <td>{{ op.get_mode_paiement_display|default:"—" }}</td>
+            <td>{{ op.nom_signataire_client|default:"—" }}</td>
         </tr>
         {% endfor %}
     </tbody>
+    <tfoot class="table-light fw-bold">
+        <tr>
+            <td colspan="4" class="text-end">Total ({{ operations|length }} operation{% if operations|length > 1 %}s{% endif %})</td>
+            <td class="text-end">{{ total_montant|floatformat:0 }} <small class="fw-normal text-muted">FCFA</small></td>
+            <td colspan="2"></td>
+        </tr>
+    </tfoot>
 </table>
 {% else %}
 <div class="alert alert-info">Aucune operation pour cette date / livreur.</div>
