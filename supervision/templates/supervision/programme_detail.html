@@ -48,6 +48,24 @@
         {% else %}
         <p class="text-muted mb-0">Aucune ligne prevue ni realisee.</p>
         {% endif %}
+
+        {% for op in r.etape.operations.all %}
+            {% if not op.is_deleted %}
+                {% with doc=op.document_x3 %}
+                {% if doc %}
+                <div class="mt-2 p-2 rounded border border-success-subtle bg-success-subtle d-flex align-items-center gap-3">
+                    <span class="badge bg-success">{{ doc.type_document }}</span>
+                    <span class="fw-semibold font-monospace">{{ doc.numero_x3 }}</span>
+                    <span class="text-muted small">{{ doc.statut }}</span>
+                    {% if doc.bcr %}
+                    <span class="text-muted small">&#8594; BCR : <span class="font-monospace">{{ doc.bcr.numero_x3 }}</span></span>
+                    {% endif %}
+                    <span class="text-muted small ms-auto">{{ doc.created_at|date:"d/m/Y H:i" }}</span>
+                </div>
+                {% endif %}
+                {% endwith %}
+            {% endif %}
+        {% endfor %}
     </div>
 </div>
 {% empty %}

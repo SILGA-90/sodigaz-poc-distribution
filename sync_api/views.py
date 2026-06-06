@@ -249,6 +249,7 @@ def sync_push(request):
         "anomalie": {"created": 0, "updated": 0, "deleted": 0},
         "photo": {"created": 0, "updated": 0, "deleted": 0},
     }
+    pushed_op_uuids: list[str] = []
 
     try:
         with transaction.atomic():
@@ -271,6 +272,7 @@ def sync_push(request):
                 if d.get("latitude") is not None and d.get("longitude") is not None:
                     localisation = Point(d["longitude"], d["latitude"], srid=4326)
 
+                pushed_op_uuids.append(str(d["uuid"]))
                 op, created = Operation.objects.update_or_create(
                     uuid=d["uuid"],
                     defaults={
@@ -465,6 +467,19 @@ def sync_push(request):
             {"status": "error", "detail": str(e)},
             status=status.HTTP_403_FORBIDDEN,
         )
+
+    # Simulation remontée Sage X3 (best-effort : n'impacte pas la réponse push)
+    if pushed_op_uuids:
+        try:
+            from mock_x3.x3_sync import creer_documents_x3
+            ops = list(
+                Operation.objects.filter(uuid__in=pushed_op_uuids)
+                .select_related("etape__plv")
+            )
+            creer_documents_x3(ops)
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning("x3_sync echoue : %s", exc)
 
     return Response({"status": "ok", "applied": applied}, status=status.HTTP_200_OK)
 

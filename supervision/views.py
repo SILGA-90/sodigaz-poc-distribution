@@ -185,7 +185,11 @@ def programme_detail(request, programme_id):
         programme.etapes
         .filter(is_deleted=False)
         .select_related("plv", "plv__client")
-        .prefetch_related("operations__lignes__produit", "lignes_prevues__produit")
+        .prefetch_related(
+            "operations__lignes__produit",
+            "operations__document_x3__bcr",
+            "lignes_prevues__produit",
+        )
         .order_by("ordre_prevu")
     )
 
