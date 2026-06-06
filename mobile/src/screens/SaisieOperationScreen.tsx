@@ -6,7 +6,7 @@
  * - Montant calcule auto (somme quantite x prix), corrigeable.
  * - Enregistrement local PENDING (offline-first).
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -77,6 +77,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
   const [gpsStatus, setGpsStatus] = useState<'a capturer' | 'fiable' | 'degradee' | 'absente'>('a capturer');
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
+  const isDirty = useRef<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -98,6 +99,23 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
     })();
   }, [etapeId, navigation]);
 
+  // Alerte si l'utilisateur quitte avec des données saisies
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      if (!isDirty.current || saving) return;
+      e.preventDefault();
+      Alert.alert(
+        'Quitter la saisie ?',
+        'Les informations saisies seront perdues.',
+        [
+          { text: 'Rester', style: 'cancel' },
+          { text: 'Quitter', style: 'destructive', onPress: () => navigation.dispatch(e.data.action) },
+        ],
+      );
+    });
+    return unsubscribe;
+  }, [navigation, saving]);
+
   // La position est acquise au moment de l'enregistrement (valeur probante),
   // pas a l'ouverture de l'ecran.
 
@@ -114,6 +132,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
     : montantCalcule;
 
   function updateQuantite(index: number, valeur: string): void {
+    isDirty.current = true;
     const copy = [...lignes];
     copy[index].quantite = valeur.replace(/[^0-9]/g, '');
     setLignes(copy);
@@ -168,6 +187,30 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
       modePaiementFinal = modePaiement;
     }
 
+    // Vérification écart prévus/saisis (seulement pour les lignes avec quantite_prevue)
+    const lignesEcart = lignes.filter((l) => {
+      if (l.produit.quantite_prevue == null) return false;
+      const saisi = parseInt(l.quantite, 10) || 0;
+      const prevu = l.produit.quantite_prevue;
+      return saisi > prevu * 2 && saisi - prevu > 5;
+    });
+    if (lignesEcart.length > 0) {
+      const detail = lignesEcart
+        .map((l) => `${l.produit.libelle} : prevu ${l.produit.quantite_prevue}, saisi ${l.quantite}`)
+        .join('\n');
+      const confirme = await new Promise<boolean>((resolve) => {
+        Alert.alert(
+          'Ecart important detecte',
+          `Les quantites suivantes s'ecartent fortement du prevu :\n\n${detail}\n\nConfirmes-tu ces valeurs ?`,
+          [
+            { text: 'Corriger', style: 'cancel', onPress: () => resolve(false) },
+            { text: 'Confirmer quand meme', onPress: () => resolve(true) },
+          ],
+        );
+      });
+      if (!confirme) return;
+    }
+
     setSaving(true);
     try {
       // Acquisition de la position au moment de l'enregistrement (valeur probante)
@@ -218,6 +261,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         );
       }
 
+      isDirty.current = false;
       Alert.alert(
         'Operation enregistree',
         `L'operation${photos.length > 0 ? ' et ' + photos.length + ' photo(s)' : ''} enregistree(s) localement. Remontee a la prochaine synchronisation.`,
@@ -409,7 +453,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
       <TextInput
         style={styles.commentaire}
         value={commentaire}
-        onChangeText={setCommentaire}
+        onChangeText={(v) => { isDirty.current = true; setCommentaire(v); }}
         multiline
         placeholder="Remarque eventuelle..."
       />
@@ -442,6 +486,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
                   onPress: async () => {
                     try {
                       await marquerEtapeEchec(etapeInfo.uuid);
+                      isDirty.current = false;
                       navigation.goBack();
                     } catch (e: any) {
                       Alert.alert('Erreur', e?.message ?? String(e));
@@ -460,6 +505,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         visible={padVisible !== null}
         titre={padVisible === 'LIVREUR' ? 'Signature du livreur' : 'Signature du client'}
         onSave={(sig) => {
+          isDirty.current = true;
           if (padVisible === 'LIVREUR') setSignatureLivreur(sig);
           else setSignatureClient(sig);
           setPadVisible(null);

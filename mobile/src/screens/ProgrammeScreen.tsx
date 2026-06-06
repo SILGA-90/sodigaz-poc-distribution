@@ -100,8 +100,16 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
           </Text>
         </View>
         <View style={styles.actionsCol}>
-          <View style={[styles.statutBadge, badgeStyle]}>
-            <Text style={[styles.statutText, echec && styles.statutTextEchec]}>{badgeLabel}</Text>
+          <View style={styles.statutRow}>
+            <View style={[styles.statutBadge, badgeStyle]}>
+              <Text style={[styles.statutText, echec && styles.statutTextEchec]}>{badgeLabel}</Text>
+            </View>
+            {visite && (
+              <View style={[
+                styles.syncDot,
+                item.op_sync_status === 'SYNCED' ? styles.syncDotGreen : styles.syncDotOrange,
+              ]} />
+            )}
           </View>
           <TouchableOpacity
             style={styles.itineraireBtn}
@@ -236,6 +244,10 @@ const styles = StyleSheet.create({
   statutText: { fontSize: 11, fontWeight: '700', color: '#333' },
   statutTextEchec: { color: '#842029' },
   actionsCol: { alignItems: 'flex-end' },
+  statutRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  syncDot: { width: 8, height: 8, borderRadius: 4 },
+  syncDotGreen: { backgroundColor: '#22c55e' },
+  syncDotOrange: { backgroundColor: '#f97316' },
   itineraireBtn: {
     marginTop: 6, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12,
     backgroundColor: '#cfe2ff', borderWidth: 1, borderColor: '#0d6efd',

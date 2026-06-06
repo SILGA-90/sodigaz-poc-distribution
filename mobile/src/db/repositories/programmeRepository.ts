@@ -10,6 +10,7 @@ export interface EtapeAvecPlv extends Etape {
   client_raison_sociale: string;
   plv_latitude: number;
   plv_longitude: number;
+  op_sync_status: 'PENDING' | 'SYNCED' | null;
 }
 
 export interface ProgrammeAvecProgression extends Programme {
@@ -79,7 +80,10 @@ export async function getEtapesDuProgramme(programmeId: number): Promise<EtapeAv
         p.libelle AS plv_libelle,
         p.latitude AS plv_latitude,
         p.longitude AS plv_longitude,
-        c.raison_sociale AS client_raison_sociale
+        c.raison_sociale AS client_raison_sociale,
+        (SELECT o.sync_status FROM operation o
+         WHERE o.etape_uuid = e.uuid AND o.is_deleted = 0
+         ORDER BY o.last_modified DESC LIMIT 1) AS op_sync_status
      FROM etape e
      JOIN plv p ON p.id = e.plv_id
      JOIN client c ON c.id = p.client_id

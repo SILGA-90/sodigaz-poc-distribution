@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -26,6 +26,16 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Dashboard'>;
 
 type SyncStatus = 'idle' | 'syncing' | 'success' | 'error';
 
+function formatRelativeTime(ts: number): string {
+  if (ts === 0) return 'jamais';
+  const diffMin = Math.floor((Date.now() - ts) / 60000);
+  if (diffMin < 1) return 'a l\'instant';
+  if (diffMin < 60) return `il y a ${diffMin} min`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `il y a ${diffH}h`;
+  return new Date(ts).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+}
+
 export default function DashboardScreen({ navigation }: Props): React.ReactElement {
   const [user, setUser] = useState<UtilisateurInfo | null>(null);
   const [programmes, setProgrammes] = useState<ProgrammeAvecProgression[]>([]);
@@ -37,6 +47,13 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     visible: false, message: '', type: 'success',
   });
   const { isConnected, justReconnected, clearReconnected } = useNetworkStatus();
+  // Ticker pour que l'affichage "il y a X min" se rafraichisse chaque minute
+  const [, setTick] = useState(0);
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    tickRef.current = setInterval(() => setTick((n) => n + 1), 60000);
+    return () => { if (tickRef.current) clearInterval(tickRef.current); };
+  }, []);
 
   function showToast(message: string, type: 'success' | 'error' | 'info' = 'success') {
     setToast({ visible: true, message, type });
@@ -185,9 +202,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       <View style={styles.syncBar}>
         <View style={{ flex: 1 }}>
           <Text style={styles.syncLabel}>Derniere sync</Text>
-          <Text style={styles.syncValue}>
-            {lastSync === 0 ? 'jamais' : new Date(lastSync).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-          </Text>
+          <Text style={styles.syncValue}>{formatRelativeTime(lastSync)}</Text>
         </View>
         {pendingCount > 0 && (
           <View style={styles.pendingBadge}>
