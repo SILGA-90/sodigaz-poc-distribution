@@ -29,6 +29,7 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
   const [recap, setRecap] = useState<RecapProgramme | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [closing, setClosing] = useState<boolean>(false);
+  const [clotureReussie, setClotureReussie] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -59,11 +60,7 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
     setClosing(true);
     try {
       await cloturerProgrammeLocal(programme.uuid);
-      Alert.alert(
-        'Programme cloture',
-        'Le programme est cloture. Il sera remonte au superviseur a la prochaine synchronisation.',
-        [{ text: 'OK', onPress: () => navigation.navigate('Dashboard') }],
-      );
+      setClotureReussie(true);
     } catch (e: any) {
       Alert.alert('Erreur', e?.message ?? String(e));
     } finally {
@@ -88,6 +85,65 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
   }
 
   const dejaCloture = programme.statut === 'CLOTURE';
+
+  if (clotureReussie && recap) {
+    const pct = recap.total_etapes > 0
+      ? Math.round((recap.etapes_visitees / recap.total_etapes) * 100)
+      : 0;
+    return (
+      <View style={styles.container}>
+        <View style={styles.successHeader}>
+          <Text style={styles.successIcon}>✓</Text>
+          <Text style={styles.successTitle}>Tournee terminee</Text>
+          <Text style={styles.successSub}>{programme.numero_x3} · {programme.date_programme}</Text>
+        </View>
+
+        <View style={styles.recapCard}>
+          <Text style={styles.recapTitle}>Bilan de la tournee</Text>
+
+          <View style={styles.recapRow}>
+            <Text style={styles.recapLabel}>Etapes visitees</Text>
+            <Text style={styles.recapValue}>{recap.etapes_visitees} / {recap.total_etapes} ({pct} %)</Text>
+          </View>
+          {recap.etapes_echec > 0 && (
+            <View style={styles.recapRow}>
+              <Text style={styles.recapLabel}>Etapes en echec</Text>
+              <Text style={[styles.recapValue, { color: '#dc3545' }]}>{recap.etapes_echec}</Text>
+            </View>
+          )}
+          <View style={styles.recapRow}>
+            <Text style={styles.recapLabel}>Operations realisees</Text>
+            <Text style={styles.recapValue}>{recap.nb_operations}</Text>
+          </View>
+          <View style={styles.recapRow}>
+            <Text style={styles.recapLabel}>Montant encaisse</Text>
+            <Text style={[styles.recapValue, { color: '#198754' }]}>
+              {recap.montant_encaisse.toLocaleString('fr-FR')} FCFA
+            </Text>
+          </View>
+          {recap.nb_anomalies > 0 && (
+            <View style={styles.recapRow}>
+              <Text style={styles.recapLabel}>Anomalies signalees</Text>
+              <Text style={[styles.recapValue, { color: '#ffc107' }]}>{recap.nb_anomalies}</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.syncNotice}>
+          <Text style={styles.syncNoticeText}>
+            Synchronisez des que possible pour remonter vos donnees au superviseur.
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('Dashboard')}
+        >
+          <Text style={styles.buttonText}>Retour au tableau de bord</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -163,4 +219,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#d1e7dd', alignItems: 'center',
   },
   clotureBadgeText: { color: '#0f5132', fontWeight: '700' },
+  successHeader: {
+    backgroundColor: '#198754', padding: 32, alignItems: 'center',
+  },
+  successIcon: { fontSize: 56, color: '#fff', fontWeight: '700' },
+  successTitle: { color: '#fff', fontSize: 22, fontWeight: '700', marginTop: 8 },
+  successSub: { color: '#a3cfbb', fontSize: 14, marginTop: 4 },
+  syncNotice: {
+    marginHorizontal: 16, marginBottom: 8, padding: 12,
+    backgroundColor: '#fff3cd', borderRadius: 8,
+    borderLeftWidth: 4, borderLeftColor: '#ffc107',
+  },
+  syncNoticeText: { fontSize: 13, color: '#664d03', lineHeight: 18 },
 });

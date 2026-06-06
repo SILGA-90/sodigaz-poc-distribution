@@ -15,6 +15,7 @@ import SaisieOperationScreen from '../screens/SaisieOperationScreen';
 import AnomalieScreen from '../screens/AnomalieScreen';
 import ClotureScreen from '../screens/ClotureScreen';
 import EtapeDetailScreen from '../screens/EtapeDetailScreen';
+import MesAnomaliesScreen from '../screens/MesAnomaliesScreen';
 import { isAuthenticated } from '../api/authService';
 import { RootStackParamList } from '../types/navigation';
 
@@ -51,6 +52,7 @@ export default function RootNavigator(): React.ReactElement {
         <Stack.Screen name="Cloture" component={ClotureScreen} options={{ headerShown: true, title: "Cloture" }} />
         <Stack.Screen name="Debug" component={DebugScreen} options={{ headerShown: true, title: "Debug BDD" }} />
         <Stack.Screen name="EtapeDetail" component={EtapeDetailScreen} options={{ headerShown: true, title: "Detail etape" }} />
+        <Stack.Screen name="MesAnomalies" component={MesAnomaliesScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

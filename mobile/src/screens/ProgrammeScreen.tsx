@@ -20,7 +20,6 @@ import {
   ProgrammeAvecProgression,
   EtapeAvecPlv,
 } from '../db/repositories/programmeRepository';
-import { marquerEtapeEchec } from '../db/repositories/saisieRepository';
 import { Programme } from '../types/models';
 import { RootStackParamList } from '../types/navigation';
 
@@ -104,31 +103,6 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
           <View style={[styles.statutBadge, badgeStyle]}>
             <Text style={[styles.statutText, echec && styles.statutTextEchec]}>{badgeLabel}</Text>
           </View>
-          {!programmeCloture && !visite && !echec && (
-            <TouchableOpacity
-              style={styles.echecBtn}
-              onPress={(e) => {
-                e.stopPropagation();
-                Alert.alert(
-                  'Marquer comme echec ?',
-                  'Cette etape sera signaler comme impossible a visiter.',
-                  [
-                    { text: 'Annuler', style: 'cancel' },
-                    {
-                      text: 'Confirmer',
-                      style: 'destructive',
-                      onPress: async () => {
-                        await marquerEtapeEchec(item.uuid);
-                        await chargerDonnees();
-                      },
-                    },
-                  ],
-                );
-              }}
-            >
-              <Text style={styles.echecBtnText}>Echec</Text>
-            </TouchableOpacity>
-          )}
           <TouchableOpacity
             style={styles.itineraireBtn}
             onPress={(e) => {
@@ -167,26 +141,26 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
               </View>
             )}
           </View>
-          {programme.statut === 'CLOTURE' ? (
-            <View style={styles.clotureBadge}>
-              <Text style={styles.clotureBadgeText}>Programme cloture — saisie impossible</Text>
-            </View>
-          ) : (
-            <>
-              <TouchableOpacity
-                style={styles.anomalieBtn}
-                onPress={() => navigation.navigate('Anomalie', { programmeUuid: programme.uuid, programmeId: programme.id })}
-              >
-                <Text style={styles.anomalieBtnText}>Signaler une anomalie</Text>
-              </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('MesAnomalies', { programmeUuid: programme.uuid, programmeNumero: programme.numero_x3 })}
+            >
+              <Text style={styles.voirAnomaliesLink}>Voir les anomalies &rsaquo;</Text>
+            </TouchableOpacity>
+            {programme.statut !== 'CLOTURE' && (
               <TouchableOpacity
                 style={styles.clotureBtn}
                 onPress={() => navigation.navigate('Cloture', { programmeId: programme.id })}
               >
                 <Text style={styles.clotureBtnText}>Cloturer le programme</Text>
               </TouchableOpacity>
-            </>
-          )}
+            )}
+            {programme.statut === 'CLOTURE' && (
+              <View style={styles.clotureBadge}>
+                <Text style={styles.clotureBadgeText}>Programme cloture — saisie impossible</Text>
+              </View>
+            )}
+          </View>
         </View>
       )}
       <FlatList
@@ -198,6 +172,14 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
           <Text style={styles.empty}>Aucune etape dans ce programme.</Text>
         }
       />
+      {programme && programme.statut !== 'CLOTURE' && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('Anomalie', { programmeUuid: programme.uuid, programmeId: programme.id })}
+        >
+          <Text style={styles.fabText}>+ Anomalie</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -220,14 +202,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   echecCountText: { fontSize: 11, color: '#842029', fontWeight: '700' },
-  anomalieBtn: {
-    marginTop: 12, padding: 10, borderRadius: 8,
-    backgroundColor: '#fff3cd', borderWidth: 1, borderColor: '#ffc107',
-    alignItems: 'center',
-  },
-  anomalieBtnText: { color: '#664d03', fontWeight: '700' },
+  headerActions: { marginTop: 10, gap: 6 },
+  voirAnomaliesLink: { fontSize: 13, color: '#0d6efd', textDecorationLine: 'underline' },
   clotureBtn: {
-    marginTop: 8, padding: 10, borderRadius: 8,
+    marginTop: 4, padding: 10, borderRadius: 8,
     backgroundColor: '#d1e7dd', borderWidth: 1, borderColor: '#198754',
     alignItems: 'center',
   },
@@ -257,11 +235,6 @@ const styles = StyleSheet.create({
   echecBadge: { backgroundColor: '#f8d7da' },
   statutText: { fontSize: 11, fontWeight: '700', color: '#333' },
   statutTextEchec: { color: '#842029' },
-  echecBtn: {
-    marginTop: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12,
-    backgroundColor: '#f8d7da', borderWidth: 1, borderColor: '#dc3545',
-  },
-  echecBtnText: { fontSize: 11, fontWeight: '700', color: '#842029' },
   actionsCol: { alignItems: 'flex-end' },
   itineraireBtn: {
     marginTop: 6, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12,
@@ -271,8 +244,17 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', color: '#888', padding: 32 },
   cardDisabled: { opacity: 0.5 },
   clotureBadge: {
-    marginTop: 10, padding: 10, borderRadius: 8,
+    marginTop: 4, padding: 10, borderRadius: 8,
     backgroundColor: '#198754', alignItems: 'center',
   },
   clotureBadgeText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  fab: {
+    position: 'absolute', bottom: 20, right: 20,
+    backgroundColor: '#fd7e14',
+    paddingHorizontal: 20, paddingVertical: 14,
+    borderRadius: 30,
+    elevation: 6,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 4,
+  },
+  fabText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 });

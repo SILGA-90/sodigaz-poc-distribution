@@ -33,6 +33,25 @@ export async function creerAnomalie(data: AnomalieSaisie): Promise<string> {
   return uuid;
 }
 
+export interface AnomalieLocale {
+  uuid: string;
+  type_anomalie: string;
+  gravite: 'FAIBLE' | 'MOYENNE' | 'ELEVEE';
+  description: string;
+  date_heure: string;
+  sync_status: string;
+  statut: string;
+}
+
+export async function getAnomaliesDuProgramme(programmeUuid: string): Promise<AnomalieLocale[]> {
+  const db = await getDatabase();
+  return db.getAllAsync<AnomalieLocale>(
+    `SELECT uuid, type_anomalie, gravite, description, date_heure, sync_status, statut
+     FROM anomalie WHERE programme_uuid = ? AND is_deleted = 0 ORDER BY date_heure DESC;`,
+    [programmeUuid],
+  );
+}
+
 export async function countAnomaliesProgramme(programmeUuid: string): Promise<number> {
   const db = await getDatabase();
   const row = await db.getFirstAsync<{ n: number }>(

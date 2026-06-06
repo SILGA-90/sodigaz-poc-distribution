@@ -30,6 +30,7 @@ import {
   getEtapeInfo,
   getProduitsSaisissables,
   enregistrerOperation,
+  marquerEtapeEchec,
   ProduitSaisie,
   EtapeInfo,
 } from '../db/repositories/saisieRepository';
@@ -425,6 +426,36 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         )}
       </TouchableOpacity>
 
+      {etapeInfo && (
+        <TouchableOpacity
+          style={styles.echecButton}
+          disabled={saving}
+          onPress={() => {
+            Alert.alert(
+              'Marquer en echec',
+              'Confirmes-tu que cette etape ne peut pas etre effectuee ? Elle sera marquee ECHEC et ne pourra plus etre saisie.',
+              [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                  text: 'Confirmer l\'echec',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await marquerEtapeEchec(etapeInfo.uuid);
+                      navigation.goBack();
+                    } catch (e: any) {
+                      Alert.alert('Erreur', e?.message ?? String(e));
+                    }
+                  },
+                },
+              ],
+            );
+          }}
+        >
+          <Text style={styles.echecButtonText}>Je ne peux pas effectuer cette etape → Echec</Text>
+        </TouchableOpacity>
+      )}
+
       <SignaturePad
         visible={padVisible !== null}
         titre={padVisible === 'LIVREUR' ? 'Signature du livreur' : 'Signature du client'}
@@ -504,4 +535,10 @@ const styles = StyleSheet.create({
   sigDone: { backgroundColor: '#198754' },
   sigButtonText: { color: '#fff', fontWeight: '600', fontSize: 13 },
   saveText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  echecButton: {
+    marginHorizontal: 16, marginBottom: 16, padding: 14,
+    borderRadius: 10, alignItems: 'center',
+    borderWidth: 1, borderColor: '#dc3545', backgroundColor: '#fff8f8',
+  },
+  echecButtonText: { color: '#dc3545', fontWeight: '600', fontSize: 14 },
 });

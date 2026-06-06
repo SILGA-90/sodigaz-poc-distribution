@@ -1,0 +1,187 @@
+{% extends "supervision/base.html" %}
+{% block title %}Rapport journee {{ date_filter|date:"d/m/Y" }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <h1 class="h3 mb-0">Rapport de journee — {{ date_filter|date:"l j F Y" }}</h1>
+    <div class="d-flex gap-2">
+        <form method="get" class="d-flex gap-2">
+            <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}" class="form-control">
+            <button type="submit" class="btn btn-primary">Filtrer</button>
+        </form>
+        <button onclick="window.print()" class="btn btn-outline-secondary">Imprimer / PDF</button>
+    </div>
+</div>
+
+{# En-tete imprimable #}
+<div class="print-only mb-3">
+    <h2>SODIGAZ APC — Rapport de journee</h2>
+    <p class="text-muted">{{ date_filter|date:"l j F Y" }}</p>
+</div>
+
+{% if not programmes %}
+<div class="alert alert-info">Aucun programme pour cette date.</div>
+{% else %}
+
+{# ── Tableau de synthese ── #}
+<div class="card mb-4">
+    <div class="card-header fw-semibold">Synthese par programme</div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Programme</th>
+                    <th>Type</th>
+                    <th>Livreur</th>
+                    <th>Statut</th>
+                    <th class="text-center">Etapes</th>
+                    <th class="text-center">Taux</th>
+                    <th class="text-center">Echecs</th>
+                    <th class="text-center">Operations</th>
+                    <th class="text-end">Montant total</th>
+                    <th class="text-end">Encaisse</th>
+                    <th class="text-center">Anomalies</th>
+                    <th class="no-print">Detail</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prog in programmes %}
+                <tr>
+                    <td class="fw-semibold font-monospace">{{ prog.numero_x3 }}</td>
+                    <td>
+                        {% if prog.type_programme == "COLLECTE" %}
+                        <span class="badge bg-primary">Collecte</span>
+                        {% else %}
+                        <span class="badge bg-success">Restitution</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="fw-semibold">{{ prog.utilisateur.code_livreur }}</div>
+                        <div class="text-muted small">{{ prog.utilisateur.get_full_name }}</div>
+                    </td>
+                    <td>
+                        <span class="badge badge-statut-{{ prog.statut }}">{{ prog.get_statut_display }}</span>
+                    </td>
+                    <td class="text-center">{{ prog.etapes_visitees }}/{{ prog.total_etapes }}</td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center gap-1 justify-content-center">
+                            <div style="width:60px;height:8px;background:#e9ecef;border-radius:4px;overflow:hidden;">
+                                <div style="width:{{ prog.taux }}%;height:8px;background:{% if prog.taux == 100 %}#198754{% elif prog.taux >= 50 %}#0d6efd{% else %}#ffc107{% endif %};"></div>
+                            </div>
+                            <span class="small fw-semibold">{{ prog.taux }}%</span>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        {% if prog.etapes_echec > 0 %}
+                        <span class="badge bg-danger">{{ prog.etapes_echec }}</span>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">{{ prog.nb_operations }}</td>
+                    <td class="text-end">{{ prog.montant_total_ops|floatformat:0 }} <small class="text-muted">FCFA</small></td>
+                    <td class="text-end fw-semibold {% if prog.montant_encaisse_ops > 0 %}text-success{% endif %}">
+                        {{ prog.montant_encaisse_ops|floatformat:0 }} <small class="text-muted fw-normal">FCFA</small>
+                    </td>
+                    <td class="text-center">
+                        {% if prog.nb_anomalies > 0 %}
+                        <span class="badge bg-warning text-dark">{{ prog.nb_anomalies }}</span>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="no-print">
+                        <a href="{% url 'supervision:programme-detail' prog.id %}" class="btn btn-sm btn-outline-primary">Voir</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-secondary fw-bold">
+                <tr>
+                    <td colspan="4">Total ({{ programmes|length }} programme{{ programmes|length|pluralize }})</td>
+                    <td class="text-center">{{ totaux.etapes_visitees }}/{{ totaux.total_etapes }}</td>
+                    <td class="text-center">
+                        {% if totaux.total_etapes > 0 %}
+                        {{ totaux.etapes_visitees|floatformat:0 }}%
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if totaux.etapes_echec > 0 %}
+                        <span class="badge bg-danger">{{ totaux.etapes_echec }}</span>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td class="text-center">{{ totaux.nb_operations }}</td>
+                    <td class="text-end">{{ totaux.montant_total|floatformat:0 }} <small class="fw-normal text-muted">FCFA</small></td>
+                    <td class="text-end text-success">{{ totaux.montant_encaisse|floatformat:0 }} <small class="fw-normal text-muted">FCFA</small></td>
+                    <td class="text-center">{{ totaux.nb_anomalies }}</td>
+                    <td class="no-print"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+{# ── KPI cards ── #}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="text-muted small">Taux de couverture</div>
+                <div class="display-6 fw-bold {% if totaux.total_etapes > 0 and totaux.etapes_visitees == totaux.total_etapes %}text-success{% else %}text-primary{% endif %}">
+                    {% if totaux.total_etapes > 0 %}
+                    {{ totaux.etapes_visitees|floatformat:0 }}%
+                    {% else %}—{% endif %}
+                </div>
+                <div class="small text-muted">{{ totaux.etapes_visitees }} / {{ totaux.total_etapes }} etapes</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="text-muted small">Montant encaisse</div>
+                <div class="display-6 fw-bold text-success">{{ totaux.montant_encaisse|floatformat:0 }}</div>
+                <div class="small text-muted">FCFA</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="text-muted small">Operations realisees</div>
+                <div class="display-6 fw-bold">{{ totaux.nb_operations }}</div>
+                <div class="small text-muted">sur {{ programmes|length }} tournee{{ programmes|length|pluralize }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100 {% if totaux.nb_anomalies > 0 %}border-warning{% endif %}">
+            <div class="card-body">
+                <div class="text-muted small">Anomalies</div>
+                <div class="display-6 fw-bold {% if totaux.nb_anomalies > 0 %}text-warning{% else %}text-muted{% endif %}">{{ totaux.nb_anomalies }}</div>
+                <div class="small">
+                    {% if totaux.nb_anomalies > 0 %}
+                    <a href="{% url 'supervision:anomalies' %}">Voir les anomalies</a>
+                    {% else %}
+                    <span class="text-muted">Aucune</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+<style>
+    @media print {
+        .no-print { display: none !important; }
+        .print-only { display: block !important; }
+        .navbar, footer { display: none !important; }
+        .card { break-inside: avoid; }
+    }
+    @media screen {
+        .print-only { display: none; }
+    }
+</style>
+{% endblock %}

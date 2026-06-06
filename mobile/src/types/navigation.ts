@@ -12,4 +12,5 @@ export type RootStackParamList = {
   Cloture: { programmeId: number };
   Debug: undefined;
   EtapeDetail: { etapeId: number; etapeUuid: string };
+  MesAnomalies: { programmeUuid: string; programmeNumero: string };
 };

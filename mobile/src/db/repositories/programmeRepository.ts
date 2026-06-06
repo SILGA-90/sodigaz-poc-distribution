@@ -21,6 +21,7 @@ export interface ProgrammeAvecProgression extends Programme {
 export interface RecapProgramme {
   total_etapes: number;
   etapes_visitees: number;
+  etapes_echec: number;
   nb_operations: number;
   montant_encaisse: number;
   nb_anomalies: number;
@@ -97,10 +98,11 @@ export async function getRecapProgramme(
 ): Promise<RecapProgramme> {
   const db = await getDatabase();
 
-  const etapes = await db.getFirstAsync<{ total: number; visitees: number }>(
+  const etapes = await db.getFirstAsync<{ total: number; visitees: number; echec: number }>(
     `SELECT
         COUNT(*) AS total,
-        SUM(CASE WHEN statut_visite = 'VISITEE' THEN 1 ELSE 0 END) AS visitees
+        SUM(CASE WHEN statut_visite = 'VISITEE' THEN 1 ELSE 0 END) AS visitees,
+        SUM(CASE WHEN statut_visite = 'ECHEC'   THEN 1 ELSE 0 END) AS echec
      FROM etape WHERE programme_id = ? AND is_deleted = 0;`,
     [programmeId],
   );
@@ -123,6 +125,7 @@ export async function getRecapProgramme(
   return {
     total_etapes: etapes?.total ?? 0,
     etapes_visitees: etapes?.visitees ?? 0,
+    etapes_echec: etapes?.echec ?? 0,
     nb_operations: ops?.nb ?? 0,
     montant_encaisse: ops?.montant ?? 0,
     nb_anomalies: anomalies?.n ?? 0,

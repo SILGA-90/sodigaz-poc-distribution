@@ -15,6 +15,7 @@ urlpatterns = [
     path("", views.dashboard, name="dashboard"),
     path("api/carte/", views.dashboard_carte_data, name="carte-data"),
     path("api/stats/", views.dashboard_stats_data, name="stats-data"),
+    path("rapport/", views.rapport_journee, name="rapport"),
     path("programmes/", views.programmes_list, name="programmes"),
     path("programmes/<int:programme_id>/", views.programme_detail, name="programme-detail"),
     path("operations/", views.operations_list, name="operations"),
