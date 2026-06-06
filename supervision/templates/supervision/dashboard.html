@@ -1,14 +1,35 @@
 {% extends "supervision/base.html" %}
 {% block title %}Tableau de bord{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3">Tableau de bord - {{ today|date:"l j F Y" }}</h1>
-    <div class="text-end">
-        <span class="badge bg-success" id="status-indicator">
-            <span class="status-dot">&#9679;</span> Connecte
-        </span>
-        <div class="small text-muted mt-1">
-            Mis a jour <span id="last-update">a l'instant</span>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <h1 class="h3 mb-0">Tableau de bord
+            {% if not is_today %}
+            <span class="badge bg-warning text-dark ms-2" title="Vous consultez une date anterieure">
+                {{ today|date:"j F Y" }}
+            </span>
+            {% else %}
+            <span class="text-muted fs-6 fw-normal ms-2">{{ today|date:"l j F Y" }}</span>
+            {% endif %}
+        </h1>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        <form method="get" class="d-flex align-items-center gap-2">
+            <label class="text-muted small mb-0 text-nowrap">Date :</label>
+            <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}"
+                   class="form-control form-control-sm" style="width:auto;"
+                   onchange="this.form.submit()">
+            {% if not is_today %}
+            <a href="?" class="btn btn-sm btn-outline-secondary text-nowrap">Aujourd'hui</a>
+            {% endif %}
+        </form>
+        <div class="text-end">
+            <span class="badge bg-success" id="status-indicator">
+                <span class="status-dot">&#9679;</span> Connecte
+            </span>
+            <div class="small text-muted mt-1">
+                Mis a jour <span id="last-update">a l'instant</span>
+            </div>
         </div>
     </div>
 </div>
@@ -80,7 +101,12 @@
     <div class="col-lg-8">
         <div class="card h-100">
             <div class="card-body">
-                <h5 class="card-title">Cartographie des PLV et operations du jour</h5>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="card-title mb-0">Cartographie des PLV et operations</h5>
+                    <button id="toggleParcours" class="btn btn-sm btn-outline-secondary">
+                        Parcours &#8250;&#8250; Afficher
+                    </button>
+                </div>
                 <div id="map"></div>
             </div>
         </div>
@@ -118,9 +144,10 @@
 // Configuration
 // =============================================================================
 const REFRESH_INTERVAL_MS = 15000;  // 15 secondes
-const CARTE_URL = "{% url 'supervision:carte-data' %}";
-const STATS_URL = "{% url 'supervision:stats-data' %}";
-const ACTIVITE_URL = "{% url 'supervision:activite-data' %}";
+const DATE_FILTER = "{{ date_filter|date:'Y-m-d' }}";
+const CARTE_URL  = `{% url 'supervision:carte-data' %}?date=${DATE_FILTER}`;
+const STATS_URL  = `{% url 'supervision:stats-data' %}?date=${DATE_FILTER}`;
+const ACTIVITE_URL = `{% url 'supervision:activite-data' %}?date=${DATE_FILTER}`;
 
 // =============================================================================
 // Graphique activite par heure (Chart.js)
@@ -183,10 +210,48 @@ const opIcon = L.divIcon({
 });
 
 // Cache des marqueurs deja affiches, indexe par cle stable
-// (id du PLV ou uuid de l'operation).
-// Cela permet d'identifier ce qui est nouveau, modifie, ou disparu.
 const plvMarkers = new Map();
-const opMarkers = new Map();
+const opMarkers  = new Map();
+
+// Polylines des parcours réels (une par livreur)
+let routePolylines = [];
+let showParcours = false;
+const LIVREUR_COLORS = ['#0d6efd', '#dc3545', '#198754', '#fd7e14', '#6f42c1'];
+
+document.getElementById('toggleParcours').addEventListener('click', function () {
+    showParcours = !showParcours;
+    this.textContent = showParcours
+        ? 'Parcours ›› Masquer'
+        : 'Parcours ›› Afficher';
+    routePolylines.forEach(p => showParcours ? p.addTo(map) : map.removeLayer(p));
+});
+
+function redessinerParcours(operations) {
+    // Supprimer les anciennes polylines
+    routePolylines.forEach(p => map.removeLayer(p));
+    routePolylines = [];
+
+    // Grouper par livreur, trier par timestamp
+    const byLivreur = {};
+    operations.forEach(op => {
+        if (!byLivreur[op.livreur]) byLivreur[op.livreur] = [];
+        byLivreur[op.livreur].push(op);
+    });
+
+    let colorIdx = 0;
+    for (const [livreur, ops] of Object.entries(byLivreur)) {
+        ops.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+        if (ops.length < 2) { colorIdx++; continue; }
+        const color = LIVREUR_COLORS[colorIdx % LIVREUR_COLORS.length];
+        const latlngs = ops.map(op => [op.latitude, op.longitude]);
+        const poly = L.polyline(latlngs, {
+            color, weight: 3, opacity: 0.75, dashArray: '6 8',
+        }).bindTooltip(`Parcours ${livreur}`, { permanent: false, sticky: true });
+        if (showParcours) poly.addTo(map);
+        routePolylines.push(poly);
+        colorIdx++;
+    }
+}
 
 function refreshCarte() {
     return fetch(CARTE_URL, { credentials: 'same-origin' })
@@ -245,6 +310,8 @@ function refreshCarte() {
                     opMarkers.delete(key);
                 }
             }
+
+            redessinerParcours(data.operations);
         });
 }
 

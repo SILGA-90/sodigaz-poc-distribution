@@ -1,6 +1,6 @@
 """Vues de l'interface de supervision logistique."""
 import csv
-from datetime import date as date_cls
+from datetime import date as date_cls, datetime as datetime_cls
 
 from django.contrib.auth import logout as django_logout
 from django.db.models import Count, Exists, OuterRef, Q, Sum, DecimalField
@@ -24,15 +24,41 @@ from distribution.models import (
 from .decorators import superviseur_required
 
 
+def _get_date_filter(request, write_session: bool = False) -> date_cls:
+    """
+    Résout le filtre de date actif :
+      1. Paramètre GET 'date' (prioritaire, met à jour la session si write_session=True)
+      2. Session 'date_filter' (persistance cross-page)
+      3. Aujourd'hui (fallback)
+    """
+    date_str = request.GET.get("date", "").strip()
+    if date_str:
+        try:
+            d = datetime_cls.strptime(date_str, "%Y-%m-%d").date()
+            if write_session:
+                request.session["date_filter"] = date_str
+            return d
+        except ValueError:
+            pass
+    session_date = request.session.get("date_filter", "")
+    if session_date:
+        try:
+            return datetime_cls.strptime(session_date, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+    return date_cls.today()
+
+
 @superviseur_required
 def dashboard(request):
     """
     Page d'accueil : carte de Ouaga + statistiques du jour.
     """
-    today = date_cls.today()
+    date_filter = _get_date_filter(request, write_session=True)
+    today = date_filter  # alias pour réutiliser les expressions existantes
 
     programmes_aujourdhui = Programme.objects.filter(
-        date_programme=today, is_deleted=False,
+        date_programme=date_filter, is_deleted=False,
     ).select_related("utilisateur", "vehicule")
 
     nb_programmes = programmes_aujourdhui.count()
@@ -67,7 +93,9 @@ def dashboard(request):
     )
 
     context = {
-        "today": today,
+        "today": date_filter,
+        "date_filter": date_filter,
+        "is_today": date_filter == date_cls.today(),
         "nb_programmes": nb_programmes,
         "nb_programmes_en_cours": nb_programmes_en_cours,
         "nb_programmes_clotures": nb_programmes_clotures,
@@ -85,7 +113,7 @@ def dashboard_carte_data(request):
     Endpoint AJAX : renvoie les PLV et operations du jour au format GeoJSON-ish.
     Appele par la carte Leaflet.
     """
-    today = date_cls.today()
+    date_filter = _get_date_filter(request)
 
     plvs = []
     for plv in (
@@ -95,7 +123,7 @@ def dashboard_carte_data(request):
             visite=Exists(
                 Operation.objects.filter(
                     etape__plv=OuterRef("pk"),
-                    etape__programme__date_programme=today,
+                    etape__programme__date_programme=date_filter,
                     is_deleted=False,
                 )
             )
@@ -112,10 +140,10 @@ def dashboard_carte_data(request):
 
     operations = []
     for op in Operation.objects.filter(
-        etape__programme__date_programme=today,
+        etape__programme__date_programme=date_filter,
         is_deleted=False,
         localisation_saisie__isnull=False,
-    ).select_related("etape__plv", "etape__programme__utilisateur"):
+    ).select_related("etape__plv", "etape__programme__utilisateur").order_by("date_heure"):
         operations.append({
             "uuid": str(op.uuid),
             "plv": op.etape.plv.libelle,
@@ -123,6 +151,8 @@ def dashboard_carte_data(request):
             "type": op.type_operation,
             "latitude": op.localisation_saisie.y,
             "longitude": op.localisation_saisie.x,
+            "timestamp": op.date_heure.isoformat(),
+            "ordre_prevu": op.etape.ordre_prevu,
         })
 
     return JsonResponse({"plvs": plvs, "operations": operations})
@@ -134,17 +164,17 @@ def dashboard_stats_data(request):
     Endpoint AJAX : renvoie les 4 KPI du dashboard.
     Permet la mise a jour sans recharger toute la page.
     """
-    today = date_cls.today()
+    date_filter = _get_date_filter(request)
 
     programmes_aujourdhui = Programme.objects.filter(
-        date_programme=today, is_deleted=False,
+        date_programme=date_filter, is_deleted=False,
     )
     nb_programmes = programmes_aujourdhui.count()
     nb_programmes_en_cours = programmes_aujourdhui.filter(statut="EN_COURS").count()
     nb_programmes_clotures = programmes_aujourdhui.filter(statut="CLOTURE").count()
 
     operations_aujourdhui = Operation.objects.filter(
-        etape__programme__date_programme=today,
+        etape__programme__date_programme=date_filter,
         is_deleted=False,
     )
     nb_operations = operations_aujourdhui.count()
@@ -153,13 +183,13 @@ def dashboard_stats_data(request):
     )
 
     nb_anomalies_ouvertes = Anomalie.objects.filter(
-        programme__date_programme=today,
+        programme__date_programme=date_filter,
         statut=StatutAnomalie.OUVERTE,
         is_deleted=False,
     ).count()
 
     nb_anomalies_elevees = Anomalie.objects.filter(
-        programme__date_programme=today,
+        programme__date_programme=date_filter,
         gravite="ELEVEE",
         statut__in=("OUVERTE", "EN_TRAITEMENT"),
         is_deleted=False,
@@ -179,16 +209,7 @@ def dashboard_stats_data(request):
 
 @superviseur_required
 def programmes_list(request):
-    today = date_cls.today()
-    date_str = request.GET.get("date")
-    if date_str:
-        try:
-            from datetime import datetime
-            date_filter = datetime.strptime(date_str, "%Y-%m-%d").date()
-        except ValueError:
-            date_filter = today
-    else:
-        date_filter = today
+    date_filter = _get_date_filter(request)
 
     programmes = (
         Programme.objects
@@ -264,28 +285,36 @@ def programme_detail(request, programme_id):
             lignes_recon.append(d)
         reconciliation.append({"etape": etape, "lignes": lignes_recon})
 
+    # Timeline : operations dans l'ordre chronologique réel, avec comparaison au circuit
+    timeline = []
+    prev_ordre = 0
+    for op in (
+        Operation.objects
+        .filter(etape__programme=programme, is_deleted=False)
+        .select_related("etape__plv")
+        .order_by("date_heure")
+    ):
+        en_avance = op.etape.ordre_prevu < prev_ordre  # visite un PLV "en arriere" du circuit
+        timeline.append({
+            "op": op,
+            "en_avance": en_avance,
+            "conforme": op.etape.ordre_prevu >= prev_ordre,
+        })
+        prev_ordre = op.etape.ordre_prevu
+
     return render(request, "supervision/programme_detail.html", {
         "programme": programme,
         "reconciliation": reconciliation,
         "filtre_statut": filtre_statut,
+        "timeline": timeline,
     })
 
 
 @superviseur_required
 def operations_list(request):
-    today = date_cls.today()
-    date_str = request.GET.get("date")
+    date_filter = _get_date_filter(request)
     livreur_code = request.GET.get("livreur", "").strip()
     type_filter = request.GET.get("type", "").strip()
-
-    if date_str:
-        try:
-            from datetime import datetime
-            date_filter = datetime.strptime(date_str, "%Y-%m-%d").date()
-        except ValueError:
-            date_filter = today
-    else:
-        date_filter = today
 
     operations = (
         Operation.objects
@@ -392,16 +421,7 @@ def logout_view(request):
 @superviseur_required
 def rapport_journee(request):
     """Vue consolidee par livreur pour une journee donnee — imprimable."""
-    today = date_cls.today()
-    date_str = request.GET.get("date")
-    if date_str:
-        try:
-            from datetime import datetime
-            date_filter = datetime.strptime(date_str, "%Y-%m-%d").date()
-        except ValueError:
-            date_filter = today
-    else:
-        date_filter = today
+    date_filter = _get_date_filter(request)
 
     programmes = list(
         Programme.objects
@@ -466,19 +486,9 @@ def rapport_journee(request):
 @superviseur_required
 def operations_export_csv(request):
     """Exporte les operations du jour (filtrees) en CSV ; separateur point-virgule."""
-    today = date_cls.today()
-    date_str = request.GET.get("date")
+    date_filter = _get_date_filter(request)
     livreur_code = request.GET.get("livreur", "").strip()
     type_filter = request.GET.get("type", "").strip()
-
-    if date_str:
-        try:
-            from datetime import datetime
-            date_filter = datetime.strptime(date_str, "%Y-%m-%d").date()
-        except ValueError:
-            date_filter = today
-    else:
-        date_filter = today
 
     operations = (
         Operation.objects
@@ -523,11 +533,11 @@ def operations_export_csv(request):
 @superviseur_required
 def dashboard_activite_data(request):
     """Renvoie le nombre d'operations par heure pour le jour courant."""
-    today = date_cls.today()
+    date_filter = _get_date_filter(request)
 
     rows = (
         Operation.objects
-        .filter(etape__programme__date_programme=today, is_deleted=False)
+        .filter(etape__programme__date_programme=date_filter, is_deleted=False)
         .annotate(heure=ExtractHour("date_heure"))
         .values("heure")
         .annotate(count=Count("id"))
