@@ -60,6 +60,9 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
   const [montantManuel, setMontantManuel] = useState<string>('');
   const [montantCorrige, setMontantCorrige] = useState<boolean>(false);
   const [estEncaissee, setEstEncaissee] = useState<boolean>(true);
+  // Acompte optionnel lors d'une collecte
+  const [avecAcompte, setAvecAcompte] = useState<boolean>(false);
+  const [montantAcompte, setMontantAcompte] = useState<string>('');
   const [commentaire, setCommentaire] = useState<string>('');
   const [signatureLivreur, setSignatureLivreur] = useState<string>('');
   const [signatureClient, setSignatureClient] = useState<string>('');
@@ -117,6 +120,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
 
   async function handleSave(): Promise<void> {
     if (!etapeInfo) return;
+    const isCollecte = etapeInfo.type_programme === 'COLLECTE';
 
     const lignesSaisies = lignes
       .map((l) => ({
@@ -129,6 +133,38 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
     if (lignesSaisies.length === 0) {
       Alert.alert('Aucune quantite', 'Saisis au moins une quantite superieure a 0.');
       return;
+    }
+
+    // Calcul des champs paiement selon le type d'operation
+    let montantTotal: number;
+    let montantEncaisse: number;
+    let encaissee: boolean;
+    let modePaiementFinal: ModePaiement | null;
+
+    if (isCollecte) {
+      if (avecAcompte) {
+        const acompte = parseFloat(montantAcompte) || 0;
+        if (acompte <= 0) {
+          Alert.alert('Acompte invalide', 'Saisis un montant d\'acompte superieur a 0.');
+          return;
+        }
+        montantTotal = acompte;
+        montantEncaisse = acompte;
+        encaissee = true;
+        modePaiementFinal = modePaiement;
+      } else {
+        // Collecte sans paiement : valeurs neutres
+        montantTotal = 0;
+        montantEncaisse = 0;
+        encaissee = false;
+        modePaiementFinal = null;
+      }
+    } else {
+      // Restitution : paiement obligatoire, montant calcule ou corrige
+      montantTotal = montantFinal;
+      montantEncaisse = estEncaissee ? montantFinal : 0;
+      encaissee = estEncaissee;
+      modePaiementFinal = modePaiement;
     }
 
     setSaving(true);
@@ -154,15 +190,15 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         if (!confirme) { setSaving(false); return; }
       }
 
-      const typeOp = etapeInfo.type_programme === 'COLLECTE' ? 'COLLECTE' : 'RESTITUTION';
+      const typeOp = isCollecte ? 'COLLECTE' : 'RESTITUTION';
       const opUuid = await enregistrerOperation({
         etape_uuid: etapeInfo.uuid,
         type_operation: typeOp,
         sous_type: typeOp === 'COLLECTE' ? 'BCR' : null,
-        mode_paiement: modePaiement,
-        montant_total: montantFinal,
-        montant_encaisse: estEncaissee ? montantFinal : 0,
-        est_encaissee: estEncaissee,
+        mode_paiement: modePaiementFinal,
+        montant_total: montantTotal,
+        montant_encaisse: montantEncaisse,
+        est_encaissee: encaissee,
         latitude: pos.latitude,
         longitude: pos.longitude,
         gps_precision: pos.precision,
@@ -256,49 +292,86 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         </View>
       ))}
 
-      <Text style={styles.sectionTitle}>Paiement</Text>
-      <View style={styles.card}>
-        <Text style={styles.label}>Mode de paiement</Text>
-        <View style={styles.pickerWrap}>
-          <Picker
-            selectedValue={modePaiement}
-            onValueChange={(v) => setModePaiement(v as ModePaiement)}
-          >
-            {MODES_PAIEMENT.map((m) => (
-              <Picker.Item key={m.value} label={m.label} value={m.value} />
-            ))}
-          </Picker>
-        </View>
+      {etapeInfo?.type_programme === 'COLLECTE' ? (
+        <>
+          <Text style={styles.sectionTitle}>Acompte (optionnel)</Text>
+          <View style={styles.card}>
+            <View style={styles.switchRow}>
+              <Text style={styles.label}>Le client verse un acompte ?</Text>
+              <Switch value={avecAcompte} onValueChange={setAvecAcompte} />
+            </View>
+            {avecAcompte && (
+              <>
+                <Text style={[styles.label, { marginTop: 14 }]}>Montant de l'acompte (FCFA)</Text>
+                <TextInput
+                  style={styles.montantInput}
+                  value={montantAcompte}
+                  onChangeText={(v) => setMontantAcompte(v.replace(/[^0-9.]/g, ''))}
+                  keyboardType="decimal-pad"
+                  placeholder="0"
+                />
+                <Text style={[styles.label, { marginTop: 14 }]}>Mode de paiement</Text>
+                <View style={styles.pickerWrap}>
+                  <Picker
+                    selectedValue={modePaiement}
+                    onValueChange={(v) => setModePaiement(v as ModePaiement)}
+                  >
+                    {MODES_PAIEMENT.map((m) => (
+                      <Picker.Item key={m.value} label={m.label} value={m.value} />
+                    ))}
+                  </Picker>
+                </View>
+              </>
+            )}
+          </View>
+        </>
+      ) : (
+        <>
+          <Text style={styles.sectionTitle}>Paiement</Text>
+          <View style={styles.card}>
+            <Text style={styles.label}>Mode de paiement</Text>
+            <View style={styles.pickerWrap}>
+              <Picker
+                selectedValue={modePaiement}
+                onValueChange={(v) => setModePaiement(v as ModePaiement)}
+              >
+                {MODES_PAIEMENT.map((m) => (
+                  <Picker.Item key={m.value} label={m.label} value={m.value} />
+                ))}
+              </Picker>
+            </View>
 
-        <View style={styles.montantRow}>
-          <Text style={styles.label}>Montant total (FCFA)</Text>
-          <TouchableOpacity onPress={() => setMontantCorrige(!montantCorrige)}>
-            <Text style={styles.toggleLink}>
-              {montantCorrige ? 'Revenir au calcul auto' : 'Corriger manuellement'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+            <View style={styles.montantRow}>
+              <Text style={styles.label}>Montant total (FCFA)</Text>
+              <TouchableOpacity onPress={() => setMontantCorrige(!montantCorrige)}>
+                <Text style={styles.toggleLink}>
+                  {montantCorrige ? 'Revenir au calcul auto' : 'Corriger manuellement'}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-        {montantCorrige ? (
-          <TextInput
-            style={styles.montantInput}
-            value={montantManuel}
-            onChangeText={(v) => setMontantManuel(v.replace(/[^0-9.]/g, ''))}
-            keyboardType="decimal-pad"
-            placeholder={String(montantCalcule)}
-          />
-        ) : (
-          <Text style={styles.montantAuto}>
-            {montantCalcule.toLocaleString('fr-FR')} FCFA
-            <Text style={styles.montantAutoHint}> (calcule)</Text>
-          </Text>
-        )}
+            {montantCorrige ? (
+              <TextInput
+                style={styles.montantInput}
+                value={montantManuel}
+                onChangeText={(v) => setMontantManuel(v.replace(/[^0-9.]/g, ''))}
+                keyboardType="decimal-pad"
+                placeholder={String(montantCalcule)}
+              />
+            ) : (
+              <Text style={styles.montantAuto}>
+                {montantCalcule.toLocaleString('fr-FR')} FCFA
+                <Text style={styles.montantAutoHint}> (calcule)</Text>
+              </Text>
+            )}
 
-        <View style={styles.switchRow}>
-          <Text style={styles.label}>Montant encaisse ?</Text>
-          <Switch value={estEncaissee} onValueChange={setEstEncaissee} />
-        </View>
-      </View>
+            <View style={styles.switchRow}>
+              <Text style={styles.label}>Montant encaisse ?</Text>
+              <Switch value={estEncaissee} onValueChange={setEstEncaissee} />
+            </View>
+          </View>
+        </>
+      )}
 
       <Text style={styles.sectionTitle}>Signatures</Text>
       <View style={styles.card}>

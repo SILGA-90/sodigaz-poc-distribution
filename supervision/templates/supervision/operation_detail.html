@@ -25,6 +25,18 @@
         </div>
     </div>
     <div class="text-end">
+        {% if operation.type_operation == "COLLECTE" %}
+        {% if operation.montant_total > 0 %}
+        <div class="display-6 fw-bold text-warning">{{ operation.montant_total|floatformat:0 }} <small class="fs-6 text-muted fw-normal">FCFA</small></div>
+        <span class="badge bg-warning text-dark">Acompte encaisse</span>
+        {% if operation.mode_paiement %}
+        <div class="text-muted small mt-1">{{ operation.get_mode_paiement_display }}</div>
+        {% endif %}
+        {% else %}
+        <div class="text-muted fst-italic">Aucun paiement</div>
+        <div class="text-muted small">(normal pour une collecte)</div>
+        {% endif %}
+    {% else %}
         <div class="display-6 fw-bold text-primary">{{ operation.montant_total|floatformat:0 }} <small class="fs-6 text-muted fw-normal">FCFA</small></div>
         {% if operation.est_encaissee %}
         <span class="badge bg-success">Encaisse — {{ operation.montant_encaisse|floatformat:0 }} FCFA</span>
@@ -34,6 +46,7 @@
         {% if operation.mode_paiement %}
         <div class="text-muted small mt-1">{{ operation.get_mode_paiement_display }}</div>
         {% endif %}
+    {% endif %}
     </div>
 </div>
 
@@ -82,6 +95,35 @@
                 {% endif %}
             </div>
         </div>
+
+        {# Paiement (card distincte uniquement si pertinent) #}
+        {% if operation.type_operation == "RESTITUTION" or operation.montant_total > 0 %}
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">
+                {% if operation.type_operation == "COLLECTE" %}Acompte verse{% else %}Paiement{% endif %}
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Montant</dt>
+                    <dd class="col-sm-7 fw-bold">{{ operation.montant_total|floatformat:0 }} FCFA</dd>
+                    {% if operation.type_operation == "RESTITUTION" %}
+                    <dt class="col-sm-5">Encaissement</dt>
+                    <dd class="col-sm-7">
+                        {% if operation.est_encaissee %}
+                        <span class="badge bg-success">{{ operation.montant_encaisse|floatformat:0 }} FCFA encaisse</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">Non encaisse</span>
+                        {% endif %}
+                    </dd>
+                    {% endif %}
+                    {% if operation.mode_paiement %}
+                    <dt class="col-sm-5">Mode</dt>
+                    <dd class="col-sm-7">{{ operation.get_mode_paiement_display }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+        {% endif %}
 
         {# Signataire #}
         {% if operation.nom_signataire_client %}
