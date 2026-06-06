@@ -1,7 +1,7 @@
 /**
  * Ecran d'un programme : liste des etapes (PLV) a visiter dans l'ordre.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -25,6 +25,14 @@ import { RootStackParamList } from '../types/navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Programme'>;
 
+type TriMode = 'optimise' | 'alpha' | 'a_visiter';
+
+const TRI_MODES: { key: TriMode; label: string }[] = [
+  { key: 'optimise',  label: 'Circuit' },
+  { key: 'alpha',     label: 'A-Z' },
+  { key: 'a_visiter', label: 'A faire' },
+];
+
 function ouvrirItineraire(lat: number, lon: number): void {
   // Pas d'origin dans l'URL : Google Maps part de la position courante.
   const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
@@ -37,6 +45,18 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
   const [progression, setProgression] = useState<{ visitees: number; echec: number; total: number }>({ visitees: 0, echec: 0, total: 0 });
   const [etapes, setEtapes] = useState<EtapeAvecPlv[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [triMode, setTriMode] = useState<TriMode>('optimise');
+
+  const etapesTri = useMemo((): EtapeAvecPlv[] => {
+    if (triMode === 'alpha') {
+      return [...etapes].sort((a, b) => a.plv_libelle.localeCompare(b.plv_libelle, 'fr'));
+    }
+    if (triMode === 'a_visiter') {
+      const ordre = { A_VISITER: 0, VISITEE: 1, ECHEC: 2 } as Record<string, number>;
+      return [...etapes].sort((a, b) => (ordre[a.statut_visite] ?? 1) - (ordre[b.statut_visite] ?? 1));
+    }
+    return etapes; // 'optimise' : ordre DB conservé
+  }, [etapes, triMode]);
 
   async function chargerDonnees() {
     const p = await getProgrammeById(programmeId);
@@ -149,6 +169,19 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
               </View>
             )}
           </View>
+          <View style={styles.triBar}>
+            {TRI_MODES.map((m) => (
+              <TouchableOpacity
+                key={m.key}
+                style={[styles.triBtn, triMode === m.key && styles.triBtnActive]}
+                onPress={() => setTriMode(m.key)}
+              >
+                <Text style={[styles.triBtnText, triMode === m.key && styles.triBtnTextActive]}>
+                  {m.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
           <View style={styles.headerActions}>
             <TouchableOpacity
               onPress={() => navigation.navigate('MesAnomalies', { programmeUuid: programme.uuid, programmeNumero: programme.numero_x3 })}
@@ -172,7 +205,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
         </View>
       )}
       <FlatList
-        data={etapes}
+        data={etapesTri}
         keyExtractor={(item) => item.uuid}
         renderItem={renderEtape}
         contentContainerStyle={styles.list}
@@ -210,6 +243,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   echecCountText: { fontSize: 11, color: '#842029', fontWeight: '700' },
+  triBar: {
+    flexDirection: 'row', marginTop: 12,
+    backgroundColor: '#f0f4ff', borderRadius: 8, padding: 3, gap: 3,
+  },
+  triBtn: {
+    flex: 1, paddingVertical: 6, borderRadius: 6, alignItems: 'center',
+  },
+  triBtnActive: { backgroundColor: '#0d6efd' },
+  triBtnText: { fontSize: 12, fontWeight: '600', color: '#6c757d' },
+  triBtnTextActive: { color: '#fff' },
   headerActions: { marginTop: 10, gap: 6 },
   voirAnomaliesLink: { fontSize: 13, color: '#0d6efd', textDecorationLine: 'underline' },
   clotureBtn: {
