@@ -71,19 +71,8 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
             {item.plv_latitude.toFixed(4)}, {item.plv_longitude.toFixed(4)}
           </Text>
         </View>
-        <View style={styles.actionsCol}>
-          <View style={[styles.statutBadge, visite ? styles.visitee : styles.aVisiter]}>
-            <Text style={styles.statutText}>{visite ? 'Visitee' : 'A visiter'}</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.itineraireBtn}
-            onPress={(e) => {
-              e.stopPropagation();
-              ouvrirItineraire(item.plv_latitude, item.plv_longitude);
-            }}
-          >
-            <Text style={styles.itineraireBtnText}>Itineraire</Text>
-          </TouchableOpacity>
+        <View style={[styles.statutBadge, visite ? styles.visitee : styles.aVisiter]}>
+          <Text style={styles.statutText}>{visite ? 'Visitee' : 'A visiter'}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -165,11 +154,5 @@ const styles = StyleSheet.create({
   visitee: { backgroundColor: '#d1e7dd' },
   aVisiter: { backgroundColor: '#fff3cd' },
   statutText: { fontSize: 11, fontWeight: '700', color: '#333' },
-  actionsCol: { alignItems: 'flex-end' },
-  itineraireBtn: {
-    marginTop: 6, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12,
-    backgroundColor: '#cfe2ff', borderWidth: 1, borderColor: '#0d6efd',
-  },
-  itineraireBtnText: { fontSize: 11, fontWeight: '700', color: '#084298' },
   empty: { textAlign: 'center', color: '#888', padding: 32 },
 });

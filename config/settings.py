@@ -136,3 +136,20 @@ LOGOUT_REDIRECT_URL = "/supervision/login/"
 # pour une photo compressee cote mobile)
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5 Mo
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10 Mo (pour le JSON sync)
+
+
+# =============================================================================
+# Point de depart des tournees : le depot SODIGAZ.
+# Sert de point d'origine a l'heuristique du plus proche voisin qui calcule
+# l'ordre de visite suggere (champ Etape.ordre_optimise).
+#
+# ATTENTION : ce sont des coordonnees PLAUSIBLES a Ouagadougou, PAS les vraies
+# coordonnees du depot SODIGAZ. A remplacer par les coordonnees reelles quand
+# elles seront connues. Format : (longitude, latitude).
+# (zone industrielle de Kossodo, nord-est de Ouaga, a titre indicatif)
+# =============================================================================
+DEPOT_SODIGAZ = {
+    "nom": "Depot SODIGAZ (coordonnees provisoires)",
+    "longitude": -1.4900,
+    "latitude": 12.4100,
+}

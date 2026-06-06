@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from accounts.models import Role, Utilisateur
+from distribution.circuit import appliquer_ordre_optimise
 from distribution.models import (
     Etape,
     LigneProgramme,
@@ -112,6 +113,9 @@ class Command(BaseCommand):
                                 produit=prod,
                                 quantite_prevue=random.randint(5, 30),
                             )
+
+                # Calcul de l'ordre de visite suggere (plus proche voisin)
+                appliquer_ordre_optimise(programme)
 
                 compteur += 1
                 self.stdout.write(
