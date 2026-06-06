@@ -168,10 +168,10 @@ async function applyProgrammes(db: any, changes?: TableChanges): Promise<number>
       `INSERT OR REPLACE INTO programme
        (id, uuid, numero_x3, utilisateur_id, vehicule_id, date_programme,
         type_programme, statut, heure_debut, heure_fin, last_modified, is_deleted)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0);`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [r.id, r.uuid, r.numero_x3 ?? '', r.utilisateur_id, r.vehicule_id ?? null,
        r.date_programme, r.type_programme, r.statut,
-       r.heure_debut ?? null, r.heure_fin ?? null, r.last_modified ?? 0],
+       r.heure_debut ?? null, r.heure_fin ?? null, r.last_modified ?? 0, bool(r.is_deleted)],
     );
   }
   // Suppressions
@@ -189,9 +189,9 @@ async function applyEtapes(db: any, changes?: TableChanges): Promise<number> {
       `INSERT OR REPLACE INTO etape
        (id, uuid, programme_id, plv_id, ordre_prevu, ordre_optimise,
         statut_visite, last_modified, is_deleted)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0);`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [r.id, r.uuid, r.programme_id, r.plv_id, r.ordre_prevu,
-       r.ordre_optimise ?? null, r.statut_visite, r.last_modified ?? 0],
+       r.ordre_optimise ?? null, r.statut_visite, r.last_modified ?? 0, bool(r.is_deleted)],
     );
   }
   for (const uuid of changes.deleted ?? []) {
@@ -207,8 +207,8 @@ async function applyLignesProgramme(db: any, changes?: TableChanges): Promise<nu
     await db.runAsync(
       `INSERT OR REPLACE INTO ligne_programme
        (id, uuid, etape_id, produit_id, quantite_prevue, last_modified, is_deleted)
-       VALUES (?, ?, ?, ?, ?, ?, 0);`,
-      [r.id, r.uuid, r.etape_id, r.produit_id, r.quantite_prevue, r.last_modified ?? 0],
+       VALUES (?, ?, ?, ?, ?, ?, ?);`,
+      [r.id, r.uuid, r.etape_id, r.produit_id, r.quantite_prevue, r.last_modified ?? 0, bool(r.is_deleted)],
     );
   }
   for (const uuid of changes.deleted ?? []) {

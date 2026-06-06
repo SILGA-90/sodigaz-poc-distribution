@@ -50,6 +50,13 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     await db.execAsync('PRAGMA user_version = 2;');
   }
 
+  // Migration v2 -> v3 : alignement de la version (toutes les tables sont déjà
+  // créées par le bloc < 1 ; ce bloc existe uniquement pour synchroniser
+  // user_version avec SCHEMA_VERSION sur les bases existantes à v2).
+  if (currentVersion < 3) {
+    await db.execAsync('PRAGMA user_version = 3;');
+  }
+
   dbInstance = db;
   return db;
 }

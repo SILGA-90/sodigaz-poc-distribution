@@ -60,7 +60,7 @@ export async function getEtapesDuProgramme(programmeId: number): Promise<EtapeAv
      JOIN plv p ON p.id = e.plv_id
      JOIN client c ON c.id = p.client_id
      WHERE e.programme_id = ? AND e.is_deleted = 0
-     ORDER BY e.ordre_prevu;`,
+     ORDER BY COALESCE(e.ordre_optimise, e.ordre_prevu);`,
     [programmeId],
   );
 }

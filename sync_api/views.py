@@ -36,7 +36,6 @@ from distribution.models import (
     Plv,
     Produit,
     Programme,
-    Vehicule,
 )
 
 from .push_serializers import (
@@ -56,7 +55,6 @@ from .serializers import (
     PlvSyncSerializer,
     ProduitSyncSerializer,
     ProgrammeSyncSerializer,
-    VehiculeSyncSerializer,
 )
 
 
@@ -83,7 +81,7 @@ def sync_pull(request):
       - Operations, LigneOperation, Photo : idem en remontant la chaine
       - Anomalies : celles des programmes ci-dessus
 
-      - Referentiels (Client, PLV, Produit, Vehicule) : tous (pas de filtre
+      - Referentiels (Client, PLV, Produit) : tous (pas de filtre
         livreur sur les referentiels, ils sont partages).
     """
     last_pulled_at = request.data.get("lastPulledAt", 0) or 0
@@ -110,10 +108,6 @@ def sync_pull(request):
     )
     produits_changes = _build_changes(
         Produit.objects.all(), last_pulled_at, ProduitSyncSerializer,
-        has_soft_delete=False, has_last_modified=False,
-    )
-    vehicules_changes = _build_changes(
-        Vehicule.objects.all(), last_pulled_at, VehiculeSyncSerializer,
         has_soft_delete=False, has_last_modified=False,
     )
 
@@ -164,7 +158,6 @@ def sync_pull(request):
             "client": clients_changes,
             "plv": plvs_changes,
             "produit": produits_changes,
-            "vehicule": vehicules_changes,
             "programme": programmes_changes,
             "etape": etapes_changes,
             "ligne_programme": lignes_prog_changes,
@@ -547,7 +540,7 @@ def cloturer_programmes(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    heure_fin = timezone.localtime().time()
+    heure_fin = timezone.now()
     count = 0
     for u in uuids:
         count += Programme.objects.filter(
