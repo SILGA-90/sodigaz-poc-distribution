@@ -55,10 +55,24 @@
     </div>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        <h5 class="card-title">Cartographie des PLV et operations du jour</h5>
-        <div id="map"></div>
+<div class="row g-3 mb-3">
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Cartographie des PLV et operations du jour</h5>
+                <div id="map"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title">Activite par heure</h5>
+                <div style="flex:1;position:relative;min-height:200px;">
+                    <canvas id="activiteChart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -73,6 +87,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
 // =============================================================================
 // Configuration
@@ -80,6 +95,42 @@
 const REFRESH_INTERVAL_MS = 15000;  // 15 secondes
 const CARTE_URL = "{% url 'supervision:carte-data' %}";
 const STATS_URL = "{% url 'supervision:stats-data' %}";
+const ACTIVITE_URL = "{% url 'supervision:activite-data' %}";
+
+// =============================================================================
+// Graphique activite par heure (Chart.js)
+// =============================================================================
+const activiteCtx = document.getElementById('activiteChart').getContext('2d');
+const activiteChart = new Chart(activiteCtx, {
+    type: 'bar',
+    data: { labels: [], datasets: [{
+        label: 'Operations',
+        data: [],
+        backgroundColor: 'rgba(13,110,253,0.25)',
+        borderColor: '#0d6efd',
+        borderWidth: 2,
+        borderRadius: 4,
+    }]},
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } },
+            x: { grid: { display: false } },
+        },
+    },
+});
+
+function refreshActivite() {
+    return fetch(ACTIVITE_URL, { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(d => {
+            activiteChart.data.labels = d.labels;
+            activiteChart.data.datasets[0].data = d.data;
+            activiteChart.update('none');
+        });
+}
 
 // =============================================================================
 // Carte Leaflet
@@ -221,7 +272,7 @@ setInterval(updateFreshnessIndicator, 1000);
 const indicator = document.getElementById('status-indicator');
 
 function tick() {
-    Promise.all([refreshCarte(), refreshStats()])
+    Promise.all([refreshCarte(), refreshStats(), refreshActivite()])
         .then(() => {
             lastUpdateAt = Date.now();
             indicator.className = 'badge bg-success';

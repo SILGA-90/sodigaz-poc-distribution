@@ -1,0 +1,196 @@
+{% extends "supervision/base.html" %}
+{% block title %}Operation {{ operation.uuid|truncatechars:8 }}{% endblock %}
+{% block content %}
+
+{% with prog=operation.etape.programme plv=operation.etape.plv %}
+
+<a href="{% url 'supervision:operations' %}?date={{ prog.date_programme|date:'Y-m-d' }}&livreur={{ prog.utilisateur.code_livreur }}"
+   class="btn btn-sm btn-outline-secondary mb-3">&laquo; Retour aux operations</a>
+
+{# ── En-tete ── #}
+<div class="d-flex align-items-start justify-content-between mb-1">
+    <div>
+        <h1 class="h3 mb-1">
+            {% if operation.type_operation == "COLLECTE" %}
+            <span class="badge bg-primary fs-6">Collecte</span>
+            {% else %}
+            <span class="badge bg-success fs-6">Restitution</span>
+            {% endif %}
+            {% if operation.sous_type %}
+            <span class="badge bg-secondary fs-6">{{ operation.sous_type }}</span>
+            {% endif %}
+        </h1>
+        <div class="text-muted">
+            {{ operation.date_heure|date:"l j F Y \à H\hi" }}
+        </div>
+    </div>
+    <div class="text-end">
+        <div class="display-6 fw-bold text-primary">{{ operation.montant_total|floatformat:0 }} <small class="fs-6 text-muted fw-normal">FCFA</small></div>
+        {% if operation.est_encaissee %}
+        <span class="badge bg-success">Encaisse — {{ operation.montant_encaisse|floatformat:0 }} FCFA</span>
+        {% else %}
+        <span class="badge bg-warning text-dark">Non encaisse</span>
+        {% endif %}
+        {% if operation.mode_paiement %}
+        <div class="text-muted small mt-1">{{ operation.get_mode_paiement_display }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<hr>
+
+<div class="row g-4">
+
+    {# ── Colonne gauche : infos contextuelles ── #}
+    <div class="col-lg-4">
+
+        {# Livreur #}
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Livreur</div>
+            <div class="card-body">
+                <div class="fw-bold">{{ prog.utilisateur.code_livreur }}</div>
+                <div>{{ prog.utilisateur.get_full_name }}</div>
+                {% if prog.vehicule %}
+                <div class="text-muted small mt-1">{{ prog.vehicule.immatriculation }}</div>
+                {% endif %}
+                <div class="mt-2">
+                    <a href="{% url 'supervision:programme-detail' prog.id %}" class="btn btn-sm btn-outline-primary">
+                        Voir programme {{ prog.numero_x3 }}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {# Client / PLV #}
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Point de livraison</div>
+            <div class="card-body">
+                <div class="fw-bold">{{ plv.client.raison_sociale }}</div>
+                <div class="text-muted">{{ plv.libelle }}</div>
+                {% if operation.localisation_saisie %}
+                <div class="mt-2 p-2 rounded bg-light font-monospace small">
+                    {{ operation.localisation_saisie.y|floatformat:6 }},
+                    {{ operation.localisation_saisie.x|floatformat:6 }}
+                    {% if operation.gps_precision %}
+                    <span class="text-muted">&plusmn;{{ operation.gps_precision|floatformat:0 }}m</span>
+                    {% endif %}
+                </div>
+                <a href="https://www.google.com/maps?q={{ operation.localisation_saisie.y }},{{ operation.localisation_saisie.x }}"
+                   target="_blank" class="btn btn-sm btn-outline-secondary mt-1">Ouvrir dans Maps</a>
+                {% else %}
+                <div class="text-muted small mt-2">Position GPS non disponible</div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Signataire #}
+        {% if operation.nom_signataire_client %}
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Signataire</div>
+            <div class="card-body">{{ operation.nom_signataire_client }}</div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    {# ── Colonne droite : produits, signatures, photos ── #}
+    <div class="col-lg-8">
+
+        {# Produits #}
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Produits</div>
+            <div class="card-body p-0">
+                {% with lignes=operation.lignes.all %}
+                {% if lignes %}
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Produit</th>
+                            <th class="text-end">Qte realisee</th>
+                            <th class="text-end">Montant ligne</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for l in lignes %}
+                        {% if not l.is_deleted %}
+                        <tr>
+                            <td>{{ l.produit.libelle }} <small class="text-muted">({{ l.produit.code_x3 }})</small></td>
+                            <td class="text-end fw-semibold">{{ l.quantite_realisee }}</td>
+                            <td class="text-end">{{ l.montant_ligne|floatformat:0 }} FCFA</td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted p-3 mb-0">Aucune ligne produit.</p>
+                {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+
+        {# Signatures #}
+        {% if operation.signature_livreur or operation.signature_client %}
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Signatures</div>
+            <div class="card-body">
+                <div class="d-flex gap-4 flex-wrap">
+                    {% if operation.signature_livreur %}
+                    <div>
+                        <div class="text-muted small fw-semibold mb-2">Livreur — {{ prog.utilisateur.get_full_name }}</div>
+                        <div style="border:1px solid #dee2e6;border-radius:8px;background:#fff;width:240px;height:120px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+                            {{ operation.signature_livreur|safe }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if operation.signature_client %}
+                    <div>
+                        <div class="text-muted small fw-semibold mb-2">Client {% if operation.nom_signataire_client %}— {{ operation.nom_signataire_client }}{% endif %}</div>
+                        <div style="border:1px solid #dee2e6;border-radius:8px;background:#fff;width:240px;height:120px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+                            {{ operation.signature_client|safe }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Photos #}
+        {% with photos=operation.photos.all %}
+        {% if photos %}
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Photos ({{ photos|length }})</div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-3">
+                    {% for photo in photos %}
+                    {% if not photo.is_deleted and photo.fichier and photo.fichier != "placeholder.bin" %}
+                    <div class="text-center">
+                        <a href="{{ photo.fichier.url }}" target="_blank">
+                            <img src="{{ photo.fichier.url }}"
+                                 style="height:120px;width:120px;object-fit:cover;border-radius:8px;border:1px solid #dee2e6;">
+                        </a>
+                        <div class="text-muted small mt-1">{{ photo.get_type_photo_display }}</div>
+                        <div class="text-muted small">{{ photo.date_heure|date:"H:i" }}</div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {# Commentaire #}
+        {% if operation.commentaire %}
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Commentaire</div>
+            <div class="card-body text-muted">{{ operation.commentaire }}</div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endwith %}
+{% endblock %}

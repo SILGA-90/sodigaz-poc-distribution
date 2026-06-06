@@ -11,5 +11,5 @@ export type RootStackParamList = {
   Anomalie: { programmeUuid: string; programmeId: number };
   Cloture: { programmeId: number };
   Debug: undefined;
-  // Sprint 2 ajoutera : Programme, Etape, Operation, etc.
+  EtapeDetail: { etapeId: number; etapeUuid: string };
 };

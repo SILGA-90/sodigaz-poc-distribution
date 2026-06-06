@@ -77,11 +77,18 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
     if (visite) { badgeStyle = styles.visitee; badgeLabel = 'Visitee'; }
     if (echec)  { badgeStyle = styles.echecBadge; badgeLabel = 'Echec'; }
 
+    function handleCardPress() {
+      if (visite) {
+        navigation.navigate('EtapeDetail', { etapeId: item.id, etapeUuid: item.uuid });
+      } else if (!cardDisabled) {
+        navigation.navigate('SaisieOperation', { etapeId: item.id });
+      }
+    }
+
     return (
       <TouchableOpacity
-        style={[styles.card, cardDisabled && styles.cardDisabled]}
-        onPress={cardDisabled ? undefined : () => navigation.navigate('SaisieOperation', { etapeId: item.id })}
-        disabled={cardDisabled}
+        style={[styles.card, (echec || (programmeCloture && !visite)) && styles.cardDisabled]}
+        onPress={handleCardPress}
       >
         <View style={styles.ordreCircle}>
           <Text style={styles.ordreText}>{item.ordre_prevu}</Text>

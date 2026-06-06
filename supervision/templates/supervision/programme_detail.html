@@ -18,6 +18,27 @@
 </dl>
 
 <h2 class="h5 mt-4">Reconciliation prevu / realise par etape</h2>
+
+<div class="mb-3 d-flex gap-2 align-items-center">
+    <span class="text-muted small">Filtrer :</span>
+    <a href="?{% if filtre_statut %}&{% endif %}"
+       class="btn btn-sm {% if not filtre_statut %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+        Toutes
+    </a>
+    <a href="?filtre_statut=A_VISITER"
+       class="btn btn-sm {% if filtre_statut == 'A_VISITER' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+        A visiter
+    </a>
+    <a href="?filtre_statut=VISITEE"
+       class="btn btn-sm {% if filtre_statut == 'VISITEE' %}btn-success{% else %}btn-outline-success{% endif %}">
+        Visitees
+    </a>
+    <a href="?filtre_statut=ECHEC"
+       class="btn btn-sm {% if filtre_statut == 'ECHEC' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+        Echecs
+    </a>
+</div>
+
 {% for r in reconciliation %}
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between">
@@ -68,20 +89,12 @@
                 </div>
                 {% endif %}
                 {% endwith %}
-                {% with photos=op.photos.all %}
-                {% if photos %}
-                <div class="mt-2 d-flex flex-wrap gap-2">
-                    {% for photo in photos %}
-                    {% if not photo.is_deleted and photo.fichier %}
-                    <a href="{{ photo.fichier.url }}" target="_blank" title="{{ photo.type_photo }} — {{ photo.date_heure|date:'d/m H:i' }}">
-                        <img src="{{ photo.fichier.url }}"
-                             style="height:64px;width:64px;object-fit:cover;border-radius:6px;border:1px solid #ccc;">
+                <div class="mt-2">
+                    <a href="{% url 'supervision:operation-detail' op.uuid %}"
+                       class="btn btn-sm btn-outline-primary">
+                        Voir le detail (signatures, photos, GPS) &rarr;
                     </a>
-                    {% endif %}
-                    {% endfor %}
                 </div>
-                {% endif %}
-                {% endwith %}
             {% endif %}
         {% endfor %}
     </div>

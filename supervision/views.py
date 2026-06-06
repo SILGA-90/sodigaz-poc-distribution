@@ -1,10 +1,11 @@
 """Vues de l'interface de supervision logistique."""
+import csv
 from datetime import date as date_cls
 
 from django.contrib.auth import logout as django_logout
 from django.db.models import Count, Exists, OuterRef, Q, Sum, DecimalField
-from django.db.models.functions import Coalesce
-from django.http import JsonResponse
+from django.db.models.functions import Coalesce, ExtractHour
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from accounts.models import Role, Utilisateur
@@ -199,14 +200,17 @@ def programme_detail(request, programme_id):
         id=programme_id, is_deleted=False,
     )
 
+    filtre_statut = request.GET.get("filtre_statut", "")
+    etapes_qs = programme.etapes.filter(is_deleted=False)
+    if filtre_statut in ("A_VISITER", "VISITEE", "ECHEC"):
+        etapes_qs = etapes_qs.filter(statut_visite=filtre_statut)
+
     etapes = (
-        programme.etapes
-        .filter(is_deleted=False)
+        etapes_qs
         .select_related("plv", "plv__client")
         .prefetch_related(
             "operations__lignes__produit",
             "operations__document_x3__bcr",
-            "operations__photos",
             "lignes_prevues__produit",
         )
         .order_by("ordre_prevu")
@@ -242,6 +246,7 @@ def programme_detail(request, programme_id):
     return render(request, "supervision/programme_detail.html", {
         "programme": programme,
         "reconciliation": reconciliation,
+        "filtre_statut": filtre_statut,
     })
 
 
@@ -290,6 +295,22 @@ def operations_list(request):
 
 
 @superviseur_required
+def operation_detail(request, operation_uuid):
+    operation = get_object_or_404(
+        Operation.objects
+        .select_related(
+            "etape__plv__client",
+            "etape__programme__utilisateur",
+            "etape__programme__vehicule",
+        )
+        .prefetch_related("lignes__produit", "photos"),
+        uuid=operation_uuid,
+        is_deleted=False,
+    )
+    return render(request, "supervision/operation_detail.html", {"operation": operation})
+
+
+@superviseur_required
 def anomalies_list(request):
     statut_filter = request.GET.get("statut", "OUVERTE")
     anomalies_qs = (
@@ -322,3 +343,79 @@ def changer_statut_anomalie(request, anomalie_id):
 def logout_view(request):
     django_logout(request)
     return redirect("supervision:login")
+
+
+@superviseur_required
+def operations_export_csv(request):
+    """Exporte les operations du jour (filtrees) en CSV ; separateur point-virgule."""
+    today = date_cls.today()
+    date_str = request.GET.get("date")
+    livreur_code = request.GET.get("livreur", "").strip()
+
+    if date_str:
+        try:
+            from datetime import datetime
+            date_filter = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            date_filter = today
+    else:
+        date_filter = today
+
+    operations = (
+        Operation.objects
+        .filter(etape__programme__date_programme=date_filter, is_deleted=False)
+        .select_related("etape__plv__client", "etape__programme__utilisateur")
+        .order_by("date_heure")
+    )
+    if livreur_code:
+        operations = operations.filter(
+            etape__programme__utilisateur__code_livreur=livreur_code
+        )
+
+    filename = f"operations_{date_filter.strftime('%Y-%m-%d')}.csv"
+    response = HttpResponse(content_type="text/csv; charset=utf-8-sig")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+    writer = csv.writer(response, delimiter=";")
+    writer.writerow([
+        "Heure", "Livreur", "Type", "Sous-type",
+        "Client", "PLV",
+        "Montant total (FCFA)", "Montant encaisse (FCFA)",
+        "Mode paiement", "Signataire",
+    ])
+    for op in operations:
+        writer.writerow([
+            op.date_heure.strftime("%H:%M"),
+            op.etape.programme.utilisateur.code_livreur,
+            op.type_operation,
+            op.sous_type or "",
+            op.etape.plv.client.raison_sociale,
+            op.etape.plv.libelle,
+            op.montant_total,
+            op.montant_encaisse if op.est_encaissee else "",
+            op.get_mode_paiement_display() if op.mode_paiement else "",
+            op.nom_signataire_client or "",
+        ])
+    return response
+
+
+@superviseur_required
+def dashboard_activite_data(request):
+    """Renvoie le nombre d'operations par heure pour le jour courant."""
+    today = date_cls.today()
+
+    rows = (
+        Operation.objects
+        .filter(etape__programme__date_programme=today, is_deleted=False)
+        .annotate(heure=ExtractHour("date_heure"))
+        .values("heure")
+        .annotate(count=Count("id"))
+        .order_by("heure")
+    )
+    par_heure = {row["heure"]: row["count"] for row in rows}
+
+    heures = list(range(6, 21))
+    return JsonResponse({
+        "labels": [f"{h:02d}h" for h in heures],
+        "data": [par_heure.get(h, 0) for h in heures],
+    })

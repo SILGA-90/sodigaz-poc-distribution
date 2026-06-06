@@ -3,18 +3,24 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3">Operations du {{ date_filter|date:"j F Y" }}</h1>
-    <form method="get" class="d-flex gap-2">
-        <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}" class="form-control">
-        <select name="livreur" class="form-select">
-            <option value="">Tous les livreurs</option>
-            {% for liv in livreurs %}
-            <option value="{{ liv.code_livreur }}" {% if liv.code_livreur == livreur_code %}selected{% endif %}>
-                {{ liv.code_livreur }} - {{ liv.get_full_name }}
-            </option>
-            {% endfor %}
-        </select>
-        <button type="submit" class="btn btn-primary">Filtrer</button>
-    </form>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+        <form method="get" class="d-flex gap-2">
+            <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}" class="form-control">
+            <select name="livreur" class="form-select">
+                <option value="">Tous les livreurs</option>
+                {% for liv in livreurs %}
+                <option value="{{ liv.code_livreur }}" {% if liv.code_livreur == livreur_code %}selected{% endif %}>
+                    {{ liv.code_livreur }} - {{ liv.get_full_name }}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">Filtrer</button>
+        </form>
+        <a href="{% url 'supervision:operations-export' %}?date={{ date_filter|date:'Y-m-d' }}{% if livreur_code %}&livreur={{ livreur_code }}{% endif %}"
+           class="btn btn-outline-success">
+            &#x2B73; Exporter CSV
+        </a>
+    </div>
 </div>
 
 {% if operations %}
@@ -32,7 +38,7 @@
     </thead>
     <tbody>
         {% for op in operations %}
-        <tr>
+        <tr class="cursor-pointer" onclick="window.location='{% url 'supervision:operation-detail' op.uuid %}'">
             <td class="text-muted small">{{ op.date_heure|date:"H:i" }}</td>
             <td><span class="fw-semibold">{{ op.etape.programme.utilisateur.code_livreur }}</span></td>
             <td>

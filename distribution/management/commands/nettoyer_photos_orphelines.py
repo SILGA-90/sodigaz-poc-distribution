@@ -1,0 +1,79 @@
+"""
+Supprime les enregistrements Photo dont le fichier binaire n'a jamais
+ete uploade (fichier == 'placeholder.bin') et dont la date de saisie
+depasse le seuil (defaut : 24 heures).
+
+Utilisation :
+    python manage.py nettoyer_photos_orphelines
+    python manage.py nettoyer_photos_orphelines --heures 48
+    python manage.py nettoyer_photos_orphelines --dry-run
+"""
+
+from datetime import timedelta
+
+from django.core.management.base import BaseCommand
+from django.utils import timezone
+
+from distribution.models import Photo
+
+
+class Command(BaseCommand):
+    help = "Supprime les enregistrements Photo sans fichier uploade apres le delai indique."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--heures",
+            type=int,
+            default=24,
+            help="Anciennete minimale en heures avant suppression (defaut : 24).",
+        )
+        parser.add_argument(
+            "--dry-run",
+            action="store_true",
+            default=False,
+            help="Affiche les enregistrements concernes sans les supprimer.",
+        )
+
+    def handle(self, *args, **options):
+        heures = options["heures"]
+        dry_run = options["dry_run"]
+        seuil = timezone.now() - timedelta(hours=heures)
+
+        orphelines = Photo.objects.filter(
+            fichier="placeholder.bin",
+            date_heure__lt=seuil,
+            is_deleted=False,
+        )
+
+        count = orphelines.count()
+
+        if count == 0:
+            self.stdout.write(self.style.SUCCESS("Aucune photo orpheline a nettoyer."))
+            return
+
+        if dry_run:
+            self.stdout.write(
+                self.style.WARNING(
+                    f"[dry-run] {count} photo(s) orpheline(s) seraient supprimees "
+                    f"(seuil : {heures}h) :"
+                )
+            )
+            for ph in orphelines.select_related("operation__etape__programme", "anomalie__programme"):
+                programme = (
+                    ph.operation.etape.programme if ph.operation_id
+                    else ph.anomalie.programme if ph.anomalie_id
+                    else None
+                )
+                ref = programme.numero_x3 if programme else "?"
+                self.stdout.write(f"  - {ph.uuid}  type={ph.type_photo}  programme={ref}  date={ph.date_heure:%Y-%m-%d %H:%M}")
+            return
+
+        # Suppression definitive : aucun fichier sur disque a supprimer
+        # car le placeholder n'existe pas en tant que fichier reel.
+        supprimees, _ = orphelines.delete()
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"{supprimees} photo(s) orpheline(s) supprimee(s) "
+                f"(seuil : {heures}h, date : {timezone.now():%Y-%m-%d %H:%M})."
+            )
+        )
