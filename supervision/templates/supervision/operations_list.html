@@ -4,19 +4,24 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3">Operations du {{ date_filter|date:"j F Y" }}</h1>
     <div class="d-flex gap-2 align-items-center flex-wrap">
-        <form method="get" class="d-flex gap-2">
-            <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}" class="form-control">
-            <select name="livreur" class="form-select">
-                <option value="">Tous les livreurs</option>
+        <form method="get" class="d-flex gap-2 flex-wrap">
+            <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}" class="form-control" style="width:auto;">
+            <select name="livreur" class="form-select" style="width:auto;">
+                <option value="">Tous livreurs</option>
                 {% for liv in livreurs %}
                 <option value="{{ liv.code_livreur }}" {% if liv.code_livreur == livreur_code %}selected{% endif %}>
                     {{ liv.code_livreur }} - {{ liv.get_full_name }}
                 </option>
                 {% endfor %}
             </select>
+            <select name="type" class="form-select" style="width:auto;">
+                <option value="" {% if not type_filter %}selected{% endif %}>Tous types</option>
+                <option value="COLLECTE" {% if type_filter == "COLLECTE" %}selected{% endif %}>Collecte</option>
+                <option value="RESTITUTION" {% if type_filter == "RESTITUTION" %}selected{% endif %}>Restitution</option>
+            </select>
             <button type="submit" class="btn btn-primary">Filtrer</button>
         </form>
-        <a href="{% url 'supervision:operations-export' %}?date={{ date_filter|date:'Y-m-d' }}{% if livreur_code %}&livreur={{ livreur_code }}{% endif %}"
+        <a href="{% url 'supervision:operations-export' %}?date={{ date_filter|date:'Y-m-d' }}{% if livreur_code %}&livreur={{ livreur_code }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}"
            class="btn btn-outline-success">
             &#x2B73; Exporter CSV
         </a>

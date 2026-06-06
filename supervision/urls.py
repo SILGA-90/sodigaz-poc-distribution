@@ -23,5 +23,6 @@ urlpatterns = [
     path("operations/<uuid:operation_uuid>/", views.operation_detail, name="operation-detail"),
     path("api/activite/", views.dashboard_activite_data, name="activite-data"),
     path("anomalies/", views.anomalies_list, name="anomalies"),
+    path("anomalies/<int:anomalie_id>/", views.anomalie_detail, name="anomalie-detail"),
     path("anomalies/<int:anomalie_id>/statut/", views.changer_statut_anomalie, name="anomalie-statut"),
 ]

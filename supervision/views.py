@@ -54,6 +54,18 @@ def dashboard(request):
         is_deleted=False,
     ).count()
 
+    anomalies_elevees = (
+        Anomalie.objects
+        .filter(
+            programme__date_programme=today,
+            gravite="ELEVEE",
+            statut__in=("OUVERTE", "EN_TRAITEMENT"),
+            is_deleted=False,
+        )
+        .select_related("programme__utilisateur", "plv")
+        .order_by("-date_heure")
+    )
+
     context = {
         "today": today,
         "nb_programmes": nb_programmes,
@@ -62,6 +74,7 @@ def dashboard(request):
         "nb_operations": nb_operations,
         "montant_encaisse": montant_encaisse,
         "nb_anomalies_ouvertes": nb_anomalies_ouvertes,
+        "anomalies_elevees": anomalies_elevees,
     }
     return render(request, "supervision/dashboard.html", context)
 
@@ -145,6 +158,13 @@ def dashboard_stats_data(request):
         is_deleted=False,
     ).count()
 
+    nb_anomalies_elevees = Anomalie.objects.filter(
+        programme__date_programme=today,
+        gravite="ELEVEE",
+        statut__in=("OUVERTE", "EN_TRAITEMENT"),
+        is_deleted=False,
+    ).count()
+
     return JsonResponse({
         "nb_programmes": nb_programmes,
         "nb_programmes_en_cours": nb_programmes_en_cours,
@@ -152,6 +172,7 @@ def dashboard_stats_data(request):
         "nb_operations": nb_operations,
         "montant_encaisse": montant_encaisse,
         "nb_anomalies_ouvertes": nb_anomalies_ouvertes,
+        "nb_anomalies_elevees": nb_anomalies_elevees,
     })
 
 
@@ -255,6 +276,7 @@ def operations_list(request):
     today = date_cls.today()
     date_str = request.GET.get("date")
     livreur_code = request.GET.get("livreur", "").strip()
+    type_filter = request.GET.get("type", "").strip()
 
     if date_str:
         try:
@@ -278,6 +300,8 @@ def operations_list(request):
         operations = operations.filter(
             etape__programme__utilisateur__code_livreur=livreur_code
         )
+    if type_filter in ("COLLECTE", "RESTITUTION"):
+        operations = operations.filter(type_operation=type_filter)
 
     livreurs = Utilisateur.objects.filter(role=Role.LIVREUR, is_active=True).order_by("code_livreur")
 
@@ -289,6 +313,7 @@ def operations_list(request):
         "operations": operations,
         "date_filter": date_filter,
         "livreur_code": livreur_code,
+        "type_filter": type_filter,
         "livreurs": livreurs,
         "total_montant": total_montant,
     })
@@ -311,8 +336,21 @@ def operation_detail(request, operation_uuid):
 
 
 @superviseur_required
+def anomalie_detail(request, anomalie_id):
+    anomalie = get_object_or_404(
+        Anomalie.objects
+        .select_related("programme__utilisateur", "plv__client")
+        .prefetch_related("photos"),
+        id=anomalie_id,
+        is_deleted=False,
+    )
+    return render(request, "supervision/anomalie_detail.html", {"anomalie": anomalie})
+
+
+@superviseur_required
 def anomalies_list(request):
     statut_filter = request.GET.get("statut", "OUVERTE")
+    gravite_filter = request.GET.get("gravite", "").strip()
     anomalies_qs = (
         Anomalie.objects
         .filter(is_deleted=False)
@@ -321,10 +359,13 @@ def anomalies_list(request):
     )
     if statut_filter and statut_filter != "TOUS":
         anomalies_qs = anomalies_qs.filter(statut=statut_filter)
+    if gravite_filter in ("ELEVEE", "MOYENNE", "FAIBLE"):
+        anomalies_qs = anomalies_qs.filter(gravite=gravite_filter)
 
     return render(request, "supervision/anomalies_list.html", {
         "anomalies": anomalies_qs,
         "statut_filter": statut_filter,
+        "gravite_filter": gravite_filter,
     })
 
 
@@ -337,6 +378,9 @@ def changer_statut_anomalie(request, anomalie_id):
             Anomalie.objects.filter(id=anomalie_id, is_deleted=False).update(
                 statut=nouveau_statut
             )
+    referer = request.META.get("HTTP_REFERER")
+    if referer:
+        return redirect(referer)
     return redirect("supervision:anomalies")
 
 
@@ -425,6 +469,7 @@ def operations_export_csv(request):
     today = date_cls.today()
     date_str = request.GET.get("date")
     livreur_code = request.GET.get("livreur", "").strip()
+    type_filter = request.GET.get("type", "").strip()
 
     if date_str:
         try:
@@ -445,6 +490,8 @@ def operations_export_csv(request):
         operations = operations.filter(
             etape__programme__utilisateur__code_livreur=livreur_code
         )
+    if type_filter in ("COLLECTE", "RESTITUTION"):
+        operations = operations.filter(type_operation=type_filter)
 
     filename = f"operations_{date_filter.strftime('%Y-%m-%d')}.csv"
     response = HttpResponse(content_type="text/csv; charset=utf-8-sig")

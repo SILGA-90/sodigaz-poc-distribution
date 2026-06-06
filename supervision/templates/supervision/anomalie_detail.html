@@ -1,0 +1,145 @@
+{% extends "supervision/base.html" %}
+{% block title %}Anomalie {{ anomalie.id }} — {{ anomalie.type_anomalie }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="{% url 'supervision:anomalies' %}" class="text-muted small">&larr; Retour aux anomalies</a>
+        <h1 class="h3 mb-0 mt-1">
+            {{ anomalie.type_anomalie }}
+            {% if anomalie.gravite == "ELEVEE" %}
+            <span class="badge bg-danger ms-2">Gravite elevee</span>
+            {% elif anomalie.gravite == "MOYENNE" %}
+            <span class="badge bg-warning text-dark ms-2">Gravite moyenne</span>
+            {% else %}
+            <span class="badge bg-success ms-2">Gravite faible</span>
+            {% endif %}
+            <span class="badge badge-statut-{{ anomalie.statut }} ms-1">{{ anomalie.get_statut_display }}</span>
+        </h1>
+        <div class="text-muted small mt-1">{{ anomalie.date_heure|date:"l j F Y à H:i" }}</div>
+    </div>
+    <div class="d-flex gap-2">
+        {% if anomalie.statut == "OUVERTE" %}
+        <form method="post" action="{% url 'supervision:anomalie-statut' anomalie.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="statut" value="EN_TRAITEMENT">
+            <button type="submit" class="btn btn-warning">Prendre en charge</button>
+        </form>
+        {% elif anomalie.statut == "EN_TRAITEMENT" %}
+        <form method="post" action="{% url 'supervision:anomalie-statut' anomalie.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="statut" value="RESOLUE">
+            <button type="submit" class="btn btn-success">Marquer resolue</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    {# ── Colonne gauche : infos contextuelles ── #}
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Contexte</div>
+            <div class="card-body">
+                <dl class="mb-0">
+                    <dt class="text-muted small">Programme</dt>
+                    <dd>
+                        <a href="{% url 'supervision:programme-detail' anomalie.programme.id %}" class="fw-semibold font-monospace">
+                            {{ anomalie.programme.numero_x3 }}
+                        </a>
+                        <span class="badge {% if anomalie.programme.type_programme == 'COLLECTE' %}bg-primary{% else %}bg-success{% endif %} ms-1">
+                            {{ anomalie.programme.type_programme }}
+                        </span>
+                    </dd>
+                    <dt class="text-muted small mt-2">Livreur</dt>
+                    <dd>
+                        <span class="fw-semibold">{{ anomalie.programme.utilisateur.code_livreur }}</span>
+                        <br><small class="text-muted">{{ anomalie.programme.utilisateur.get_full_name }}</small>
+                    </dd>
+                    <dt class="text-muted small mt-2">PLV</dt>
+                    <dd>{{ anomalie.plv.libelle|default:"—" }}</dd>
+                    {% if anomalie.plv.client %}
+                    <dt class="text-muted small mt-2">Client</dt>
+                    <dd>{{ anomalie.plv.client.raison_sociale }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+
+        {% if anomalie.localisation %}
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Localisation GPS</div>
+            <div class="card-body pb-2">
+                <p class="font-monospace small mb-2">
+                    {{ anomalie.localisation.y|floatformat:6 }},
+                    {{ anomalie.localisation.x|floatformat:6 }}
+                </p>
+                <div id="minimap" style="height:160px;border-radius:6px;"></div>
+                <a class="btn btn-sm btn-outline-secondary mt-2 w-100"
+                   href="https://www.google.com/maps?q={{ anomalie.localisation.y }},{{ anomalie.localisation.x }}"
+                   target="_blank" rel="noopener">
+                    Ouvrir dans Google Maps
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── Colonne droite : description + photos ── #}
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Description</div>
+            <div class="card-body">
+                <p class="mb-0" style="white-space:pre-wrap;">{{ anomalie.description }}</p>
+            </div>
+        </div>
+
+        {% with photos=anomalie.photos.all %}
+        {% if photos %}
+        <div class="card">
+            <div class="card-header fw-semibold">Photos ({{ photos|length }})</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% for photo in photos %}
+                    <div class="col-6 col-md-4">
+                        {% if "placeholder" in photo.fichier.name %}
+                        <div class="bg-light border rounded d-flex align-items-center justify-content-center"
+                             style="height:140px;">
+                            <span class="text-muted small text-center px-2">En attente<br>de synchronisation</span>
+                        </div>
+                        {% else %}
+                        <a href="{{ photo.fichier.url }}" target="_blank">
+                            <img src="{{ photo.fichier.url }}" alt="{{ photo.type_photo }}"
+                                 class="img-fluid rounded" style="height:140px;width:100%;object-fit:cover;">
+                        </a>
+                        {% endif %}
+                        <div class="text-muted small text-center mt-1">{{ photo.get_type_photo_display }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-body text-muted">Aucune photo rattachee a cette anomalie.</div>
+        </div>
+        {% endif %}
+        {% endwith %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if anomalie.localisation %}
+<script>
+const minimap = L.map('minimap', { zoomControl: false, dragging: false, scrollWheelZoom: false })
+    .setView([{{ anomalie.localisation.y }}, {{ anomalie.localisation.x }}], 16);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap', maxZoom: 19,
+}).addTo(minimap);
+L.circleMarker([{{ anomalie.localisation.y }}, {{ anomalie.localisation.x }}], {
+    radius: 8, color: '#dc3545', fillColor: '#dc3545', fillOpacity: 0.8,
+}).addTo(minimap);
+</script>
+{% endif %}
+{% endblock %}

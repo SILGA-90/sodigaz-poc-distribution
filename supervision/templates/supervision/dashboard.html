@@ -13,6 +13,27 @@
     </div>
 </div>
 
+{# ── Bandeau anomalies critiques (gravite ELEVEE non resolues) ── #}
+{% if anomalies_elevees %}
+<div class="alert alert-danger border-danger mb-4 py-2" id="alerte-elevee">
+    <div class="d-flex align-items-center gap-2 mb-2">
+        <strong>&#9888; {{ anomalies_elevees|length }} anomalie{{ anomalies_elevees|length|pluralize }} de gravite ELEVEE en cours</strong>
+        <a href="{% url 'supervision:anomalies' %}?statut=TOUS&gravite=ELEVEE" class="btn btn-sm btn-danger ms-auto">Voir toutes &raquo;</a>
+    </div>
+    <ul class="mb-0 ps-3">
+        {% for a in anomalies_elevees %}
+        <li>
+            <a href="{% url 'supervision:anomalie-detail' a.id %}" class="text-danger fw-semibold">{{ a.type_anomalie }}</a>
+            — {{ a.programme.utilisateur.code_livreur }}
+            {% if a.plv %} · {{ a.plv.libelle }}{% endif %}
+            <span class="badge badge-statut-{{ a.statut }} ms-1">{{ a.get_statut_display }}</span>
+            <span class="text-muted small ms-1">{{ a.date_heure|date:"H:i" }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
 <div class="row g-3 mb-4">
     <div class="col-md-3">
         <div class="card stat-card h-100">
@@ -83,6 +104,10 @@
         100% { background-color: transparent; }
     }
     .stat-updated { animation: pulse-update 1.2s ease-out; }
+    @keyframes pulse-danger {
+        0%, 100% { border-left-color: #dc3545; }
+        50% { border-left-color: #ff8fa3; }
+    }
 </style>
 {% endblock %}
 
@@ -248,6 +273,16 @@ function refreshStats() {
             const link = document.getElementById('anomalies-link');
             if (link) {
                 link.style.display = stats.nb_anomalies_ouvertes > 0 ? '' : 'none';
+            }
+            // Mise en evidence si anomalies ELEVEE
+            const alerteCard = document.querySelector('.card.stat-card.danger');
+            if (alerteCard) {
+                if (stats.nb_anomalies_elevees > 0) {
+                    alerteCard.style.borderLeftColor = '#dc3545';
+                    alerteCard.style.animation = 'pulse-danger 1.5s infinite';
+                } else {
+                    alerteCard.style.animation = '';
+                }
             }
         });
 }
