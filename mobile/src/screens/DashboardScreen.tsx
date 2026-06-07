@@ -7,12 +7,14 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
-import { fetchMe, logout } from '../api/authService';
+import { fetchMe, logout, verifyDevAccess } from '../api/authService';
 import { syncAll } from '../sync/syncService';
 import { getProgrammesRecents, ProgrammeAvecProgression } from '../db/repositories/programmeRepository';
 import { countPending } from '../db/repositories/operationRepository';
@@ -48,6 +50,12 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     visible: false, message: '', type: 'success',
   });
   const { isConnected, justReconnected, clearReconnected } = useNetworkStatus();
+  const [devUnlocked, setDevUnlocked] = useState<boolean>(false);
+  const [pinVisible, setPinVisible] = useState<boolean>(false);
+  const [pinInput, setPinInput] = useState<string>('');
+  const [pinLoading, setPinLoading] = useState<boolean>(false);
+  const devTapCount = useRef<number>(0);
+  const devTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Ticker pour que l'affichage "il y a X min" se rafraichisse chaque minute
   const [, setTick] = useState(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -55,6 +63,39 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     tickRef.current = setInterval(() => setTick((n) => n + 1), 60000);
     return () => { if (tickRef.current) clearInterval(tickRef.current); };
   }, []);
+
+  function handleDevTap(): void {
+    devTapCount.current += 1;
+    if (devTapTimer.current) clearTimeout(devTapTimer.current);
+    if (devTapCount.current >= 7) {
+      devTapCount.current = 0;
+      setPinInput('');
+      setPinVisible(true);
+    } else {
+      devTapTimer.current = setTimeout(() => { devTapCount.current = 0; }, 2000);
+    }
+  }
+
+  async function checkPin(): Promise<void> {
+    setPinLoading(true);
+    const result = await verifyDevAccess(pinInput);
+    setPinLoading(false);
+    if (result === 'ok') {
+      setPinVisible(false);
+      setPinInput('');
+      setDevUnlocked(true);
+      showToast('Mode developpeur active', 'info');
+    } else if (result === 'quota') {
+      setPinInput('');
+      showToast('Trop de tentatives — reessayez dans 1 heure', 'error');
+    } else if (result === 'error') {
+      setPinInput('');
+      showToast('Connexion requise pour le mode developpeur', 'error');
+    } else {
+      setPinInput('');
+      showToast('Code incorrect', 'error');
+    }
+  }
 
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ visible: true, message, type });
@@ -267,9 +308,61 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
           <Text style={styles.footerText}>Deconnexion</Text>
         </TouchableOpacity>
       </View>
-      <TouchableOpacity style={styles.debugLink} onPress={() => navigation.navigate('Debug')}>
-        <Text style={styles.debugLinkText}>Debug BDD</Text>
-      </TouchableOpacity>
+      <View style={styles.devZone}>
+        <TouchableOpacity
+          onPress={handleDevTap}
+          hitSlop={{ top: 8, bottom: 8, left: 20, right: 20 }}
+        >
+          <Text style={styles.versionText}>v1.0 POC</Text>
+        </TouchableOpacity>
+        {devUnlocked && (
+          <TouchableOpacity
+            style={styles.debugLink}
+            onPress={() => navigation.navigate('Debug')}
+          >
+            <Text style={styles.debugLinkText}>Debug BDD</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Overlay PIN mode developpeur */}
+      {pinVisible && (
+        <View style={styles.pinOverlay}>
+          <View style={styles.pinCard}>
+            <Text style={styles.pinTitle}>Mode developpeur</Text>
+            <Text style={styles.pinSub}>Entrez le code d'acces</Text>
+            <TextInput
+              style={styles.pinInput}
+              value={pinInput}
+              onChangeText={setPinInput}
+              keyboardType="number-pad"
+              maxLength={4}
+              secureTextEntry
+              autoFocus
+              placeholder="• • • •"
+              placeholderTextColor="#aaa"
+            />
+            <View style={styles.pinActions}>
+              <TouchableOpacity
+                style={styles.pinCancelBtn}
+                onPress={() => { setPinVisible(false); setPinInput(''); }}
+              >
+                <Text style={styles.pinCancelText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.pinConfirmBtn, pinLoading && { opacity: 0.6 }]}
+                onPress={checkPin}
+                disabled={pinLoading}
+              >
+                {pinLoading
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={styles.pinConfirmText}>Valider</Text>
+                }
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* Toast */}
       <Toast
@@ -373,6 +466,32 @@ const styles = StyleSheet.create({
   footer: { borderTopWidth: 1, borderTopColor: '#e0e0e0', backgroundColor: '#fff' },
   logoutButton: { padding: 14, alignItems: 'center', backgroundColor: '#1a2332' },
   footerText: { color: '#fff', fontWeight: '600' },
-  debugLink: { padding: 8, alignItems: 'center' },
-  debugLinkText: { color: '#ccc', fontSize: 11 },
+  devZone: { paddingVertical: 8, alignItems: 'center', gap: 4 },
+  versionText: { color: '#ccc', fontSize: 11 },
+  debugLink: { paddingVertical: 4, paddingHorizontal: 12 },
+  debugLinkText: { color: '#1a7fba', fontSize: 12, fontWeight: '600' },
+
+  pinOverlay: {
+    position: 'absolute', inset: 0,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  pinCard: {
+    backgroundColor: '#fff', borderRadius: 14, padding: 24,
+    width: 280,
+    shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 }, elevation: 10,
+  },
+  pinTitle: { fontSize: 16, fontWeight: '700', color: '#1a2332', textAlign: 'center' },
+  pinSub: { fontSize: 13, color: '#888', textAlign: 'center', marginTop: 4, marginBottom: 16 },
+  pinInput: {
+    borderWidth: 1, borderColor: '#ccc', borderRadius: 8,
+    padding: 12, fontSize: 22, textAlign: 'center',
+    letterSpacing: 8, color: '#333', backgroundColor: '#f8f9fa',
+  },
+  pinActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 16, gap: 10 },
+  pinCancelBtn: { flex: 1, padding: 12, borderRadius: 8, backgroundColor: '#f1f5f9', alignItems: 'center' },
+  pinCancelText: { color: '#666', fontWeight: '600' },
+  pinConfirmBtn: { flex: 1, padding: 12, borderRadius: 8, backgroundColor: '#1a7fba', alignItems: 'center' },
+  pinConfirmText: { color: '#fff', fontWeight: '700' },
 });

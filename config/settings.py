@@ -88,6 +88,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 
+DEV_ACCESS_CODE = env("DEV_ACCESS_CODE", default="")
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -96,6 +98,10 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_THROTTLE_RATES": {
+        # 3 tentatives par heure par utilisateur sur l'endpoint dev-access
+        "dev_access": "3/hour",
+    },
 }
 
 

@@ -42,3 +42,30 @@ export async function isAuthenticated(): Promise<boolean> {
   const token = await getItem(STORAGE_KEYS.ACCESS_TOKEN);
   return token !== null;
 }
+
+/**
+ * Verifie le code d'acces developpeur aupres du serveur.
+ * Le code n'est jamais stocke dans l'application — la verification est cote serveur.
+ *
+ * Retourne :
+ *   "ok"      — code correct
+ *   "invalid" — code incorrect
+ *   "quota"   — trop de tentatives (429)
+ *   "error"   — erreur reseau ou serveur
+ */
+export async function verifyDevAccess(
+  code: string,
+): Promise<'ok' | 'invalid' | 'quota' | 'error'> {
+  try {
+    const response = await apiClient.post<{ ok: boolean }>(
+      '/api/auth/dev-access/',
+      { code },
+    );
+    return response.data.ok ? 'ok' : 'invalid';
+  } catch (err: any) {
+    const status: number | undefined = err?.response?.status;
+    if (status === 403) return 'invalid';
+    if (status === 429) return 'quota';
+    return 'error';
+  }
+}
