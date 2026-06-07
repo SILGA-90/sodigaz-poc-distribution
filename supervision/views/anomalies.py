@@ -18,7 +18,7 @@ def anomalies_list(request):
 
     anomalies_qs = (
         Anomalie.objects
-        .filter(is_deleted=False)
+        .filter(is_deleted=False, programme__is_deleted=False)
         .select_related("programme__utilisateur", "plv__client")
         .order_by("-date_heure")
     )

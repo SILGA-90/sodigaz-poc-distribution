@@ -1,23 +1,36 @@
 """Commande Django simulant l'export quotidien de Sage X3."""
 import random
+import uuid
 from datetime import date as date_cls
 from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.utils import timezone
 
 from accounts.models import Role, Utilisateur
 from distribution.circuit import appliquer_ordre_optimise
 from distribution.models import (
+    Anomalie,
     Etape,
+    GraviteAnomalie,
     LigneProgramme,
     Plv,
     Produit,
     Programme,
+    StatutAnomalie,
     StatutProgramme,
     TypeProgramme,
     Vehicule,
 )
+
+_TYPES_ANOMALIE = [
+    "Client absent",
+    "Probleme acces depot",
+    "Bouteille endommagee",
+    "Quantite insuffisante en stock camion",
+    "Refus de reception client",
+]
 
 
 class Command(BaseCommand):
@@ -29,7 +42,7 @@ class Command(BaseCommand):
         parser.add_argument("--livreur", type=str,
             help="Code livreur specifique. Par defaut : tous.")
         parser.add_argument("--reset", action="store_true",
-            help="Supprime les programmes existants pour la date avant generation.")
+            help="Soft-delete les programmes existants pour la date avant regeneration.")
 
     def handle(self, *args, **options):
         if options["date"]:
@@ -58,11 +71,21 @@ class Command(BaseCommand):
             raise CommandError("Produits G* (gaz emballé) manquants. Lance d'abord 'seed_demo'.")
 
         if options["reset"]:
-            n, _ = Programme.objects.filter(
-                date_programme=date_prog,
-                utilisateur__in=livreurs,
-            ).delete()
-            self.stdout.write(self.style.WARNING(f"Reset : {n} programme(s) supprime(s)."))
+            # Soft-delete en cascade : anomalies d'abord, puis programmes.
+            # Le trigger PostgreSQL met à jour last_modified sur chaque ligne ;
+            # le mobile apprendra les suppressions via la liste "deleted" du pull.
+            progs_a_supprimer = list(
+                Programme.objects.filter(
+                    date_programme=date_prog,
+                    utilisateur__in=livreurs,
+                    is_deleted=False,
+                ).values_list("id", flat=True)
+            )
+            Anomalie.objects.filter(programme_id__in=progs_a_supprimer, is_deleted=False).update(is_deleted=True)
+            count = Programme.objects.filter(id__in=progs_a_supprimer).update(is_deleted=True)
+            self.stdout.write(self.style.WARNING(
+                f"Reset : {count} programme(s) marque(s) supprimes (soft-delete)."
+            ))
 
         compteur = 0
         with transaction.atomic():
@@ -75,6 +98,7 @@ class Command(BaseCommand):
                     utilisateur=livreur,
                     date_programme=date_prog,
                     type_programme=type_prog,
+                    is_deleted=False,
                 ).exists():
                     self.stdout.write(
                         self.style.NOTICE(
@@ -117,6 +141,20 @@ class Command(BaseCommand):
 
                 # Calcul de l'ordre de visite suggere (plus proche voisin)
                 appliquer_ordre_optimise(programme)
+
+                # Anomalies de demo : 1 par programme (pour permettre de tester la supervision)
+                if options["reset"]:
+                    plv_anomalie = random.choice(plvs_choisis)
+                    Anomalie.objects.create(
+                        uuid=uuid.uuid4(),
+                        programme=programme,
+                        plv=plv_anomalie,
+                        type_anomalie=random.choice(_TYPES_ANOMALIE),
+                        gravite=random.choice([GraviteAnomalie.FAIBLE, GraviteAnomalie.MOYENNE, GraviteAnomalie.ELEVEE]),
+                        description="Anomalie generee automatiquement pour la demonstration.",
+                        statut=StatutAnomalie.OUVERTE,
+                        date_heure=timezone.now(),
+                    )
 
                 compteur += 1
                 self.stdout.write(

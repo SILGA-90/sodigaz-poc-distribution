@@ -220,7 +220,7 @@ class Produit(TimestampedModel):
 
 class Programme(SyncableModel):
     uuid = models.UUIDField(unique=True, default=uuid_lib.uuid4, editable=False)
-    numero_x3 = models.CharField(max_length=30, unique=True, help_text="N de programme cote Sage X3")
+    numero_x3 = models.CharField(max_length=50, help_text="N de programme cote Sage X3")
     utilisateur = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -238,9 +238,16 @@ class Programme(SyncableModel):
     class Meta:
         db_table = "programme"
         constraints = [
+            # Partial : allow soft-deleted duplicates so --reset can recreate
+            models.UniqueConstraint(
+                fields=["numero_x3"],
+                name="uq_programme_numero_x3",
+                condition=models.Q(is_deleted=False),
+            ),
             models.UniqueConstraint(
                 fields=["utilisateur", "date_programme", "type_programme"],
                 name="uq_programme_livreur_jour",
+                condition=models.Q(is_deleted=False),
             ),
         ]
         indexes = [

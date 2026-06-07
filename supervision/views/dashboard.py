@@ -6,7 +6,10 @@ from django.db.models.functions import Coalesce, ExtractHour
 from django.http import JsonResponse
 from django.shortcuts import render
 
-from distribution.models import Anomalie, Operation, Plv, Programme, StatutAnomalie
+from distribution.models import (
+    Anomalie, LigneOperation, LigneProgramme,
+    Operation, Plv, Produit, Programme, StatutAnomalie,
+)
 
 from ..decorators import superviseur_required
 from ._base import _get_date_filter
@@ -165,7 +168,7 @@ def dashboard_stats_data(request):
 
 @superviseur_required
 def dashboard_activite_data(request):
-    """AJAX : nombre d'opérations par heure pour alimenter le graphique."""
+    """AJAX : nombre d'opérations par heure (conservé pour compatibilité)."""
     date_filter = _get_date_filter(request)
 
     rows = (
@@ -177,9 +180,74 @@ def dashboard_activite_data(request):
         .order_by("heure")
     )
     par_heure = {row["heure"]: row["count"] for row in rows}
-
     heures = list(range(6, 21))
     return JsonResponse({
         "labels": [f"{h:02d}h" for h in heures],
         "data": [par_heure.get(h, 0) for h in heures],
     })
+
+
+@superviseur_required
+def dashboard_bilan_produits_data(request):
+    """
+    AJAX : bilan prévu vs réalisé par produit G* pour la journée.
+    Utile pour le stock, le commercial et la réconciliation des données.
+    """
+    date_filter = _get_date_filter(request)
+    filtre = dict(
+        etape__programme__date_programme=date_filter,
+        etape__programme__is_deleted=False,
+        is_deleted=False,
+    )
+
+    # Quantités prévues (RESTITUTION uniquement — les COLLECTE n'ont pas de LigneProgramme)
+    prevus = {
+        row["produit_id"]: row["qte"]
+        for row in LigneProgramme.objects
+        .filter(
+            etape__programme__date_programme=date_filter,
+            etape__programme__is_deleted=False,
+            is_deleted=False,
+        )
+        .values("produit_id")
+        .annotate(qte=Sum("quantite_prevue"))
+    }
+
+    # Quantités réalisées (toutes opérations)
+    realises = {
+        row["produit_id"]: row["qte"]
+        for row in LigneOperation.objects
+        .filter(
+            operation__etape__programme__date_programme=date_filter,
+            operation__etape__programme__is_deleted=False,
+            is_deleted=False,
+        )
+        .values("produit_id")
+        .annotate(qte=Sum("quantite_realisee"))
+    }
+
+    # Fusion par produit
+    tous_ids = set(prevus) | set(realises)
+    if not tous_ids:
+        return JsonResponse({"produits": []})
+
+    produits_map = {
+        p.id: p
+        for p in Produit.objects.filter(id__in=tous_ids).only("id", "code_x3", "libelle", "prix_unitaire")
+    }
+
+    result = []
+    for pid in sorted(tous_ids, key=lambda i: produits_map[i].code_x3):
+        prod = produits_map[pid]
+        prevu = prevus.get(pid, 0)
+        realise = realises.get(pid, 0)
+        result.append({
+            "code_x3": prod.code_x3,
+            "libelle": prod.libelle,
+            "prevu": prevu,
+            "realise": realise,
+            "ecart": realise - prevu,
+            "montant": realise * int(prod.prix_unitaire or 0),
+        })
+
+    return JsonResponse({"produits": result})
