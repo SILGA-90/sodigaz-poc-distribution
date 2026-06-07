@@ -23,9 +23,12 @@ export interface PositionQualifiee {
   horodatage: string | null;  // ISO 8601, instant de l'acquisition GPS
 }
 
-const SEUIL_FIABLE_METRES = 50;
-// 30 s : un cold start GPS peut prendre 20-40 s en exterieur (vs 15 s avant).
-const TIMEOUT_MS = 30000;
+// 100 m : précision typique du fused location provider Android avant fix satellite.
+// 75-100 m est suffisant pour prouver la présence à un PLV (valeur probante).
+// Un fix satellite (5-15 m) n'est pas garanti en intérieur ou à l'ouverture.
+const SEUIL_FIABLE_METRES = 100;
+// 45 s : donne plus de temps au GPS satellite pour un cold fix (~30-40 s).
+const TIMEOUT_MS = 45000;
 // 2 min : couvre le temps de remplissage du formulaire apres une prise fraiche.
 const MAX_AGE_REPLI_MS = 120 * 1000;
 

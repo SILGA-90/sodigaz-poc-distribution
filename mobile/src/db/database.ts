@@ -8,12 +8,12 @@ import { CREATE_TABLES_SQL, SCHEMA_VERSION } from './schema';
 const DB_NAME = 'sodigaz.db';
 
 let dbInstance: SQLite.SQLiteDatabase | null = null;
+// Verrou d'initialisation : tous les appelants simultanés attendent la même
+// promesse au lieu d'ouvrir chacun une connexion concurrente (race condition
+// → NullPointerException côté natif Android sur prepareAsync).
+let dbInitPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
-export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
-  if (dbInstance) {
-    return dbInstance;
-  }
-
+async function _openAndInit(): Promise<SQLite.SQLiteDatabase> {
   const db = await SQLite.openDatabaseAsync(DB_NAME);
   await db.execAsync('PRAGMA journal_mode = WAL;');
   await db.execAsync('PRAGMA foreign_keys = ON;');
@@ -57,8 +57,26 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     await db.execAsync('PRAGMA user_version = 3;');
   }
 
-  dbInstance = db;
   return db;
+}
+
+export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
+  if (dbInstance) return dbInstance;
+
+  if (!dbInitPromise) {
+    dbInitPromise = _openAndInit()
+      .then((db) => {
+        dbInstance = db;
+        dbInitPromise = null;
+        return db;
+      })
+      .catch((err) => {
+        dbInitPromise = null;
+        throw err;
+      });
+  }
+
+  return dbInitPromise;
 }
 
 export async function resetDatabase(): Promise<void> {
@@ -73,6 +91,7 @@ export async function resetDatabase(): Promise<void> {
   }
   await db.execAsync('PRAGMA user_version = 0;');
   dbInstance = null;
+  dbInitPromise = null;
   await getDatabase();
 }
 
