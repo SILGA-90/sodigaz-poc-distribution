@@ -22,129 +22,63 @@
             --card-radius: 10px;
             --card-shadow: 0 1px 4px rgba(0,0,0,0.07);
         }
-
-        /* ── Global ── */
         body { font-family: 'Inter', sans-serif; background: var(--body-bg); }
 
         /* ── Sidebar ── */
         .sidebar {
-            width: var(--sidebar-w);
-            min-height: 100vh;
+            width: var(--sidebar-w); min-height: 100vh;
             background: var(--sidebar-bg);
-            position: fixed;
-            top: 0; left: 0;
-            z-index: 1040;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            transition: transform .25s ease;
+            position: fixed; top: 0; left: 0;
+            z-index: 1040; display: flex; flex-direction: column;
+            overflow-y: auto; transition: transform .25s ease;
         }
-        .sidebar-brand {
-            padding: 1rem 1.1rem 0.9rem;
-            border-bottom: 1px solid rgba(255,255,255,0.07);
-            flex-shrink: 0;
-        }
+        .sidebar-brand { padding: 1rem 1.1rem .9rem; border-bottom: 1px solid rgba(255,255,255,.07); flex-shrink: 0; }
         .sidebar-brand img { max-width: 100%; height: 44px; object-fit: contain; }
-
         .sidebar-section {
-            padding: 0.6rem 1.1rem 0.2rem;
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: .09em;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.25);
-            margin-top: .5rem;
+            padding: .6rem 1.1rem .2rem; font-size: .65rem; font-weight: 700;
+            letter-spacing: .09em; text-transform: uppercase;
+            color: rgba(255,255,255,.25); margin-top: .5rem;
         }
-        .sidebar-nav { flex: 1; padding: 0.5rem 0; list-style: none; margin: 0; }
+        .sidebar-nav { flex: 1; padding: .5rem 0; list-style: none; margin: 0; }
         .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-            padding: 0.55rem 1.1rem;
-            color: var(--sidebar-text);
-            text-decoration: none;
-            font-size: 0.855rem;
-            font-weight: 500;
-            border-left: 3px solid transparent;
-            transition: all .15s;
-            border-radius: 0 6px 6px 0;
-            margin: 1px 0.5rem 1px 0;
+            display: flex; align-items: center; gap: .7rem;
+            padding: .55rem 1.1rem; color: var(--sidebar-text);
+            text-decoration: none; font-size: .855rem; font-weight: 500;
+            border-left: 3px solid transparent; transition: all .15s;
+            border-radius: 0 6px 6px 0; margin: 1px .5rem 1px 0;
         }
-        .sidebar-link:hover {
-            background: var(--sidebar-hover);
-            color: #fff;
-        }
-        .sidebar-link.active {
-            background: rgba(244,121,32,.13);
-            color: #fff;
-            border-left-color: var(--brand-orange);
-        }
+        .sidebar-link:hover { background: var(--sidebar-hover); color: #fff; }
+        .sidebar-link.active { background: rgba(244,121,32,.13); color: #fff; border-left-color: var(--brand-orange); }
         .sidebar-link i { font-size: 1.05rem; width: 1.2rem; text-align: center; flex-shrink: 0; }
-
-        .sidebar-footer {
-            padding: .85rem 1.1rem;
-            border-top: 1px solid rgba(255,255,255,0.07);
-            flex-shrink: 0;
-        }
-        .sidebar-user {
-            display: flex;
-            align-items: center;
-            gap: .6rem;
-            font-size: .8rem;
-            color: var(--sidebar-text);
-            margin-bottom: .5rem;
-        }
+        .sidebar-footer { padding: .85rem 1.1rem; border-top: 1px solid rgba(255,255,255,.07); flex-shrink: 0; }
+        .sidebar-user { display: flex; align-items: center; gap: .6rem; font-size: .8rem; color: var(--sidebar-text); margin-bottom: .5rem; }
         .sidebar-user .avatar {
-            width: 30px; height: 30px;
-            background: var(--brand-blue);
-            border-radius: 50%;
+            width: 30px; height: 30px; background: var(--brand-blue); border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            color: #fff; font-size: .8rem; font-weight: 700;
-            flex-shrink: 0;
+            color: #fff; font-size: .8rem; font-weight: 700; flex-shrink: 0;
         }
         .sidebar-logout {
-            display: flex;
-            align-items: center;
-            gap: .5rem;
-            color: #8daec8;
-            font-size: .8rem;
-            text-decoration: none;
-            padding: .3rem .4rem;
-            border-radius: 6px;
-            transition: all .15s;
+            display: flex; align-items: center; gap: .5rem;
+            color: #8daec8; font-size: .8rem; text-decoration: none;
+            padding: .3rem .4rem; border-radius: 6px; transition: all .15s;
         }
-        .sidebar-logout:hover { background: rgba(255,255,255,0.06); color: #fff; }
-
-        /* Sidebar overlay on mobile */
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,.5);
-            z-index: 1039;
-        }
+        .sidebar-logout:hover { background: rgba(255,255,255,.06); color: #fff; }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1039; }
         .sidebar-overlay.show { display: block; }
 
-        /* ── Topbar (mobile only) ── */
+        /* ── Topbar mobile ── */
         .topbar {
-            display: none;
-            position: sticky;
-            top: 0;
-            z-index: 1030;
-            background: var(--sidebar-bg);
-            padding: .65rem 1rem;
-            align-items: center;
-            gap: 1rem;
+            display: none; position: sticky; top: 0; z-index: 1030;
+            background: var(--sidebar-bg); padding: .65rem 1rem;
+            align-items: center; gap: 1rem;
         }
         .topbar-toggle { color: #fff; border: none; background: none; font-size: 1.3rem; cursor: pointer; }
         .topbar-logo { height: 28px; }
 
-        /* ── Main content ── */
-        .main-content {
-            margin-left: var(--sidebar-w);
-            min-height: 100vh;
-        }
+        /* ── Layout ── */
+        .main-content { margin-left: var(--sidebar-w); min-height: 100vh; }
         .main-inner { padding: 1.75rem; }
+        .login-wrapper { min-height: 100vh; background: var(--body-bg); }
 
         /* ── Responsive ── */
         @media (max-width: 991.98px) {
@@ -153,16 +87,11 @@
             .main-content { margin-left: 0; }
             .topbar { display: flex; }
         }
-        @media (max-width: 768px) {
-            #map { height: 280px; }
-            .main-inner { padding: 1rem; }
-        }
+        @media (max-width: 768px) { #map { height: 280px; } .main-inner { padding: 1rem; } }
         @media (max-width: 576px) {
             .filter-row { flex-direction: column !important; align-items: stretch !important; }
             .filter-form { flex-direction: column !important; width: 100%; }
-            .filter-form .form-control,
-            .filter-form .form-select,
-            .filter-form .btn { width: 100% !important; }
+            .filter-form .form-control, .filter-form .form-select, .filter-form .btn { width: 100% !important; }
             .sig-box { width: 100% !important; max-width: 240px; }
             .gps-mono { word-break: break-all; font-size: .8rem; }
             .photo-thumb { width: 80px !important; height: 80px !important; }
@@ -173,14 +102,10 @@
 
         /* ── KPI cards ── */
         .kpi-card {
-            background: #fff;
-            border-radius: var(--card-radius);
+            background: #fff; border-radius: var(--card-radius);
             padding: 1.1rem 1.25rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-top: 3px solid var(--brand-blue);
-            box-shadow: var(--card-shadow);
+            display: flex; justify-content: space-between; align-items: center;
+            border-top: 3px solid var(--brand-blue); box-shadow: var(--card-shadow);
         }
         .kpi-card.kpi-success { border-top-color: #198754; }
         .kpi-card.kpi-warning { border-top-color: var(--brand-orange); }
@@ -191,30 +116,23 @@
         .kpi-icon  { font-size: 2.4rem; opacity: .12; line-height: 1; }
 
         /* ── Cards ── */
-        .card {
-            border: none;
-            border-radius: var(--card-radius);
-            box-shadow: var(--card-shadow);
-        }
+        .card { border: none; border-radius: var(--card-radius); box-shadow: var(--card-shadow); }
         .card-header {
-            background: #fff;
-            border-bottom: 1px solid #eef1f6;
+            background: #fff; border-bottom: 1px solid #eef1f6;
             border-radius: var(--card-radius) var(--card-radius) 0 0 !important;
-            font-weight: 600;
-            font-size: .875rem;
-            color: #1a2332;
+            font-weight: 600; font-size: .875rem; color: #1a2332;
         }
 
         /* ── Badges statut ── */
-        .badge-statut-PLANIFIE    { background-color: #6c757d; }
-        .badge-statut-EN_COURS    { background-color: var(--brand-blue); }
-        .badge-statut-CLOTURE     { background-color: #198754; }
-        .badge-statut-OUVERTE     { background-color: #dc3545; }
+        .badge-statut-PLANIFIE      { background-color: #6c757d; }
+        .badge-statut-EN_COURS      { background-color: var(--brand-blue); }
+        .badge-statut-CLOTURE       { background-color: #198754; }
+        .badge-statut-OUVERTE       { background-color: #dc3545; }
         .badge-statut-EN_TRAITEMENT { background-color: var(--brand-orange); color: #fff; }
-        .badge-statut-RESOLUE     { background-color: #198754; }
-        .badge-statut-A_VISITER   { background-color: #6c757d; }
-        .badge-statut-VISITEE     { background-color: #198754; }
-        .badge-statut-ECHEC       { background-color: #dc3545; }
+        .badge-statut-RESOLUE       { background-color: #198754; }
+        .badge-statut-A_VISITER     { background-color: #6c757d; }
+        .badge-statut-VISITEE       { background-color: #198754; }
+        .badge-statut-ECHEC         { background-color: #dc3545; }
 
         /* ── Tables ── */
         .table thead th { font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #6c757d; border-bottom-color: #eef1f6; }
@@ -231,24 +149,19 @@
         .stat-card.warning { border-left-color: var(--brand-orange); }
         .stat-card.danger  { border-left-color: #dc3545; }
         .stat-card.success { border-left-color: #198754; }
-
-        /* ── Page title ── */
         .page-title { font-size: 1.2rem; font-weight: 700; color: #1a2332; margin: 0; }
         .page-sub   { font-size: .8rem; color: #6c757d; margin-top: .1rem; }
     </style>
 </head>
-{% if user.is_authenticated %}
 <body>
 
-<!-- Sidebar overlay (mobile) -->
+{% if user.is_authenticated %}
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-<!-- Sidebar -->
 <nav class="sidebar" id="sidebar">
     <div class="sidebar-brand">
         <img src="{% static 'supervision/img/logo_name.png' %}" alt="Sodigaz APC">
     </div>
-
     <div class="sidebar-section">Navigation</div>
     <ul class="sidebar-nav">
         <li>
@@ -260,7 +173,7 @@
         <li>
             <a href="{% url 'supervision:programmes' %}"
                class="sidebar-link {% if 'programme' in request.resolver_match.url_name %}active{% endif %}">
-                <i class="bi bi-clipboard-list"></i> Programmes
+                <i class="bi bi-truck"></i> Programmes
             </a>
         </li>
         <li>
@@ -282,7 +195,6 @@
             </a>
         </li>
     </ul>
-
     <div class="sidebar-footer">
         <div class="sidebar-user">
             <div class="avatar">{{ user.get_full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}</div>
@@ -297,21 +209,24 @@
     </div>
 </nav>
 
-<!-- Topbar (mobile) -->
 <div class="topbar">
-    <button class="topbar-toggle" onclick="toggleSidebar()">
-        <i class="bi bi-list"></i>
-    </button>
+    <button class="topbar-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
     <img src="{% static 'supervision/img/logo.png' %}" alt="SODIGAZ" class="topbar-logo">
     <span class="text-white fw-semibold ms-1" style="font-size:.85rem;">Supervision</span>
 </div>
 
-<!-- Main content -->
-<div class="main-content">
-    <div class="main-inner">
-        {% block content %}{% endblock %}
-    </div>
+<div class="main-content"><div class="main-inner">
+{% else %}
+<div class="login-wrapper">
+{% endif %}
+
+{% block content %}{% endblock %}
+
+{% if user.is_authenticated %}
+</div></div>
+{% else %}
 </div>
+{% endif %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -327,10 +242,4 @@
 </script>
 {% block scripts %}{% endblock %}
 </body>
-{% else %}
-<body class="bg-light" style="font-family:'Inter',sans-serif;">
-    {% block content %}{% endblock %}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-{% endif %}
 </html>
