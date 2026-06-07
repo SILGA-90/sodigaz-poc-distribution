@@ -60,6 +60,7 @@ Commandes de gestion utiles (mock_x3/management/commands/) :
 
 Endpoints principaux :
 - `/api/auth/login/`, `/api/auth/refresh/`, `/api/auth/me/`
+- `/api/auth/dev-access/` (POST — vérification PIN mode développeur, JWT requis, throttle 3/h)
 - `/api/mock-x3/programmes/`
 - `/api/sync/pull/`  et  `/api/sync/push/`
 - `/api/sync/photos/<uuid>/upload/`
@@ -129,6 +130,20 @@ est fourni par le mobile au moment du push.
   vers Django et sont visibles en supervision, mais aucun document X3 n'est créé
   en retour. À traiter comme perspective ou à simuler dans le mock — ne pas
   prétendre que c'est fait.
+- **Mode développeur (Debug BDD) — accès protégé** : l'écran Debug BDD est caché
+  derrière un mécanisme 7 taps + PIN vérifié côté serveur (endpoint
+  `/api/auth/dev-access/`). Le code est dans la variable d'environnement
+  `DEV_ACCESS_CODE` (`.env`). **Ne jamais coder le PIN en dur dans le bundle JS**
+  (il serait extractible). Comparaison constant-time (`hmac.compare_digest`),
+  throttle 3 tentatives/heure par utilisateur JWT.
+- **Seuil GPS "fiable" = 100 m** : `SEUIL_FIABLE_METRES` dans `locationService.ts`
+  vaut 100 m (pas 50). La localisation réseau Android donne typiquement 70-100 m
+  avant fix satellite ; ce seuil est une étiquette de classification, pas un cap
+  de précision matérielle. Le fix satellite reste à 5-15 m.
+- **Singleton d'initialisation SQLite** : `database.ts` utilise `dbInitPromise`
+  pour sérialiser les appels concurrents à `openDatabaseAsync()`. Sans ça,
+  plusieurs appelants simultanés créent plusieurs instances → NullPointerException
+  Android (`prepareAsync`). Ne jamais supprimer ce verrou.
 
 ## 6. Environnement & réseau (WSL2)
 
@@ -151,13 +166,22 @@ est fourni par le mobile au moment du push.
 - 5 PLV à Ouagadougou, 3 clients, 3 produits (B6, B12, B38)
 - Centre de carte : [12.3650, -1.5236]
 
-## 8. État d'avancement (début juin 2026)
+## 8. État d'avancement (juin 2026)
 
-- Back-end : opérationnel (auth, mock X3, sync pull/push, supervision, photos).
-- Mobile : sprints validés jusqu'à 3.6 (login JWT, SQLite + repos, sync pull/push,
-  saisie d'opération, signatures SVG, photos, géolocalisation à valeur probante,
-  écran anomalie, clôture).
-- En cours : finitions et corrections de bugs ; rédaction du mémoire en parallèle.
+- **Back-end** : opérationnel (auth JWT, mock X3, sync pull/push, supervision web,
+  photos, endpoint dev-access avec throttle).
+- **Mobile** : fonctionnel bout en bout. Corrections appliquées :
+  - Race condition SQLite (NullPointerException Android) → corrigée (`dbInitPromise`)
+  - Seuil GPS ajusté à 100 m, timeout 45 s
+  - Debug BDD protégé (7 taps + PIN serveur), bugs d'audit corrigés
+  - Design cohérent : couleurs SODIGAZ (#1a7fba/#f47920/#0a1628), accents français,
+    LoginScreen branded, ProgrammeScreen header bleu, `theme.ts` créé
+- **Supervision web** : refonte design — Bootstrap primary overridé (#1a7fba),
+  tables en cards (`table-card`), filtres stylés (`filter-card`), login page
+  avec fond dégradé navy, accents et textes corrigés.
+- **Documentation** : README.md et .env.example mis à jour (DEV_ACCESS_CODE,
+  précision GPS).
+- En cours : rédaction du mémoire.
 
 ## 9. Conventions et attentes de travail
 
@@ -174,8 +198,14 @@ est fourni par le mobile au moment du push.
 - Attention particulière aux invariants de synchronisation : ne pas écrire
   `last_modified` à la main, respecter l'origine des uuid (serveur vs mobile),
   préserver l'idempotence du push et l'ordre pull-avant-push.
+- **Couleurs de marque SODIGAZ** (utiliser systématiquement, ne pas revenir à
+  Bootstrap `#0d6efd`) : bleu `#1a7fba`, orange `#f47920`, navy `#0a1628`.
+- **`expo-linear-gradient` non installé** — simuler les dégradés avec des vues
+  superposées ou un fond solide navy. Ne pas l'ajouter sans accord explicite.
+- **Ne jamais coder le PIN dev en dur** dans le JS/TS mobile (toujours via
+  `/api/auth/dev-access/` + `DEV_ACCESS_CODE` côté serveur).
 
 ## 10. Bugs à traiter
 
-(Communiqués au fil de l'eau pendant la session. Au besoin, les consigner ici
-pour en garder la trace d'une session à l'autre.)
+Aucun bug connu en suspens au 7 juin 2026.
+(Consigner ici au fil de l'eau les nouveaux bugs inter-sessions.)
