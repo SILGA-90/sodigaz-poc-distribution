@@ -32,6 +32,25 @@ _TYPES_ANOMALIE = [
     "Refus de reception client",
 ]
 
+# Probabilités pour la simulation : COL seul / RES seul / les deux
+# Reflète que les deux types peuvent coexister dans la journée d'un livreur.
+_SCENARIOS = [
+    [TypeProgramme.COLLECTE],
+    [TypeProgramme.RESTITUTION],
+    [TypeProgramme.COLLECTE, TypeProgramme.RESTITUTION],
+]
+_POIDS = [3, 3, 2]  # 37 % COL, 37 % RES, 26 % les deux
+
+
+def _numero_libre(prefix: str, candidat: datetime) -> str:
+    """Trouve le premier HHMMSS libre pour ce préfixe (évite les doublons)."""
+    while Programme.objects.filter(
+        numero_x3=prefix + candidat.strftime("%H%M%S"),
+        is_deleted=False,
+    ).exists():
+        candidat += timedelta(seconds=1)
+    return prefix + candidat.strftime("%H%M%S")
+
 
 class Command(BaseCommand):
     help = "Genere les programmes du jour (simulation Sage X3)."
@@ -41,6 +60,8 @@ class Command(BaseCommand):
             help="Date du programme (YYYY-MM-DD). Par defaut : aujourd'hui.")
         parser.add_argument("--livreur", type=str,
             help="Code livreur specifique. Par defaut : tous.")
+        parser.add_argument("--type", type=str, choices=["COL", "RES", "LES2"],
+            help="Forcer le type pour tous les livreurs : COL / RES / LES2.")
         parser.add_argument("--reset", action="store_true",
             help="Soft-delete les programmes existants pour la date avant regeneration.")
 
@@ -72,8 +93,8 @@ class Command(BaseCommand):
 
         if options["reset"]:
             # Soft-delete en cascade : anomalies d'abord, puis programmes.
-            # Le trigger PostgreSQL met à jour last_modified sur chaque ligne ;
-            # le mobile apprendra les suppressions via la liste "deleted" du pull.
+            # Le trigger PostgreSQL met à jour last_modified ; le mobile apprendra
+            # les suppressions via la liste "deleted" du prochain pull.
             progs_a_supprimer = list(
                 Programme.objects.filter(
                     date_programme=date_prog,
@@ -87,27 +108,36 @@ class Command(BaseCommand):
                 f"Reset : {count} programme(s) marque(s) supprimes (soft-delete)."
             ))
 
-        # Heure de base pour le numéro : simule l'heure d'export depuis X3.
-        # Chaque livreur décale de 1 minute pour garantir l'unicité du numéro.
+        # Scénario forcé ou aléatoire pour chaque livreur
+        type_force = options.get("type")
+        if type_force == "COL":
+            scenarios_forcat = [[TypeProgramme.COLLECTE]]
+        elif type_force == "RES":
+            scenarios_forcat = [[TypeProgramme.RESTITUTION]]
+        elif type_force == "LES2":
+            scenarios_forcat = [[TypeProgramme.COLLECTE, TypeProgramme.RESTITUTION]]
+        else:
+            scenarios_forcat = None  # aléatoire par livreur
+
         heure_base = datetime.now()
-
         compteur = 0
-        with transaction.atomic():
-            for i, livreur in enumerate(livreurs):
-                type_prog = (
-                    TypeProgramme.COLLECTE if i % 2 == 0 else TypeProgramme.RESTITUTION
-                )
 
-                # Format Sage X3 : PRG-COL-20260607-1502 (HHMM en prod).
-                # La simulation trouve le premier HHMMSS libre pour éviter les doublons.
+        with transaction.atomic():
+            # Construit la liste (livreur, type) à créer, avec décalage d'1 seconde
+            # entre chaque programme pour garantir des numéros X3 distincts.
+            taches = []
+            for livreur in livreurs:
+                types = (
+                    random.choices(_SCENARIOS, weights=_POIDS, k=1)[0]
+                    if scenarios_forcat is None
+                    else scenarios_forcat[0]
+                )
+                for type_prog in types:
+                    taches.append((livreur, type_prog))
+
+            for idx, (livreur, type_prog) in enumerate(taches):
                 prefix = f"PRG-{type_prog[:3]}-{date_prog.strftime('%Y%m%d')}-"
-                candidat = heure_base + timedelta(seconds=i)
-                while Programme.objects.filter(
-                    numero_x3=prefix + candidat.strftime("%H%M%S"),
-                    is_deleted=False,
-                ).exists():
-                    candidat += timedelta(seconds=1)
-                numero_x3 = prefix + candidat.strftime("%H%M%S")
+                numero_x3 = _numero_libre(prefix, heure_base + timedelta(seconds=idx))
                 vehicule = random.choice(vehicules) if vehicules else None
 
                 programme = Programme.objects.create(
@@ -127,7 +157,7 @@ class Command(BaseCommand):
                         plv=plv,
                         ordre_prevu=ordre,
                     )
-                    # COLLECTE : pas de LigneProgramme — quantités non planifiées à l'avance.
+                    # COLLECTE : pas de LigneProgramme — quantités non planifiées.
                     # RESTITUTION : lignes G* avec quantite_prevue.
                     if type_prog == TypeProgramme.RESTITUTION:
                         nb_articles = random.randint(1, min(3, len(produits_gaz)))
@@ -138,10 +168,9 @@ class Command(BaseCommand):
                                 quantite_prevue=random.randint(5, 30),
                             )
 
-                # Calcul de l'ordre de visite suggere (plus proche voisin)
                 appliquer_ordre_optimise(programme)
 
-                # Anomalies de demo : 1 par programme (pour permettre de tester la supervision)
+                # Anomalie de démo lors d'un --reset
                 if options["reset"]:
                     plv_anomalie = random.choice(plvs_choisis)
                     Anomalie.objects.create(
@@ -157,12 +186,9 @@ class Command(BaseCommand):
 
                 compteur += 1
                 self.stdout.write(
-                    f"  {livreur.code_livreur} : {numero_x3} "
-                    f"({type_prog}, {nb_etapes} etapes)"
+                    f"  {livreur.code_livreur} : {numero_x3} ({type_prog}, {nb_etapes} etapes)"
                 )
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"\n{compteur} programme(s) genere(s) pour le {date_prog}."
-            )
+            self.style.SUCCESS(f"\n{compteur} programme(s) genere(s) pour le {date_prog}.")
         )
