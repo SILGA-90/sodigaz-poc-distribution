@@ -63,6 +63,51 @@ export async function getProgrammesRecents(): Promise<ProgrammeAvecProgression[]
   );
 }
 
+export async function getTousLesProgrammes(): Promise<ProgrammeAvecProgression[]> {
+  const db = await getDatabase();
+  return db.getAllAsync<ProgrammeAvecProgression>(
+    `SELECT
+        pr.*,
+        (SELECT COUNT(*) FROM etape e WHERE e.programme_id = pr.id AND e.is_deleted = 0) AS total_etapes,
+        (SELECT COUNT(*) FROM etape e WHERE e.programme_id = pr.id AND e.is_deleted = 0 AND e.statut_visite = 'VISITEE') AS etapes_visitees,
+        (SELECT COUNT(*) FROM etape e WHERE e.programme_id = pr.id AND e.is_deleted = 0 AND e.statut_visite = 'ECHEC') AS etapes_echec
+     FROM programme pr
+     WHERE pr.is_deleted = 0
+     ORDER BY pr.date_programme DESC, pr.type_programme;`,
+  );
+}
+
+export interface OperationRecap {
+  plv_libelle: string;
+  type_operation: string;
+  montant_total: number;
+  montant_encaisse: number;
+  est_encaissee: number; // 0 ou 1 en SQLite
+  nb_lignes: number;
+}
+
+export async function getOperationsRecapProgramme(
+  programmeId: number,
+): Promise<OperationRecap[]> {
+  const db = await getDatabase();
+  return db.getAllAsync<OperationRecap>(
+    `SELECT
+        p.libelle        AS plv_libelle,
+        op.type_operation,
+        op.montant_total,
+        op.montant_encaisse,
+        op.est_encaissee,
+        (SELECT COUNT(*) FROM ligne_operation lo
+         WHERE lo.operation_uuid = op.uuid AND lo.is_deleted = 0) AS nb_lignes
+     FROM operation op
+     JOIN etape e ON e.uuid = op.etape_uuid
+     JOIN plv p   ON p.id   = e.plv_id
+     WHERE e.programme_id = ? AND op.is_deleted = 0
+     ORDER BY op.date_heure ASC;`,
+    [programmeId],
+  );
+}
+
 export async function getProgrammeById(id: number): Promise<Programme | null> {
   const db = await getDatabase();
   const row = await db.getFirstAsync<Programme>(

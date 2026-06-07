@@ -73,6 +73,14 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     loadLocalData();
   }, [loadLocalData]);
 
+  // Rafraîchit les données locales à chaque retour sur cet écran (focus).
+  // Sans ça, pendingCount reste à sa valeur de montage et l'auto-sync sur
+  // reconnexion ne se déclenche pas même si des opérations ont été saisies.
+  useEffect(() => {
+    const unsub = navigation.addListener('focus', loadLocalData);
+    return unsub;
+  }, [navigation, loadLocalData]);
+
   const handleSync = useCallback(async (): Promise<void> => {
     if (syncing) return;
     setSyncing(true);
@@ -221,6 +229,9 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       {/* Liste programmes */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Mes programmes du jour</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Historique')}>
+          <Text style={styles.historiqueLink}>Historique »</Text>
+        </TouchableOpacity>
       </View>
 
       <FlatList
@@ -311,8 +322,9 @@ const styles = StyleSheet.create({
   syncButtonDisabled: { opacity: 0.6 },
   syncButtonText: { color: '#fff', fontWeight: '700', fontSize: 13 },
 
-  sectionHeader: { marginHorizontal: 16, marginBottom: 8 },
+  sectionHeader: { marginHorizontal: 16, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: '#333' },
+  historiqueLink: { fontSize: 13, color: '#0d6efd' },
 
   list: { paddingHorizontal: 12, paddingBottom: 12 },
   progCard: {

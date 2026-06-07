@@ -6,6 +6,7 @@
 export type RootStackParamList = {
   Login: undefined;
   Dashboard: undefined;
+  Historique: undefined;
   Programme: { programmeId: number };
   SaisieOperation: { etapeId: number };
   Anomalie: { programmeUuid: string; programmeId: number };

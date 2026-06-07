@@ -10,7 +10,7 @@ from ._base import _get_date_filter
 
 @superviseur_required
 def programmes_list(request):
-    date_filter = _get_date_filter(request)
+    date_filter = _get_date_filter(request, write_session=True)
 
     programmes = (
         Programme.objects

@@ -218,6 +218,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
         ListEmptyComponent={
           <Text style={styles.empty}>Aucune etape dans ce programme.</Text>
         }
+        ListFooterComponent={<View style={{ height: 80 }} />}
       />
       {programme && programme.statut !== 'CLOTURE' && (
         <TouchableOpacity

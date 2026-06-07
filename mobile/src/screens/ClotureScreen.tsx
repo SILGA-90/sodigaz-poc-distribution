@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -15,8 +16,10 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   getProgrammeById,
   getRecapProgramme,
+  getOperationsRecapProgramme,
   cloturerProgrammeLocal,
   RecapProgramme,
+  OperationRecap,
 } from '../db/repositories/programmeRepository';
 import { Programme } from '../types/models';
 import { RootStackParamList } from '../types/navigation';
@@ -27,6 +30,7 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
   const { programmeId } = route.params;
   const [programme, setProgramme] = useState<Programme | null>(null);
   const [recap, setRecap] = useState<RecapProgramme | null>(null);
+  const [operations, setOperations] = useState<OperationRecap[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [closing, setClosing] = useState<boolean>(false);
   const [clotureReussie, setClotureReussie] = useState<boolean>(false);
@@ -35,9 +39,13 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
     (async () => {
       const p = await getProgrammeById(programmeId);
       if (p) {
-        const r = await getRecapProgramme(programmeId, p.uuid);
+        const [r, ops] = await Promise.all([
+          getRecapProgramme(programmeId, p.uuid),
+          getOperationsRecapProgramme(programmeId),
+        ]);
         setProgramme(p);
         setRecap(r);
+        setOperations(ops);
       }
       setLoading(false);
     })();
@@ -146,7 +154,7 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
       <View style={styles.header}>
         <Text style={styles.numero}>{programme.numero_x3}</Text>
         <Text style={styles.meta}>{programme.type_programme} - {programme.date_programme}</Text>
@@ -154,24 +162,55 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
 
       <View style={styles.recapCard}>
         <Text style={styles.recapTitle}>Recapitulatif de la tournee</Text>
-
         <View style={styles.recapRow}>
           <Text style={styles.recapLabel}>Etapes visitees</Text>
           <Text style={styles.recapValue}>{recap.etapes_visitees} / {recap.total_etapes}</Text>
         </View>
+        {recap.etapes_echec > 0 && (
+          <View style={styles.recapRow}>
+            <Text style={styles.recapLabel}>Etapes en echec</Text>
+            <Text style={[styles.recapValue, { color: '#dc3545' }]}>{recap.etapes_echec}</Text>
+          </View>
+        )}
         <View style={styles.recapRow}>
           <Text style={styles.recapLabel}>Operations realisees</Text>
           <Text style={styles.recapValue}>{recap.nb_operations}</Text>
         </View>
         <View style={styles.recapRow}>
           <Text style={styles.recapLabel}>Montant encaisse</Text>
-          <Text style={styles.recapValue}>{recap.montant_encaisse.toLocaleString('fr-FR')} FCFA</Text>
+          <Text style={[styles.recapValue, { color: '#198754' }]}>
+            {recap.montant_encaisse.toLocaleString('fr-FR')} FCFA
+          </Text>
         </View>
-        <View style={styles.recapRow}>
-          <Text style={styles.recapLabel}>Anomalies signalees</Text>
-          <Text style={styles.recapValue}>{recap.nb_anomalies}</Text>
-        </View>
+        {recap.nb_anomalies > 0 && (
+          <View style={styles.recapRow}>
+            <Text style={styles.recapLabel}>Anomalies signalees</Text>
+            <Text style={[styles.recapValue, { color: '#ffc107' }]}>{recap.nb_anomalies}</Text>
+          </View>
+        )}
       </View>
+
+      {operations.length > 0 && (
+        <View style={styles.recapCard}>
+          <Text style={styles.recapTitle}>Detail des operations</Text>
+          {operations.map((op, i) => (
+            <View key={i} style={styles.opRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.opPlv}>{op.plv_libelle}</Text>
+                <Text style={styles.opType}>{op.type_operation}</Text>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={styles.opMontant}>
+                  {op.montant_total.toLocaleString('fr-FR')} FCFA
+                </Text>
+                <Text style={[styles.opEncaisse, { color: op.est_encaissee ? '#198754' : '#dc3545' }]}>
+                  {op.est_encaissee ? 'Encaisse' : 'Non encaisse'}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
 
       {dejaCloture ? (
         <View style={styles.clotureBadge}>
@@ -190,7 +229,7 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
           )}
         </TouchableOpacity>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -225,6 +264,14 @@ const styles = StyleSheet.create({
   successIcon: { fontSize: 56, color: '#fff', fontWeight: '700' },
   successTitle: { color: '#fff', fontSize: 22, fontWeight: '700', marginTop: 8 },
   successSub: { color: '#a3cfbb', fontSize: 14, marginTop: 4 },
+  opRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
+    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
+  },
+  opPlv: { fontSize: 13, fontWeight: '600', color: '#333' },
+  opType: { fontSize: 11, color: '#888', marginTop: 2 },
+  opMontant: { fontSize: 13, fontWeight: '700', color: '#333' },
+  opEncaisse: { fontSize: 11, marginTop: 2 },
   syncNotice: {
     marginHorizontal: 16, marginBottom: 8, padding: 12,
     backgroundColor: '#fff3cd', borderRadius: 8,
