@@ -34,7 +34,7 @@ export default function RootNavigator(): React.ReactElement {
   if (initialRoute === null) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#0d6efd" />
+        <ActivityIndicator size="large" color="#1a7fba" />
       </View>
     );
   }

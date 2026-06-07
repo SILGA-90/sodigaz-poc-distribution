@@ -65,7 +65,7 @@ export default function EtapeDetailScreen({ route, navigation }: Props): React.R
   }, [etapeUuid]);
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator size="large" color="#0d6efd" /></View>;
+    return <View style={styles.center}><ActivityIndicator size="large" color="#1a7fba" /></View>;
   }
 
   if (!operation) {
@@ -86,7 +86,7 @@ export default function EtapeDetailScreen({ route, navigation }: Props): React.R
       {/* En-tete */}
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <Text style={styles.typeOp}>{operation.type_operation}</Text>
+          <Text style={styles.typeOp}>{operation.type_operation === 'COLLECTE' ? 'Collecte' : 'Restitution'}</Text>
           <View style={[styles.syncBadge, synced ? styles.syncedBg : styles.pendingBg]}>
             <Text style={styles.syncBadgeText}>{synced ? 'Synchronisee' : 'En attente sync'}</Text>
           </View>
@@ -180,15 +180,15 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
   noOpText: { color: '#888', textAlign: 'center' },
-  header: { backgroundColor: '#0d6efd', padding: 16 },
+  header: { backgroundColor: '#1a7fba', padding: 16 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   typeOp: { color: '#fff', fontSize: 18, fontWeight: '700' },
   syncBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   syncedBg: { backgroundColor: '#198754' },
   pendingBg: { backgroundColor: '#ffc107' },
   syncBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  date: { color: '#cbe2ff', fontSize: 13, marginTop: 4 },
-  sousType: { color: '#cbe2ff', fontSize: 12, marginTop: 2 },
+  date: { color: '#d0e8f5', fontSize: 13, marginTop: 4 },
+  sousType: { color: '#d0e8f5', fontSize: 12, marginTop: 2 },
   sectionTitle: {
     fontSize: 14, fontWeight: '700', color: '#555',
     marginHorizontal: 16, marginTop: 16, marginBottom: 8,
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   },
   ligneCode: { flex: 1, fontSize: 13, color: '#333', fontWeight: '600' },
   ligneQte: { fontSize: 13, color: '#666', marginRight: 12 },
-  ligneMontant: { fontSize: 13, fontWeight: '700', color: '#0d6efd' },
+  ligneMontant: { fontSize: 13, fontWeight: '700', color: '#1a7fba' },
   infoRow: {
     flexDirection: 'row', justifyContent: 'space-between',
     paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#f0f0f0',

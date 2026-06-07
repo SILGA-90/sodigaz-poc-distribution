@@ -61,7 +61,7 @@ export default function DebugScreen(): React.ReactElement {
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Base de donnees locale (SQLite)</Text>
 
-      {loading && <ActivityIndicator size="large" color="#0d6efd" />}
+      {loading && <ActivityIndicator size="large" color="#1a7fba" />}
 
       {error && (
         <View style={styles.errorBox}>
@@ -125,10 +125,10 @@ const styles = StyleSheet.create({
     borderBottomColor: '#eee',
   },
   tableName: { fontSize: 14, color: '#333', fontFamily: 'monospace', flex: 1, marginRight: 8 },
-  tableCount: { fontSize: 14, fontWeight: '700', color: '#0d6efd', flexShrink: 0 },
+  tableCount: { fontSize: 14, fontWeight: '700', color: '#1a7fba', flexShrink: 0 },
   meta: { fontSize: 13, color: '#666', marginBottom: 16, fontStyle: 'italic' },
   button: {
-    backgroundColor: '#0d6efd',
+    backgroundColor: '#1a7fba',
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',

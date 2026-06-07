@@ -187,11 +187,11 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
-  header: { backgroundColor: '#dc3545', padding: 16 },
+  header: { backgroundColor: '#f47920', padding: 16 },
   headerTitle: { color: '#fff', fontSize: 18, fontWeight: '700' },
   gpsRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
   gpsDot: { width: 8, height: 8, borderRadius: 4 },
-  gpsStatus: { color: '#ffd9dd', fontSize: 12 },
+  gpsStatus: { color: '#fde8d0', fontSize: 12 },
   sectionTitle: {
     fontSize: 15, fontWeight: '700', color: '#333',
     marginHorizontal: 16, marginTop: 16, marginBottom: 8,

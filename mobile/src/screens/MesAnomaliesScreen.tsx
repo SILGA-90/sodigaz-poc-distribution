@@ -27,7 +27,7 @@ export default function MesAnomaliesScreen({ route }: Props): React.ReactElement
   }, [programmeUuid]);
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator size="large" color="#0d6efd" /></View>;
+    return <View style={styles.center}><ActivityIndicator size="large" color="#1a7fba" /></View>;
   }
 
   function renderItem({ item }: { item: AnomalieLocale }): React.ReactElement {
@@ -82,9 +82,9 @@ export default function MesAnomaliesScreen({ route }: Props): React.ReactElement
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { backgroundColor: '#0d6efd', padding: 16 },
+  header: { backgroundColor: '#1a7fba', padding: 16 },
   headerTitle: { color: '#fff', fontSize: 17, fontWeight: '700' },
-  headerSub: { color: '#cbe2ff', fontSize: 13, marginTop: 2 },
+  headerSub: { color: '#d0e8f5', fontSize: 13, marginTop: 2 },
   list: { padding: 12 },
   card: {
     backgroundColor: '#fff', borderRadius: 10, padding: 14,

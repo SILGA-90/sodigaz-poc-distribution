@@ -143,7 +143,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#0d6efd" />
+        <ActivityIndicator size="large" color="#1a7fba" />
       </View>
     );
   }
@@ -154,7 +154,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
         <View style={styles.header}>
           <Text style={styles.numero}>{programme.numero_x3}</Text>
           <Text style={styles.meta}>
-            {programme.type_programme} · {programme.date_programme}
+            {programme.type_programme === 'COLLECTE' ? 'Collecte' : 'Restitution'} · {programme.date_programme}
           </Text>
           <View style={styles.progressionRow}>
             <View style={styles.progressionBar}>
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     flex: 1, height: 8, backgroundColor: '#e9ecef',
     borderRadius: 4, overflow: 'hidden',
   },
-  progressionFill: { height: 8, backgroundColor: '#0d6efd', borderRadius: 4 },
+  progressionFill: { height: 8, backgroundColor: '#1a7fba', borderRadius: 4 },
   progressionLabel: { fontSize: 12, color: '#555', fontWeight: '600' },
   echecCount: {
     backgroundColor: '#f8d7da', paddingHorizontal: 8, paddingVertical: 2,
@@ -258,11 +258,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f4ff', borderRadius: 8, padding: 3, gap: 3,
   },
   triBtn: { flex: 1, paddingVertical: 6, borderRadius: 6, alignItems: 'center' },
-  triBtnActive: { backgroundColor: '#0d6efd' },
+  triBtnActive: { backgroundColor: '#1a7fba' },
   triBtnText: { fontSize: 12, fontWeight: '600', color: '#6c757d' },
   triBtnTextActive: { color: '#fff' },
   headerActions: { marginTop: 10, gap: 6 },
-  voirAnomaliesLink: { fontSize: 13, color: '#0d6efd', textDecorationLine: 'underline' },
+  voirAnomaliesLink: { fontSize: 13, color: '#1a7fba', textDecorationLine: 'underline' },
   clotureBtn: {
     marginTop: 4, padding: 10, borderRadius: 8,
     backgroundColor: '#d1e7dd', borderWidth: 1, borderColor: '#198754',
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   },
   ordreCircle: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#0d6efd',
+    backgroundColor: '#1a7fba',
     justifyContent: 'center', alignItems: 'center',
     marginRight: 12,
   },
@@ -297,9 +297,9 @@ const styles = StyleSheet.create({
   syncDotOrange: { backgroundColor: '#f97316' },
   itineraireBtn: {
     marginTop: 6, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 12,
-    backgroundColor: '#cfe2ff', borderWidth: 1, borderColor: '#0d6efd',
+    backgroundColor: '#cfe2ff', borderWidth: 1, borderColor: '#1a7fba',
   },
-  itineraireBtnText: { fontSize: 11, fontWeight: '700', color: '#084298' },
+  itineraireBtnText: { fontSize: 11, fontWeight: '700', color: '#0d5e8a' },
   empty: { textAlign: 'center', color: '#888', padding: 32 },
   cardDisabled: { opacity: 0.5 },
   clotureBadge: {

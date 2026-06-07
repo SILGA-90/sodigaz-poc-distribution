@@ -31,7 +31,7 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
       : 0;
     const statutColor =
       item.statut === 'CLOTURE' ? '#198754' :
-      item.statut === 'EN_COURS' ? '#0d6efd' : '#6c757d';
+      item.statut === 'EN_COURS' ? '#1a7fba' : '#6c757d';
 
     return (
       <TouchableOpacity
@@ -41,7 +41,7 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
         <View style={styles.cardHeader}>
           <Text style={styles.numero}>{item.numero_x3}</Text>
           <View style={[styles.badge, item.type_programme === 'COLLECTE' ? styles.badgeCol : styles.badgeRes]}>
-            <Text style={styles.badgeText}>{item.type_programme}</Text>
+            <Text style={styles.badgeText}>{item.type_programme === 'COLLECTE' ? 'Collecte' : 'Restitution'}</Text>
           </View>
         </View>
         <Text style={styles.date}>{formatDate(item.date_programme)}</Text>
@@ -88,11 +88,11 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
   header: {
-    backgroundColor: '#0d6efd', paddingTop: 48, paddingBottom: 16,
+    backgroundColor: '#1a7fba', paddingTop: 48, paddingBottom: 16,
     paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', gap: 12,
   },
   backBtn: { paddingRight: 8 },
-  backText: { color: '#cbe2ff', fontSize: 18 },
+  backText: { color: '#d0e8f5', fontSize: 18 },
   title: { color: '#fff', fontSize: 18, fontWeight: '700' },
   list: { padding: 12 },
   card: {

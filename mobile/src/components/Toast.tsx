@@ -12,7 +12,7 @@ interface Props {
 const BG: Record<string, string> = {
   success: '#198754',
   error: '#dc3545',
-  info: '#0d6efd',
+  info: '#1a7fba',
 };
 
 export default function Toast({

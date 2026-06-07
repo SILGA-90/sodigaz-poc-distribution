@@ -141,7 +141,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       : 0;
     const statutColor =
       item.statut === 'CLOTURE' ? '#198754' :
-      item.statut === 'EN_COURS' ? '#0d6efd' : '#6c757d';
+      item.statut === 'EN_COURS' ? '#1a7fba' : '#6c757d';
     const statutLabel =
       item.statut === 'CLOTURE' ? 'Cloture' :
       item.statut === 'EN_COURS' ? 'En cours' : 'Planifie';
@@ -158,7 +158,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
               styles.badge,
               item.type_programme === 'COLLECTE' ? styles.badgeCollecte : styles.badgeRestitution,
             ]}>
-              <Text style={styles.badgeText}>{item.type_programme}</Text>
+              <Text style={styles.badgeText}>{item.type_programme === 'COLLECTE' ? 'Collecte' : 'Restitution'}</Text>
             </View>
             <View style={[styles.badge, { backgroundColor: statutColor }]}>
               <Text style={[styles.badgeText, { color: '#fff' }]}>{statutLabel}</Text>
@@ -285,16 +285,16 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
 
-  header: { backgroundColor: '#0d6efd', paddingHorizontal: 20, paddingTop: 44, paddingBottom: 16 },
+  header: { backgroundColor: '#1a7fba', paddingHorizontal: 20, paddingTop: 44, paddingBottom: 16 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, marginRight: 8 },
   headerLogo: { width: 40, height: 40 },
-  welcomeSmall: { color: '#cbe2ff', fontSize: 13 },
+  welcomeSmall: { color: '#d0e8f5', fontSize: 13 },
   welcomeBig: { color: '#fff', fontSize: 22, fontWeight: '700', marginTop: 2 },
-  subtitle: { color: '#cbe2ff', fontSize: 13, marginTop: 1 },
+  subtitle: { color: '#d0e8f5', fontSize: 13, marginTop: 1 },
   headerRight: { alignItems: 'center', paddingTop: 4 },
   statusDot: { width: 12, height: 12, borderRadius: 6, marginBottom: 4 },
-  statusLabel: { color: '#cbe2ff', fontSize: 10, fontWeight: '600' },
+  statusLabel: { color: '#d0e8f5', fontSize: 10, fontWeight: '600' },
 
   syncBar: {
     flexDirection: 'row',
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   },
   pendingText: { fontSize: 11, color: '#664d03', fontWeight: '700' },
   syncButton: {
-    backgroundColor: '#0d6efd',
+    backgroundColor: '#1a7fba',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
 
   sectionHeader: { marginHorizontal: 16, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: '#333' },
-  historiqueLink: { fontSize: 13, color: '#0d6efd' },
+  historiqueLink: { fontSize: 13, color: '#1a7fba' },
 
   list: { paddingHorizontal: 12, paddingBottom: 12 },
   progCard: {
@@ -365,13 +365,13 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 16, fontWeight: '700', color: '#555', marginBottom: 8 },
   emptyText: { color: '#aaa', textAlign: 'center', lineHeight: 20, marginBottom: 20 },
   emptySyncBtn: {
-    backgroundColor: '#0d6efd', paddingHorizontal: 24, paddingVertical: 12,
+    backgroundColor: '#1a7fba', paddingHorizontal: 24, paddingVertical: 12,
     borderRadius: 8,
   },
   emptySyncBtnText: { color: '#fff', fontWeight: '700' },
 
   footer: { borderTopWidth: 1, borderTopColor: '#e0e0e0', backgroundColor: '#fff' },
-  logoutButton: { padding: 14, alignItems: 'center', backgroundColor: '#dc3545' },
+  logoutButton: { padding: 14, alignItems: 'center', backgroundColor: '#1a2332' },
   footerText: { color: '#fff', fontWeight: '600' },
   debugLink: { padding: 8, alignItems: 'center' },
   debugLinkText: { color: '#ccc', fontSize: 11 },

@@ -295,7 +295,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#0d6efd" />
+        <ActivityIndicator size="large" color="#1a7fba" />
       </View>
     );
   }
@@ -304,7 +304,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
       {etapeInfo && (
         <View style={styles.header}>
-          <Text style={styles.typeOp}>{etapeInfo.type_programme}</Text>
+          <Text style={styles.typeOp}>{etapeInfo.type_programme === 'COLLECTE' ? 'Collecte' : 'Restitution'}</Text>
           <Text style={styles.plvName}>{etapeInfo.plv_libelle}</Text>
           <Text style={styles.clientName}>{etapeInfo.client_raison_sociale}</Text>
           <View style={styles.headerRow}>
@@ -542,10 +542,10 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { backgroundColor: '#0d6efd', padding: 16 },
-  typeOp: { color: '#cbe2ff', fontSize: 12, fontWeight: '700' },
+  header: { backgroundColor: '#1a7fba', padding: 16 },
+  typeOp: { color: '#d0e8f5', fontSize: 12, fontWeight: '700' },
   plvName: { color: '#fff', fontSize: 18, fontWeight: '700', marginTop: 2 },
-  clientName: { color: '#cbe2ff', fontSize: 14 },
+  clientName: { color: '#d0e8f5', fontSize: 14 },
   sectionTitle: {
     fontSize: 15, fontWeight: '700', color: '#333',
     marginHorizontal: 16, marginTop: 16, marginBottom: 8,
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
   },
   produitLibelle: { fontSize: 15, fontWeight: '600', color: '#333' },
   produitPrix: { fontSize: 12, color: '#888', marginTop: 2 },
-  prevue: { fontSize: 12, color: '#0d6efd', marginTop: 2, fontWeight: '600' },
+  prevue: { fontSize: 12, color: '#1a7fba', marginTop: 2, fontWeight: '600' },
   qteInput: {
     borderWidth: 1, borderColor: '#ccc', borderRadius: 8,
     padding: 10, width: 64, textAlign: 'center', fontSize: 18,
@@ -566,9 +566,9 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontWeight: '600', color: '#333' },
   pickerWrap: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, marginTop: 6, marginBottom: 12 },
   montantRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  toggleLink: { color: '#0d6efd', fontSize: 13 },
+  toggleLink: { color: '#1a7fba', fontSize: 13 },
   montantInput: {
-    borderWidth: 1, borderColor: '#0d6efd', borderRadius: 8,
+    borderWidth: 1, borderColor: '#1a7fba', borderRadius: 8,
     padding: 12, fontSize: 18, marginTop: 6, backgroundColor: '#fff',
   },
   montantAuto: { fontSize: 22, fontWeight: '700', color: '#198754', marginTop: 6 },
@@ -589,9 +589,9 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
   gpsRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   gpsDot: { width: 8, height: 8, borderRadius: 4 },
-  gpsStatus: { color: '#cbe2ff', fontSize: 12 },
+  gpsStatus: { color: '#d0e8f5', fontSize: 12 },
   itineraireBtn: { backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
-  itineraireText: { color: '#0d6efd', fontWeight: '700', fontSize: 12 },
+  itineraireText: { color: '#1a7fba', fontWeight: '700', fontSize: 12 },
   nomInput: {
     borderWidth: 1, borderColor: '#ccc', borderRadius: 8,
     padding: 10, marginTop: 6, marginBottom: 12, backgroundColor: '#fff',

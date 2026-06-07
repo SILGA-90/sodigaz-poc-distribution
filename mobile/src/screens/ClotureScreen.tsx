@@ -79,7 +79,7 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#0d6efd" />
+        <ActivityIndicator size="large" color="#1a7fba" />
       </View>
     );
   }
@@ -197,7 +197,7 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
             <View key={i} style={styles.opRow}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.opPlv}>{op.plv_libelle}</Text>
-                <Text style={styles.opType}>{op.type_operation}</Text>
+                <Text style={styles.opType}>{op.type_operation === 'COLLECTE' ? 'Collecte' : 'Restitution'}</Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
                 <Text style={styles.opMontant}>
@@ -236,9 +236,9 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { backgroundColor: '#0d6efd', padding: 16 },
+  header: { backgroundColor: '#1a7fba', padding: 16 },
   numero: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  meta: { color: '#cbe2ff', fontSize: 14, marginTop: 4 },
+  meta: { color: '#d0e8f5', fontSize: 14, marginTop: 4 },
   recapCard: { backgroundColor: '#fff', margin: 16, padding: 16, borderRadius: 12 },
   recapTitle: { fontSize: 16, fontWeight: '700', color: '#333', marginBottom: 12 },
   recapRow: {
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
   },
   recapLabel: { fontSize: 14, color: '#666', flexShrink: 1, marginRight: 8 },
-  recapValue: { fontSize: 15, fontWeight: '700', color: '#0d6efd' },
+  recapValue: { fontSize: 15, fontWeight: '700', color: '#1a7fba' },
   button: {
     backgroundColor: '#198754', marginHorizontal: 16, padding: 16,
     borderRadius: 10, alignItems: 'center',
