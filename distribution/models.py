@@ -238,17 +238,15 @@ class Programme(SyncableModel):
     class Meta:
         db_table = "programme"
         constraints = [
-            # Partial : allow soft-deleted duplicates so --reset can recreate
+            # Un numero X3 est unique parmi les programmes actifs.
+            # Partiel (is_deleted=False) : permet le soft-delete + recréation avec le même numéro.
             models.UniqueConstraint(
                 fields=["numero_x3"],
                 name="uq_programme_numero_x3",
                 condition=models.Q(is_deleted=False),
             ),
-            models.UniqueConstraint(
-                fields=["utilisateur", "date_programme", "type_programme"],
-                name="uq_programme_livreur_jour",
-                condition=models.Q(is_deleted=False),
-            ),
+            # Pas de contrainte (utilisateur, date, type) : un livreur peut avoir
+            # plusieurs programmes du même type dans la journée (cas rare mais réel).
         ]
         indexes = [
             models.Index(fields=["utilisateur", "date_programme"]),

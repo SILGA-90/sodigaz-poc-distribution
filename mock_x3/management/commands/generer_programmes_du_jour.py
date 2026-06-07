@@ -2,7 +2,7 @@
 import random
 import uuid
 from datetime import date as date_cls
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -87,6 +87,10 @@ class Command(BaseCommand):
                 f"Reset : {count} programme(s) marque(s) supprimes (soft-delete)."
             ))
 
+        # Heure de base pour le numéro : simule l'heure d'export depuis X3.
+        # Chaque livreur décale de 1 minute pour garantir l'unicité du numéro.
+        heure_base = datetime.now()
+
         compteur = 0
         with transaction.atomic():
             for i, livreur in enumerate(livreurs):
@@ -94,21 +98,16 @@ class Command(BaseCommand):
                     TypeProgramme.COLLECTE if i % 2 == 0 else TypeProgramme.RESTITUTION
                 )
 
-                if Programme.objects.filter(
-                    utilisateur=livreur,
-                    date_programme=date_prog,
-                    type_programme=type_prog,
+                # Format Sage X3 : PRG-COL-20260607-1502 (HHMM en prod).
+                # La simulation trouve le premier HHMMSS libre pour éviter les doublons.
+                prefix = f"PRG-{type_prog[:3]}-{date_prog.strftime('%Y%m%d')}-"
+                candidat = heure_base + timedelta(seconds=i)
+                while Programme.objects.filter(
+                    numero_x3=prefix + candidat.strftime("%H%M%S"),
                     is_deleted=False,
                 ).exists():
-                    self.stdout.write(
-                        self.style.NOTICE(
-                            f"  {livreur.code_livreur} : programme {type_prog} "
-                            f"deja existant pour le {date_prog}, ignore."
-                        )
-                    )
-                    continue
-
-                numero_x3 = f"PRG-{date_prog.strftime('%Y%m%d')}-{livreur.code_livreur}-{type_prog[:3]}"
+                    candidat += timedelta(seconds=1)
+                numero_x3 = prefix + candidat.strftime("%H%M%S")
                 vehicule = random.choice(vehicules) if vehicules else None
 
                 programme = Programme.objects.create(
