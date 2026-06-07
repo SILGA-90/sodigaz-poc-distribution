@@ -115,13 +115,32 @@
     <div class="col-lg-4">
         <div class="card h-100">
             <div class="card-body d-flex flex-column p-0">
-                <div class="px-3 pt-3 pb-2 border-bottom d-flex justify-content-between align-items-center">
+                <div class="px-3 pt-3 pb-2 border-bottom">
                     <h5 class="card-title mb-0">Bilan produits du jour</h5>
-                    <small class="text-muted">Prevu / Realise / Ecart</small>
                 </div>
                 <div style="flex:1;overflow-y:auto;">
+                    <!-- Section Collecte -->
+                    <div class="px-3 pt-2 pb-1">
+                        <span class="badge bg-warning text-dark mb-1">Collecte</span>
+                    </div>
                     <table class="table table-sm table-hover mb-0">
-                        <thead class="table-light sticky-top">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Produit</th>
+                                <th class="text-end">Collecte</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bilanCollecteTbody">
+                            <tr><td colspan="2" class="text-center text-muted py-2">Chargement...</td></tr>
+                        </tbody>
+                    </table>
+                    <!-- Section Restitution -->
+                    <div class="px-3 pt-2 pb-1 border-top mt-1">
+                        <span class="badge bg-primary mb-1">Restitution</span>
+                        <small class="text-muted ms-1">Prev. / Real. / Ecart</small>
+                    </div>
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
                             <tr>
                                 <th>Produit</th>
                                 <th class="text-end">Prev.</th>
@@ -129,8 +148,8 @@
                                 <th class="text-end">Ecart</th>
                             </tr>
                         </thead>
-                        <tbody id="bilanProduitsTbody">
-                            <tr><td colspan="4" class="text-center text-muted py-4">Chargement...</td></tr>
+                        <tbody id="bilanRestitutionTbody">
+                            <tr><td colspan="4" class="text-center text-muted py-2">Chargement...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -165,31 +184,54 @@ const STATS_URL  = `{% url 'supervision:stats-data' %}?date=${DATE_FILTER}`;
 const BILAN_URL  = `{% url 'supervision:bilan-produits-data' %}?date=${DATE_FILTER}`;
 
 // =============================================================================
-// Bilan produits du jour (prévu / réalisé / écart)
+// Bilan produits du jour (collecte + restitution)
 // =============================================================================
 function refreshBilanProduits() {
     return fetch(BILAN_URL, { credentials: 'same-origin' })
         .then(r => r.json())
         .then(d => {
-            const tbody = document.getElementById('bilanProduitsTbody');
-            if (!d.produits || d.produits.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Aucune donnee pour cette date</td></tr>';
-                return;
-            }
-            tbody.innerHTML = d.produits.map(p => {
-                const ecartSign = p.ecart >= 0 ? '+' : '';
-                const ecartClass = p.ecart < 0 ? 'text-danger fw-semibold' : p.ecart > 0 ? 'text-success fw-semibold' : 'text-muted';
-                const montantFmt = p.montant > 0 ? ` <small class="text-muted">${p.montant.toLocaleString('fr-FR')} F</small>` : '';
-                return `<tr>
-                    <td>
-                        <span class="badge bg-light text-secondary border font-monospace me-1" style="font-size:0.7em">${p.code_x3}</span>
-                        ${p.libelle}${montantFmt}
-                    </td>
-                    <td class="text-end text-muted">${p.prevu}</td>
-                    <td class="text-end fw-semibold">${p.realise}</td>
-                    <td class="text-end ${ecartClass}">${ecartSign}${p.ecart}</td>
+            const tbodyC = document.getElementById('bilanCollecteTbody');
+            const tbodyR = document.getElementById('bilanRestitutionTbody');
+            const vide2 = '<tr><td colspan="2" class="text-center text-muted py-2">Aucune donnee</td></tr>';
+            const vide4 = '<tr><td colspan="4" class="text-center text-muted py-2">Aucune donnee</td></tr>';
+
+            // Section collecte
+            if (!d.collecte || d.collecte.length === 0) {
+                tbodyC.innerHTML = vide2;
+            } else {
+                const totalC = d.collecte.reduce((s, p) => s + p.realise, 0);
+                tbodyC.innerHTML = d.collecte.map(p =>
+                    `<tr>
+                        <td><span class="badge bg-light text-secondary border font-monospace me-1" style="font-size:0.7em">${p.code_x3}</span>${p.libelle}</td>
+                        <td class="text-end fw-semibold">${p.realise}</td>
+                    </tr>`
+                ).join('') + `<tr class="table-warning fw-bold">
+                    <td>Total collecte</td>
+                    <td class="text-end">${totalC}</td>
                 </tr>`;
-            }).join('');
+            }
+
+            // Section restitution
+            if (!d.restitution || d.restitution.length === 0) {
+                tbodyR.innerHTML = vide4;
+            } else {
+                const totalR = d.restitution.reduce((s, p) => s + p.realise, 0);
+                tbodyR.innerHTML = d.restitution.map(p => {
+                    const ecartSign = p.ecart >= 0 ? '+' : '';
+                    const ecartClass = p.ecart < 0 ? 'text-danger fw-semibold' : p.ecart > 0 ? 'text-success fw-semibold' : 'text-muted';
+                    const montantFmt = p.montant > 0 ? ` <small class="text-muted">${p.montant.toLocaleString('fr-FR')} F</small>` : '';
+                    return `<tr>
+                        <td><span class="badge bg-light text-secondary border font-monospace me-1" style="font-size:0.7em">${p.code_x3}</span>${p.libelle}${montantFmt}</td>
+                        <td class="text-end text-muted">${p.prevu}</td>
+                        <td class="text-end fw-semibold">${p.realise}</td>
+                        <td class="text-end ${ecartClass}">${ecartSign}${p.ecart}</td>
+                    </tr>`;
+                }).join('') + `<tr class="table-primary fw-bold">
+                    <td colspan="2">Total restitue</td>
+                    <td class="text-end">${totalR}</td>
+                    <td></td>
+                </tr>`;
+            }
         });
 }
 

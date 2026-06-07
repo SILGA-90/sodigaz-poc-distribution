@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
   RefreshControl,
   StyleSheet,
   Text,
@@ -182,12 +183,19 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <View>
-            <Text style={styles.welcomeSmall}>Bonjour,</Text>
-            <Text style={styles.welcomeBig}>
-              {user ? `${user.first_name} ${user.last_name}` : '...'}
-            </Text>
-            <Text style={styles.subtitle}>{user?.code_livreur ?? ''}</Text>
+          <View style={styles.headerLeft}>
+            <Image
+              source={require('../../assets/logo.png')}
+              style={styles.headerLogo}
+              resizeMode="contain"
+            />
+            <View>
+              <Text style={styles.welcomeSmall}>Bonjour,</Text>
+              <Text style={styles.welcomeBig}>
+                {user ? `${user.first_name} ${user.last_name}` : '...'}
+              </Text>
+              <Text style={styles.subtitle}>{user?.code_livreur ?? ''}</Text>
+            </View>
           </View>
           <View style={styles.headerRight}>
             <View style={[styles.statusDot, { backgroundColor: statusDot }]} />
@@ -279,6 +287,8 @@ const styles = StyleSheet.create({
 
   header: { backgroundColor: '#0d6efd', paddingHorizontal: 20, paddingTop: 44, paddingBottom: 16 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  headerLogo: { width: 40, height: 40 },
   welcomeSmall: { color: '#cbe2ff', fontSize: 13 },
   welcomeBig: { color: '#fff', fontSize: 22, fontWeight: '700', marginTop: 2 },
   subtitle: { color: '#cbe2ff', fontSize: 13, marginTop: 1 },

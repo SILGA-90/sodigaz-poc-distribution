@@ -1,11 +1,17 @@
 {% extends "supervision/base.html" %}
+{% load static %}
 {% block title %}Connexion - Supervision SODIGAZ{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-4">
-        <div class="card shadow-sm mt-5">
+        <div class="text-center mt-5 mb-3">
+            <img src="{% static 'supervision/img/logo.png' %}" alt="SODIGAZ" height="80">
+            <div class="fw-bold fs-5 text-primary mt-2">SODIGAZ APC</div>
+            <div class="text-muted small">Supervision logistique</div>
+        </div>
+        <div class="card shadow-sm">
             <div class="card-body p-4">
-                <h4 class="card-title mb-4 text-center">Supervision logistique</h4>
+                <h4 class="card-title mb-4 text-center">Connexion</h4>
                 <form method="post">
                     {% csrf_token %}
                     {% if form.errors %}

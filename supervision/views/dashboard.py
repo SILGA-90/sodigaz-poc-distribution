@@ -38,6 +38,7 @@ def dashboard(request):
 
     nb_anomalies_ouvertes = Anomalie.objects.filter(
         programme__date_programme=date_filter,
+        programme__is_deleted=False,
         statut=StatutAnomalie.OUVERTE,
         is_deleted=False,
     ).count()
@@ -46,6 +47,7 @@ def dashboard(request):
         Anomalie.objects
         .filter(
             programme__date_programme=date_filter,
+            programme__is_deleted=False,
             gravite="ELEVEE",
             statut__in=("OUVERTE", "EN_TRAITEMENT"),
             is_deleted=False,
@@ -144,12 +146,14 @@ def dashboard_stats_data(request):
 
     nb_anomalies_ouvertes = Anomalie.objects.filter(
         programme__date_programme=date_filter,
+        programme__is_deleted=False,
         statut=StatutAnomalie.OUVERTE,
         is_deleted=False,
     ).count()
 
     nb_anomalies_elevees = Anomalie.objects.filter(
         programme__date_programme=date_filter,
+        programme__is_deleted=False,
         gravite="ELEVEE",
         statut__in=("OUVERTE", "EN_TRAITEMENT"),
         is_deleted=False,
@@ -190,18 +194,34 @@ def dashboard_activite_data(request):
 @superviseur_required
 def dashboard_bilan_produits_data(request):
     """
-    AJAX : bilan prévu vs réalisé par produit G* pour la journée.
-    Utile pour le stock, le commercial et la réconciliation des données.
+    AJAX : bilan produits du jour séparé par flux.
+    - collecte   : quantités réalisées par produit sur opérations COLLECTE
+    - restitution: prévu / réalisé / écart par produit sur opérations RESTITUTION
     """
     date_filter = _get_date_filter(request)
-    filtre = dict(
-        etape__programme__date_programme=date_filter,
-        etape__programme__is_deleted=False,
+    base_lo = dict(
+        operation__etape__programme__date_programme=date_filter,
+        operation__etape__programme__is_deleted=False,
         is_deleted=False,
     )
 
-    # Quantités prévues (RESTITUTION uniquement — les COLLECTE n'ont pas de LigneProgramme)
-    prevus = {
+    collecte_map = {
+        row["produit_id"]: row["qte"]
+        for row in LigneOperation.objects
+        .filter(**base_lo, operation__type_operation="COLLECTE")
+        .values("produit_id")
+        .annotate(qte=Sum("quantite_realisee"))
+    }
+
+    restit_realise_map = {
+        row["produit_id"]: row["qte"]
+        for row in LigneOperation.objects
+        .filter(**base_lo, operation__type_operation="RESTITUTION")
+        .values("produit_id")
+        .annotate(qte=Sum("quantite_realisee"))
+    }
+
+    prevus_map = {
         row["produit_id"]: row["qte"]
         for row in LigneProgramme.objects
         .filter(
@@ -213,35 +233,31 @@ def dashboard_bilan_produits_data(request):
         .annotate(qte=Sum("quantite_prevue"))
     }
 
-    # Quantités réalisées (toutes opérations)
-    realises = {
-        row["produit_id"]: row["qte"]
-        for row in LigneOperation.objects
-        .filter(
-            operation__etape__programme__date_programme=date_filter,
-            operation__etape__programme__is_deleted=False,
-            is_deleted=False,
-        )
-        .values("produit_id")
-        .annotate(qte=Sum("quantite_realisee"))
-    }
-
-    # Fusion par produit
-    tous_ids = set(prevus) | set(realises)
+    tous_ids = set(collecte_map) | set(restit_realise_map) | set(prevus_map)
     if not tous_ids:
-        return JsonResponse({"produits": []})
+        return JsonResponse({"collecte": [], "restitution": []})
 
     produits_map = {
         p.id: p
         for p in Produit.objects.filter(id__in=tous_ids).only("id", "code_x3", "libelle", "prix_unitaire")
     }
 
-    result = []
-    for pid in sorted(tous_ids, key=lambda i: produits_map[i].code_x3):
+    collecte_result = [
+        {
+            "code_x3": produits_map[pid].code_x3,
+            "libelle": produits_map[pid].libelle,
+            "realise": collecte_map[pid],
+        }
+        for pid in sorted(collecte_map, key=lambda i: produits_map[i].code_x3)
+    ]
+
+    restit_ids = set(restit_realise_map) | set(prevus_map)
+    restit_result = []
+    for pid in sorted(restit_ids, key=lambda i: produits_map[i].code_x3):
         prod = produits_map[pid]
-        prevu = prevus.get(pid, 0)
-        realise = realises.get(pid, 0)
-        result.append({
+        prevu = prevus_map.get(pid, 0)
+        realise = restit_realise_map.get(pid, 0)
+        restit_result.append({
             "code_x3": prod.code_x3,
             "libelle": prod.libelle,
             "prevu": prevu,
@@ -250,4 +266,4 @@ def dashboard_bilan_produits_data(request):
             "montant": realise * int(prod.prix_unitaire or 0),
         })
 
-    return JsonResponse({"produits": result})
+    return JsonResponse({"collecte": collecte_result, "restitution": restit_result})
