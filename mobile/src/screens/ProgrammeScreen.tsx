@@ -87,9 +87,9 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
     const cardDisabled = programmeCloture || echec;
 
     let badgeStyle = styles.aVisiter;
-    let badgeLabel = 'A visiter';
-    if (visite) { badgeStyle = styles.visitee; badgeLabel = 'Visitee'; }
-    if (echec)  { badgeStyle = styles.echecBadge; badgeLabel = 'Echec'; }
+    let badgeLabel = 'À visiter';
+    if (visite) { badgeStyle = styles.visitee; badgeLabel = 'Visitée'; }
+    if (echec)  { badgeStyle = styles.echecBadge; badgeLabel = 'Échec'; }
 
     function handleCardPress() {
       if (visite) {
@@ -133,7 +133,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
               ouvrirItineraire(item.plv_latitude, item.plv_longitude);
             }}
           >
-            <Text style={styles.itineraireBtnText}>Itineraire</Text>
+            <Text style={styles.itineraireBtnText}>Itinéraire</Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -164,11 +164,11 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
               ]} />
             </View>
             <Text style={styles.progressionLabel}>
-              {progression.visitees}/{progression.total} visitees
+              {progression.visitees}/{progression.total} visitées
             </Text>
             {progression.echec > 0 && (
               <View style={styles.echecCount}>
-                <Text style={styles.echecCountText}>{progression.echec} echec</Text>
+                <Text style={styles.echecCountText}>{progression.echec} échec</Text>
               </View>
             )}
           </View>
@@ -199,12 +199,12 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
                 style={styles.clotureBtn}
                 onPress={() => navigation.navigate('Cloture', { programmeId: programme.id })}
               >
-                <Text style={styles.clotureBtnText}>Cloturer le programme</Text>
+                <Text style={styles.clotureBtnText}>Clôturer le programme</Text>
               </TouchableOpacity>
             )}
             {programme.statut === 'CLOTURE' && (
               <View style={styles.clotureBadge}>
-                <Text style={styles.clotureBadgeText}>Programme cloture — saisie impossible</Text>
+                <Text style={styles.clotureBadgeText}>Programme clôturé — saisie impossible</Text>
               </View>
             )}
           </View>
@@ -238,37 +238,37 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { backgroundColor: '#fff', padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  numero: { fontSize: 18, fontWeight: '700', color: '#333' },
-  meta: { fontSize: 13, color: '#888', marginTop: 2 },
+  header: { backgroundColor: '#1a7fba', padding: 16 },
+  numero: { fontSize: 18, fontWeight: '700', color: '#fff' },
+  meta: { fontSize: 13, color: '#d0e8f5', marginTop: 2 },
   progressionRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
   progressionBar: {
-    flex: 1, height: 8, backgroundColor: '#e9ecef',
+    flex: 1, height: 8, backgroundColor: 'rgba(255,255,255,0.25)',
     borderRadius: 4, overflow: 'hidden',
   },
-  progressionFill: { height: 8, backgroundColor: '#1a7fba', borderRadius: 4 },
-  progressionLabel: { fontSize: 12, color: '#555', fontWeight: '600' },
+  progressionFill: { height: 8, backgroundColor: '#fff', borderRadius: 4 },
+  progressionLabel: { fontSize: 12, color: '#d0e8f5', fontWeight: '600' },
   echecCount: {
-    backgroundColor: '#f8d7da', paddingHorizontal: 8, paddingVertical: 2,
+    backgroundColor: 'rgba(220,53,69,0.85)', paddingHorizontal: 8, paddingVertical: 2,
     borderRadius: 10,
   },
-  echecCountText: { fontSize: 11, color: '#842029', fontWeight: '700' },
+  echecCountText: { fontSize: 11, color: '#fff', fontWeight: '700' },
   triBar: {
     flexDirection: 'row', marginTop: 12,
-    backgroundColor: '#f0f4ff', borderRadius: 8, padding: 3, gap: 3,
+    backgroundColor: 'rgba(0,0,0,0.18)', borderRadius: 8, padding: 3, gap: 3,
   },
   triBtn: { flex: 1, paddingVertical: 6, borderRadius: 6, alignItems: 'center' },
-  triBtnActive: { backgroundColor: '#1a7fba' },
-  triBtnText: { fontSize: 12, fontWeight: '600', color: '#6c757d' },
-  triBtnTextActive: { color: '#fff' },
+  triBtnActive: { backgroundColor: '#fff' },
+  triBtnText: { fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.7)' },
+  triBtnTextActive: { color: '#1a7fba' },
   headerActions: { marginTop: 10, gap: 6 },
-  voirAnomaliesLink: { fontSize: 13, color: '#1a7fba', textDecorationLine: 'underline' },
+  voirAnomaliesLink: { fontSize: 13, color: '#d0e8f5', textDecorationLine: 'underline' },
   clotureBtn: {
     marginTop: 4, padding: 10, borderRadius: 8,
-    backgroundColor: '#d1e7dd', borderWidth: 1, borderColor: '#198754',
+    backgroundColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)',
     alignItems: 'center',
   },
-  clotureBtnText: { color: '#0f5132', fontWeight: '700' },
+  clotureBtnText: { color: '#fff', fontWeight: '700' },
   list: { padding: 12 },
   card: {
     backgroundColor: '#fff', padding: 14, borderRadius: 10,
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
   cardDisabled: { opacity: 0.5 },
   clotureBadge: {
     marginTop: 4, padding: 10, borderRadius: 8,
-    backgroundColor: '#198754', alignItems: 'center',
+    backgroundColor: 'rgba(25,135,84,0.85)', alignItems: 'center',
   },
   clotureBadgeText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   fab: {

@@ -32,7 +32,7 @@ type SyncStatus = 'idle' | 'syncing' | 'success' | 'error';
 function formatRelativeTime(ts: number): string {
   if (ts === 0) return 'jamais';
   const diffMin = Math.floor((Date.now() - ts) / 60000);
-  if (diffMin < 1) return 'a l\'instant';
+  if (diffMin < 1) return 'à l\'instant';
   if (diffMin < 60) return `il y a ${diffMin} min`;
   const diffH = Math.floor(diffMin / 60);
   if (diffH < 24) return `il y a ${diffH}h`;
@@ -143,9 +143,9 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       const recus = Object.values(pullRes.counts).reduce((a, b) => a + b, 0);
 
       if (envoyes > 0 || recus > 0) {
-        showToast(`Sync OK — ${recus} recus, ${envoyes} envoyes`, 'success');
+        showToast(`Sync OK — ${recus} reçus, ${envoyes} envoyés`, 'success');
       } else {
-        showToast('Deja a jour', 'info');
+        showToast('Déjà à jour', 'info');
       }
     } finally {
       setSyncing(false);
@@ -156,15 +156,15 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     if (!justReconnected) return;
     clearReconnected();
     if (pendingCount > 0) {
-      showToast('Reseau retrouve — synchronisation en cours...', 'info');
+      showToast('Réseau retrouvé — synchronisation en cours...', 'info');
       handleSync();
     }
   }, [justReconnected, clearReconnected, pendingCount, showToast, handleSync]);
 
   async function handleLogout(): Promise<void> {
-    Alert.alert('Deconnexion', 'Confirmer la deconnexion ?', [
+    Alert.alert('Déconnexion', 'Confirmer la déconnexion ?', [
       { text: 'Annuler', style: 'cancel' },
-      { text: 'Deconnexion', style: 'destructive', onPress: async () => {
+      { text: 'Déconnexion', style: 'destructive', onPress: async () => {
         await logout();
         navigation.replace('Login');
       }},
@@ -184,8 +184,8 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       item.statut === 'CLOTURE' ? '#198754' :
       item.statut === 'EN_COURS' ? '#1a7fba' : '#6c757d';
     const statutLabel =
-      item.statut === 'CLOTURE' ? 'Cloture' :
-      item.statut === 'EN_COURS' ? 'En cours' : 'Planifie';
+      item.statut === 'CLOTURE' ? 'Clôturé' :
+      item.statut === 'EN_COURS' ? 'En cours' : 'Planifié';
 
     return (
       <TouchableOpacity
@@ -212,7 +212,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
             <View style={[styles.progressFill, { width: `${pct}%` as any, backgroundColor: statutColor }]} />
           </View>
           <Text style={[styles.progProgress, { color: statutColor }]}>
-            {item.etapes_visitees}/{item.total_etapes} etapes
+            {item.etapes_visitees}/{item.total_etapes} étapes
           </Text>
         </View>
       </TouchableOpacity>
@@ -254,7 +254,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       {/* Barre de synchronisation */}
       <View style={styles.syncBar}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.syncLabel}>Derniere sync</Text>
+          <Text style={styles.syncLabel}>Dernière sync</Text>
           <Text style={styles.syncValue}>{formatRelativeTime(lastSync)}</Text>
         </View>
         {pendingCount > 0 && (
@@ -279,7 +279,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Mes programmes du jour</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Historique')}>
-          <Text style={styles.historiqueLink}>Historique »</Text>
+          <Text style={styles.historiqueLink}>Historique ›</Text>
         </TouchableOpacity>
       </View>
 
@@ -293,7 +293,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
           <View style={styles.empty}>
             <Text style={styles.emptyTitle}>Aucun programme</Text>
             <Text style={styles.emptyText}>
-              Appuie sur "Synchroniser" pour recuperer ton programme du jour.
+              Appuie sur « Synchroniser » pour récupérer ton programme du jour.
             </Text>
             <TouchableOpacity style={styles.emptySyncBtn} onPress={handleSync} disabled={syncing}>
               <Text style={styles.emptySyncBtnText}>Synchroniser maintenant</Text>
@@ -305,7 +305,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       {/* Footer */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.footerText}>Deconnexion</Text>
+          <Text style={styles.footerText}>Déconnexion</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.devZone}>

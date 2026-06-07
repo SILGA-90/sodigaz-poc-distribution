@@ -71,7 +71,7 @@ export default function EtapeDetailScreen({ route, navigation }: Props): React.R
   if (!operation) {
     return (
       <View style={styles.center}>
-        <Text style={styles.noOpText}>Aucune operation enregistree pour cette etape.</Text>
+        <Text style={styles.noOpText}>Aucune opération enregistrée pour cette étape.</Text>
       </View>
     );
   }
@@ -88,7 +88,7 @@ export default function EtapeDetailScreen({ route, navigation }: Props): React.R
         <View style={styles.headerRow}>
           <Text style={styles.typeOp}>{operation.type_operation === 'COLLECTE' ? 'Collecte' : 'Restitution'}</Text>
           <View style={[styles.syncBadge, synced ? styles.syncedBg : styles.pendingBg]}>
-            <Text style={styles.syncBadgeText}>{synced ? 'Synchronisee' : 'En attente sync'}</Text>
+            <Text style={styles.syncBadgeText}>{synced ? 'Synchronisée' : 'En attente sync'}</Text>
           </View>
         </View>
         <Text style={styles.date}>{dateStr}</Text>
@@ -125,11 +125,11 @@ export default function EtapeDetailScreen({ route, navigation }: Props): React.R
           </Text>
         </View>
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Encaisse</Text>
+          <Text style={styles.infoLabel}>Encaissé</Text>
           <Text style={[styles.infoValue, { color: operation.est_encaissee ? '#198754' : '#dc3545' }]}>
             {operation.est_encaissee
               ? `${operation.montant_encaisse.toLocaleString('fr-FR')} FCFA`
-              : 'Non encaisse'}
+              : 'Non encaissé'}
           </Text>
         </View>
         {operation.mode_paiement && (
@@ -152,12 +152,12 @@ export default function EtapeDetailScreen({ route, navigation }: Props): React.R
         <View style={styles.sigRow}>
           <View style={[styles.sigChip, operation.signature_livreur ? styles.sigOk : styles.sigMissing]}>
             <Text style={styles.sigChipText}>
-              {operation.signature_livreur ? 'Livreur signe' : 'Livreur non signe'}
+              {operation.signature_livreur ? 'Livreur signé' : 'Livreur non signé'}
             </Text>
           </View>
           <View style={[styles.sigChip, operation.signature_client ? styles.sigOk : styles.sigMissing]}>
             <Text style={styles.sigChipText}>
-              {operation.signature_client ? 'Client signe' : 'Client non signe'}
+              {operation.signature_client ? 'Client signé' : 'Client non signé'}
             </Text>
           </View>
         </View>

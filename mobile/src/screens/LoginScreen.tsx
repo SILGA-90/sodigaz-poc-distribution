@@ -45,38 +45,52 @@ export default function LoginScreen({ navigation }: Props): React.ReactElement {
     }
   }
 
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.card}>
+      {/* En-tête navy brandé */}
+      <View style={styles.brandHeader}>
         <Image
           source={require('../../assets/logo_name.png')}
           style={styles.logo}
           resizeMode="contain"
         />
-        <Text style={styles.subtitle}>Connexion livreur</Text>
+        <Text style={styles.brandSub}>Espace livreur</Text>
+      </View>
+
+      {/* Formulaire */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Connexion</Text>
 
         <Text style={styles.label}>Code livreur</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, focusedField === 'code' && styles.inputFocused]}
           value={codeLivreur}
           onChangeText={setCodeLivreur}
+          onFocus={() => setFocusedField('code')}
+          onBlur={() => setFocusedField(null)}
           autoCapitalize="characters"
           autoCorrect={false}
           placeholder="LIV001"
+          placeholderTextColor="#bbb"
           editable={!loading}
         />
 
         <Text style={styles.label}>Mot de passe</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, focusedField === 'pwd' && styles.inputFocused]}
           value={password}
           onChangeText={setPassword}
+          onFocus={() => setFocusedField('pwd')}
+          onBlur={() => setFocusedField(null)}
           secureTextEntry
           autoCorrect={false}
-          placeholder="********"
+          placeholder="••••••••"
+          placeholderTextColor="#bbb"
           editable={!loading}
         />
 
@@ -92,7 +106,7 @@ export default function LoginScreen({ navigation }: Props): React.ReactElement {
           )}
         </TouchableOpacity>
 
-        <Text style={styles.hint}>Demo : LIV001 / demo1234</Text>
+        <Text style={styles.hint}>Démo : LIV001 / demo1234</Text>
       </View>
     </KeyboardAvoidingView>
   );
@@ -101,48 +115,62 @@ export default function LoginScreen({ navigation }: Props): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#0a1628',
     justifyContent: 'center',
-    backgroundColor: '#f5f5f5',
     padding: 20,
+  },
+  brandHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  logo: {
+    width: 200,
+    height: 60,
+    marginBottom: 8,
+  },
+  brandSub: {
+    color: '#8daec8',
+    fontSize: 13,
+    letterSpacing: 0.5,
   },
   card: {
     backgroundColor: '#fff',
     padding: 24,
-    borderRadius: 12,
+    borderRadius: 14,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
     maxWidth: 400,
     alignSelf: 'center',
     width: '100%',
   },
-  logo: {
-    width: '100%',
-    height: 70,
-    alignSelf: 'center',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#888',
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1a2332',
+    marginBottom: 20,
     textAlign: 'center',
-    marginBottom: 24,
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+    color: '#444',
+    marginBottom: 5,
     marginTop: 12,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
+    borderWidth: 1.5,
+    borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
-    fontSize: 16,
+    fontSize: 15,
+    backgroundColor: '#fafafa',
+    color: '#1a2332',
+  },
+  inputFocused: {
+    borderColor: '#1a7fba',
     backgroundColor: '#fff',
   },
   button: {
@@ -158,11 +186,11 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   hint: {
     textAlign: 'center',
-    color: '#888',
+    color: '#aaa',
     fontSize: 12,
     marginTop: 16,
   },
