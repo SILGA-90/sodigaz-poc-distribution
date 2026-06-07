@@ -168,6 +168,7 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
         photos={photos}
         onChange={setPhotos}
         types={[{ label: 'Anomalie', value: 'ANOMALIE' }]}
+        cameraOnly
       />
 
       <TouchableOpacity

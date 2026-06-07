@@ -162,6 +162,21 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
   }, [justReconnected, clearReconnected, pendingCount, showToast, handleSync]);
 
   async function handleLogout(): Promise<void> {
+    if (pendingCount > 0) {
+      Alert.alert(
+        'Données non synchronisées',
+        `${pendingCount} élément(s) n'ont pas encore été envoyés au serveur.\n\nSi vous vous déconnectez maintenant, ces données seront définitivement perdues.\n\nSynchronisez d'abord, puis déconnectez-vous.`,
+        [
+          { text: 'Rester', style: 'cancel' },
+          {
+            text: 'Se déconnecter quand même',
+            style: 'destructive',
+            onPress: async () => { await logout(); navigation.replace('Login'); },
+          },
+        ],
+      );
+      return;
+    }
     Alert.alert('Déconnexion', 'Confirmer la déconnexion ?', [
       { text: 'Annuler', style: 'cancel' },
       { text: 'Déconnexion', style: 'destructive', onPress: async () => {

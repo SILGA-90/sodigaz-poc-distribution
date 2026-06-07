@@ -471,7 +471,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
       </View>
 
       <Text style={styles.sectionTitle}>Photos</Text>
-      <PhotosSection photos={photos} onChange={setPhotos} />
+      <PhotosSection photos={photos} onChange={setPhotos} cameraOnly />
       <Text style={styles.sectionTitle}>Commentaire (optionnel)</Text>
       <TextInput
         style={styles.commentaire}

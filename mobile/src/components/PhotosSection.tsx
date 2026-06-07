@@ -32,6 +32,8 @@ interface Props {
   photos: PhotoEnAttente[];
   onChange: (photos: PhotoEnAttente[]) => void;
   types?: TypeOption[];
+  /** Interdit la galerie — obligatoire pour les preuves de livraison (anti-fraude). */
+  cameraOnly?: boolean;
 }
 
 const DEFAULT_TYPES: TypeOption[] = [
@@ -40,7 +42,7 @@ const DEFAULT_TYPES: TypeOption[] = [
   { label: 'Etat PLV', value: 'ETAT_PLV' },
 ];
 
-export default function PhotosSection({ photos, onChange, types = DEFAULT_TYPES }: Props): React.ReactElement {
+export default function PhotosSection({ photos, onChange, types = DEFAULT_TYPES, cameraOnly = false }: Props): React.ReactElement {
   const [busy, setBusy] = useState<boolean>(false);
   const [typeChoisi, setTypeChoisi] = useState<string>(types[0].value);
 
@@ -84,9 +86,11 @@ export default function PhotosSection({ photos, onChange, types = DEFAULT_TYPES 
         <TouchableOpacity style={styles.actionButton} onPress={() => ajouter(prendrePhoto)} disabled={busy}>
           <Text style={styles.actionText}>Prendre une photo</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={() => ajouter(choisirPhoto)} disabled={busy}>
-          <Text style={styles.actionText}>Galerie</Text>
-        </TouchableOpacity>
+        {!cameraOnly && (
+          <TouchableOpacity style={styles.actionButton} onPress={() => ajouter(choisirPhoto)} disabled={busy}>
+            <Text style={styles.actionText}>Galerie</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {busy && <ActivityIndicator color="#1a7fba" style={{ marginVertical: 8 }} />}

@@ -18,6 +18,7 @@ import {
   getPendingAnomalies,
   markTableSynced,
 } from '../db/repositories/operationRepository';
+import { purgerDonneesAnciennes } from '../db/repositories/programmeRepository';
 import {
   getPhotosPendingMeta,
   getPhotosPendingUpload,
@@ -363,6 +364,12 @@ export async function syncAll(): Promise<{ pull: PullResult; push: PushResult }>
   await pushClotures();
   const pullResult = await pull();
   const pushResult = await push();
+  // Purge des données locales anciennes après une sync réussie.
+  // On purge uniquement si pull ET push ont réussi pour ne pas supprimer
+  // de données qui n'auraient pas encore été envoyées.
+  if (pullResult.success && pushResult.success) {
+    purgerDonneesAnciennes(90).catch(() => {});
+  }
   return { pull: pullResult, push: pushResult };
 }
 

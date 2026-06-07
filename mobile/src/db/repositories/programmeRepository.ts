@@ -1,6 +1,8 @@
 /**
  * Repository des programmes : lecture, recap, cloture locale.
  */
+import * as FileSystem from 'expo-file-system/legacy';
+
 import { getDatabase, addCloturePending } from '../database';
 import { getItem, STORAGE_KEYS } from '../../storage/secureStorage';
 import { Programme, Etape } from '../../types/models';
@@ -33,23 +35,10 @@ export async function getProgrammesRecents(): Promise<ProgrammeAvecProgression[]
   const userIdStr = await getItem(STORAGE_KEYS.USER_ID);
   const utilisateurId = userIdStr ? parseInt(userIdStr, 10) : null;
 
-  if (utilisateurId) {
-    return db.getAllAsync<ProgrammeAvecProgression>(
-      `SELECT
-          pr.*,
-          (SELECT COUNT(*) FROM etape e WHERE e.programme_id = pr.id AND e.is_deleted = 0) AS total_etapes,
-          (SELECT COUNT(*) FROM etape e WHERE e.programme_id = pr.id AND e.is_deleted = 0 AND e.statut_visite = 'VISITEE') AS etapes_visitees,
-          (SELECT COUNT(*) FROM etape e WHERE e.programme_id = pr.id AND e.is_deleted = 0 AND e.statut_visite = 'ECHEC') AS etapes_echec
-       FROM programme pr
-       WHERE pr.is_deleted = 0
-         AND pr.utilisateur_id = ?
-         AND date(pr.date_programme) = date('now')
-       ORDER BY pr.type_programme;`,
-      [utilisateurId],
-    );
-  }
+  // Sans identifiant livreur, on retourne une liste vide plutôt que de
+  // montrer les programmes de tous les livreurs (isolation des données).
+  if (!utilisateurId) return [];
 
-  // Fallback si l'id n'est pas encore en cache (premier lancement avant login complet)
   return db.getAllAsync<ProgrammeAvecProgression>(
     `SELECT
         pr.*,
@@ -58,8 +47,10 @@ export async function getProgrammesRecents(): Promise<ProgrammeAvecProgression[]
         (SELECT COUNT(*) FROM etape e WHERE e.programme_id = pr.id AND e.is_deleted = 0 AND e.statut_visite = 'ECHEC') AS etapes_echec
      FROM programme pr
      WHERE pr.is_deleted = 0
+       AND pr.utilisateur_id = ?
        AND date(pr.date_programme) = date('now')
      ORDER BY pr.type_programme;`,
+    [utilisateurId],
   );
 }
 
@@ -179,6 +170,111 @@ export async function getRecapProgramme(
     montant_encaisse: ops?.montant ?? 0,
     nb_anomalies: anomalies?.n ?? 0,
   };
+}
+
+/**
+ * Supprime physiquement les programmes CLOTURE plus vieux que daysToKeep jours
+ * et toutes leurs données dépendantes (étapes, opérations, photos…).
+ * Supprime aussi les fichiers photo du disque.
+ * N'efface jamais les données PENDING non synchronisées.
+ */
+export async function purgerDonneesAnciennes(daysToKeep = 90): Promise<void> {
+  const db = await getDatabase();
+
+  // 1. Identifier les programmes éligibles à la purge
+  const oldProgrammes = await db.getAllAsync<{ id: number; uuid: string }>(
+    `SELECT id, uuid FROM programme
+     WHERE statut = 'CLOTURE'
+       AND is_deleted = 0
+       AND date(date_programme) < date('now', ? || ' days')
+       AND id NOT IN (
+         SELECT DISTINCT e.programme_id FROM etape e
+         JOIN operation o ON o.etape_uuid = e.uuid
+         WHERE o.sync_status = 'PENDING'
+       );`,
+    [`-${daysToKeep}`],
+  );
+
+  if (oldProgrammes.length === 0) return;
+
+  const progIds   = oldProgrammes.map((p) => p.id);
+  const progUuids = oldProgrammes.map((p) => p.uuid);
+  const ph        = (n: number) => Array(n).fill('?').join(',');
+
+  // 2. Collecter les URI des photos pour suppression fichier
+  const photoRows = await db.getAllAsync<{ local_uri: string }>(
+    `SELECT p.local_uri FROM photo p
+     WHERE (
+       p.operation_uuid IN (
+         SELECT o.uuid FROM operation o
+         JOIN etape e ON e.uuid = o.etape_uuid
+         WHERE e.programme_id IN (${ph(progIds.length)})
+       )
+       OR p.anomalie_uuid IN (
+         SELECT a.uuid FROM anomalie a
+         WHERE a.programme_uuid IN (${ph(progUuids.length)})
+       )
+     )`,
+    [...progIds, ...progUuids],
+  );
+
+  // 3. Supprimer en cascade dans l'ordre des dépendances (FK)
+  await db.withTransactionAsync(async () => {
+    // photos
+    await db.runAsync(
+      `DELETE FROM photo WHERE operation_uuid IN (
+         SELECT o.uuid FROM operation o
+         JOIN etape e ON e.uuid = o.etape_uuid
+         WHERE e.programme_id IN (${ph(progIds.length)})
+       ) OR anomalie_uuid IN (
+         SELECT a.uuid FROM anomalie a WHERE a.programme_uuid IN (${ph(progUuids.length)})
+       )`,
+      [...progIds, ...progUuids],
+    );
+    // lignes opération
+    await db.runAsync(
+      `DELETE FROM ligne_operation WHERE operation_uuid IN (
+         SELECT o.uuid FROM operation o
+         JOIN etape e ON e.uuid = o.etape_uuid
+         WHERE e.programme_id IN (${ph(progIds.length)})
+       )`,
+      progIds,
+    );
+    // opérations
+    await db.runAsync(
+      `DELETE FROM operation WHERE etape_uuid IN (
+         SELECT uuid FROM etape WHERE programme_id IN (${ph(progIds.length)})
+       )`,
+      progIds,
+    );
+    // anomalies
+    await db.runAsync(
+      `DELETE FROM anomalie WHERE programme_uuid IN (${ph(progUuids.length)})`,
+      progUuids,
+    );
+    // lignes programme
+    await db.runAsync(
+      `DELETE FROM ligne_programme WHERE etape_id IN (
+         SELECT id FROM etape WHERE programme_id IN (${ph(progIds.length)})
+       )`,
+      progIds,
+    );
+    // étapes
+    await db.runAsync(
+      `DELETE FROM etape WHERE programme_id IN (${ph(progIds.length)})`,
+      progIds,
+    );
+    // programmes
+    await db.runAsync(
+      `DELETE FROM programme WHERE id IN (${ph(progIds.length)})`,
+      progIds,
+    );
+  });
+
+  // 4. Supprimer les fichiers photo du disque (best-effort, hors transaction)
+  for (const { local_uri } of photoRows) {
+    await FileSystem.deleteAsync(local_uri, { idempotent: true });
+  }
 }
 
 /**

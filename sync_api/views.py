@@ -15,6 +15,7 @@ Filtre de securite : un livreur ne voit / ne pousse QUE ses propres donnees.
 import logging
 import time
 from contextlib import suppress
+from datetime import date, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -93,9 +94,14 @@ def sync_pull(request):
     # Timestamp courant cote serveur, retourne en fin de reponse.
     server_timestamp = now_ms()
 
-    # Ensemble des programmes du livreur connecte (servira de filtre pour
-    # toutes les tables qui en derivent).
-    programmes_qs = Programme.objects.filter(utilisateur=user)
+    # Programmes du livreur — limités aux 90 derniers jours.
+    # Cela borne la taille de la SQLite mobile et accélère le premier pull.
+    # L'historique complet reste consultable côté supervision web.
+    date_min = date.today() - timedelta(days=90)
+    programmes_qs = Programme.objects.filter(
+        utilisateur=user,
+        date_programme__gte=date_min,
+    )
     programmes_ids = list(programmes_qs.values_list("id", flat=True))
 
     # --------------------------------------------------------------------
@@ -455,6 +461,29 @@ def sync_push(request):
                             {"status": "error", "detail": f"Operation {d['operation_uuid']} non autorisee."},
                             status=status.HTTP_403_FORBIDDEN,
                         )
+                    # Validation anti-fraude : l'écart entre la date de la photo
+                    # et la date de l'opération ne doit pas dépasser 2 heures.
+                    # Tolérance généreuse pour couvrir les saisies légèrement
+                    # décalées (photo prise avant de remplir le formulaire).
+                    MAX_PHOTO_DELTA_SECONDS = 2 * 3600
+                    photo_dt = d["date_heure"]
+                    op_dt = op.date_heure
+                    # Rendre les deux aware si nécessaire pour la comparaison
+                    if photo_dt.tzinfo is None:
+                        from django.utils.timezone import make_aware
+                        photo_dt = make_aware(photo_dt)
+                    if op_dt.tzinfo is None:
+                        from django.utils.timezone import make_aware
+                        op_dt = make_aware(op_dt)
+                    delta_seconds = abs((photo_dt - op_dt).total_seconds())
+                    if delta_seconds > MAX_PHOTO_DELTA_SECONDS:
+                        logger.warning(
+                            "push: photo %s rejetee — ecart temporel %.0f s "
+                            "(max %d s) par rapport a l'operation %s pour %s",
+                            d["uuid"], delta_seconds, MAX_PHOTO_DELTA_SECONDS,
+                            d["operation_uuid"], user.code_livreur,
+                        )
+                        continue
                     operation_id = op.id
                 else:
                     an = Anomalie.objects.filter(uuid=d["anomalie_uuid"]).first()
