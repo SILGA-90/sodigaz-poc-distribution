@@ -52,6 +52,70 @@ const MODES_PAIEMENT: { label: string; value: ModePaiement }[] = [
   { label: 'Credit', value: 'CREDIT' },
 ];
 
+interface PaymentFields {
+  montantTotal: number;
+  montantEncaisse: number;
+  encaissee: boolean;
+  modePaiementFinal: ModePaiement | null;
+}
+
+/**
+ * Calcule les champs financiers selon le type d'opération et les saisies.
+ * Retourne null si l'acompte saisi est invalide (<= 0) ; l'appelant affiche alors l'alerte.
+ */
+function computePaymentFields(
+  isCollecte: boolean,
+  avecAcompte: boolean,
+  montantAcompte: string,
+  montantFinal: number,
+  estEncaissee: boolean,
+  modePaiement: ModePaiement,
+): PaymentFields | null {
+  if (isCollecte) {
+    if (avecAcompte) {
+      const acompte = parseFloat(montantAcompte) || 0;
+      if (acompte <= 0) return null;
+      return { montantTotal: acompte, montantEncaisse: acompte, encaissee: true, modePaiementFinal: modePaiement };
+    }
+    // Collecte sans paiement : valeurs neutres
+    return { montantTotal: 0, montantEncaisse: 0, encaissee: false, modePaiementFinal: null };
+  }
+  // Restitution : paiement obligatoire, montant calculé ou corrigé manuellement
+  return {
+    montantTotal: montantFinal,
+    montantEncaisse: estEncaissee ? montantFinal : 0,
+    encaissee: estEncaissee,
+    modePaiementFinal: modePaiement,
+  };
+}
+
+/**
+ * Vérifie que les quantités saisies ne s'écartent pas fortement des prévisions.
+ * Seuil : plus du double ET écart absolu > 5 (évite les faux positifs sur petites quantités).
+ * Retourne true si tout est OK ou si le livreur confirme malgré l'écart.
+ */
+async function validateQuantiteEcart(lignes: LigneState[]): Promise<boolean> {
+  const horsNorme = lignes.filter((l) => {
+    if (l.produit.quantite_prevue == null) return false;
+    const saisi = parseInt(l.quantite, 10) || 0;
+    return saisi > l.produit.quantite_prevue * 2 && saisi - l.produit.quantite_prevue > 5;
+  });
+  if (horsNorme.length === 0) return true;
+  const detail = horsNorme
+    .map((l) => `${l.produit.libelle} : prevu ${l.produit.quantite_prevue}, saisi ${l.quantite}`)
+    .join('\n');
+  return new Promise<boolean>((resolve) => {
+    Alert.alert(
+      'Ecart important detecte',
+      `Les quantites suivantes s'ecartent fortement du prevu :\n\n${detail}\n\nConfirmes-tu ces valeurs ?`,
+      [
+        { text: 'Corriger', style: 'cancel', onPress: () => resolve(false) },
+        { text: 'Confirmer quand meme', onPress: () => resolve(true) },
+      ],
+    );
+  });
+}
+
 export default function SaisieOperationScreen({ route, navigation }: Props): React.ReactElement {
   const { etapeId } = route.params;
 
@@ -119,7 +183,6 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
   // La position est acquise au moment de l'enregistrement (valeur probante),
   // pas a l'ouverture de l'ecran.
 
-  // Montant calcule automatiquement
   const montantCalcule = useMemo(() => {
     return lignes.reduce((sum, l) => {
       const q = parseInt(l.quantite, 10) || 0;
@@ -155,65 +218,16 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
       return;
     }
 
-    // Calcul des champs paiement selon le type d'operation
-    let montantTotal: number;
-    let montantEncaisse: number;
-    let encaissee: boolean;
-    let modePaiementFinal: ModePaiement | null;
-
-    if (isCollecte) {
-      if (avecAcompte) {
-        const acompte = parseFloat(montantAcompte) || 0;
-        if (acompte <= 0) {
-          Alert.alert('Acompte invalide', 'Saisis un montant d\'acompte superieur a 0.');
-          return;
-        }
-        montantTotal = acompte;
-        montantEncaisse = acompte;
-        encaissee = true;
-        modePaiementFinal = modePaiement;
-      } else {
-        // Collecte sans paiement : valeurs neutres
-        montantTotal = 0;
-        montantEncaisse = 0;
-        encaissee = false;
-        modePaiementFinal = null;
-      }
-    } else {
-      // Restitution : paiement obligatoire, montant calcule ou corrige
-      montantTotal = montantFinal;
-      montantEncaisse = estEncaissee ? montantFinal : 0;
-      encaissee = estEncaissee;
-      modePaiementFinal = modePaiement;
+    const paiement = computePaymentFields(isCollecte, avecAcompte, montantAcompte, montantFinal, estEncaissee, modePaiement);
+    if (paiement === null) {
+      Alert.alert('Acompte invalide', "Saisis un montant d'acompte superieur a 0.");
+      return;
     }
 
-    // Vérification écart prévus/saisis (seulement pour les lignes avec quantite_prevue)
-    const lignesEcart = lignes.filter((l) => {
-      if (l.produit.quantite_prevue == null) return false;
-      const saisi = parseInt(l.quantite, 10) || 0;
-      const prevu = l.produit.quantite_prevue;
-      return saisi > prevu * 2 && saisi - prevu > 5;
-    });
-    if (lignesEcart.length > 0) {
-      const detail = lignesEcart
-        .map((l) => `${l.produit.libelle} : prevu ${l.produit.quantite_prevue}, saisi ${l.quantite}`)
-        .join('\n');
-      const confirme = await new Promise<boolean>((resolve) => {
-        Alert.alert(
-          'Ecart important detecte',
-          `Les quantites suivantes s'ecartent fortement du prevu :\n\n${detail}\n\nConfirmes-tu ces valeurs ?`,
-          [
-            { text: 'Corriger', style: 'cancel', onPress: () => resolve(false) },
-            { text: 'Confirmer quand meme', onPress: () => resolve(true) },
-          ],
-        );
-      });
-      if (!confirme) return;
-    }
+    if (!await validateQuantiteEcart(lignes)) return;
 
     setSaving(true);
     try {
-      // Acquisition de la position au moment de l'enregistrement (valeur probante)
       const pos = await acquerirPositionProbante();
       setGpsLat(pos.latitude);
       setGpsLon(pos.longitude);
@@ -223,7 +237,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
 
       if (pos.qualite !== 'fiable') {
         const msg = pos.qualite === 'absente'
-          ? 'Aucune position GPS fiable n\'a pu etre obtenue. L\'operation sera enregistree SANS position. Continuer ?'
+          ? "Aucune position GPS fiable n'a pu etre obtenue. L'operation sera enregistree SANS position. Continuer ?"
           : `Position GPS peu precise (${pos.precision ? Math.round(pos.precision) + ' m' : 'inconnue'}). Enregistrer quand meme ?`;
         const confirme = await new Promise<boolean>((resolve) => {
           Alert.alert('Position GPS', msg, [
@@ -239,10 +253,10 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         etape_uuid: etapeInfo.uuid,
         type_operation: typeOp,
         sous_type: typeOp === 'COLLECTE' ? 'BCR' : null,
-        mode_paiement: modePaiementFinal,
-        montant_total: montantTotal,
-        montant_encaisse: montantEncaisse,
-        est_encaissee: encaissee,
+        mode_paiement: paiement.modePaiementFinal,
+        montant_total: paiement.montantTotal,
+        montant_encaisse: paiement.montantEncaisse,
+        est_encaissee: paiement.encaissee,
         latitude: pos.latitude,
         longitude: pos.longitude,
         gps_precision: pos.precision,
@@ -254,11 +268,8 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         lignes: lignesSaisies,
       });
 
-      // Persister les photos rattachees a l'operation
       for (const ph of photos) {
-        await ajouterPhotoOperation(
-          opUuid, ph.uri, ph.type_photo, ph.tailleOctets, pos.latitude, pos.longitude,
-        );
+        await ajouterPhotoOperation(opUuid, ph.uri, ph.type_photo, ph.tailleOctets, pos.latitude, pos.longitude);
       }
 
       isDirty.current = false;

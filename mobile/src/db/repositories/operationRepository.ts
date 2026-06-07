@@ -8,8 +8,6 @@
 import { getDatabase } from '../database';
 import { Operation, LigneOperation, Anomalie } from '../../types/models';
 
-// ---- Lecture des PENDING (pour le push) ----
-
 export async function getPendingOperations(): Promise<Operation[]> {
   const db = await getDatabase();
   // JOIN etape : exclut les operations orphelines dont l'etape n'existe pas en
@@ -38,8 +36,7 @@ export async function getPendingAnomalies(): Promise<Anomalie[]> {
   );
 }
 
-// ---- Marquage SYNCED apres push reussi ----
-
+// 'photo' est géré par photoRepository.markPhotoMetaSynced (cycle d'upload distinct).
 type SyncTable = 'operation' | 'ligne_operation' | 'anomalie';
 
 /**

@@ -55,9 +55,9 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     return () => { if (tickRef.current) clearInterval(tickRef.current); };
   }, []);
 
-  function showToast(message: string, type: 'success' | 'error' | 'info' = 'success') {
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ visible: true, message, type });
-  }
+  }, []);
 
   const loadLocalData = useCallback(async () => {
     const progs = await getProgrammesRecents();
@@ -73,17 +73,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     loadLocalData();
   }, [loadLocalData]);
 
-  useEffect(() => {
-    if (!justReconnected) return;
-    clearReconnected();
-    if (pendingCount > 0) {
-      showToast('Reseau retrouve — synchronisation en cours...', 'info');
-      handleSync();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [justReconnected]);
-
-  async function handleSync(): Promise<void> {
+  const handleSync = useCallback(async (): Promise<void> => {
     if (syncing) return;
     setSyncing(true);
     setSyncStatus('syncing');
@@ -103,17 +93,23 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       const recus = Object.values(pullRes.counts).reduce((a, b) => a + b, 0);
 
       if (envoyes > 0 || recus > 0) {
-        showToast(
-          `Sync OK — ${recus} recus, ${envoyes} envoyes`,
-          'success',
-        );
+        showToast(`Sync OK — ${recus} recus, ${envoyes} envoyes`, 'success');
       } else {
         showToast('Deja a jour', 'info');
       }
     } finally {
       setSyncing(false);
     }
-  }
+  }, [syncing, loadLocalData, showToast]);
+
+  useEffect(() => {
+    if (!justReconnected) return;
+    clearReconnected();
+    if (pendingCount > 0) {
+      showToast('Reseau retrouve — synchronisation en cours...', 'info');
+      handleSync();
+    }
+  }, [justReconnected, clearReconnected, pendingCount, showToast, handleSync]);
 
   async function handleLogout(): Promise<void> {
     Alert.alert('Deconnexion', 'Confirmer la deconnexion ?', [
@@ -130,7 +126,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     : syncStatus === 'syncing' ? '#fbbf24'
     : '#94a3b8';
 
-  function renderProgramme({ item }: { item: ProgrammeAvecProgression }): React.ReactElement {
+  const renderProgramme = useCallback(({ item }: { item: ProgrammeAvecProgression }): React.ReactElement => {
     const pct = item.total_etapes > 0
       ? Math.round((item.etapes_visitees / item.total_etapes) * 100)
       : 0;
@@ -171,7 +167,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
         </View>
       </TouchableOpacity>
     );
-  }
+  }, [navigation]);
 
   return (
     <View style={styles.container}>

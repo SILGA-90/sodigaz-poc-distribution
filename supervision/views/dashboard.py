@@ -14,7 +14,6 @@ from ._base import _get_date_filter
 
 @superviseur_required
 def dashboard(request):
-    """Page d'accueil : carte de Ouaga + statistiques du jour."""
     date_filter = _get_date_filter(request, write_session=True)
 
     programmes_aujourdhui = Programme.objects.filter(

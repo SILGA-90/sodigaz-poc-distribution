@@ -85,7 +85,10 @@ def programme_detail(request, programme_id):
             lignes_recon.append(d)
         reconciliation.append({"etape": etape, "lignes": lignes_recon})
 
-    # Timeline chronologique avec détection des écarts d'ordre
+    # Timeline chronologique avec détection des écarts d'ordre.
+    # conforme = True si le livreur avance dans le sens du circuit (ordre croissant).
+    # >= et non == : une visite "en saut" (ordre 3 → 5, en sautant 4) reste conforme ;
+    # seul un retour en arrière (ordre 5 → 3) est signalé hors-ordre.
     timeline = []
     prev_ordre = 0
     for op in (

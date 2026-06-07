@@ -1,14 +1,14 @@
 /**
  * Ecran d'un programme : liste des etapes (PLV) a visiter dans l'ordre.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
+  Linking,
   StyleSheet,
   Text,
-  Alert,
-  Linking,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -17,7 +17,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   getEtapesDuProgramme,
   getProgrammeById,
-  ProgrammeAvecProgression,
   EtapeAvecPlv,
 } from '../db/repositories/programmeRepository';
 import { Programme } from '../types/models';
@@ -42,7 +41,9 @@ function ouvrirItineraire(lat: number, lon: number): void {
 export default function ProgrammeScreen({ route, navigation }: Props): React.ReactElement {
   const { programmeId } = route.params;
   const [programme, setProgramme] = useState<Programme | null>(null);
-  const [progression, setProgression] = useState<{ visitees: number; echec: number; total: number }>({ visitees: 0, echec: 0, total: 0 });
+  const [progression, setProgression] = useState<{ visitees: number; echec: number; total: number }>(
+    { visitees: 0, echec: 0, total: 0 },
+  );
   const [etapes, setEtapes] = useState<EtapeAvecPlv[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [triMode, setTriMode] = useState<TriMode>('optimise');
@@ -77,15 +78,9 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
     })();
   }, [programmeId]);
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#0d6efd" />
-      </View>
-    );
-  }
-
-  function renderEtape({ item }: { item: EtapeAvecPlv }): React.ReactElement {
+  // useCallback est requis AVANT le return anticipé ci-dessous (règle des hooks :
+  // jamais après un return conditionnel).
+  const renderEtape = useCallback(({ item }: { item: EtapeAvecPlv }): React.ReactElement => {
     const visite = item.statut_visite === 'VISITEE';
     const echec = item.statut_visite === 'ECHEC';
     const programmeCloture = programme?.statut === 'CLOTURE';
@@ -143,6 +138,14 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
         </View>
       </TouchableOpacity>
     );
+  }, [navigation, programme]);
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#0d6efd" />
+      </View>
+    );
   }
 
   return (
@@ -184,7 +187,10 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
           </View>
           <View style={styles.headerActions}>
             <TouchableOpacity
-              onPress={() => navigation.navigate('MesAnomalies', { programmeUuid: programme.uuid, programmeNumero: programme.numero_x3 })}
+              onPress={() => navigation.navigate('MesAnomalies', {
+                programmeUuid: programme.uuid,
+                programmeNumero: programme.numero_x3,
+              })}
             >
               <Text style={styles.voirAnomaliesLink}>Voir les anomalies &rsaquo;</Text>
             </TouchableOpacity>
@@ -216,7 +222,10 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
       {programme && programme.statut !== 'CLOTURE' && (
         <TouchableOpacity
           style={styles.fab}
-          onPress={() => navigation.navigate('Anomalie', { programmeUuid: programme.uuid, programmeId: programme.id })}
+          onPress={() => navigation.navigate('Anomalie', {
+            programmeUuid: programme.uuid,
+            programmeId: programme.id,
+          })}
         >
           <Text style={styles.fabText}>+ Anomalie</Text>
         </TouchableOpacity>
@@ -247,9 +256,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', marginTop: 12,
     backgroundColor: '#f0f4ff', borderRadius: 8, padding: 3, gap: 3,
   },
-  triBtn: {
-    flex: 1, paddingVertical: 6, borderRadius: 6, alignItems: 'center',
-  },
+  triBtn: { flex: 1, paddingVertical: 6, borderRadius: 6, alignItems: 'center' },
   triBtnActive: { backgroundColor: '#0d6efd' },
   triBtnText: { fontSize: 12, fontWeight: '600', color: '#6c757d' },
   triBtnTextActive: { color: '#fff' },
@@ -263,12 +270,8 @@ const styles = StyleSheet.create({
   clotureBtnText: { color: '#0f5132', fontWeight: '700' },
   list: { padding: 12 },
   card: {
-    backgroundColor: '#fff',
-    padding: 14,
-    borderRadius: 10,
-    marginBottom: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: '#fff', padding: 14, borderRadius: 10,
+    marginBottom: 10, flexDirection: 'row', alignItems: 'center',
   },
   ordreCircle: {
     width: 36, height: 36, borderRadius: 18,
