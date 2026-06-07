@@ -146,13 +146,17 @@ def sync_pull(request):
     # Operations / lignes_operation / anomalies du livreur
     # (re-pull au cas ou serveur les aurait modifies, ex : superviseur)
     # --------------------------------------------------------------------
-    operations_qs = Operation.objects.filter(etape_id__in=etapes_ids)
+    operations_qs = Operation.objects.filter(
+        etape_id__in=etapes_ids
+    ).select_related("etape")
     operations_changes = _build_changes(
         operations_qs, last_pulled_at, OperationSyncSerializer,
     )
     operations_ids = list(operations_qs.values_list("id", flat=True))
 
-    lignes_op_qs = LigneOperation.objects.filter(operation_id__in=operations_ids)
+    lignes_op_qs = LigneOperation.objects.filter(
+        operation_id__in=operations_ids
+    ).select_related("operation", "produit")
     lignes_op_changes = _build_changes(
         lignes_op_qs, last_pulled_at, LigneOperationSyncSerializer,
     )

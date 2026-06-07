@@ -138,14 +138,14 @@ class LigneProgrammeSyncSerializer(serializers.ModelSerializer):
 class OperationSyncSerializer(serializers.ModelSerializer):
     """Pour le PULL (relecture cote serveur). Le PUSH passe par OperationPushSerializer."""
     uuid = serializers.UUIDField()
-    etape_id = serializers.IntegerField()
+    etape_uuid = serializers.SerializerMethodField()
     latitude = serializers.SerializerMethodField()
     longitude = serializers.SerializerMethodField()
 
     class Meta:
         model = Operation
         fields = (
-            "id", "uuid", "etape_id",
+            "id", "uuid", "etape_uuid",
             "type_operation", "sous_type",
             "date_heure", "latitude", "longitude",
             "mode_paiement", "montant_total", "montant_encaisse", "est_encaissee",
@@ -153,6 +153,9 @@ class OperationSyncSerializer(serializers.ModelSerializer):
             "commentaire",
             "last_modified",
         )
+
+    def get_etape_uuid(self, obj):
+        return str(obj.etape.uuid) if obj.etape_id else None
 
     def get_latitude(self, obj):
         return obj.localisation_saisie.y if obj.localisation_saisie else None
@@ -163,19 +166,25 @@ class OperationSyncSerializer(serializers.ModelSerializer):
 
 class LigneOperationSyncSerializer(serializers.ModelSerializer):
     uuid = serializers.UUIDField()
-    operation_id = serializers.IntegerField()
-    produit_id = serializers.IntegerField()
+    operation_uuid = serializers.SerializerMethodField()
+    produit_code_x3 = serializers.SerializerMethodField()
 
     class Meta:
         model = LigneOperation
         fields = (
             "id", "uuid",
-            "operation_id", "produit_id",
+            "operation_uuid", "produit_code_x3",
             "quantite_realisee", "quantite_collectee_vide",
             "quantite_consignee", "quantite_deconsignee",
             "montant_ligne",
             "last_modified",
         )
+
+    def get_operation_uuid(self, obj):
+        return str(obj.operation.uuid) if obj.operation_id else None
+
+    def get_produit_code_x3(self, obj):
+        return obj.produit.code_x3 if obj.produit_id else None
 
 
 class AnomalieSyncSerializer(serializers.ModelSerializer):

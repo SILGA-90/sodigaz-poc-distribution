@@ -93,6 +93,14 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
 
     function handleCardPress() {
       if (visite) {
+        if (item.op_sync_status === null) {
+          // Étape visitée sur un autre appareil : l'opération n'est pas disponible hors ligne.
+          Alert.alert(
+            'Détail non disponible',
+            "L'opération a été enregistrée sur un autre appareil et n'est pas accessible hors ligne.",
+          );
+          return;
+        }
         navigation.navigate('EtapeDetail', { etapeId: item.id, etapeUuid: item.uuid });
       } else if (!disabled) {
         navigation.navigate('SaisieOperation', { etapeId: item.id });
@@ -118,7 +126,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
             <View style={[styles.statutBadge, { backgroundColor: statusBg }]}>
               <Text style={[styles.statutText, { color: statusColor }]}>{badgeLabel}</Text>
             </View>
-            {visite && (
+            {visite && item.op_sync_status !== null && (
               <View style={[
                 styles.syncDot,
                 item.op_sync_status === 'SYNCED' ? styles.syncDotGreen : styles.syncDotOrange,

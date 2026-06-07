@@ -167,6 +167,57 @@ async function applyLignesProgramme(db: any, changes?: TableChanges): Promise<nu
   );
 }
 
+async function applyOperations(db: any, changes?: TableChanges): Promise<number> {
+  return applyRows(
+    db, changes,
+    (r) => db.runAsync(
+      // INSERT OR IGNORE : on ne remplace jamais une opération PENDING locale.
+      // Les opérations PENDING ne sont pas encore sur le serveur (pull avant push),
+      // donc elles n'apparaissent pas dans le pull — pas de conflit en pratique.
+      // La règle s'applique aussi si le superviseur modifie une opération côté serveur :
+      // la version serveur sera prise à la prochaine sync complète (PENDING → SYNCED → pull).
+      `INSERT OR IGNORE INTO operation
+       (uuid, etape_uuid, type_operation, sous_type, date_heure,
+        latitude, longitude, gps_precision, gps_horodatage,
+        mode_paiement, montant_total, montant_encaisse,
+        est_encaissee, signature_livreur, signature_client, nom_signataire_client,
+        commentaire, sync_status, last_modified, is_deleted)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'SYNCED', ?, 0);`,
+      [
+        String(r.uuid), r.etape_uuid, r.type_operation, r.sous_type ?? null,
+        r.date_heure, r.latitude ?? null, r.longitude ?? null,
+        r.gps_precision ?? null, r.gps_horodatage ?? null,
+        r.mode_paiement ?? null, r.montant_total ?? 0, r.montant_encaisse ?? 0,
+        r.est_encaissee ? 1 : 0,
+        r.signature_livreur ?? '', r.signature_client ?? '',
+        r.nom_signataire_client ?? '', r.commentaire ?? '',
+        r.last_modified ?? 0,
+      ],
+    ),
+    'operation',
+  );
+}
+
+async function applyLignesOperation(db: any, changes?: TableChanges): Promise<number> {
+  return applyRows(
+    db, changes,
+    (r) => db.runAsync(
+      `INSERT OR IGNORE INTO ligne_operation
+       (uuid, operation_uuid, produit_code_x3, quantite_realisee,
+        quantite_collectee_vide, quantite_consignee, quantite_deconsignee,
+        montant_ligne, sync_status, last_modified, is_deleted)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'SYNCED', ?, 0);`,
+      [
+        String(r.uuid), r.operation_uuid, r.produit_code_x3,
+        r.quantite_realisee ?? 0, r.quantite_collectee_vide ?? 0,
+        r.quantite_consignee ?? 0, r.quantite_deconsignee ?? 0,
+        r.montant_ligne ?? 0, r.last_modified ?? 0,
+      ],
+    ),
+    'ligne_operation',
+  );
+}
+
 // ===========================================================================
 // PULL
 // ===========================================================================
@@ -192,12 +243,14 @@ export async function pull(): Promise<PullResult> {
 
   try {
     await db.withTransactionAsync(async () => {
-      counts.client          = await applyClients(db, changes.client);
-      counts.plv             = await applyPlvs(db, changes.plv);
-      counts.produit         = await applyProduits(db, changes.produit);
-      counts.programme       = await applyProgrammes(db, changes.programme);
-      counts.etape           = await applyEtapes(db, changes.etape);
-      counts.ligne_programme = await applyLignesProgramme(db, changes.ligne_programme);
+      counts.client           = await applyClients(db, changes.client);
+      counts.plv              = await applyPlvs(db, changes.plv);
+      counts.produit          = await applyProduits(db, changes.produit);
+      counts.programme        = await applyProgrammes(db, changes.programme);
+      counts.etape            = await applyEtapes(db, changes.etape);
+      counts.ligne_programme  = await applyLignesProgramme(db, changes.ligne_programme);
+      counts.operation        = await applyOperations(db, changes.operation);
+      counts.ligne_operation  = await applyLignesOperation(db, changes.ligne_operation);
     });
   } catch (e: any) {
     return {

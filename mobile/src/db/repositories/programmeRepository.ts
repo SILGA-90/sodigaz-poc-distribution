@@ -56,6 +56,9 @@ export async function getProgrammesRecents(): Promise<ProgrammeAvecProgression[]
 
 export async function getTousLesProgrammes(): Promise<ProgrammeAvecProgression[]> {
   const db = await getDatabase();
+  const userIdStr = await getItem(STORAGE_KEYS.USER_ID);
+  const utilisateurId = userIdStr ? parseInt(userIdStr, 10) : null;
+  if (!utilisateurId) return [];
   return db.getAllAsync<ProgrammeAvecProgression>(
     `SELECT
         pr.*,
@@ -64,7 +67,9 @@ export async function getTousLesProgrammes(): Promise<ProgrammeAvecProgression[]
         (SELECT COUNT(*) FROM etape e WHERE e.programme_id = pr.id AND e.is_deleted = 0 AND e.statut_visite = 'ECHEC') AS etapes_echec
      FROM programme pr
      WHERE pr.is_deleted = 0
+       AND pr.utilisateur_id = ?
      ORDER BY pr.date_programme DESC, pr.type_programme;`,
+    [utilisateurId],
   );
 }
 
