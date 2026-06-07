@@ -189,9 +189,9 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
               style={styles.headerLogo}
               resizeMode="contain"
             />
-            <View>
+            <View style={{ flex: 1, flexShrink: 1 }}>
               <Text style={styles.welcomeSmall}>Bonjour,</Text>
-              <Text style={styles.welcomeBig}>
+              <Text style={styles.welcomeBig} numberOfLines={1}>
                 {user ? `${user.first_name} ${user.last_name}` : '...'}
               </Text>
               <Text style={styles.subtitle}>{user?.code_livreur ?? ''}</Text>
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
 
   header: { backgroundColor: '#0d6efd', paddingHorizontal: 20, paddingTop: 44, paddingBottom: 16 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, marginRight: 8 },
   headerLogo: { width: 40, height: 40 },
   welcomeSmall: { color: '#cbe2ff', fontSize: 13 },
   welcomeBig: { color: '#fff', fontSize: 22, fontWeight: '700', marginTop: 2 },

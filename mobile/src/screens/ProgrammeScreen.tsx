@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   syncDotGreen: { backgroundColor: '#22c55e' },
   syncDotOrange: { backgroundColor: '#f97316' },
   itineraireBtn: {
-    marginTop: 6, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12,
+    marginTop: 6, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 12,
     backgroundColor: '#cfe2ff', borderWidth: 1, borderColor: '#0d6efd',
   },
   itineraireBtnText: { fontSize: 11, fontWeight: '700', color: '#084298' },
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   },
   clotureBadgeText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   fab: {
-    position: 'absolute', bottom: 20, right: 20,
+    position: 'absolute', bottom: 20, right: 16,
     backgroundColor: '#fd7e14',
     paddingHorizontal: 20, paddingVertical: 14,
     borderRadius: 30,

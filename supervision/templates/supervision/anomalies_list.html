@@ -1,11 +1,13 @@
 {% extends "supervision/base.html" %}
 {% block title %}Anomalies{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-start mb-3">
-    <h1 class="h3">Anomalies</h1>
-    <form method="get" class="d-flex gap-2 flex-wrap justify-content-end" style="max-width:780px">
-        <input type="date" name="date" value="{{ date_filter }}" class="form-control" style="width:160px" title="Filtrer par date du programme">
-        <select name="livreur" class="form-select" style="width:160px">
+<div class="mb-3">
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-2">
+        <h1 class="h3 mb-0">Anomalies</h1>
+    </div>
+    <form method="get" class="d-flex gap-2 flex-wrap filter-form">
+        <input type="date" name="date" value="{{ date_filter }}" class="form-control" style="width:160px;" title="Filtrer par date du programme">
+        <select name="livreur" class="form-select" style="width:160px;">
             <option value="">Tous livreurs</option>
             {% for l in livreurs %}
             <option value="{{ l.code_livreur }}" {% if livreur_filter == l.code_livreur %}selected{% endif %}>
@@ -13,15 +15,15 @@
             </option>
             {% endfor %}
         </select>
-        <input type="text" name="programme" value="{{ prog_filter }}" class="form-control" style="width:160px"
+        <input type="text" name="programme" value="{{ prog_filter }}" class="form-control" style="width:160px;"
                placeholder="N° programme">
-        <select name="statut" class="form-select" style="width:150px">
+        <select name="statut" class="form-select" style="width:150px;">
             <option value="OUVERTE" {% if statut_filter == "OUVERTE" %}selected{% endif %}>Ouvertes</option>
             <option value="EN_TRAITEMENT" {% if statut_filter == "EN_TRAITEMENT" %}selected{% endif %}>En traitement</option>
             <option value="RESOLUE" {% if statut_filter == "RESOLUE" %}selected{% endif %}>Resolues</option>
             <option value="TOUS" {% if statut_filter == "TOUS" %}selected{% endif %}>Toutes</option>
         </select>
-        <select name="gravite" class="form-select" style="width:140px">
+        <select name="gravite" class="form-select" style="width:140px;">
             <option value="" {% if not gravite_filter %}selected{% endif %}>Ts gravites</option>
             <option value="ELEVEE" {% if gravite_filter == "ELEVEE" %}selected{% endif %}>Elevee</option>
             <option value="MOYENNE" {% if gravite_filter == "MOYENNE" %}selected{% endif %}>Moyenne</option>
@@ -33,6 +35,7 @@
 </div>
 
 {% if anomalies %}
+<div class="table-responsive">
 <table class="table table-hover bg-white">
     <thead>
         <tr>
@@ -91,6 +94,7 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% else %}
 <div class="alert alert-info">Aucune anomalie pour ce filtre.</div>
 {% endif %}

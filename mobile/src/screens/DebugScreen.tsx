@@ -124,8 +124,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
-  tableName: { fontSize: 14, color: '#333', fontFamily: 'monospace' },
-  tableCount: { fontSize: 14, fontWeight: '700', color: '#0d6efd' },
+  tableName: { fontSize: 14, color: '#333', fontFamily: 'monospace', flex: 1, marginRight: 8 },
+  tableCount: { fontSize: 14, fontWeight: '700', color: '#0d6efd', flexShrink: 0 },
   meta: { fontSize: 13, color: '#666', marginBottom: 16, fontStyle: 'italic' },
   button: {
     backgroundColor: '#0d6efd',

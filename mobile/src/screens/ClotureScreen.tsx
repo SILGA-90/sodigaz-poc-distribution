@@ -242,10 +242,10 @@ const styles = StyleSheet.create({
   recapCard: { backgroundColor: '#fff', margin: 16, padding: 16, borderRadius: 12 },
   recapTitle: { fontSize: 16, fontWeight: '700', color: '#333', marginBottom: 12 },
   recapRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
+    flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4,
     paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
   },
-  recapLabel: { fontSize: 14, color: '#666' },
+  recapLabel: { fontSize: 14, color: '#666', flexShrink: 1, marginRight: 8 },
   recapValue: { fontSize: 15, fontWeight: '700', color: '#0d6efd' },
   button: {
     backgroundColor: '#198754', marginHorizontal: 16, padding: 16,

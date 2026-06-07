@@ -1,10 +1,10 @@
 {% extends "supervision/base.html" %}
 {% block title %}Operations{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3">Operations du {{ date_filter|date:"j F Y" }}</h1>
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-start mb-3 filter-row">
+    <h1 class="h3 mb-0">Operations du {{ date_filter|date:"j F Y" }}</h1>
     <div class="d-flex gap-2 align-items-center flex-wrap">
-        <form method="get" class="d-flex gap-2 flex-wrap">
+        <form method="get" class="d-flex gap-2 flex-wrap filter-form">
             <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}" class="form-control" style="width:auto;">
             <select name="livreur" class="form-select" style="width:auto;">
                 <option value="">Tous livreurs</option>
@@ -29,6 +29,7 @@
 </div>
 
 {% if operations %}
+<div class="table-responsive">
 <table class="table table-hover bg-white">
     <thead>
         <tr>
@@ -74,6 +75,7 @@
         </tr>
     </tfoot>
 </table>
+</div>
 {% else %}
 <div class="alert alert-info">Aucune operation pour cette date / livreur.</div>
 {% endif %}

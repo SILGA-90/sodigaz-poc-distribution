@@ -71,6 +71,7 @@
     </div>
     <div class="card-body">
         {% if r.lignes %}
+        <div class="table-responsive">
         <table class="table table-sm mb-0">
             <thead><tr><th>Produit</th><th class="text-end">Prevu</th><th class="text-end">Realise</th><th class="text-end">Ecart</th></tr></thead>
             <tbody>
@@ -86,6 +87,7 @@
             {% endfor %}
             </tbody>
         </table>
+        </div>
         {% else %}
         {% if programme.type_programme == "COLLECTE" %}
         <p class="text-muted mb-0">Programme de collecte : les quantites prevues ne sont pas connues a l'avance. Les realisations s'afficheront apres le push des operations.</p>
@@ -135,6 +137,7 @@
 </p>
 <div class="card">
     <div class="card-body p-0">
+    <div class="table-responsive">
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
@@ -182,6 +185,7 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
     </div>
 </div>
 {% else %}
