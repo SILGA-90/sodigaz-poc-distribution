@@ -14,7 +14,7 @@ superviseur suit l'activité en temps quasi réel depuis une interface web.
 
 ## Architecture
 
-```
+```text
                  +---------------------------+
                  |   Mobile (livreur)        |
                  |   Expo / React Native     |
@@ -38,8 +38,7 @@ superviseur suit l'activité en temps quasi réel depuis une interface web.
                  +---------------------------+
 ```
 
-- **Back-end** : Django 5 + Django REST Framework + GeoDjango, sur PostgreSQL
-  + PostGIS installés nativement dans WSL2.
+- **Back-end** : Django 5 + Django REST Framework + GeoDjango, sur PostgreSQL + PostGIS installés nativement dans WSL2.
 - **Mobile** : Expo SDK 54 + React Native + TypeScript, base locale
   **expo-sqlite** avec une couche de **synchronisation manuelle** (pull/push).
 - **Supervision web** : Django Templates + Bootstrap 5 + carte Leaflet/OSM,
@@ -56,9 +55,9 @@ superviseur suit l'activité en temps quasi réel depuis une interface web.
 | `accounts`     | Modèle `Utilisateur` personnalisé (code_livreur, rôle)               |
 | `distribution` | Modèles métier (PLV, produits, programmes, étapes, opérations, etc.) |
 | `mock_x3`      | Simulation de Sage X3 (génération des programmes du jour)            |
-| `auth_api`     | Authentification JWT (login par code livreur, refresh, profil)      |
-| `sync_api`     | Synchronisation offline-first (pull, push, upload photos, clôture)  |
-| `supervision`  | Interface web superviseur (dashboard, programmes, opérations, etc.) |
+| `auth_api`     | Authentification JWT (login par code livreur, refresh, profil)       |
+| `sync_api`     | Synchronisation offline-first (pull, push, upload photos, clôture)   |
+| `supervision`  | Interface web superviseur (dashboard, programmes, opérations, etc.)  |
 
 Le dossier `mobile/` contient l'application Expo (monorepo).
 
@@ -101,6 +100,8 @@ pip install -r requirements.txt
 # 2. Configuration (copier et adapter les variables d'environnement)
 cp .env.example .env
 #    -> renseigner SECRET_KEY, DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
+#    -> générer DEV_ACCESS_CODE :
+#       python3 -c "import secrets; print(secrets.token_urlsafe(12))"
 
 # 3. Base de données : créer la base et activer PostGIS
 #    (à faire une seule fois, en tant qu'utilisateur postgres)
@@ -127,8 +128,8 @@ python manage.py calculer_circuits
 python manage.py runserver 0.0.0.0:8000
 ```
 
-- Admin Django : http://localhost:8000/admin/
-- Supervision web : http://localhost:8000/supervision/
+- Admin Django : <http://localhost:8000/admin/>
+- Supervision web : <http://localhost:8000/supervision/>
 
 ---
 
@@ -149,7 +150,7 @@ de réseau Wi-Fi :
 
 Côté mobile, le fichier `mobile/.env` contient :
 
-```
+```text
 EXPO_PUBLIC_API_URL=http://<IP_WINDOWS>:8000
 ```
 
@@ -238,7 +239,9 @@ Le superviseur se connecte sur la **web** (aminata.s / demo1234).
 - Pas de suite de tests automatisés à ce stade.
 - L'optimisation de circuit est une heuristique gloutonne (plus proche voisin),
   non optimale ; un solveur de tournées (VRP) reste une perspective d'évolution.
-- La précision GPS dépend du matériel grand public (typiquement 5 à 50 m).
+- La précision GPS dépend du matériel et du contexte : typiquement 5 à 100 m en
+  localisation réseau (avant fix satellite), 5 à 15 m une fois le fix satellite
+  acquis. Le seuil de classification « fiable » retenu dans l'application est 100 m.
 - La carte embarquée côté mobile n'est pas implémentée (la cartographie est
   assurée côté supervision web) ; c'est une évolution possible.
 
@@ -246,4 +249,4 @@ Le superviseur se connecte sur la **web** (aminata.s / demo1234).
 
 ## Dépôt
 
-Code source : https://github.com/SILGA-90/sodigaz-poc-distribution
+Code source : <https://github.com/SILGA-90/sodigaz-poc-distribution>
