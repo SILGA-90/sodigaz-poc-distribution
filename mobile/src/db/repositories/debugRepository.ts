@@ -11,7 +11,7 @@ export interface TableCounts {
 const TABLES = [
   'client', 'plv', 'produit',
   'programme', 'etape', 'ligne_programme',
-  'operation', 'ligne_operation', 'anomalie',
+  'operation', 'ligne_operation', 'anomalie', 'photo',
 ];
 
 export async function getTableCounts(): Promise<TableCounts> {

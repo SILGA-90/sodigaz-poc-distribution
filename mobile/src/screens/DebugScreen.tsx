@@ -6,6 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -46,15 +47,28 @@ export default function DebugScreen(): React.ReactElement {
     refresh();
   }, []);
 
-  async function handleReset(): Promise<void> {
-    setLoading(true);
-    try {
-      await resetDatabase();
-      await refresh();
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
-      setLoading(false);
-    }
+  function handleReset(): void {
+    Alert.alert(
+      'Reinitialiser la base ?',
+      `Cette action supprime toutes les donnees locales (referentiels, programmes, operations, photos).\n\nLes enregistrements PENDING non synchronises seront perdus definitivement.\n\nPending actuels : ${pending}`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Reinitialiser',
+          style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              await resetDatabase();
+              await refresh();
+            } catch (e: any) {
+              setError(e?.message ?? String(e));
+              setLoading(false);
+            }
+          },
+        },
+      ],
+    );
   }
 
   return (
@@ -92,11 +106,13 @@ export default function DebugScreen(): React.ReactElement {
         </>
       )}
 
-      <View style={styles.pendingBox}>
-        <Text style={styles.pendingText}>
-          En attente de synchronisation (PENDING) : {pending}
-        </Text>
-      </View>
+      {!loading && (
+        <View style={styles.pendingBox}>
+          <Text style={styles.pendingText}>
+            En attente de synchronisation (PENDING) : {pending}
+          </Text>
+        </View>
+      )}
 
       <TouchableOpacity style={styles.button} onPress={refresh}>
         <Text style={styles.buttonText}>Rafraichir</Text>

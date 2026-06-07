@@ -59,7 +59,9 @@ export async function countPending(): Promise<number> {
     `SELECT
        (SELECT COUNT(*) FROM operation       WHERE sync_status = 'PENDING' AND is_deleted = 0) +
        (SELECT COUNT(*) FROM ligne_operation WHERE sync_status = 'PENDING' AND is_deleted = 0) +
-       (SELECT COUNT(*) FROM anomalie        WHERE sync_status = 'PENDING' AND is_deleted = 0) AS n;`,
+       (SELECT COUNT(*) FROM anomalie        WHERE sync_status = 'PENDING' AND is_deleted = 0) +
+       (SELECT COUNT(*) FROM photo           WHERE (sync_status = 'PENDING' OR upload_status = 'PENDING')
+                                               AND is_deleted = 0) AS n;`,
   );
   return row?.n ?? 0;
 }
