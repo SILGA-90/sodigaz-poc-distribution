@@ -18,6 +18,7 @@ import EtapeDetailScreen from '../screens/EtapeDetailScreen';
 import MesAnomaliesScreen from '../screens/MesAnomaliesScreen';
 import HistoriqueScreen from '../screens/HistoriqueScreen';
 import { isAuthenticated } from '../api/authService';
+import { repairCachePhotoUris } from '../db/repositories/photoRepository';
 import { RootStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -28,6 +29,8 @@ export default function RootNavigator(): React.ReactElement {
   useEffect(() => {
     isAuthenticated().then((auth) => {
       setInitialRoute(auth ? 'Dashboard' : 'Login');
+      // Réparation des URIs de cache existantes — fire-and-forget, non bloquant.
+      if (auth) repairCachePhotoUris().catch(() => {});
     });
   }, []);
 

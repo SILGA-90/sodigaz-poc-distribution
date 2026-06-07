@@ -23,6 +23,7 @@ import {
   getPhotosPendingUpload,
   markPhotoMetaSynced,
   markPhotoUploaded,
+  markPhotoFileLost,
 } from '../db/repositories/photoRepository';
 import * as FileSystem from 'expo-file-system/legacy';
 import { API_BASE_URL } from '../config/api';
@@ -394,6 +395,16 @@ async function uploaderPhotosBinaires(): Promise<void> {
 
   for (const photo of photos) {
     try {
+      const info = await FileSystem.getInfoAsync(photo.local_uri);
+      if (!info.exists) {
+        // Le fichier local est introuvable (cache Android vidé avant correctif).
+        // FILE_LOST ≠ DONE : le binaire n'est PAS sur le serveur.
+        // La métadonnée est conservée ; la photo ne sera plus retentée.
+        await markPhotoFileLost(photo.uuid);
+        console.warn('[sync] photo FILE_LOST :', photo.uuid, photo.local_uri);
+        continue;
+      }
+
       const uploadUrl = `${API_BASE_URL}/api/sync/photos/${photo.uuid}/upload/`;
       const result = await FileSystem.uploadAsync(uploadUrl, photo.local_uri, {
         httpMethod: 'POST',
