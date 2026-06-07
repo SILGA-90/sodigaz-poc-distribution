@@ -29,34 +29,44 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
     const pct = item.total_etapes > 0
       ? Math.round((item.etapes_visitees / item.total_etapes) * 100)
       : 0;
+    const isCollecte = item.type_programme === 'COLLECTE';
     const statutColor =
       item.statut === 'CLOTURE' ? '#198754' :
       item.statut === 'EN_COURS' ? '#1a7fba' : '#6c757d';
+    const statutBg =
+      item.statut === 'CLOTURE' ? '#d1f5e0' :
+      item.statut === 'EN_COURS' ? '#dbeafe' : '#f0f0f0';
+    const statutLabel =
+      item.statut === 'CLOTURE' ? 'Clôturé' :
+      item.statut === 'EN_COURS' ? 'En cours' : 'Planifié';
 
     return (
       <TouchableOpacity
-        style={styles.card}
+        style={[styles.card, { borderLeftColor: statutColor }]}
         onPress={() => navigation.navigate('Programme', { programmeId: item.id })}
+        activeOpacity={0.75}
       >
-        <View style={styles.cardHeader}>
-          <Text style={styles.numero}>{item.numero_x3}</Text>
-          <View style={[styles.badge, item.type_programme === 'COLLECTE' ? styles.badgeCol : styles.badgeRes]}>
-            <Text style={styles.badgeText}>{item.type_programme === 'COLLECTE' ? 'Collecte' : 'Restitution'}</Text>
-          </View>
-        </View>
-        <Text style={styles.date}>{formatDate(item.date_programme)}</Text>
-        <View style={styles.progressRow}>
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${pct}%` as any, backgroundColor: statutColor }]} />
-          </View>
-          <Text style={[styles.progressLabel, { color: statutColor }]}>
-            {item.etapes_visitees}/{item.total_etapes} etapes
-          </Text>
-          <View style={[styles.statutBadge, { backgroundColor: statutColor }]}>
-            <Text style={styles.statutText}>
-              {item.statut === 'CLOTURE' ? 'Cloture' : item.statut === 'EN_COURS' ? 'En cours' : 'Planifie'}
+        <View style={styles.cardTop}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.numero}>{item.numero_x3}</Text>
+            <Text style={styles.dateLine}>
+              <Text style={[styles.typeChip, isCollecte ? styles.chipCol : styles.chipRes]}>
+                {isCollecte ? ' Collecte ' : ' Restitution '}
+              </Text>
+              {'  ·  '}{formatDate(item.date_programme)}
             </Text>
           </View>
+          <View style={[styles.statutPill, { backgroundColor: statutBg }]}>
+            <Text style={[styles.statutPillText, { color: statutColor }]}>{statutLabel}</Text>
+          </View>
+        </View>
+        <View style={styles.barRow}>
+          <View style={styles.barTrack}>
+            <View style={[styles.barFill, { width: `${pct}%` as any, backgroundColor: statutColor }]} />
+          </View>
+          <Text style={[styles.barLabel, { color: statutColor }]}>
+            {item.etapes_visitees}/{item.total_etapes}
+          </Text>
         </View>
       </TouchableOpacity>
     );
@@ -96,23 +106,29 @@ const styles = StyleSheet.create({
   title: { color: '#fff', fontSize: 18, fontWeight: '700' },
   list: { padding: 12 },
   card: {
-    backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 10,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 }, elevation: 2,
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    shadowColor: '#0a1628',
+    shadowOpacity: 0.09,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  numero: { fontSize: 14, fontWeight: '700', color: '#1a1a2e' },
-  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
-  badgeCol: { backgroundColor: '#dbeafe' },
-  badgeRes: { backgroundColor: '#dcfce7' },
-  badgeText: { fontSize: 10, fontWeight: '700', color: '#333' },
-  date: { color: '#999', fontSize: 12, marginTop: 4 },
-  progressRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
-  progressBar: { flex: 1, height: 5, backgroundColor: '#e9ecef', borderRadius: 3, overflow: 'hidden' },
-  progressFill: { height: 5, borderRadius: 3 },
-  progressLabel: { fontSize: 11, fontWeight: '600', minWidth: 60 },
-  statutBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
-  statutText: { fontSize: 10, color: '#fff', fontWeight: '700' },
+  cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  numero: { fontSize: 15, fontWeight: '700', color: '#1a1a2e', marginBottom: 4 },
+  dateLine: { fontSize: 12, color: '#888' },
+  typeChip: { fontSize: 10, fontWeight: '700', borderRadius: 4, overflow: 'hidden' },
+  chipCol: { color: '#1d4ed8', backgroundColor: '#dbeafe' },
+  chipRes: { color: '#166534', backgroundColor: '#dcfce7' },
+  statutPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, alignSelf: 'flex-start' },
+  statutPillText: { fontSize: 11, fontWeight: '700' },
+  barRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14 },
+  barTrack: { flex: 1, height: 8, backgroundColor: '#eef1f6', borderRadius: 4, overflow: 'hidden' },
+  barFill: { height: 8, borderRadius: 4 },
+  barLabel: { fontSize: 12, fontWeight: '700', minWidth: 36, textAlign: 'right' },
   empty: { padding: 40, alignItems: 'center' },
   emptyText: { color: '#aaa', fontSize: 14 },
 });

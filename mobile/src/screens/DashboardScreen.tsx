@@ -138,6 +138,10 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
         return;
       }
 
+      // Le lastPulledAt en base est le timestamp serveur (curseur du protocole).
+      // Pour l'affichage on utilise Date.now() côté client : évite le décalage
+      // d'horloge WSL2/serveur qui ferait afficher "il y a 3 min" à l'instant même.
+      setLastSync(Date.now());
       setSyncStatus('success');
       const envoyes = pushRes.pushed.operation + pushRes.pushed.ligne_operation + pushRes.pushed.anomalie;
       const recus = Object.values(pullRes.counts).reduce((a, b) => a + b, 0);
@@ -195,39 +199,43 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     const pct = item.total_etapes > 0
       ? Math.round((item.etapes_visitees / item.total_etapes) * 100)
       : 0;
+    const isCollecte = item.type_programme === 'COLLECTE';
     const statutColor =
       item.statut === 'CLOTURE' ? '#198754' :
       item.statut === 'EN_COURS' ? '#1a7fba' : '#6c757d';
+    const statutBg =
+      item.statut === 'CLOTURE' ? '#d1f5e0' :
+      item.statut === 'EN_COURS' ? '#dbeafe' : '#f0f0f0';
     const statutLabel =
       item.statut === 'CLOTURE' ? 'Clôturé' :
       item.statut === 'EN_COURS' ? 'En cours' : 'Planifié';
 
     return (
       <TouchableOpacity
-        style={styles.progCard}
+        style={[styles.progCard, { borderLeftColor: statutColor }]}
         onPress={() => navigation.navigate('Programme', { programmeId: item.id })}
+        activeOpacity={0.75}
       >
-        <View style={styles.progHeader}>
-          <Text style={styles.progNumero}>{item.numero_x3}</Text>
-          <View style={styles.badgesRow}>
-            <View style={[
-              styles.badge,
-              item.type_programme === 'COLLECTE' ? styles.badgeCollecte : styles.badgeRestitution,
-            ]}>
-              <Text style={styles.badgeText}>{item.type_programme === 'COLLECTE' ? 'Collecte' : 'Restitution'}</Text>
-            </View>
-            <View style={[styles.badge, { backgroundColor: statutColor }]}>
-              <Text style={[styles.badgeText, { color: '#fff' }]}>{statutLabel}</Text>
-            </View>
+        <View style={styles.progCardTop}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.progNumero}>{item.numero_x3}</Text>
+            <Text style={styles.progMeta}>
+              <Text style={[styles.progTypeChip, isCollecte ? styles.chipCollecte : styles.chipRestitution]}>
+                {isCollecte ? ' Collecte ' : ' Restitution '}
+              </Text>
+              {'  ·  '}{item.date_programme}
+            </Text>
+          </View>
+          <View style={[styles.statutPill, { backgroundColor: statutBg }]}>
+            <Text style={[styles.statutPillText, { color: statutColor }]}>{statutLabel}</Text>
           </View>
         </View>
-        <Text style={styles.progDate}>{item.date_programme}</Text>
-        <View style={styles.progressRow}>
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${pct}%` as any, backgroundColor: statutColor }]} />
+        <View style={styles.progBarRow}>
+          <View style={styles.progBarTrack}>
+            <View style={[styles.progBarFill, { width: `${pct}%` as any, backgroundColor: statutColor }]} />
           </View>
-          <Text style={[styles.progProgress, { color: statutColor }]}>
-            {item.etapes_visitees}/{item.total_etapes} étapes
+          <Text style={[styles.progPct, { color: statutColor }]}>
+            {item.etapes_visitees}/{item.total_etapes}
           </Text>
         </View>
       </TouchableOpacity>
@@ -238,13 +246,16 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
+        <View style={styles.headerAccent} />
         <View style={styles.headerTop}>
           <View style={styles.headerLeft}>
-            <Image
-              source={require('../../assets/logo.png')}
-              style={styles.headerLogo}
-              resizeMode="contain"
-            />
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {user
+                  ? `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase()
+                  : '?'}
+              </Text>
+            </View>
             <View style={{ flex: 1, flexShrink: 1 }}>
               <Text style={styles.welcomeSmall}>Bonjour,</Text>
               <Text style={styles.welcomeBig} numberOfLines={1}>
@@ -253,14 +264,19 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
               <Text style={styles.subtitle}>{user?.code_livreur ?? ''}</Text>
             </View>
           </View>
-          <View style={styles.headerRight}>
-            <View style={[styles.statusDot, { backgroundColor: statusDot }]} />
-            <Text style={styles.statusLabel}>
-              {syncStatus === 'syncing' ? 'Sync...' :
-               syncStatus === 'success' ? 'En ligne' :
-               syncStatus === 'error' ? 'Erreur' : 'Pret'}
-            </Text>
-          </View>
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
+        </View>
+        <View style={styles.statusPill}>
+          <View style={[styles.statusDot, { backgroundColor: statusDot }]} />
+          <Text style={styles.statusPillText}>
+            {syncStatus === 'syncing' ? 'Synchronisation...' :
+             syncStatus === 'success' ? 'Synchronisé' :
+             syncStatus === 'error' ? 'Erreur de sync' : 'Prêt'}
+          </Text>
         </View>
       </View>
 
@@ -268,8 +284,8 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
 
       {/* Barre de synchronisation */}
       <View style={styles.syncBar}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.syncLabel}>Dernière sync</Text>
+        <View style={styles.syncInfo}>
+          <Text style={styles.syncLabel}>Dernière synchronisation</Text>
           <Text style={styles.syncValue}>{formatRelativeTime(lastSync)}</Text>
         </View>
         {pendingCount > 0 && (
@@ -281,11 +297,12 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
           style={[styles.syncButton, syncing && styles.syncButtonDisabled]}
           onPress={handleSync}
           disabled={syncing}
+          activeOpacity={0.82}
         >
           {syncing ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
-            <Text style={styles.syncButtonText}>Synchroniser</Text>
+            <Text style={styles.syncButtonText}>↑  Synchroniser</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -319,8 +336,12 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
 
       {/* Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.footerText}>Déconnexion</Text>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+          activeOpacity={0.75}
+        >
+          <Text style={styles.logoutText}>Déconnexion</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.devZone}>
@@ -393,52 +414,95 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
 
-  header: { backgroundColor: '#1a7fba', paddingHorizontal: 20, paddingTop: 44, paddingBottom: 16 },
-  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, marginRight: 8 },
-  headerLogo: { width: 40, height: 40 },
-  welcomeSmall: { color: '#d0e8f5', fontSize: 13 },
-  welcomeBig: { color: '#fff', fontSize: 22, fontWeight: '700', marginTop: 2 },
-  subtitle: { color: '#d0e8f5', fontSize: 13, marginTop: 1 },
-  headerRight: { alignItems: 'center', paddingTop: 4 },
-  statusDot: { width: 12, height: 12, borderRadius: 6, marginBottom: 4 },
-  statusLabel: { color: '#d0e8f5', fontSize: 10, fontWeight: '600' },
+  header: {
+    backgroundColor: '#1a7fba',
+    paddingHorizontal: 20,
+    paddingTop: 48,
+    paddingBottom: 20,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  headerAccent: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    height: 28,
+    backgroundColor: 'rgba(10,22,40,0.18)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, marginRight: 10 },
+  avatar: {
+    width: 50, height: 50, borderRadius: 25,
+    backgroundColor: '#f47920',
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.35)',
+    flexShrink: 0,
+  },
+  avatarText: { color: '#fff', fontSize: 17, fontWeight: '700', letterSpacing: 1 },
+  headerLogo: { width: 44, height: 44, flexShrink: 0 },
+  welcomeSmall: { color: 'rgba(255,255,255,0.7)', fontSize: 13 },
+  welcomeBig: { color: '#fff', fontSize: 20, fontWeight: '700', marginTop: 1 },
+  subtitle: { color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 1 },
+  statusPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 7,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(0,0,0,0.22)',
+    paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 20,
+  },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  statusPillText: { color: 'rgba(255,255,255,0.9)', fontSize: 12, fontWeight: '600' },
 
   syncBar: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     backgroundColor: '#fff',
     margin: 12,
-    padding: 14,
-    borderRadius: 10,
-    gap: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    marginTop: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderLeftWidth: 4,
+    borderLeftColor: '#1a7fba',
+    shadowColor: '#0a1628',
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
-  syncLabel: { fontSize: 11, color: '#aaa' },
-  syncValue: { fontSize: 14, color: '#333', fontWeight: '600' },
+  syncInfo: { flex: 1 },
+  syncLabel: { fontSize: 11, color: '#94a3b8', fontWeight: '500' },
+  syncValue: { fontSize: 15, color: '#1a1a2e', fontWeight: '700', marginTop: 3 },
   pendingBadge: {
-    backgroundColor: '#fff3cd',
-    paddingHorizontal: 10,
+    backgroundColor: 'rgba(244,121,32,0.10)',
+    paddingHorizontal: 11,
     paddingVertical: 5,
-    borderRadius: 8,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ffc107',
+    borderColor: 'rgba(244,121,32,0.35)',
   },
-  pendingText: { fontSize: 11, color: '#664d03', fontWeight: '700' },
+  pendingText: { fontSize: 11, color: '#f47920', fontWeight: '700' },
   syncButton: {
     backgroundColor: '#1a7fba',
-    paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 8,
-    minWidth: 110,
+    paddingHorizontal: 16,
+    borderRadius: 25,
     alignItems: 'center',
+    shadowColor: '#1a7fba',
+    shadowOpacity: 0.30,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
   },
-  syncButtonDisabled: { opacity: 0.6 },
-  syncButtonText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  syncButtonDisabled: { opacity: 0.55 },
+  syncButtonText: { color: '#fff', fontWeight: '700', fontSize: 13, letterSpacing: 0.3 },
 
   sectionHeader: { marginHorizontal: 16, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: '#333' },
@@ -448,26 +512,30 @@ const styles = StyleSheet.create({
   progCard: {
     backgroundColor: '#fff',
     padding: 16,
-    borderRadius: 12,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    borderRadius: 14,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    shadowColor: '#0a1628',
+    shadowOpacity: 0.09,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
-  progHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  progNumero: { fontSize: 15, fontWeight: '700', color: '#1a1a2e' },
-  badgesRow: { flexDirection: 'row', gap: 6 },
-  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
-  badgeCollecte: { backgroundColor: '#dbeafe' },
-  badgeRestitution: { backgroundColor: '#dcfce7' },
-  badgeText: { fontSize: 10, fontWeight: '700', color: '#333' },
-  progDate: { color: '#aaa', fontSize: 12, marginTop: 4 },
-  progressRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
-  progressBar: { flex: 1, height: 6, backgroundColor: '#e9ecef', borderRadius: 3, overflow: 'hidden' },
-  progressFill: { height: 6, borderRadius: 3 },
-  progProgress: { fontSize: 12, fontWeight: '700', minWidth: 70, textAlign: 'right' },
+  progCardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  progNumero: { fontSize: 15, fontWeight: '700', color: '#1a1a2e', marginBottom: 4 },
+  progMeta: { fontSize: 12, color: '#888' },
+  progTypeChip: { fontSize: 10, fontWeight: '700', borderRadius: 4, overflow: 'hidden' },
+  chipCollecte: { color: '#1d4ed8', backgroundColor: '#dbeafe' },
+  chipRestitution: { color: '#166534', backgroundColor: '#dcfce7' },
+  statutPill: {
+    paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: 20, alignSelf: 'flex-start',
+  },
+  statutPillText: { fontSize: 11, fontWeight: '700' },
+  progBarRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14 },
+  progBarTrack: { flex: 1, height: 8, backgroundColor: '#eef1f6', borderRadius: 4, overflow: 'hidden' },
+  progBarFill: { height: 8, borderRadius: 4 },
+  progPct: { fontSize: 12, fontWeight: '700', minWidth: 36, textAlign: 'right' },
 
   empty: { padding: 40, alignItems: 'center' },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: '#555', marginBottom: 8 },
@@ -478,9 +546,20 @@ const styles = StyleSheet.create({
   },
   emptySyncBtnText: { color: '#fff', fontWeight: '700' },
 
-  footer: { borderTopWidth: 1, borderTopColor: '#e0e0e0', backgroundColor: '#fff' },
-  logoutButton: { padding: 14, alignItems: 'center', backgroundColor: '#1a2332' },
-  footerText: { color: '#fff', fontWeight: '600' },
+  footer: {
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#eef1f6',
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  logoutButton: {
+    paddingHorizontal: 28, paddingVertical: 11,
+    borderRadius: 25,
+    borderWidth: 1.5, borderColor: '#dc3545',
+    backgroundColor: 'rgba(220,53,69,0.06)',
+  },
+  logoutText: { color: '#dc3545', fontWeight: '700', fontSize: 14 },
   devZone: { paddingVertical: 8, alignItems: 'center', gap: 4 },
   versionText: { color: '#ccc', fontSize: 11 },
   debugLink: { paddingVertical: 4, paddingHorizontal: 12 },

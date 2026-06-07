@@ -86,38 +86,37 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
     const programmeCloture = programme?.statut === 'CLOTURE';
     const cardDisabled = programmeCloture || echec;
 
-    let badgeStyle = styles.aVisiter;
-    let badgeLabel = 'À visiter';
-    if (visite) { badgeStyle = styles.visitee; badgeLabel = 'Visitée'; }
-    if (echec)  { badgeStyle = styles.echecBadge; badgeLabel = 'Échec'; }
+    const statusColor = visite ? '#198754' : echec ? '#dc3545' : '#f47920';
+    const statusBg    = visite ? '#d1f5e0' : echec ? '#ffe4e6' : '#fff7ed';
+    const badgeLabel  = visite ? 'Visitée' : echec ? 'Échec' : 'À visiter';
+    const disabled    = echec || (programmeCloture && !visite);
 
     function handleCardPress() {
       if (visite) {
         navigation.navigate('EtapeDetail', { etapeId: item.id, etapeUuid: item.uuid });
-      } else if (!cardDisabled) {
+      } else if (!disabled) {
         navigation.navigate('SaisieOperation', { etapeId: item.id });
       }
     }
 
     return (
       <TouchableOpacity
-        style={[styles.card, (echec || (programmeCloture && !visite)) && styles.cardDisabled]}
+        style={[styles.card, { borderLeftColor: statusColor }, disabled && styles.cardDisabled]}
         onPress={handleCardPress}
+        activeOpacity={disabled ? 1 : 0.75}
       >
-        <View style={styles.ordreCircle}>
-          <Text style={styles.ordreText}>{item.ordre_prevu}</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.plvLibelle}>{item.plv_libelle}</Text>
-          <Text style={styles.clientName}>{item.client_raison_sociale}</Text>
-          <Text style={styles.coords}>
-            {item.plv_latitude.toFixed(4)}, {item.plv_longitude.toFixed(4)}
-          </Text>
-        </View>
-        <View style={styles.actionsCol}>
-          <View style={styles.statutRow}>
-            <View style={[styles.statutBadge, badgeStyle]}>
-              <Text style={[styles.statutText, echec && styles.statutTextEchec]}>{badgeLabel}</Text>
+        {/* Ligne principale */}
+        <View style={styles.cardMain}>
+          <View style={[styles.ordreCircle, { backgroundColor: statusColor }]}>
+            <Text style={styles.ordreText}>{item.ordre_prevu}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.plvLibelle}>{item.plv_libelle}</Text>
+            <Text style={styles.clientName}>{item.client_raison_sociale}</Text>
+          </View>
+          <View style={styles.cardRight}>
+            <View style={[styles.statutBadge, { backgroundColor: statusBg }]}>
+              <Text style={[styles.statutText, { color: statusColor }]}>{badgeLabel}</Text>
             </View>
             {visite && (
               <View style={[
@@ -126,16 +125,15 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
               ]} />
             )}
           </View>
-          <TouchableOpacity
-            style={styles.itineraireBtn}
-            onPress={(e) => {
-              e.stopPropagation();
-              ouvrirItineraire(item.plv_latitude, item.plv_longitude);
-            }}
-          >
-            <Text style={styles.itineraireBtnText}>Itinéraire</Text>
-          </TouchableOpacity>
         </View>
+        {/* Bouton itinéraire */}
+        <TouchableOpacity
+          style={styles.itineraireRow}
+          onPress={(e) => { e.stopPropagation(); ouvrirItineraire(item.plv_latitude, item.plv_longitude); }}
+          activeOpacity={0.65}
+        >
+          <Text style={styles.itineraireTxt}>Ouvrir l'itinéraire  ›</Text>
+        </TouchableOpacity>
       </TouchableOpacity>
     );
   }, [navigation, programme]);
@@ -271,37 +269,43 @@ const styles = StyleSheet.create({
   clotureBtnText: { color: '#fff', fontWeight: '700' },
   list: { padding: 12 },
   card: {
-    backgroundColor: '#fff', padding: 14, borderRadius: 10,
-    marginBottom: 10, flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    shadowColor: '#0a1628',
+    shadowOpacity: 0.09,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  cardMain: {
+    flexDirection: 'row', alignItems: 'center',
+    padding: 14, paddingBottom: 10,
   },
   ordreCircle: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#1a7fba',
+    width: 40, height: 40, borderRadius: 20,
     justifyContent: 'center', alignItems: 'center',
-    marginRight: 12,
+    marginRight: 12, flexShrink: 0,
   },
-  ordreText: { color: '#fff', fontWeight: '700' },
-  plvLibelle: { fontSize: 15, fontWeight: '600', color: '#333' },
-  clientName: { fontSize: 13, color: '#666', marginTop: 2 },
-  coords: { fontSize: 11, color: '#aaa', marginTop: 2, fontFamily: 'monospace' },
-  statutBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  visitee: { backgroundColor: '#d1e7dd' },
-  aVisiter: { backgroundColor: '#fff3cd' },
-  echecBadge: { backgroundColor: '#f8d7da' },
-  statutText: { fontSize: 11, fontWeight: '700', color: '#333' },
-  statutTextEchec: { color: '#842029' },
-  actionsCol: { alignItems: 'flex-end' },
-  statutRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  ordreText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  plvLibelle: { fontSize: 15, fontWeight: '700', color: '#1a1a2e' },
+  clientName: { fontSize: 12, color: '#888', marginTop: 2 },
+  cardRight: { alignItems: 'flex-end', gap: 6 },
+  statutBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  statutText: { fontSize: 11, fontWeight: '700' },
   syncDot: { width: 8, height: 8, borderRadius: 4 },
   syncDotGreen: { backgroundColor: '#22c55e' },
   syncDotOrange: { backgroundColor: '#f97316' },
-  itineraireBtn: {
-    marginTop: 6, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 12,
-    backgroundColor: '#cfe2ff', borderWidth: 1, borderColor: '#1a7fba',
+  itineraireRow: {
+    borderTopWidth: 1, borderTopColor: '#f0f2f5',
+    paddingVertical: 10, paddingHorizontal: 14,
+    alignItems: 'flex-end',
   },
-  itineraireBtnText: { fontSize: 11, fontWeight: '700', color: '#0d5e8a' },
+  itineraireTxt: { fontSize: 12, fontWeight: '700', color: '#1a7fba' },
   empty: { textAlign: 'center', color: '#888', padding: 32 },
-  cardDisabled: { opacity: 0.5 },
+  cardDisabled: { opacity: 0.45 },
   clotureBadge: {
     marginTop: 4, padding: 10, borderRadius: 8,
     backgroundColor: 'rgba(25,135,84,0.85)', alignItems: 'center',
