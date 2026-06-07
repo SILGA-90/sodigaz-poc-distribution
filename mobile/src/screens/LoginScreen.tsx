@@ -52,11 +52,10 @@ export default function LoginScreen({ navigation }: Props): React.ReactElement {
     >
       <View style={styles.card}>
         <Image
-          source={require('../../assets/logo.png')}
+          source={require('../../assets/logo_name.png')}
           style={styles.logo}
           resizeMode="contain"
         />
-        <Text style={styles.title}>SODIGAZ</Text>
         <Text style={styles.subtitle}>Connexion livreur</Text>
 
         <Text style={styles.label}>Code livreur</Text>
@@ -120,20 +119,14 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   logo: {
-    width: 80,
-    height: 80,
+    width: '100%',
+    height: 70,
     alignSelf: 'center',
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0d6efd',
-    textAlign: 'center',
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 15,
+    color: '#888',
     textAlign: 'center',
     marginBottom: 24,
   },

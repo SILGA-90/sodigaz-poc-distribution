@@ -1,4 +1,5 @@
 {% extends "supervision/base.html" %}
+{% load static %}
 {% block title %}Rapport journee {{ date_filter|date:"d/m/Y" }}{% endblock %}
 
 {% block content %}
@@ -14,9 +15,12 @@
 </div>
 
 {# En-tete imprimable #}
-<div class="print-only mb-3">
-    <h2>SODIGAZ APC — Rapport de journee</h2>
-    <p class="text-muted">{{ date_filter|date:"l j F Y" }}</p>
+<div class="print-only mb-3 d-flex align-items-center gap-3">
+    <img src="{% static 'supervision/img/logo_name.png' %}" alt="Sodigaz APC" style="height:50px;">
+    <div>
+        <div class="fw-semibold">Rapport de journee</div>
+        <div class="text-muted">{{ date_filter|date:"l j F Y" }}</div>
+    </div>
 </div>
 
 {% if not programmes %}
