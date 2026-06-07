@@ -5,87 +5,15 @@
  * sync_status = 'PENDING'. Le service de push les remonte au serveur et
  * les passe a 'SYNCED'.
  */
-import * as Crypto from 'expo-crypto';
-
 import { getDatabase } from '../database';
-import { getItem, STORAGE_KEYS } from '../../storage/secureStorage';
 import { Operation, LigneOperation, Anomalie } from '../../types/models';
-
-function nowMs(): number {
-  return Date.now();
-}
-
-function nowIso(): string {
-  return new Date().toISOString();
-}
-
-/**
- * Cree une operation de TEST (Sprint 2.3, en attendant les vrais formulaires
- * du Sprint 3). Prend une etape et un produit existants en local.
- */
-export async function createOperationTest(): Promise<string> {
-  const db = await getDatabase();
-
-  const userIdStr = await getItem(STORAGE_KEYS.USER_ID);
-  const utilisateurId = userIdStr ? parseInt(userIdStr, 10) : null;
-
-  // Prendre une etape appartenant a l'utilisateur connecte
-  const etape = await db.getFirstAsync<{ uuid: string }>(
-    `SELECT e.uuid FROM etape e
-     JOIN programme p ON p.id = e.programme_id
-     WHERE e.is_deleted = 0
-       ${utilisateurId ? 'AND p.utilisateur_id = ?' : ''}
-     LIMIT 1;`,
-    utilisateurId ? [utilisateurId] : [],
-  );
-  if (!etape) {
-    throw new Error('Aucune etape en local. Synchronise d\'abord (pull).');
-  }
-
-  // Prendre le premier produit disponible
-  const produit = await db.getFirstAsync<{ code_x3: string; prix_unitaire: number }>(
-    'SELECT code_x3, prix_unitaire FROM produit LIMIT 1;',
-  );
-  if (!produit) {
-    throw new Error('Aucun produit en local. Synchronise d\'abord (pull).');
-  }
-
-  const opUuid = Crypto.randomUUID();
-  const ligneUuid = Crypto.randomUUID();
-  const ts = nowMs();
-  const montant = produit.prix_unitaire * 2;
-
-  await db.withTransactionAsync(async () => {
-    await db.runAsync(
-      `INSERT INTO operation
-       (uuid, etape_uuid, type_operation, sous_type, date_heure,
-        latitude, longitude, mode_paiement, montant_total, montant_encaisse,
-        est_encaissee, signature_livreur, signature_client, nom_signataire_client,
-        commentaire, sync_status, last_modified, is_deleted)
-       VALUES (?, ?, 'COLLECTE', 'BCR', ?, 12.3650, -1.5236, 'ESPECES',
-               ?, ?, 1, '', '', 'Client test', 'Operation de test (Sprint 2.3)',
-               'PENDING', ?, 0);`,
-      [opUuid, etape.uuid, nowIso(), montant, montant, ts],
-    );
-    await db.runAsync(
-      `INSERT INTO ligne_operation
-       (uuid, operation_uuid, produit_code_x3, quantite_realisee,
-        quantite_collectee_vide, quantite_consignee, quantite_deconsignee,
-        montant_ligne, sync_status, last_modified, is_deleted)
-       VALUES (?, ?, ?, 2, 0, 0, 0, ?, 'PENDING', ?, 0);`,
-      [ligneUuid, opUuid, produit.code_x3, montant, ts],
-    );
-  });
-
-  return opUuid;
-}
 
 // ---- Lecture des PENDING (pour le push) ----
 
 export async function getPendingOperations(): Promise<Operation[]> {
   const db = await getDatabase();
   // JOIN etape : exclut les operations orphelines dont l'etape n'existe pas en
-  // local (ex. operations de test creees sous un autre compte).
+  // local (ex. si l'etape a ete supprimee ou appartient a un autre compte).
   return db.getAllAsync<Operation>(
     `SELECT o.* FROM operation o
      JOIN etape e ON e.uuid = o.etape_uuid AND e.is_deleted = 0
@@ -112,32 +40,18 @@ export async function getPendingAnomalies(): Promise<Anomalie[]> {
 
 // ---- Marquage SYNCED apres push reussi ----
 
-export async function markOperationsSynced(uuids: string[]): Promise<void> {
-  if (uuids.length === 0) return;
-  const db = await getDatabase();
-  const placeholders = uuids.map(() => '?').join(',');
-  await db.runAsync(
-    `UPDATE operation SET sync_status = 'SYNCED' WHERE uuid IN (${placeholders});`,
-    uuids,
-  );
-}
+type SyncTable = 'operation' | 'ligne_operation' | 'anomalie';
 
-export async function markLignesSynced(uuids: string[]): Promise<void> {
+/**
+ * Passe sync_status = 'SYNCED' pour une liste d'UUIDs dans la table indiquee.
+ * Remplace les anciennes fonctions markOperationsSynced / markLignesSynced / markAnomaliesSynced.
+ */
+export async function markTableSynced(tableName: SyncTable, uuids: string[]): Promise<void> {
   if (uuids.length === 0) return;
   const db = await getDatabase();
   const placeholders = uuids.map(() => '?').join(',');
   await db.runAsync(
-    `UPDATE ligne_operation SET sync_status = 'SYNCED' WHERE uuid IN (${placeholders});`,
-    uuids,
-  );
-}
-
-export async function markAnomaliesSynced(uuids: string[]): Promise<void> {
-  if (uuids.length === 0) return;
-  const db = await getDatabase();
-  const placeholders = uuids.map(() => '?').join(',');
-  await db.runAsync(
-    `UPDATE anomalie SET sync_status = 'SYNCED' WHERE uuid IN (${placeholders});`,
+    `UPDATE ${tableName} SET sync_status = 'SYNCED' WHERE uuid IN (${placeholders});`,
     uuids,
   );
 }
@@ -146,9 +60,9 @@ export async function countPending(): Promise<number> {
   const db = await getDatabase();
   const row = await db.getFirstAsync<{ n: number }>(
     `SELECT
-       (SELECT COUNT(*) FROM operation WHERE sync_status='PENDING' AND is_deleted=0) +
-       (SELECT COUNT(*) FROM ligne_operation WHERE sync_status='PENDING' AND is_deleted=0) +
-       (SELECT COUNT(*) FROM anomalie WHERE sync_status='PENDING' AND is_deleted=0) AS n;`,
+       (SELECT COUNT(*) FROM operation       WHERE sync_status = 'PENDING' AND is_deleted = 0) +
+       (SELECT COUNT(*) FROM ligne_operation WHERE sync_status = 'PENDING' AND is_deleted = 0) +
+       (SELECT COUNT(*) FROM anomalie        WHERE sync_status = 'PENDING' AND is_deleted = 0) AS n;`,
   );
   return row?.n ?? 0;
 }

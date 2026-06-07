@@ -15,8 +15,7 @@ import {
 
 import { getDatabase, resetDatabase, getLastPulledAt } from '../db/database';
 import { getTableCounts, TableCounts } from '../db/repositories/debugRepository';
-import { createOperationTest, countPending } from '../db/repositories/operationRepository';
-import { Alert } from 'react-native';
+import { countPending } from '../db/repositories/operationRepository';
 
 export default function DebugScreen(): React.ReactElement {
   const [counts, setCounts] = useState<TableCounts | null>(null);
@@ -55,16 +54,6 @@ export default function DebugScreen(): React.ReactElement {
     } catch (e: any) {
       setError(e?.message ?? String(e));
       setLoading(false);
-    }
-  }
-
-  async function handleCreateTest(): Promise<void> {
-    try {
-      const uuid = await createOperationTest();
-      Alert.alert('Operation de test creee', `UUID : ${uuid.slice(0, 8)}...\nElle est PENDING. Va sur le Dashboard et synchronise pour la remonter.`);
-      await refresh();
-    } catch (e: any) {
-      Alert.alert('Erreur', e?.message ?? String(e));
     }
   }
 
@@ -109,10 +98,6 @@ export default function DebugScreen(): React.ReactElement {
         </Text>
       </View>
 
-      <TouchableOpacity style={[styles.button, styles.buttonTest]} onPress={handleCreateTest}>
-        <Text style={styles.buttonText}>Creer une operation de test</Text>
-      </TouchableOpacity>
-
       <TouchableOpacity style={styles.button} onPress={refresh}>
         <Text style={styles.buttonText}>Rafraichir</Text>
       </TouchableOpacity>
@@ -150,7 +135,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   buttonDanger: { backgroundColor: '#dc3545' },
-  buttonTest: { backgroundColor: '#198754' },
   pendingBox: { backgroundColor: '#fff3cd', padding: 12, borderRadius: 8, marginBottom: 12 },
   pendingText: { color: '#664d03', fontWeight: '600', textAlign: 'center' },
   buttonText: { color: '#fff', fontWeight: '600' },

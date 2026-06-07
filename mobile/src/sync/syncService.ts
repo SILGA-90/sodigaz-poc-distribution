@@ -1,22 +1,14 @@
 /**
- * Service de synchronisation.
+ * Service de synchronisation offline-first.
  *
- * SPRINT 2.2 : implemente le PULL.
- *   - Appelle POST /api/sync/pull/ avec le timestamp de derniere sync
- *   - Applique les changements recus dans une transaction SQLite unique
- *   - Met a jour le timestamp pour le prochain pull incremental
+ * Protocole : syncAll() = pushClotures() → pull() → push()
+ *   - pull  : POST /api/sync/pull/  — recoit les changements serveur, les ecrit en local
+ *   - push  : POST /api/sync/push/  — remonte les donnees terrain (PENDING) au serveur
  *
- * Le push sera ajoute au Sprint 2.3.
- *
- * Format de reponse du serveur (rappel) :
- *   {
- *     "changes": {
- *       "client":  { "created": [], "updated": [...], "deleted": [...] },
- *       "plv":     { ... },
- *       ...
- *     },
- *     "timestamp": 1717111200000
- *   }
+ * Invariants a respecter :
+ *   - pull AVANT push (evite d'ecraser une cloture locale avec un statut serveur perime)
+ *   - idempotence : le push est rejoue sans risque grace a update_or_create par UUID cote serveur
+ *   - last_modified jamais ecrit a la main (trigger PostgreSQL cote serveur)
  */
 import apiClient from '../api/client';
 import { getDatabase, getLastPulledAt, setLastPulledAt, getCloturesPending, clearCloturesPending } from '../db/database';
@@ -24,9 +16,7 @@ import {
   getPendingOperations,
   getPendingLignesOperation,
   getPendingAnomalies,
-  markOperationsSynced,
-  markLignesSynced,
-  markAnomaliesSynced,
+  markTableSynced,
 } from '../db/repositories/operationRepository';
 import {
   getPhotosPendingMeta,
@@ -56,21 +46,135 @@ export interface PullResult {
   error?: string;
 }
 
-/**
- * Convertit un booleen JSON (true/false) en entier SQLite (1/0).
- */
+/** Convertit un booleen JSON (true/false) en entier SQLite (1/0). */
 function bool(value: any): number {
   return value ? 1 : 0;
 }
+
+// ---------------------------------------------------------------------------
+// Helper generique pour l'application des changements descendant (pull)
+// ---------------------------------------------------------------------------
+
+/**
+ * Applique un lot de changements (created + updated) sur une table SQLite.
+ *
+ * @param db          Instance de la base SQLite
+ * @param changes     Objet {created, updated, deleted} recu du serveur
+ * @param insertRow   Callback qui execute l'INSERT OR REPLACE pour une ligne
+ * @param deleteTable Nom de la table pour la suppression par uuid (optionnel ;
+ *                    les tables referentielles n'ont pas de suppression logique)
+ * @returns           Nombre de lignes creees ou mises a jour
+ */
+async function applyRows(
+  db: any,
+  changes: TableChanges | undefined,
+  insertRow: (r: any) => Promise<void>,
+  deleteTable?: string,
+): Promise<number> {
+  if (!changes) return 0;
+  const rows = [...changes.created, ...changes.updated];
+  for (const r of rows) {
+    await insertRow(r);
+  }
+  if (deleteTable) {
+    for (const uuid of changes.deleted ?? []) {
+      await db.runAsync(`DELETE FROM ${deleteTable} WHERE uuid = ?;`, [uuid]);
+    }
+  }
+  return rows.length;
+}
+
+// ---------------------------------------------------------------------------
+// Application table par table — pull
+// ---------------------------------------------------------------------------
+
+async function applyClients(db: any, changes?: TableChanges): Promise<number> {
+  return applyRows(db, changes, (r) =>
+    db.runAsync(
+      `INSERT OR REPLACE INTO client
+       (id, code_x3, raison_sociale, type_client, contact, telephone, actif)
+       VALUES (?, ?, ?, ?, ?, ?, ?);`,
+      [r.id, r.code_x3, r.raison_sociale, r.type_client ?? '', r.contact ?? '', r.telephone ?? '', bool(r.actif)],
+    ),
+  );
+}
+
+async function applyPlvs(db: any, changes?: TableChanges): Promise<number> {
+  return applyRows(db, changes, (r) =>
+    db.runAsync(
+      `INSERT OR REPLACE INTO plv
+       (id, client_id, libelle, adresse, latitude, longitude, statut)
+       VALUES (?, ?, ?, ?, ?, ?, ?);`,
+      [r.id, r.client_id, r.libelle, r.adresse ?? '', r.latitude, r.longitude, r.statut ?? 'ACTIF'],
+    ),
+  );
+}
+
+async function applyProduits(db: any, changes?: TableChanges): Promise<number> {
+  return applyRows(db, changes, (r) =>
+    db.runAsync(
+      `INSERT OR REPLACE INTO produit
+       (id, code_x3, libelle, type_emballage, prix_unitaire, montant_consignation, actif)
+       VALUES (?, ?, ?, ?, ?, ?, ?);`,
+      [r.id, r.code_x3, r.libelle, r.type_emballage ?? '', r.prix_unitaire ?? 0, r.montant_consignation ?? 0, bool(r.actif)],
+    ),
+  );
+}
+
+async function applyProgrammes(db: any, changes?: TableChanges): Promise<number> {
+  return applyRows(
+    db, changes,
+    (r) => db.runAsync(
+      `INSERT OR REPLACE INTO programme
+       (id, uuid, numero_x3, utilisateur_id, vehicule_id, date_programme,
+        type_programme, statut, heure_debut, heure_fin, last_modified, is_deleted)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      [r.id, r.uuid, r.numero_x3 ?? '', r.utilisateur_id, r.vehicule_id ?? null,
+       r.date_programme, r.type_programme, r.statut,
+       r.heure_debut ?? null, r.heure_fin ?? null, r.last_modified ?? 0, bool(r.is_deleted)],
+    ),
+    'programme',
+  );
+}
+
+async function applyEtapes(db: any, changes?: TableChanges): Promise<number> {
+  return applyRows(
+    db, changes,
+    (r) => db.runAsync(
+      `INSERT OR REPLACE INTO etape
+       (id, uuid, programme_id, plv_id, ordre_prevu, ordre_optimise,
+        statut_visite, last_modified, is_deleted)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      [r.id, r.uuid, r.programme_id, r.plv_id, r.ordre_prevu,
+       r.ordre_optimise ?? null, r.statut_visite, r.last_modified ?? 0, bool(r.is_deleted)],
+    ),
+    'etape',
+  );
+}
+
+async function applyLignesProgramme(db: any, changes?: TableChanges): Promise<number> {
+  return applyRows(
+    db, changes,
+    (r) => db.runAsync(
+      `INSERT OR REPLACE INTO ligne_programme
+       (id, uuid, etape_id, produit_id, quantite_prevue, last_modified, is_deleted)
+       VALUES (?, ?, ?, ?, ?, ?, ?);`,
+      [r.id, r.uuid, r.etape_id, r.produit_id, r.quantite_prevue, r.last_modified ?? 0, bool(r.is_deleted)],
+    ),
+    'ligne_programme',
+  );
+}
+
+// ===========================================================================
+// PULL
+// ===========================================================================
 
 export async function pull(): Promise<PullResult> {
   const lastPulledAt = await getLastPulledAt();
 
   let response;
   try {
-    response = await apiClient.post<PullResponse>('/api/sync/pull/', {
-      lastPulledAt,
-    });
+    response = await apiClient.post<PullResponse>('/api/sync/pull/', { lastPulledAt });
   } catch (e: any) {
     return {
       success: false,
@@ -86,18 +190,12 @@ export async function pull(): Promise<PullResult> {
 
   try {
     await db.withTransactionAsync(async () => {
-      // ----- Referentiels -----
-      counts.client = await applyClients(db, changes.client);
-      counts.plv = await applyPlvs(db, changes.plv);
-      counts.produit = await applyProduits(db, changes.produit);
-
-      // ----- Tables semi-synchronisees -----
-      counts.programme = await applyProgrammes(db, changes.programme);
-      counts.etape = await applyEtapes(db, changes.etape);
+      counts.client          = await applyClients(db, changes.client);
+      counts.plv             = await applyPlvs(db, changes.plv);
+      counts.produit         = await applyProduits(db, changes.produit);
+      counts.programme       = await applyProgrammes(db, changes.programme);
+      counts.etape           = await applyEtapes(db, changes.etape);
       counts.ligne_programme = await applyLignesProgramme(db, changes.ligne_programme);
-
-      // NOTE : operation / ligne_operation / anomalie sont gerees au Sprint 2.3.
-      // Au premier pull d'un livreur, elles sont vides cote serveur.
     });
   } catch (e: any) {
     return {
@@ -108,118 +206,12 @@ export async function pull(): Promise<PullResult> {
     };
   }
 
-  // Mise a jour du timestamp seulement si tout a reussi
   await setLastPulledAt(timestamp);
-
   return { success: true, timestamp, counts };
 }
 
-// ---------------------------------------------------------------------------
-// Application table par table (verbeux mais explicite et defendable)
-// ---------------------------------------------------------------------------
-
-async function applyClients(db: any, changes?: TableChanges): Promise<number> {
-  if (!changes) return 0;
-  const rows = [...changes.created, ...changes.updated];
-  for (const r of rows) {
-    await db.runAsync(
-      `INSERT OR REPLACE INTO client
-       (id, code_x3, raison_sociale, type_client, contact, telephone, actif)
-       VALUES (?, ?, ?, ?, ?, ?, ?);`,
-      [r.id, r.code_x3, r.raison_sociale, r.type_client ?? '', r.contact ?? '', r.telephone ?? '', bool(r.actif)],
-    );
-  }
-  return rows.length;
-}
-
-async function applyPlvs(db: any, changes?: TableChanges): Promise<number> {
-  if (!changes) return 0;
-  const rows = [...changes.created, ...changes.updated];
-  for (const r of rows) {
-    await db.runAsync(
-      `INSERT OR REPLACE INTO plv
-       (id, client_id, libelle, adresse, latitude, longitude, statut)
-       VALUES (?, ?, ?, ?, ?, ?, ?);`,
-      [r.id, r.client_id, r.libelle, r.adresse ?? '', r.latitude, r.longitude, r.statut ?? 'ACTIF'],
-    );
-  }
-  return rows.length;
-}
-
-async function applyProduits(db: any, changes?: TableChanges): Promise<number> {
-  if (!changes) return 0;
-  const rows = [...changes.created, ...changes.updated];
-  for (const r of rows) {
-    await db.runAsync(
-      `INSERT OR REPLACE INTO produit
-       (id, code_x3, libelle, type_emballage, prix_unitaire, montant_consignation, actif)
-       VALUES (?, ?, ?, ?, ?, ?, ?);`,
-      [r.id, r.code_x3, r.libelle, r.type_emballage ?? '', r.prix_unitaire ?? 0, r.montant_consignation ?? 0, bool(r.actif)],
-    );
-  }
-  return rows.length;
-}
-
-async function applyProgrammes(db: any, changes?: TableChanges): Promise<number> {
-  if (!changes) return 0;
-  const rows = [...changes.created, ...changes.updated];
-  for (const r of rows) {
-    await db.runAsync(
-      `INSERT OR REPLACE INTO programme
-       (id, uuid, numero_x3, utilisateur_id, vehicule_id, date_programme,
-        type_programme, statut, heure_debut, heure_fin, last_modified, is_deleted)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-      [r.id, r.uuid, r.numero_x3 ?? '', r.utilisateur_id, r.vehicule_id ?? null,
-       r.date_programme, r.type_programme, r.statut,
-       r.heure_debut ?? null, r.heure_fin ?? null, r.last_modified ?? 0, bool(r.is_deleted)],
-    );
-  }
-  // Suppressions
-  for (const uuid of changes.deleted ?? []) {
-    await db.runAsync('DELETE FROM programme WHERE uuid = ?;', [uuid]);
-  }
-  return rows.length;
-}
-
-async function applyEtapes(db: any, changes?: TableChanges): Promise<number> {
-  if (!changes) return 0;
-  const rows = [...changes.created, ...changes.updated];
-  for (const r of rows) {
-    await db.runAsync(
-      `INSERT OR REPLACE INTO etape
-       (id, uuid, programme_id, plv_id, ordre_prevu, ordre_optimise,
-        statut_visite, last_modified, is_deleted)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-      [r.id, r.uuid, r.programme_id, r.plv_id, r.ordre_prevu,
-       r.ordre_optimise ?? null, r.statut_visite, r.last_modified ?? 0, bool(r.is_deleted)],
-    );
-  }
-  for (const uuid of changes.deleted ?? []) {
-    await db.runAsync('DELETE FROM etape WHERE uuid = ?;', [uuid]);
-  }
-  return rows.length;
-}
-
-async function applyLignesProgramme(db: any, changes?: TableChanges): Promise<number> {
-  if (!changes) return 0;
-  const rows = [...changes.created, ...changes.updated];
-  for (const r of rows) {
-    await db.runAsync(
-      `INSERT OR REPLACE INTO ligne_programme
-       (id, uuid, etape_id, produit_id, quantite_prevue, last_modified, is_deleted)
-       VALUES (?, ?, ?, ?, ?, ?, ?);`,
-      [r.id, r.uuid, r.etape_id, r.produit_id, r.quantite_prevue, r.last_modified ?? 0, bool(r.is_deleted)],
-    );
-  }
-  for (const uuid of changes.deleted ?? []) {
-    await db.runAsync('DELETE FROM ligne_programme WHERE uuid = ?;', [uuid]);
-  }
-  return rows.length;
-}
-
-
 // ===========================================================================
-// PUSH (Sprint 2.3)
+// PUSH
 // ===========================================================================
 
 export interface PushResult {
@@ -228,19 +220,6 @@ export interface PushResult {
   error?: string;
 }
 
-/**
- * Remonte au serveur toutes les operations / lignes / anomalies PENDING.
- *
- * Format envoye (conforme a /api/sync/push/) :
- *   {
- *     lastPulledAt,
- *     changes: {
- *       operation:       { created: [...], updated: [], deleted: [] },
- *       ligne_operation: { created: [...], updated: [], deleted: [] },
- *       anomalie:        { created: [...], updated: [], deleted: [] }
- *     }
- *   }
- */
 async function getEchecEtapeUuids(): Promise<string[]> {
   const db = await getDatabase();
   const rows = await db.getAllAsync<{ uuid: string }>(
@@ -250,15 +229,14 @@ async function getEchecEtapeUuids(): Promise<string[]> {
 }
 
 export async function push(): Promise<PushResult> {
-  const operations = await getPendingOperations();
-  const lignes = await getPendingLignesOperation();
-  const anomalies = await getPendingAnomalies();
-  const photosMeta = await getPhotosPendingMeta();
+  const operations  = await getPendingOperations();
+  const lignes      = await getPendingLignesOperation();
+  const anomalies   = await getPendingAnomalies();
+  const photosMeta  = await getPhotosPendingMeta();
   const echecEtapeUuids = await getEchecEtapeUuids();
 
   const empty = { operation: 0, ligne_operation: 0, anomalie: 0 };
 
-  // Rien a pousser en meta : on tente quand meme les uploads binaires en attente
   if (
     operations.length === 0 && lignes.length === 0 &&
     anomalies.length === 0 && photosMeta.length === 0 &&
@@ -354,13 +332,11 @@ export async function push(): Promise<PushResult> {
     };
   }
 
-  // Marquer SYNCED ce qui a ete pousse avec succes
-  await markOperationsSynced(operations.map((o) => o.uuid));
-  await markLignesSynced(lignes.map((l) => l.uuid));
-  await markAnomaliesSynced(anomalies.map((a) => a.uuid));
+  await markTableSynced('operation',       operations.map((o) => o.uuid));
+  await markTableSynced('ligne_operation', lignes.map((l) => l.uuid));
+  await markTableSynced('anomalie',        anomalies.map((a) => a.uuid));
   await markPhotoMetaSynced(photosMeta.map((p) => p.uuid));
 
-  // Etape 2 : upload des fichiers binaires (best-effort)
   await uploaderPhotosBinaires();
 
   return {
@@ -373,12 +349,16 @@ export async function push(): Promise<PushResult> {
   };
 }
 
+// ===========================================================================
+// ORCHESTRATION
+// ===========================================================================
+
 /**
- * Synchronisation complete : pull PUIS push.
+ * Synchronisation complete : push clotures → pull → push terrain.
  */
 export async function syncAll(): Promise<{ pull: PullResult; push: PushResult }> {
-  // Les clotures sont poussees AVANT le pull : ainsi le pull qui suit
-  // ramene un statut coherent (CLOTURE) et n'ecrase pas une cloture locale.
+  // Les clotures sont poussees AVANT le pull pour que le pull qui suit
+  // ramene un statut CLOTURE coherent et n'ecrase pas la cloture locale.
   await pushClotures();
   const pullResult = await pull();
   const pushResult = await push();
@@ -386,7 +366,7 @@ export async function syncAll(): Promise<{ pull: PullResult; push: PushResult }>
 }
 
 /**
- * Remonte au serveur les programmes clotures localement (file sync_meta).
+ * Remonte au serveur les programmes clotures localement.
  * Best-effort : en cas d'echec reseau, la cloture reste en attente et
  * sera retentee au prochain cycle.
  */
@@ -397,18 +377,14 @@ async function pushClotures(): Promise<void> {
     await apiClient.post('/api/sync/programmes/cloturer/', { uuids });
     await clearCloturesPending(uuids);
   } catch (e) {
-    // on laisse en attente, retry au prochain cycle
     console.warn('Push cloture echoue :', e);
   }
 }
 
-
 /**
  * Upload des fichiers binaires des photos dont la metadonnee est deja
  * remontee (sync_status SYNCED) mais le fichier pas encore (upload_status PENDING).
- *
- * Best-effort : si un upload echoue, on continue ; la photo reste PENDING
- * et sera retentee a la prochaine sync.
+ * Best-effort : les echecs sont silencieux et reessayes au prochain cycle.
  */
 async function uploaderPhotosBinaires(): Promise<void> {
   const photos = await getPhotosPendingUpload();
@@ -423,9 +399,7 @@ async function uploaderPhotosBinaires(): Promise<void> {
         httpMethod: 'POST',
         uploadType: FileSystem.FileSystemUploadType.MULTIPART,
         fieldName: 'fichier',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (result.status === 200) {
         await markPhotoUploaded(photo.uuid);
