@@ -1,36 +1,51 @@
 {% extends "supervision/base.html" %}
-{% block title %}Operations{% endblock %}
+{% block title %}Opérations{% endblock %}
 {% block content %}
-<div class="d-flex flex-wrap gap-2 justify-content-between align-items-start mb-3 filter-row">
-    <h1 class="h3 mb-0"><i class="bi bi-lightning-charge text-primary me-2"></i>Operations du {{ date_filter|date:"j F Y" }}</h1>
-    <div class="d-flex gap-2 align-items-center flex-wrap">
-        <form method="get" class="d-flex gap-2 flex-wrap filter-form">
-            <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}" class="form-control" style="width:auto;">
-            <select name="livreur" class="form-select" style="width:auto;">
-                <option value="">Tous livreurs</option>
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-start mb-3">
+    <div>
+        <p class="page-title"><i class="bi bi-lightning-charge me-2 text-primary"></i>Opérations</p>
+        <p class="page-sub">{{ date_filter|date:"l j F Y"|capfirst }}</p>
+    </div>
+    <a href="{% url 'supervision:operations-export' %}?date={{ date_filter|date:'Y-m-d' }}{% if livreur_code %}&livreur={{ livreur_code }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}"
+       class="btn btn-sm btn-outline-success">
+        <i class="bi bi-download me-1"></i>Exporter CSV
+    </a>
+</div>
+
+<div class="filter-card d-flex gap-2 flex-wrap align-items-end">
+    <form method="get" class="d-flex gap-2 flex-wrap filter-form w-100">
+        <div>
+            <label class="form-label small text-muted mb-1">Date</label>
+            <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}" class="form-control form-control-sm" style="width:auto;">
+        </div>
+        <div>
+            <label class="form-label small text-muted mb-1">Livreur</label>
+            <select name="livreur" class="form-select form-select-sm" style="width:auto;">
+                <option value="">Tous</option>
                 {% for liv in livreurs %}
                 <option value="{{ liv.code_livreur }}" {% if liv.code_livreur == livreur_code %}selected{% endif %}>
-                    {{ liv.code_livreur }} - {{ liv.get_full_name }}
+                    {{ liv.code_livreur }} — {{ liv.get_full_name }}
                 </option>
                 {% endfor %}
             </select>
-            <select name="type" class="form-select" style="width:auto;">
-                <option value="" {% if not type_filter %}selected{% endif %}>Tous types</option>
+        </div>
+        <div>
+            <label class="form-label small text-muted mb-1">Type</label>
+            <select name="type" class="form-select form-select-sm" style="width:auto;">
+                <option value="" {% if not type_filter %}selected{% endif %}>Tous</option>
                 <option value="COLLECTE" {% if type_filter == "COLLECTE" %}selected{% endif %}>Collecte</option>
                 <option value="RESTITUTION" {% if type_filter == "RESTITUTION" %}selected{% endif %}>Restitution</option>
             </select>
-            <button type="submit" class="btn btn-primary">Filtrer</button>
-        </form>
-        <a href="{% url 'supervision:operations-export' %}?date={{ date_filter|date:'Y-m-d' }}{% if livreur_code %}&livreur={{ livreur_code }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}"
-           class="btn btn-outline-success">
-            &#x2B73; Exporter CSV
-        </a>
-    </div>
+        </div>
+        <div class="d-flex align-items-end">
+            <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-funnel me-1"></i>Filtrer</button>
+        </div>
+    </form>
 </div>
 
 {% if operations %}
-<div class="table-responsive">
-<table class="table table-hover bg-white">
+<div class="table-responsive table-card">
+<table class="table table-hover mb-0">
     <thead>
         <tr>
             <th>Heure</th>
@@ -58,18 +73,20 @@
                 {% if op.sous_type %}<small class="text-muted ms-1">{{ op.sous_type }}</small>{% endif %}
             </td>
             <td>
-                {{ op.etape.plv.client.raison_sociale }}
+                <span class="fw-medium">{{ op.etape.plv.client.raison_sociale }}</span>
                 <br><small class="text-muted">{{ op.etape.plv.libelle }}</small>
             </td>
             <td class="text-end fw-semibold">{{ op.montant_total|floatformat:0 }} <small class="text-muted fw-normal">FCFA</small></td>
-            <td>{{ op.get_mode_paiement_display|default:"—" }}</td>
-            <td>{{ op.nom_signataire_client|default:"—" }}</td>
+            <td class="text-muted">{{ op.get_mode_paiement_display|default:"—" }}</td>
+            <td class="text-muted">{{ op.nom_signataire_client|default:"—" }}</td>
         </tr>
         {% endfor %}
     </tbody>
     <tfoot class="table-light fw-bold">
         <tr>
-            <td colspan="4" class="text-end">Total ({{ operations|length }} operation{% if operations|length > 1 %}s{% endif %})</td>
+            <td colspan="4" class="text-end text-muted fw-normal" style="font-size:.85rem;">
+                Total — {{ operations|length }} opération{% if operations|length > 1 %}s{% endif %}
+            </td>
             <td class="text-end">{{ total_montant|floatformat:0 }} <small class="fw-normal text-muted">FCFA</small></td>
             <td colspan="2"></td>
         </tr>
@@ -77,6 +94,6 @@
 </table>
 </div>
 {% else %}
-<div class="alert alert-info">Aucune operation pour cette date / livreur.</div>
+<div class="alert alert-info"><i class="bi bi-info-circle me-1"></i>Aucune opération pour cette date / livreur.</div>
 {% endif %}
 {% endblock %}

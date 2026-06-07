@@ -35,7 +35,7 @@
 {% if anomalies_elevees %}
 <div class="alert alert-danger border-danger mb-4 py-2" id="alerte-elevee">
     <div class="d-flex align-items-center gap-2 mb-2">
-        <strong>&#9888; {{ anomalies_elevees|length }} anomalie{{ anomalies_elevees|length|pluralize }} de gravite ELEVEE en cours</strong>
+        <strong>&#9888; {{ anomalies_elevees|length }} anomalie{{ anomalies_elevees|length|pluralize }} de gravité élevée en cours</strong>
         <a href="{% url 'supervision:anomalies' %}?statut=TOUS&gravite=ELEVEE" class="btn btn-sm btn-danger ms-auto">Voir toutes &raquo;</a>
     </div>
     <ul class="mb-0 ps-3">
@@ -141,8 +141,8 @@
                     </table>
                     <!-- Section Restitution -->
                     <div class="px-3 pt-2 pb-1 border-top mt-1">
-                        <span class="badge bg-primary mb-1">Restitution</span>
-                        <small class="text-muted ms-1">Prev. / Real. / Ecart</small>
+                        <span class="badge mb-1" style="background:#198754;">Restitution</span>
+                        <small class="text-muted ms-1">Prév. / Réal. / Écart</small>
                     </div>
                     <table class="table table-sm table-hover mb-0">
                         <thead class="table-light">
@@ -251,7 +251,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 const blueIcon = L.divIcon({
     className: 'plv-icon',
-    html: '<div style="background:#0d6efd;width:14px;height:14px;border-radius:50%;border:2px solid white;"></div>',
+    html: '<div style="background:#1a7fba;width:14px;height:14px;border-radius:50%;border:2px solid white;"></div>',
     iconSize: [18, 18],
 });
 const greenIcon = L.divIcon({
@@ -272,7 +272,7 @@ const opMarkers  = new Map();
 // Polylines des parcours réels (une par livreur)
 let routePolylines = [];
 let showParcours = false;
-const LIVREUR_COLORS = ['#0d6efd', '#dc3545', '#198754', '#fd7e14', '#6f42c1'];
+const LIVREUR_COLORS = ['#1a7fba', '#dc3545', '#198754', '#f47920', '#6f42c1'];
 
 document.getElementById('toggleParcours').addEventListener('click', function () {
     showParcours = !showParcours;

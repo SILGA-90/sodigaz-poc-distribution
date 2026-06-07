@@ -1,48 +1,68 @@
 {% extends "supervision/base.html" %}
 {% block title %}Anomalies{% endblock %}
 {% block content %}
-<div class="mb-3">
-    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-2">
-        <h1 class="h3 mb-0"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Anomalies</h1>
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+    <div>
+        <p class="page-title"><i class="bi bi-exclamation-triangle me-2 text-danger"></i>Anomalies</p>
+        <p class="page-sub">Suivi et traitement des incidents terrain</p>
     </div>
-    <form method="get" class="d-flex gap-2 flex-wrap filter-form">
-        <input type="date" name="date" value="{{ date_filter }}" class="form-control" style="width:160px;" title="Filtrer par date du programme">
-        <select name="livreur" class="form-select" style="width:160px;">
-            <option value="">Tous livreurs</option>
-            {% for l in livreurs %}
-            <option value="{{ l.code_livreur }}" {% if livreur_filter == l.code_livreur %}selected{% endif %}>
-                {{ l.code_livreur }} — {{ l.get_full_name }}
-            </option>
-            {% endfor %}
-        </select>
-        <input type="text" name="programme" value="{{ prog_filter }}" class="form-control" style="width:160px;"
-               placeholder="N° programme">
-        <select name="statut" class="form-select" style="width:150px;">
-            <option value="OUVERTE" {% if statut_filter == "OUVERTE" %}selected{% endif %}>Ouvertes</option>
-            <option value="EN_TRAITEMENT" {% if statut_filter == "EN_TRAITEMENT" %}selected{% endif %}>En traitement</option>
-            <option value="RESOLUE" {% if statut_filter == "RESOLUE" %}selected{% endif %}>Resolues</option>
-            <option value="TOUS" {% if statut_filter == "TOUS" %}selected{% endif %}>Toutes</option>
-        </select>
-        <select name="gravite" class="form-select" style="width:140px;">
-            <option value="" {% if not gravite_filter %}selected{% endif %}>Ts gravites</option>
-            <option value="ELEVEE" {% if gravite_filter == "ELEVEE" %}selected{% endif %}>Elevee</option>
-            <option value="MOYENNE" {% if gravite_filter == "MOYENNE" %}selected{% endif %}>Moyenne</option>
-            <option value="FAIBLE" {% if gravite_filter == "FAIBLE" %}selected{% endif %}>Faible</option>
-        </select>
-        <button type="submit" class="btn btn-primary">Filtrer</button>
-        <a href="{% url 'supervision:anomalies' %}" class="btn btn-outline-secondary">Reinit.</a>
+</div>
+
+<div class="filter-card">
+    <form method="get" class="d-flex gap-2 flex-wrap align-items-end">
+        <div>
+            <label class="form-label small text-muted mb-1">Date</label>
+            <input type="date" name="date" value="{{ date_filter }}" class="form-control form-control-sm" style="width:150px;" title="Filtrer par date du programme">
+        </div>
+        <div>
+            <label class="form-label small text-muted mb-1">Livreur</label>
+            <select name="livreur" class="form-select form-select-sm" style="width:160px;">
+                <option value="">Tous</option>
+                {% for l in livreurs %}
+                <option value="{{ l.code_livreur }}" {% if livreur_filter == l.code_livreur %}selected{% endif %}>
+                    {{ l.code_livreur }} — {{ l.get_full_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label small text-muted mb-1">N° programme</label>
+            <input type="text" name="programme" value="{{ prog_filter }}" class="form-control form-control-sm" style="width:140px;" placeholder="ex. PGM-001">
+        </div>
+        <div>
+            <label class="form-label small text-muted mb-1">Statut</label>
+            <select name="statut" class="form-select form-select-sm" style="width:150px;">
+                <option value="OUVERTE" {% if statut_filter == "OUVERTE" %}selected{% endif %}>Ouvertes</option>
+                <option value="EN_TRAITEMENT" {% if statut_filter == "EN_TRAITEMENT" %}selected{% endif %}>En traitement</option>
+                <option value="RESOLUE" {% if statut_filter == "RESOLUE" %}selected{% endif %}>Résolues</option>
+                <option value="TOUS" {% if statut_filter == "TOUS" %}selected{% endif %}>Toutes</option>
+            </select>
+        </div>
+        <div>
+            <label class="form-label small text-muted mb-1">Gravité</label>
+            <select name="gravite" class="form-select form-select-sm" style="width:130px;">
+                <option value="" {% if not gravite_filter %}selected{% endif %}>Toutes</option>
+                <option value="ELEVEE" {% if gravite_filter == "ELEVEE" %}selected{% endif %}>Élevée</option>
+                <option value="MOYENNE" {% if gravite_filter == "MOYENNE" %}selected{% endif %}>Moyenne</option>
+                <option value="FAIBLE" {% if gravite_filter == "FAIBLE" %}selected{% endif %}>Faible</option>
+            </select>
+        </div>
+        <div class="d-flex gap-2 align-items-end">
+            <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-funnel me-1"></i>Filtrer</button>
+            <a href="{% url 'supervision:anomalies' %}" class="btn btn-sm btn-outline-secondary">Réinit.</a>
+        </div>
     </form>
 </div>
 
 {% if anomalies %}
-<div class="table-responsive">
-<table class="table table-hover bg-white">
+<div class="table-responsive table-card">
+<table class="table table-hover mb-0">
     <thead>
         <tr>
             <th>Date</th>
             <th>Programme / Livreur</th>
             <th>Type</th>
-            <th>Gravite</th>
+            <th>Gravité</th>
             <th>Description</th>
             <th>PLV</th>
             <th>Statut</th>
@@ -55,23 +75,23 @@
             onclick="window.location='{% url 'supervision:anomalie-detail' a.id %}'">
             <td class="text-muted small">{{ a.date_heure|date:"d/m H:i" }}</td>
             <td>
-                {{ a.programme.numero_x3 }}<br>
+                <span class="fw-medium">{{ a.programme.numero_x3 }}</span><br>
                 <small class="text-muted">{{ a.programme.utilisateur.code_livreur }}</small>
             </td>
             <td>{{ a.type_anomalie }}</td>
             <td>
                 {% if a.gravite == "ELEVEE" %}
-                <span class="badge bg-danger">&#9888; Elevee</span>
+                <span class="badge bg-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Élevée</span>
+                {% elif a.gravite == "MOYENNE" %}
+                <span class="badge bg-warning text-dark">Moyenne</span>
                 {% elif a.gravite == "FAIBLE" %}
                 <span class="badge bg-success">Faible</span>
-                {% elif a.statut == "OUVERTE" %}
-                <span class="badge bg-secondary">A classer</span>
                 {% else %}
-                <span class="badge bg-warning text-dark">Moyenne</span>
+                <span class="badge bg-secondary">À classer</span>
                 {% endif %}
             </td>
-            <td>{{ a.description|truncatewords:12 }}</td>
-            <td>{{ a.plv.libelle|default:"-" }}</td>
+            <td class="text-muted">{{ a.description|truncatewords:12 }}</td>
+            <td class="text-muted">{{ a.plv.libelle|default:"—" }}</td>
             <td><span class="badge badge-statut-{{ a.statut }}">{{ a.get_statut_display }}</span></td>
             <td onclick="event.stopPropagation()">
                 {% if a.statut == "OUVERTE" %}
@@ -84,10 +104,10 @@
                 <form method="post" action="{% url 'supervision:anomalie-statut' a.id %}" class="d-inline">
                     {% csrf_token %}
                     <input type="hidden" name="statut" value="RESOLUE">
-                    <button type="submit" class="btn btn-sm btn-success">Marquer resolue</button>
+                    <button type="submit" class="btn btn-sm btn-success">Marquer résolue</button>
                 </form>
                 {% else %}
-                <span class="text-muted small">-</span>
+                <span class="text-muted">—</span>
                 {% endif %}
             </td>
         </tr>
@@ -96,6 +116,6 @@
 </table>
 </div>
 {% else %}
-<div class="alert alert-info">Aucune anomalie pour ce filtre.</div>
+<div class="alert alert-info"><i class="bi bi-info-circle me-1"></i>Aucune anomalie pour ce filtre.</div>
 {% endif %}
 {% endblock %}

@@ -1,34 +1,40 @@
 {% extends "supervision/base.html" %}
 {% block title %}Programmes{% endblock %}
 {% block content %}
-<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3 filter-row">
-    <h1 class="h3 mb-0"><i class="bi bi-truck text-primary me-2"></i>Programmes du {{ date_filter|date:"j F Y" }}</h1>
+<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+    <div>
+        <p class="page-title"><i class="bi bi-truck me-2 text-primary"></i>Programmes</p>
+        <p class="page-sub">{{ date_filter|date:"l j F Y"|capfirst }}</p>
+    </div>
     <form method="get" class="d-flex gap-2 flex-wrap filter-form">
-        <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}" class="form-control" style="width:auto;">
-        <button type="submit" class="btn btn-primary">Filtrer</button>
+        <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}" class="form-control form-control-sm" style="width:auto;">
+        <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-funnel me-1"></i>Filtrer</button>
     </form>
 </div>
 
 {% if programmes %}
-<div class="table-responsive">
-<table class="table table-hover bg-white">
+<div class="table-responsive table-card">
+<table class="table table-hover mb-0">
     <thead>
         <tr>
-            <th>Numero X3</th>
+            <th>N° X3</th>
             <th>Livreur</th>
             <th>Type</th>
-            <th>Vehicule</th>
+            <th>Véhicule</th>
             <th>Statut</th>
             <th>Progression</th>
-            <th>Echecs</th>
+            <th>Échecs</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
         {% for p in programmes %}
         <tr>
-            <td><code>{{ p.numero_x3 }}</code></td>
-            <td>{{ p.utilisateur.code_livreur }} — {{ p.utilisateur.get_full_name }}</td>
+            <td><code class="text-secondary">{{ p.numero_x3 }}</code></td>
+            <td>
+                <span class="fw-semibold">{{ p.utilisateur.code_livreur }}</span>
+                <span class="text-muted"> — {{ p.utilisateur.get_full_name }}</span>
+            </td>
             <td>
                 {% if p.type_programme == "COLLECTE" %}
                 <span class="badge bg-primary">Collecte</span>
@@ -36,14 +42,14 @@
                 <span class="badge bg-success">Restitution</span>
                 {% endif %}
             </td>
-            <td>{{ p.vehicule.immatriculation|default:"-" }}</td>
+            <td class="text-muted">{{ p.vehicule.immatriculation|default:"—" }}</td>
             <td><span class="badge badge-statut-{{ p.statut }}">{{ p.get_statut_display }}</span></td>
-            <td>
+            <td style="min-width:130px;">
                 <div class="d-flex align-items-center gap-2">
-                    <div class="progress flex-grow-1" style="height: 8px;" title="{{ p.etapes_visitees }}/{{ p.total_etapes }} etapes visitees">
+                    <div class="progress flex-grow-1" style="height:7px;" title="{{ p.etapes_visitees }}/{{ p.total_etapes }} étapes visitées">
                         {% if p.total_etapes > 0 %}
                         <div class="progress-bar {% if p.statut == 'CLOTURE' %}bg-success{% endif %}" role="progressbar"
-                             style="width: {% widthratio p.etapes_visitees p.total_etapes 100 %}%"></div>
+                             style="width:{% widthratio p.etapes_visitees p.total_etapes 100 %}%"></div>
                         {% endif %}
                     </div>
                     <small class="text-muted text-nowrap">{{ p.etapes_visitees }}/{{ p.total_etapes }}</small>
@@ -51,18 +57,22 @@
             </td>
             <td>
                 {% if p.etapes_echec > 0 %}
-                <span class="badge bg-danger">{{ p.etapes_echec }} echec{% if p.etapes_echec > 1 %}s{% endif %}</span>
+                <span class="badge bg-danger">{{ p.etapes_echec }} échec{% if p.etapes_echec > 1 %}s{% endif %}</span>
                 {% else %}
                 <span class="text-muted">—</span>
                 {% endif %}
             </td>
-            <td><a href="{% url 'supervision:programme-detail' p.id %}" class="btn btn-sm btn-outline-primary">Detail</a></td>
+            <td>
+                <a href="{% url 'supervision:programme-detail' p.id %}" class="btn btn-sm btn-outline-primary">
+                    Détail <i class="bi bi-chevron-right"></i>
+                </a>
+            </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 </div>
 {% else %}
-<div class="alert alert-info">Aucun programme pour cette date.</div>
+<div class="alert alert-info"><i class="bi bi-info-circle me-1"></i>Aucun programme pour cette date.</div>
 {% endif %}
 {% endblock %}

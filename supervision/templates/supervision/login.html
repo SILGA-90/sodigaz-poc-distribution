@@ -2,36 +2,65 @@
 {% load static %}
 {% block title %}Connexion - Supervision SODIGAZ{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-4">
-        <div class="text-center mt-5 mb-3">
-            <img src="{% static 'supervision/img/logo_name.png' %}" alt="Sodigaz APC" class="img-fluid" style="max-height:90px;">
-            <div class="text-muted small mt-2">Supervision logistique</div>
+<style>
+    /* base.html fournit déjà <div class="login-wrapper"> — on le transforme en conteneur flex */
+    .login-wrapper {
+        background: linear-gradient(135deg, #0a1628 0%, #1a3a5c 55%, #1a7fba 100%) !important;
+        display: flex; align-items: center; justify-content: center;
+        padding: 2rem 1rem;
+    }
+    .login-card {
+        width: 100%; max-width: 400px;
+        background: #fff; border-radius: 14px;
+        box-shadow: 0 8px 40px rgba(0,0,0,.35);
+        overflow: hidden;
+    }
+    .login-header {
+        background: #0a1628;
+        padding: 2rem 2rem 1.5rem;
+        text-align: center;
+    }
+    .login-header img { max-height: 60px; }
+    .login-header .subtitle { color: #8daec8; font-size: .8rem; margin-top: .5rem; }
+    .login-body { padding: 1.75rem 2rem 2rem; }
+    .login-body .form-label { font-size: .85rem; font-weight: 600; color: #1a2332; }
+    .login-body .form-control { border-radius: 8px; font-size: .9rem; padding: .55rem .85rem; }
+    .login-body .form-control:focus { border-color: #1a7fba; box-shadow: 0 0 0 3px rgba(26,127,186,.15); }
+    .btn-login {
+        background: #1a7fba; color: #fff; border: none;
+        border-radius: 8px; padding: .65rem; font-weight: 600; font-size: .95rem;
+        width: 100%; transition: background .15s; cursor: pointer;
+    }
+    .btn-login:hover { background: #1568a0; }
+    .demo-hint { font-size: .78rem; color: #6c757d; text-align: center; margin-top: 1rem; }
+    .demo-hint code { color: #1a7fba; }
+</style>
+<div class="login-card">
+    <div class="login-header">
+        <img src="{% static 'supervision/img/logo_name.png' %}" alt="Sodigaz APC">
+        <div class="subtitle">Supervision logistique</div>
+    </div>
+    <div class="login-body">
+        {% if form.errors %}
+        <div class="alert alert-danger py-2 mb-3" style="font-size:.85rem;">
+            <i class="bi bi-exclamation-circle me-1"></i>
+            Identifiants invalides ou compte sans privilège superviseur.
         </div>
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <h4 class="card-title mb-4 text-center">Connexion</h4>
-                <form method="post">
-                    {% csrf_token %}
-                    {% if form.errors %}
-                    <div class="alert alert-danger">
-                        Identifiants invalides ou compte sans privilege superviseur.
-                    </div>
-                    {% endif %}
-                    <div class="mb-3">
-                        <label for="id_username" class="form-label">Nom d'utilisateur</label>
-                        <input type="text" name="username" id="id_username" class="form-control" required autofocus>
-                    </div>
-                    <div class="mb-3">
-                        <label for="id_password" class="form-label">Mot de passe</label>
-                        <input type="password" name="password" id="id_password" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Se connecter</button>
-                </form>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="id_username" class="form-label">Nom d'utilisateur</label>
+                <input type="text" name="username" id="id_username" class="form-control" required autofocus>
             </div>
-        </div>
-        <p class="text-muted small text-center mt-3">
-            Compte demo : <code>aminata.s</code> / <code>demo1234</code>
+            <div class="mb-4">
+                <label for="id_password" class="form-label">Mot de passe</label>
+                <input type="password" name="password" id="id_password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn-login">Se connecter</button>
+        </form>
+        <p class="demo-hint">
+            Compte démo : <code>aminata.s</code> / <code>demo1234</code>
         </p>
     </div>
 </div>

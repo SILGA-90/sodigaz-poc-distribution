@@ -113,7 +113,7 @@
         .kpi-label { font-size: .72rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: #6c757d; }
         .kpi-value { font-size: 2rem; font-weight: 700; color: #1a2332; line-height: 1.1; margin: .15rem 0; }
         .kpi-sub   { font-size: .78rem; color: #6c757d; }
-        .kpi-icon  { font-size: 2.4rem; opacity: .12; line-height: 1; }
+        .kpi-icon  { font-size: 2.2rem; opacity: .18; line-height: 1; }
 
         /* ── Cards ── */
         .card { border: none; border-radius: var(--card-radius); box-shadow: var(--card-shadow); }
@@ -151,6 +151,50 @@
         .stat-card.success { border-left-color: #198754; }
         .page-title { font-size: 1.2rem; font-weight: 700; color: #1a2332; margin: 0; }
         .page-sub   { font-size: .8rem; color: #6c757d; margin-top: .1rem; }
+
+        /* ── Bootstrap primary → SODIGAZ blue ── */
+        .btn-primary {
+            --bs-btn-bg: #1a7fba; --bs-btn-border-color: #1a7fba;
+            --bs-btn-hover-bg: #1568a0; --bs-btn-hover-border-color: #1568a0;
+            --bs-btn-active-bg: #1568a0; --bs-btn-active-border-color: #1568a0;
+            --bs-btn-disabled-bg: #1a7fba; --bs-btn-disabled-border-color: #1a7fba;
+        }
+        .btn-outline-primary {
+            --bs-btn-color: #1a7fba; --bs-btn-border-color: #1a7fba;
+            --bs-btn-hover-bg: #1a7fba; --bs-btn-hover-border-color: #1a7fba;
+            --bs-btn-active-bg: #1a7fba; --bs-btn-active-border-color: #1a7fba;
+            --bs-btn-hover-color: #fff; --bs-btn-active-color: #fff;
+        }
+        .bg-primary  { background-color: #1a7fba !important; }
+        .text-primary { color: #1a7fba !important; }
+        .border-primary { border-color: #1a7fba !important; }
+        a.text-primary:hover { color: #1568a0 !important; }
+
+        /* ── Sidebar active : dégradé ── */
+        .sidebar-link.active {
+            background: linear-gradient(90deg, rgba(244,121,32,.2) 0%, rgba(244,121,32,.05) 100%);
+            color: #fff; border-left-color: var(--brand-orange);
+        }
+
+        /* ── Table dans une card ── */
+        .table-card {
+            background: #fff; border-radius: var(--card-radius);
+            box-shadow: var(--card-shadow); overflow: hidden;
+        }
+        .table-card .table { margin-bottom: 0; }
+        .table-card > .table > thead > tr > th:first-child,
+        .table-card > .table > tbody > tr > td:first-child,
+        .table-card > .table > tfoot > tr > td:first-child { padding-left: 1.25rem; }
+        .table-card > .table > thead > tr > th:last-child,
+        .table-card > .table > tbody > tr > td:last-child,
+        .table-card > .table > tfoot > tr > td:last-child  { padding-right: 1.25rem; }
+
+        /* ── Filtre bar ── */
+        .filter-card {
+            background: #fff; border-radius: var(--card-radius);
+            box-shadow: var(--card-shadow); padding: .85rem 1.1rem;
+            margin-bottom: 1.25rem;
+        }
     </style>
 </head>
 <body>
@@ -179,7 +223,7 @@
         <li>
             <a href="{% url 'supervision:operations' %}"
                class="sidebar-link {% if 'operation' in request.resolver_match.url_name %}active{% endif %}">
-                <i class="bi bi-lightning-charge"></i> Operations
+                <i class="bi bi-lightning-charge"></i> Opérations
             </a>
         </li>
         <li>
@@ -191,7 +235,7 @@
         <li>
             <a href="{% url 'supervision:rapport' %}"
                class="sidebar-link {% if request.resolver_match.url_name == 'rapport' %}active{% endif %}">
-                <i class="bi bi-file-earmark-bar-graph"></i> Rapport journee
+                <i class="bi bi-file-earmark-bar-graph"></i> Rapport journée
             </a>
         </li>
     </ul>
@@ -204,7 +248,7 @@
             </div>
         </div>
         <a href="{% url 'supervision:logout' %}" class="sidebar-logout">
-            <i class="bi bi-box-arrow-right"></i> Deconnexion
+            <i class="bi bi-box-arrow-right"></i> Déconnexion
         </a>
     </div>
 </nav>
