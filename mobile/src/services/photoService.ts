@@ -6,7 +6,7 @@
  * Les deux retournent une image compressee (uri locale + taille).
  */
 import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system/legacy';
 
 export interface PhotoCapturee {
@@ -18,11 +18,10 @@ const LARGEUR_MAX = 1024;
 const QUALITE = 0.6;
 
 async function compresser(uri: string): Promise<PhotoCapturee> {
-  const result = await ImageManipulator.manipulateAsync(
-    uri,
-    [{ resize: { width: LARGEUR_MAX } }],
-    { compress: QUALITE, format: ImageManipulator.SaveFormat.JPEG },
-  );
+  const imageRef = await ImageManipulator.manipulate(uri)
+    .resize({ width: LARGEUR_MAX })
+    .renderAsync();
+  const result = await imageRef.saveAsync({ compress: QUALITE, format: SaveFormat.JPEG });
 
   const info = await FileSystem.getInfoAsync(result.uri);
   const taille = info.exists && 'size' in info ? (info as any).size : 0;
@@ -36,7 +35,7 @@ export async function prendrePhoto(): Promise<PhotoCapturee | null> {
     throw new Error('Permission camera refusee.');
   }
   const result = await ImagePicker.launchCameraAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    mediaTypes: 'images',
     quality: 1,
   });
   if (result.canceled || !result.assets[0]) return null;
@@ -49,7 +48,7 @@ export async function choisirPhoto(): Promise<PhotoCapturee | null> {
     throw new Error('Permission galerie refusee.');
   }
   const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    mediaTypes: 'images',
     quality: 1,
   });
   if (result.canceled || !result.assets[0]) return null;
