@@ -106,6 +106,7 @@
                     <button id="toggleParcours" class="btn btn-sm btn-outline-secondary">
                         Parcours &#8250;&#8250; Afficher
                     </button>
+                    <span id="parcours-msg" class="small text-muted ms-2" style="display:none;"></span>
                 </div>
                 <div id="map"></div>
             </div>
@@ -220,9 +221,20 @@ const LIVREUR_COLORS = ['#0d6efd', '#dc3545', '#198754', '#fd7e14', '#6f42c1'];
 
 document.getElementById('toggleParcours').addEventListener('click', function () {
     showParcours = !showParcours;
-    this.textContent = showParcours
-        ? 'Parcours ›› Masquer'
-        : 'Parcours ›› Afficher';
+    const parcoursMsg = document.getElementById('parcours-msg');
+
+    if (showParcours && routePolylines.length === 0) {
+        // Pas encore d'opérations géolocalisées pour aujourd'hui.
+        // On revient en arrière pour que le bouton reste cliquable.
+        showParcours = false;
+        parcoursMsg.textContent = 'Aucun parcours disponible — le mobile doit d\'abord synchroniser des opérations.';
+        parcoursMsg.style.display = '';
+        setTimeout(() => { parcoursMsg.style.display = 'none'; }, 5000);
+        return;
+    }
+
+    parcoursMsg.style.display = 'none';
+    this.textContent = showParcours ? 'Parcours ›› Masquer' : 'Parcours ›› Afficher';
     routePolylines.forEach(p => showParcours ? p.addTo(map) : map.removeLayer(p));
 });
 

@@ -134,10 +134,6 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
   const [nomSignataire, setNomSignataire] = useState<string>('');
   const [padVisible, setPadVisible] = useState<null | 'LIVREUR' | 'CLIENT'>(null);
   const [photos, setPhotos] = useState<PhotoEnAttente[]>([]);
-  const [gpsLat, setGpsLat] = useState<number | null>(null);
-  const [gpsLon, setGpsLon] = useState<number | null>(null);
-  const [gpsPrecision, setGpsPrecision] = useState<number | null>(null);
-  const [gpsHorodatage, setGpsHorodatage] = useState<string | null>(null);
   const [gpsStatus, setGpsStatus] = useState<'a capturer' | 'fiable' | 'degradee' | 'absente'>('a capturer');
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -209,7 +205,8 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
       .map((l) => ({
         produit_code_x3: l.produit.code_x3,
         quantite_realisee: parseInt(l.quantite, 10) || 0,
-        montant_ligne: (parseInt(l.quantite, 10) || 0) * l.produit.prix_unitaire,
+        // Collecte = ramassage de vides, aucune transaction sur la bouteille elle-même.
+        montant_ligne: isCollecte ? 0 : (parseInt(l.quantite, 10) || 0) * l.produit.prix_unitaire,
       }))
       .filter((l) => l.quantite_realisee > 0);
 
@@ -229,10 +226,6 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
     setSaving(true);
     try {
       const pos = await acquerirPositionProbante();
-      setGpsLat(pos.latitude);
-      setGpsLon(pos.longitude);
-      setGpsPrecision(pos.precision);
-      setGpsHorodatage(pos.horodatage);
       setGpsStatus(pos.qualite);
 
       if (pos.qualite !== 'fiable') {
@@ -326,14 +319,18 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         </View>
       )}
 
-      <Text style={styles.sectionTitle}>Articles</Text>
+      <Text style={styles.sectionTitle}>
+        {etapeInfo?.type_programme === 'COLLECTE' ? 'Bouteilles vides à collecter' : 'Articles'}
+      </Text>
       {lignes.map((ligne, index) => (
         <View key={ligne.produit.code_x3} style={styles.ligneCard}>
           <View style={{ flex: 1 }}>
             <Text style={styles.produitLibelle}>{ligne.produit.libelle}</Text>
-            <Text style={styles.produitPrix}>
-              {ligne.produit.prix_unitaire.toLocaleString('fr-FR')} FCFA / unite
-            </Text>
+            {etapeInfo?.type_programme !== 'COLLECTE' && (
+              <Text style={styles.produitPrix}>
+                {ligne.produit.prix_unitaire.toLocaleString('fr-FR')} FCFA / unite (recharge)
+              </Text>
+            )}
             {ligne.produit.quantite_prevue != null && (
               <Text style={styles.prevue}>Prevu : {ligne.produit.quantite_prevue}</Text>
             )}

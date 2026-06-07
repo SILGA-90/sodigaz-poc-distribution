@@ -53,9 +53,9 @@ class Command(BaseCommand):
                 f"Pas assez de PLV actifs ({len(plvs)}). Lance d'abord 'seed_demo'."
             )
         vehicules = list(Vehicule.objects.filter(actif=True))
-        produits = list(Produit.objects.filter(actif=True))
-        if not produits:
-            raise CommandError("Aucun produit actif. Lance d'abord 'seed_demo'.")
+        produits_gaz = list(Produit.objects.filter(actif=True, code_x3__startswith='G'))
+        if not produits_gaz:
+            raise CommandError("Produits G* (gaz emballé) manquants. Lance d'abord 'seed_demo'.")
 
         if options["reset"]:
             n, _ = Programme.objects.filter(
@@ -104,10 +104,11 @@ class Command(BaseCommand):
                         plv=plv,
                         ordre_prevu=ordre,
                     )
+                    # COLLECTE : pas de LigneProgramme — quantités non planifiées à l'avance.
+                    # RESTITUTION : lignes G* avec quantite_prevue.
                     if type_prog == TypeProgramme.RESTITUTION:
-                        nb_articles = random.randint(1, min(3, len(produits)))
-                        produits_choisis = random.sample(produits, nb_articles)
-                        for prod in produits_choisis:
+                        nb_articles = random.randint(1, min(3, len(produits_gaz)))
+                        for prod in random.sample(produits_gaz, nb_articles):
                             LigneProgramme.objects.create(
                                 etape=etape,
                                 produit=prod,

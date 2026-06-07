@@ -45,9 +45,10 @@ export async function getEtapeInfo(etapeId: number): Promise<EtapeInfo | null> {
 }
 
 /**
- * Produits saisissables :
- *   - RESTITUTION : produits prevus (lignes_programme) avec quantite prevue.
- *   - COLLECTE : tous les produits actifs, quantite_prevue = null.
+ * Produits saisissables selon le type de programme :
+ *   - RESTITUTION : produits G* (gaz emballé) pré-planifiés, avec quantite_prevue.
+ *   - COLLECTE    : tous les emballages vides E* actifs, quantite_prevue = null.
+ *     La collecte est opportuniste : le livreur ramasse ce qu'il trouve, sans plan.
  */
 export async function getProduitsSaisissables(
   etapeId: number,
@@ -71,7 +72,7 @@ export async function getProduitsSaisissables(
   return db.getAllAsync<ProduitSaisie>(
     `SELECT *, NULL AS quantite_prevue
      FROM produit
-     WHERE actif = 1
+     WHERE actif = 1 AND code_x3 LIKE 'E%'
      ORDER BY libelle;`,
   );
 }
