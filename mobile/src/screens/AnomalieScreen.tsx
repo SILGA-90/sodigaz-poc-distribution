@@ -116,13 +116,14 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
         <View style={styles.gpsRow}>
           <View style={[styles.gpsDot, {
             backgroundColor:
-              gpsStatus === 'fiable' ? '#34d399' :
-              gpsStatus === 'degradee' ? '#fbbf24' : '#f87171',
+              gpsStatus === 'fiable'       ? '#34d399' :
+              gpsStatus === 'degradee'     ? '#fbbf24' :
+              gpsStatus === 'indisponible' ? '#f87171' : '#94a3b8',
           }]} />
           <Text style={styles.gpsStatus}>
-            {gpsStatus === 'fiable' ? 'GPS fiable' :
-             gpsStatus === 'degradee' ? 'GPS imprecis' :
-             gpsStatus === 'indisponible' ? 'GPS absent' : 'Acquisition...'}
+            {gpsStatus === 'fiable'       ? 'GPS fiable' :
+             gpsStatus === 'degradee'     ? 'GPS imprecis' :
+             gpsStatus === 'indisponible' ? 'GPS absent' : 'GPS en cours...'}
           </Text>
         </View>
       </View>

@@ -5,7 +5,7 @@
  * besoin (a l'enregistrement de l'operation), en haute precision, avec timeout.
  * On renvoie une position QUALIFIEE :
  *   - fiable   : acquise, recente, precision <= SEUIL_FIABLE metres
- *   - degradee : acquise mais imprecise (precision > seuil) ou via cache recent
+ *   - degradee : acquise mais imprecise, ou via cache recent
  *   - absente  : aucune position obtenue
  *
  * On expose aussi la precision (rayon d'incertitude) et l'horodatage, qui
@@ -24,7 +24,10 @@ export interface PositionQualifiee {
 }
 
 const SEUIL_FIABLE_METRES = 50;
-const TIMEOUT_MS = 15000;
+// 30 s : un cold start GPS peut prendre 20-40 s en exterieur (vs 15 s avant).
+const TIMEOUT_MS = 30000;
+// 2 min : couvre le temps de remplissage du formulaire apres une prise fraiche.
+const MAX_AGE_REPLI_MS = 120 * 1000;
 
 const POSITION_ABSENTE: PositionQualifiee = {
   qualite: 'absente',
@@ -34,14 +37,33 @@ const POSITION_ABSENTE: PositionQualifiee = {
   horodatage: null,
 };
 
+function _qualifierCoords(coords: Location.LocationObjectCoords, ts: number): PositionQualifiee {
+  const precision = coords.accuracy ?? null;
+  const qualite: QualitePosition =
+    precision != null && precision <= SEUIL_FIABLE_METRES ? 'fiable' : 'degradee';
+  return {
+    qualite,
+    latitude: coords.latitude,
+    longitude: coords.longitude,
+    precision,
+    horodatage: new Date(ts).toISOString(),
+  };
+}
+
 /**
  * Acquisition fraiche et active de la position, qualifiee.
- * A appeler au moment de l'enregistrement (valeur probante).
+ *
+ * Strategie :
+ *  1. Essai haute precision avec timeout de 30 s.
+ *  2. Si echec : repli sur la derniere position connue (max 2 min).
+ *  3. Si toujours rien : POSITION_ABSENTE.
+ *
+ * Appeler cote ecran a l'ouverture (warm-up) ET a l'enregistrement.
  */
 export async function acquerirPositionProbante(): Promise<PositionQualifiee> {
   const enabled = await Location.hasServicesEnabledAsync();
   if (!enabled) {
-    console.log('[GPS] Services desactives.');
+    console.log('[GPS] Services desactives — verifie les parametres du telephone.');
     return POSITION_ABSENTE;
   }
 
@@ -51,7 +73,7 @@ export async function acquerirPositionProbante(): Promise<PositionQualifiee> {
     return POSITION_ABSENTE;
   }
 
-  // Acquisition fraiche, haute precision, avec timeout via Promise.race.
+  // Tentative principale : position fraiche haute precision
   try {
     const loc = await Promise.race([
       Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
@@ -59,39 +81,38 @@ export async function acquerirPositionProbante(): Promise<PositionQualifiee> {
     ]);
 
     if (loc) {
-      const precision = loc.coords.accuracy ?? null;
-      const qualite: QualitePosition =
-        precision != null && precision <= SEUIL_FIABLE_METRES ? 'fiable' : 'degradee';
-      console.log('[GPS] Position fraiche :', loc.coords.latitude, loc.coords.longitude, 'precision', precision, '->', qualite);
-      return {
-        qualite,
-        latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude,
-        precision,
-        horodatage: new Date(loc.timestamp).toISOString(),
-      };
+      const pos = _qualifierCoords(loc.coords, loc.timestamp);
+      console.log('[GPS] Position fraiche :', pos.latitude, pos.longitude,
+        '±', pos.precision, 'm ->', pos.qualite);
+      return pos;
     }
-    console.log('[GPS] Timeout acquisition fraiche, repli sur derniere position connue.');
+    console.warn('[GPS] Timeout fraiche (30 s), repli sur derniere position connue.');
   } catch (e) {
-    console.log('[GPS] Erreur acquisition fraiche :', e);
+    console.warn('[GPS] Erreur acquisition fraiche :', e);
   }
 
-  // Repli : derniere position connue tres recente (< 30 s) = degradee.
+  // Repli : derniere position connue recente (max 2 min)
   try {
-    const last = await Location.getLastKnownPositionAsync({ maxAge: 30 * 1000 });
+    const last = await Location.getLastKnownPositionAsync({ maxAge: MAX_AGE_REPLI_MS });
     if (last) {
-      console.log('[GPS] Repli derniere position connue :', last.coords.latitude, last.coords.longitude);
-      return {
-        qualite: 'degradee',
-        latitude: last.coords.latitude,
-        longitude: last.coords.longitude,
-        precision: last.coords.accuracy ?? null,
-        horodatage: new Date(last.timestamp).toISOString(),
-      };
+      const pos = _qualifierCoords(last.coords, last.timestamp);
+      console.log('[GPS] Repli derniere position :', pos.latitude, pos.longitude,
+        '±', pos.precision, 'm (age', Math.round((Date.now() - last.timestamp) / 1000), 's)');
+      return { ...pos, qualite: 'degradee' };
     }
   } catch (e) {
-    console.log('[GPS] Repli echoue :', e);
+    console.warn('[GPS] Repli echoue :', e);
   }
 
+  console.warn('[GPS] Aucune position disponible.');
   return POSITION_ABSENTE;
+}
+
+/**
+ * Verifie si une position peut etre reutilisee (moins de maxAgeMs).
+ * Permet d'eviter une double acquisition si la position est recente.
+ */
+export function positionEstRecente(pos: PositionQualifiee, maxAgeMs = 5 * 60 * 1000): boolean {
+  if (!pos.horodatage || pos.qualite === 'absente') return false;
+  return Date.now() - new Date(pos.horodatage).getTime() < maxAgeMs;
 }

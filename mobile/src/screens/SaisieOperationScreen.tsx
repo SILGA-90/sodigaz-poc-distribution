@@ -23,7 +23,7 @@ import { Picker } from '@react-native-picker/picker';
 import SignaturePad from '../components/SignaturePad';
 import PhotosSection, { PhotoEnAttente } from '../components/PhotosSection';
 import { ajouterPhotoOperation } from '../db/repositories/photoRepository';
-import { acquerirPositionProbante } from '../services/locationService';
+import { acquerirPositionProbante, positionEstRecente, PositionQualifiee } from '../services/locationService';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import {
@@ -134,7 +134,8 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
   const [nomSignataire, setNomSignataire] = useState<string>('');
   const [padVisible, setPadVisible] = useState<null | 'LIVREUR' | 'CLIENT'>(null);
   const [photos, setPhotos] = useState<PhotoEnAttente[]>([]);
-  const [gpsStatus, setGpsStatus] = useState<'a capturer' | 'fiable' | 'degradee' | 'absente'>('a capturer');
+  const [gpsStatus, setGpsStatus] = useState<'acquisition' | 'fiable' | 'degradee' | 'absente'>('acquisition');
+  const positionRef = useRef<PositionQualifiee | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const isDirty = useRef<boolean>(false);
@@ -176,8 +177,17 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
     return unsubscribe;
   }, [navigation, saving]);
 
-  // La position est acquise au moment de l'enregistrement (valeur probante),
-  // pas a l'ouverture de l'ecran.
+  // Warm-up GPS : démarrage dès l'ouverture pour laisser le chipset s'initialiser
+  // pendant que l'utilisateur remplit le formulaire (cold start = 20-40 s).
+  useEffect(() => {
+    let annule = false;
+    acquerirPositionProbante().then((pos) => {
+      if (annule) return;
+      positionRef.current = pos;
+      setGpsStatus(pos.qualite === 'absente' ? 'absente' : pos.qualite);
+    });
+    return () => { annule = true; };
+  }, []);
 
   const montantCalcule = useMemo(() => {
     return lignes.reduce((sum, l) => {
@@ -225,8 +235,12 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
 
     setSaving(true);
     try {
-      const pos = await acquerirPositionProbante();
-      setGpsStatus(pos.qualite);
+      // Réutilise la position du warm-up si elle est récente (< 5 min),
+      // sinon réacquiert (cas où l'utilisateur a mis très longtemps).
+      const pos = (positionRef.current && positionEstRecente(positionRef.current))
+        ? positionRef.current
+        : await acquerirPositionProbante();
+      setGpsStatus(pos.qualite === 'absente' ? 'absente' : pos.qualite);
 
       if (pos.qualite !== 'fiable') {
         const msg = pos.qualite === 'absente'
@@ -297,13 +311,14 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
             <View style={styles.gpsRow}>
               <View style={[styles.gpsDot, {
                 backgroundColor:
-                  gpsStatus === 'fiable' ? '#34d399' :
-                  gpsStatus === 'degradee' ? '#fbbf24' : '#f87171',
+                  gpsStatus === 'fiable'     ? '#34d399' :
+                  gpsStatus === 'degradee'   ? '#fbbf24' :
+                  gpsStatus === 'absente'    ? '#f87171' : '#94a3b8',
               }]} />
               <Text style={styles.gpsStatus}>
-                {gpsStatus === 'fiable' ? 'GPS fiable' :
-                 gpsStatus === 'degradee' ? 'GPS imprecis' :
-                 gpsStatus === 'absente' ? 'GPS absent' : 'Acquisition...'}
+                {gpsStatus === 'fiable'     ? 'GPS fiable' :
+                 gpsStatus === 'degradee'   ? 'GPS imprecis' :
+                 gpsStatus === 'absente'    ? 'GPS absent' : 'GPS en cours...'}
               </Text>
             </View>
             <TouchableOpacity
