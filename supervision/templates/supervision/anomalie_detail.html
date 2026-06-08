@@ -1,161 +1,384 @@
 {% extends "supervision/base.html" %}
-{% block title %}Anomalie {{ anomalie.id }} — {{ anomalie.type_anomalie }}{% endblock %}
+{% block title %}Anomalie — {{ anomalie.type_anomalie }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <a href="{% url 'supervision:anomalies' %}" class="text-muted small">&larr; Retour aux anomalies</a>
-        <h1 class="h3 mb-0 mt-1">
-            {{ anomalie.type_anomalie }}
-            {% if anomalie.gravite == "ELEVEE" %}
-            <span class="badge bg-danger ms-2">Gravite elevee</span>
-            {% elif anomalie.gravite == "MOYENNE" %}
-            <span class="badge bg-warning text-dark ms-2">Gravite moyenne</span>
-            {% else %}
-            <span class="badge bg-success ms-2">Gravite faible</span>
-            {% endif %}
-            <span class="badge badge-statut-{{ anomalie.statut }} ms-1">{{ anomalie.get_statut_display }}</span>
-        </h1>
-        <div class="text-muted small mt-1">{{ anomalie.date_heure|date:"l j F Y à H:i" }}</div>
+
+<!-- ── Retour ── -->
+<a href="{% url 'supervision:anomalies' %}" class="back-link">
+    <i class="bi bi-chevron-left"></i> Retour aux anomalies
+</a>
+
+<!-- ── En-tête ── -->
+<div class="anom-detail-header anom-border-{{ anomalie.gravite }} mb-4">
+    <div class="anom-header-left">
+        <span class="pg-icon pg-icon-{{ anomalie.gravite }}">
+            <i class="bi bi-exclamation-triangle{% if anomalie.gravite == 'ELEVEE' %}-fill{% endif %}"></i>
+        </span>
+        <div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                {% if anomalie.gravite == "ELEVEE" %}
+                <span class="grav-pill grav-elevee">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Gravité élevée
+                </span>
+                {% elif anomalie.gravite == "MOYENNE" %}
+                <span class="grav-pill grav-moyenne">
+                    <i class="bi bi-dash-circle-fill"></i> Gravité moyenne
+                </span>
+                {% else %}
+                <span class="grav-pill grav-faible">
+                    <i class="bi bi-check-circle-fill"></i> Gravité faible
+                </span>
+                {% endif %}
+                <span class="statut-anom-pill statut-anom-{{ anomalie.statut }}">
+                    {% if anomalie.statut == "OUVERTE" %}
+                    <i class="bi bi-circle me-1"></i>Ouverte
+                    {% elif anomalie.statut == "EN_TRAITEMENT" %}
+                    <i class="bi bi-arrow-repeat me-1"></i>En traitement
+                    {% else %}
+                    <i class="bi bi-check-circle-fill me-1"></i>Résolue
+                    {% endif %}
+                </span>
+            </div>
+            <h1 class="anom-detail-type mt-2 mb-0">{{ anomalie.type_anomalie }}</h1>
+            <p class="page-sub mb-0 mt-1">
+                <i class="bi bi-calendar3 me-1"></i>
+                {{ anomalie.date_heure|date:"l j F Y \à H\hi"|capfirst }}
+            </p>
+        </div>
     </div>
-    <div class="d-flex gap-2">
+
+    <div class="anom-action-block">
         {% if anomalie.statut == "OUVERTE" %}
         <form method="post" action="{% url 'supervision:anomalie-statut' anomalie.id %}">
             {% csrf_token %}
             <input type="hidden" name="statut" value="EN_TRAITEMENT">
-            <button type="submit" class="btn btn-warning">Prendre en charge</button>
+            <button type="submit" class="btn-action-lg btn-action-warn">
+                <i class="bi bi-hand-index me-2"></i>Prendre en charge
+            </button>
         </form>
         {% elif anomalie.statut == "EN_TRAITEMENT" %}
         <form method="post" action="{% url 'supervision:anomalie-statut' anomalie.id %}">
             {% csrf_token %}
             <input type="hidden" name="statut" value="RESOLUE">
-            <button type="submit" class="btn btn-success">Marquer resolue</button>
+            <button type="submit" class="btn-action-lg btn-action-green">
+                <i class="bi bi-check-lg me-2"></i>Marquer résolue
+            </button>
         </form>
+        {% else %}
+        <div class="anom-resolved-badge">
+            <i class="bi bi-check-circle-fill me-2"></i>Anomalie résolue
+        </div>
         {% endif %}
     </div>
 </div>
 
-<div class="row g-4">
-    {# ── Colonne gauche : infos contextuelles ── #}
-    <div class="col-md-4">
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Contexte</div>
-            <div class="card-body">
-                <dl class="mb-0">
-                    <dt class="text-muted small">Programme</dt>
-                    <dd>
-                        <a href="{% url 'supervision:programme-detail' anomalie.programme.id %}" class="fw-semibold font-monospace">
-                            {{ anomalie.programme.numero_x3 }}
-                        </a>
-                        <span class="badge {% if anomalie.programme.type_programme == 'COLLECTE' %}bg-primary{% else %}bg-success{% endif %} ms-1">
-                            {{ anomalie.programme.type_programme }}
-                        </span>
-                    </dd>
-                    <dt class="text-muted small mt-2">Livreur</dt>
-                    <dd>
-                        <span class="fw-semibold">{{ anomalie.programme.utilisateur.code_livreur }}</span>
-                        <br><small class="text-muted">{{ anomalie.programme.utilisateur.get_full_name }}</small>
-                    </dd>
-                    <dt class="text-muted small mt-2">PLV</dt>
-                    <dd>{{ anomalie.plv.libelle|default:"—" }}</dd>
-                    {% if anomalie.plv.client %}
-                    <dt class="text-muted small mt-2">Client</dt>
-                    <dd>{{ anomalie.plv.client.raison_sociale }}</dd>
-                    {% endif %}
-                </dl>
-            </div>
-        </div>
+<!-- ── Info row ── -->
+<div class="info-row mb-4">
 
-        {# ── Panneau de classification de la gravite ── #}
-        <div class="card mb-3 {% if anomalie.gravite == 'ELEVEE' %}border-danger{% elif anomalie.gravite == 'FAIBLE' %}border-success{% else %}border-warning{% endif %}">
-            <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
-                <span>Classification superviseur</span>
-                {% if anomalie.gravite == "ELEVEE" %}
-                <span class="badge bg-danger">&#9888; Elevee</span>
-                {% elif anomalie.gravite == "FAIBLE" %}
-                <span class="badge bg-success">Faible</span>
+    <div class="info-card">
+        <div class="info-avatar">{{ anomalie.programme.utilisateur.code_livreur|slice:":1"|upper }}</div>
+        <div>
+            <div class="info-label">Livreur</div>
+            <div class="info-value">{{ anomalie.programme.utilisateur.get_full_name }}</div>
+            <div class="info-sub">{{ anomalie.programme.utilisateur.code_livreur }}</div>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <div class="info-icon-box"><i class="bi bi-clipboard2-check"></i></div>
+        <div>
+            <div class="info-label">Programme</div>
+            <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+                <span class="info-value mb-0">{{ anomalie.programme.numero_x3 }}</span>
+                {% if anomalie.programme.type_programme == "COLLECTE" %}
+                <span class="type-chip type-collecte">Collecte</span>
                 {% else %}
-                <span class="badge bg-warning text-dark">Moyenne</span>
+                <span class="type-chip type-restitution">Restitution</span>
                 {% endif %}
             </div>
-            <div class="card-body">
-                <p class="text-muted small mb-2">
-                    La gravite est determinee par le superviseur apres evaluation.
-                </p>
-                <form method="post" action="{% url 'supervision:anomalie-gravite' anomalie.id %}"
-                      class="d-flex gap-2">
-                    {% csrf_token %}
-                    <select name="gravite" class="form-select form-select-sm">
-                        <option value="FAIBLE"  {% if anomalie.gravite == "FAIBLE"  %}selected{% endif %}>Faible — impact limite</option>
-                        <option value="MOYENNE" {% if anomalie.gravite == "MOYENNE" %}selected{% endif %}>Moyenne — a surveiller</option>
-                        <option value="ELEVEE"  {% if anomalie.gravite == "ELEVEE"  %}selected{% endif %}>Elevee — action requise</option>
-                    </select>
-                    <button type="submit" class="btn btn-sm btn-primary text-nowrap">Appliquer</button>
-                </form>
-            </div>
+            <a href="{% url 'supervision:programme-detail' anomalie.programme.id %}" class="info-link mt-1">
+                <i class="bi bi-arrow-right-circle me-1"></i>Voir le programme
+            </a>
         </div>
-
-        {% if anomalie.localisation %}
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Localisation GPS</div>
-            <div class="card-body pb-2">
-                <p class="font-monospace small mb-2">
-                    {{ anomalie.localisation.y|floatformat:6 }},
-                    {{ anomalie.localisation.x|floatformat:6 }}
-                </p>
-                <div id="minimap" style="height:160px;border-radius:6px;"></div>
-                <a class="btn btn-sm btn-outline-secondary mt-2 w-100"
-                   href="https://www.google.com/maps?q={{ anomalie.localisation.y }},{{ anomalie.localisation.x }}"
-                   target="_blank" rel="noopener">
-                    Ouvrir dans Google Maps
-                </a>
-            </div>
-        </div>
-        {% endif %}
     </div>
 
-    {# ── Colonne droite : description + photos ── #}
-    <div class="col-md-8">
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Description</div>
-            <div class="card-body">
-                <p class="mb-0" style="white-space:pre-wrap;">{{ anomalie.description }}</p>
-            </div>
+    {% if anomalie.plv %}
+    <div class="info-card">
+        <div class="info-icon-box"><i class="bi bi-building"></i></div>
+        <div>
+            <div class="info-label">Point de livraison</div>
+            <div class="info-value">{{ anomalie.plv.libelle }}</div>
+            {% if anomalie.plv.client %}
+            <div class="info-sub">{{ anomalie.plv.client.raison_sociale }}</div>
+            {% endif %}
         </div>
+    </div>
+    {% endif %}
 
-        {% with photos=anomalie.photos.all %}
-        {% if photos %}
-        <div class="card">
-            <div class="card-header fw-semibold">Photos ({{ photos|length }})</div>
-            <div class="card-body">
-                <div class="row g-3">
-                    {% for photo in photos %}
-                    <div class="col-6 col-md-4">
-                        {% if "placeholder" in photo.fichier.name %}
-                        <div class="bg-light border rounded d-flex align-items-center justify-content-center"
-                             style="height:140px;">
-                            <span class="text-muted small text-center px-2">En attente<br>de synchronisation</span>
-                        </div>
-                        {% else %}
-                        <a href="{{ photo.fichier.url }}" target="_blank">
-                            <img src="{{ photo.fichier.url }}" alt="{{ photo.type_photo }}"
-                                 class="img-fluid rounded" style="height:140px;width:100%;object-fit:cover;">
-                        </a>
-                        {% endif %}
-                        <div class="text-muted small text-center mt-1">{{ photo.get_type_photo_display }}</div>
-                    </div>
-                    {% endfor %}
-                </div>
+    {% if anomalie.localisation %}
+    <div class="info-card">
+        <div class="info-icon-box"><i class="bi bi-geo-alt"></i></div>
+        <div>
+            <div class="info-label">Position GPS</div>
+            <div class="info-gps">
+                {{ anomalie.localisation.y|floatformat:5 }},
+                {{ anomalie.localisation.x|floatformat:5 }}
             </div>
+            <a href="https://www.google.com/maps?q={{ anomalie.localisation.y }},{{ anomalie.localisation.x }}"
+               target="_blank" class="info-link mt-1">
+                <i class="bi bi-box-arrow-up-right me-1"></i>Ouvrir dans Maps
+            </a>
         </div>
-        {% else %}
-        <div class="card">
-            <div class="card-body text-muted">Aucune photo rattachee a cette anomalie.</div>
-        </div>
-        {% endif %}
-        {% endwith %}
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- ── Description ── -->
+<div class="section-card mb-4">
+    <div class="section-header"><i class="bi bi-chat-left-text me-2"></i>Description</div>
+    <div class="section-body">
+        <p class="mb-0 anom-description">{{ anomalie.description }}</p>
     </div>
 </div>
+
+<!-- ── Classification gravité ── -->
+<div class="section-card classif-border-{{ anomalie.gravite }} mb-4">
+    <div class="section-header">
+        <i class="bi bi-sliders me-2"></i>Classification superviseur
+        <div class="ms-auto">
+            {% if anomalie.gravite == "ELEVEE" %}
+            <span class="grav-pill grav-elevee"><i class="bi bi-exclamation-triangle-fill"></i> Élevée</span>
+            {% elif anomalie.gravite == "MOYENNE" %}
+            <span class="grav-pill grav-moyenne"><i class="bi bi-dash-circle-fill"></i> Moyenne</span>
+            {% else %}
+            <span class="grav-pill grav-faible"><i class="bi bi-check-circle-fill"></i> Faible</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="section-body">
+        <p class="text-muted small mb-3">
+            La gravité est déterminée par le superviseur après évaluation. Elle peut être modifiée à tout moment.
+        </p>
+        <form method="post" action="{% url 'supervision:anomalie-gravite' anomalie.id %}"
+              class="d-flex gap-2 align-items-center">
+            {% csrf_token %}
+            <select name="gravite" class="form-select form-select-sm" style="width:auto;">
+                <option value="FAIBLE"  {% if anomalie.gravite == "FAIBLE"  %}selected{% endif %}>Faible — impact limité</option>
+                <option value="MOYENNE" {% if anomalie.gravite == "MOYENNE" %}selected{% endif %}>Moyenne — à surveiller</option>
+                <option value="ELEVEE"  {% if anomalie.gravite == "ELEVEE"  %}selected{% endif %}>Élevée — action requise</option>
+            </select>
+            <button type="submit" class="btn btn-sm btn-primary px-3">Appliquer</button>
+        </form>
+    </div>
+</div>
+
+<!-- ── Carte minimap ── -->
+{% if anomalie.localisation %}
+<div class="section-card mb-4">
+    <div class="section-header"><i class="bi bi-map me-2"></i>Localisation</div>
+    <div id="minimap" style="height:220px;border-radius:0 0 12px 12px;"></div>
+</div>
+{% endif %}
+
+<!-- ── Photos ── -->
+{% with photos=anomalie.photos.all %}
+{% if photos %}
+<div class="section-card mb-4">
+    <div class="section-header">
+        <i class="bi bi-images me-2"></i>Photos
+        <span class="section-count">{{ photos|length }}</span>
+    </div>
+    <div class="section-body photo-grid">
+        {% for photo in photos %}
+        {% if "placeholder" in photo.fichier.name %}
+        <div class="photo-pending">
+            <i class="bi bi-hourglass-split"></i>
+            <div>En attente<br>de synchronisation</div>
+        </div>
+        {% else %}
+        <a href="{{ photo.fichier.url }}" target="_blank" class="photo-thumb-wrap">
+            <img src="{{ photo.fichier.url }}" alt="{{ photo.get_type_photo_display }}" class="photo-thumb">
+            <div class="photo-label">{{ photo.get_type_photo_display }}</div>
+        </a>
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endwith %}
+
+<style>
+/* ─── Retour ─── */
+.back-link {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .82rem; font-weight: 600; color: #1a7fba;
+    text-decoration: none; margin-bottom: 1.2rem; transition: gap .15s;
+}
+.back-link:hover { gap: .55rem; color: #1568a0; }
+
+/* ─── En-tête ─── */
+.anom-detail-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 1rem;
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
+    padding: 1.4rem 1.5rem;
+    border-left: 4px solid #94a3b8;
+}
+.anom-border-ELEVEE  { border-left-color: #dc3545; }
+.anom-border-MOYENNE { border-left-color: #f47920; }
+.anom-border-FAIBLE  { border-left-color: #198754; }
+
+.anom-header-left { display: flex; align-items: flex-start; gap: 1rem; }
+
+.pg-icon {
+    width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+    background: rgba(220,53,69,.1); color: #dc3545;
+}
+.pg-icon-MOYENNE { background: rgba(244,121,32,.1); color: #f47920; }
+.pg-icon-FAIBLE  { background: rgba(25,135,84,.1);  color: #198754; }
+
+.anom-detail-type { font-size: 1.35rem; font-weight: 800; color: #1a2332; }
+
+/* ─── Gravité / statut pills ─── */
+.grav-pill {
+    font-size: .72rem; font-weight: 700; padding: .28rem .8rem; border-radius: 20px;
+    display: inline-flex; align-items: center; gap: .3rem;
+}
+.grav-elevee  { background: #fde8e8; color: #dc3545; }
+.grav-moyenne { background: rgba(244,121,32,.1); color: #c45a00; }
+.grav-faible  { background: #d1f5e0; color: #198754; }
+
+.statut-anom-pill {
+    font-size: .72rem; font-weight: 700; padding: .28rem .8rem; border-radius: 20px;
+    display: inline-flex; align-items: center; gap: .3rem;
+}
+.statut-anom-OUVERTE       { background: #fde8e8; color: #dc3545; }
+.statut-anom-EN_TRAITEMENT { background: rgba(244,121,32,.1); color: #c45a00; }
+.statut-anom-RESOLUE       { background: #d1f5e0; color: #198754; }
+
+/* ─── Boutons d'action ─── */
+.anom-action-block { display: flex; align-items: center; }
+.btn-action-lg {
+    display: inline-flex; align-items: center;
+    padding: .7rem 1.4rem; border-radius: 10px;
+    font-size: .88rem; font-weight: 700;
+    border: 1.5px solid transparent; cursor: pointer; transition: all .15s;
+}
+.btn-action-warn  { background: rgba(244,121,32,.1); color: #c45a00; border-color: rgba(244,121,32,.3); }
+.btn-action-warn:hover  { background: #f47920; color: #fff; border-color: #f47920; }
+.btn-action-green { background: rgba(25,135,84,.1); color: #198754; border-color: rgba(25,135,84,.3); }
+.btn-action-green:hover { background: #198754; color: #fff; border-color: #198754; }
+.anom-resolved-badge {
+    display: inline-flex; align-items: center;
+    padding: .7rem 1.4rem; border-radius: 10px;
+    font-size: .88rem; font-weight: 700;
+    background: #d1f5e0; color: #198754;
+    border: 1.5px solid rgba(25,135,84,.2);
+}
+
+/* ─── Info row ─── */
+.info-row { display: flex; flex-wrap: wrap; gap: .75rem; }
+.info-card {
+    display: flex; align-items: flex-start; gap: .75rem;
+    background: #fff; border-radius: 12px;
+    padding: .85rem 1rem; border: 1px solid #eef1f6;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    flex: 1; min-width: 170px;
+}
+.info-avatar {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, #1a7fba, #1568a0);
+    color: #fff; font-size: .9rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(26,127,186,.3);
+}
+.info-icon-box {
+    width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+    background: rgba(26,127,186,.1); color: #1a7fba; font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+}
+.info-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #94a3b8; }
+.info-value { font-size: .88rem; font-weight: 700; color: #1a2332; margin-top: .1rem; }
+.info-sub   { font-size: .75rem; color: #94a3b8; margin-top: .1rem; }
+.info-gps {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: .76rem; color: #1a2332; margin-top: .1rem;
+}
+.info-link {
+    display: inline-flex; align-items: center; gap: .2rem;
+    font-size: .75rem; font-weight: 600; color: #1a7fba;
+    text-decoration: none; transition: color .15s;
+}
+.info-link:hover { color: #1568a0; }
+
+/* ─── Type chips ─── */
+.type-chip {
+    font-size: .68rem; font-weight: 700; padding: .2rem .55rem; border-radius: 20px;
+    display: inline-flex; align-items: center;
+}
+.type-collecte    { background: #dbeafe; color: #1d4ed8; }
+.type-restitution { background: #dcfce7; color: #166534; }
+
+/* ─── Section cards ─── */
+.section-card {
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
+    overflow: hidden;
+}
+.section-header {
+    display: flex; align-items: center;
+    padding: .85rem 1.25rem;
+    font-size: .82rem; font-weight: 700; color: #1a2332;
+    background: #f8fafc; border-bottom: 1px solid #eef1f6;
+}
+.section-count {
+    margin-left: .5rem; background: #e8f4fc; color: #1a7fba;
+    font-size: .68rem; font-weight: 700; padding: .1rem .5rem; border-radius: 20px;
+}
+.section-body { padding: 1.1rem 1.25rem; }
+
+/* Classification border */
+.classif-border-ELEVEE  { border-left: 3px solid #dc3545; }
+.classif-border-MOYENNE { border-left: 3px solid #f47920; }
+.classif-border-FAIBLE  { border-left: 3px solid #198754; }
+
+/* Description */
+.anom-description { white-space: pre-wrap; color: #4a5568; font-size: .9rem; line-height: 1.65; }
+
+/* ─── Photos ─── */
+.photo-grid { display: flex; flex-wrap: wrap; gap: 1rem; }
+.photo-thumb-wrap {
+    display: flex; flex-direction: column; align-items: center; gap: .3rem;
+    text-decoration: none; transition: transform .15s;
+}
+.photo-thumb-wrap:hover { transform: scale(1.03); }
+.photo-thumb {
+    width: 140px; height: 140px; object-fit: cover;
+    border-radius: 10px; border: 1px solid #eef1f6;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+.photo-label { font-size: .72rem; font-weight: 600; color: #6c757d; }
+.photo-pending {
+    width: 140px; height: 140px; border-radius: 10px;
+    border: 1.5px dashed #cbd5e1; background: #f8fafc;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: .4rem;
+    color: #94a3b8; font-size: .72rem; text-align: center; padding: .75rem;
+}
+.photo-pending i { font-size: 1.6rem; }
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+    .anom-detail-header { flex-direction: column; }
+    .anom-action-block  { width: 100%; }
+    .btn-action-lg, .anom-resolved-badge { width: 100%; justify-content: center; }
+    .info-row { flex-direction: column; }
+}
+</style>
+
 {% endblock %}
 
 {% block scripts %}
@@ -167,7 +390,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap', maxZoom: 19,
 }).addTo(minimap);
 L.circleMarker([{{ anomalie.localisation.y }}, {{ anomalie.localisation.x }}], {
-    radius: 8, color: '#dc3545', fillColor: '#dc3545', fillOpacity: 0.8,
+    radius: 9, color: '#dc3545', fillColor: '#dc3545', fillOpacity: 0.85,
+    weight: 2.5,
 }).addTo(minimap);
 </script>
 {% endif %}

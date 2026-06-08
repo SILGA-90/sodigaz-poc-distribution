@@ -1,180 +1,501 @@
 {% extends "supervision/base.html" %}
 {% block title %}Tableau de bord{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
-    <div>
-        <p class="page-title"><i class="bi bi-speedometer2 me-2 text-primary"></i>Tableau de bord</p>
-        <p class="page-sub">
-            {% if not is_today %}
-            <span class="badge bg-warning text-dark">{{ date_filter|date:"j F Y" }}</span>
-            {% else %}
-            {{ today|date:"l j F Y" }}
-            {% endif %}
-        </p>
+
+<!-- ── En-tête ── -->
+<div class="dash-header mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <span class="pg-icon"><i class="bi bi-speedometer2"></i></span>
+        <div>
+            <h1 class="page-title mb-0">Tableau de bord</h1>
+            <p class="page-sub mb-0">
+                {% if not is_today %}
+                <span class="hist-badge"><i class="bi bi-clock-history me-1"></i>{{ date_filter|date:"l j F Y"|capfirst }}</span>
+                {% else %}
+                <span>{{ today|date:"l j F Y"|capfirst }}</span>
+                {% endif %}
+            </p>
+        </div>
     </div>
     <div class="d-flex align-items-center gap-3 flex-wrap">
         <form method="get" class="d-flex align-items-center gap-2">
-            <label class="text-muted small mb-0 text-nowrap"><i class="bi bi-calendar3"></i></label>
+            <i class="bi bi-calendar3 text-muted"></i>
             <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}"
-                   class="form-control form-control-sm" style="width:auto;"
+                   class="form-control form-control-sm dash-date-input"
                    onchange="this.form.submit()">
             {% if not is_today %}
-            <a href="?" class="btn btn-sm btn-outline-secondary"><i class="bi bi-house"></i> Aujourd'hui</a>
+            <a href="?" class="btn-today"><i class="bi bi-house me-1"></i>Aujourd'hui</a>
             {% endif %}
         </form>
-        <div class="text-end">
-            <span class="badge rounded-pill bg-success" id="status-indicator">
-                <i class="bi bi-circle-fill" style="font-size:.5rem;vertical-align:middle;"></i> En ligne
-            </span>
-            <div class="small text-muted mt-1">Mis a jour <span id="last-update">a l'instant</span></div>
+        <div class="live-indicator">
+            <span class="live-dot" id="live-dot"></span>
+            <span id="live-status">Connexion…</span>
+            <span class="live-sep">·</span>
+            <span id="last-update">à l'instant</span>
         </div>
     </div>
 </div>
 
-{# ── Bandeau anomalies critiques (gravite ELEVEE non resolues) ── #}
+<!-- ── Alerte anomalies élevées ── -->
 {% if anomalies_elevees %}
-<div class="alert alert-danger border-danger mb-4 py-2" id="alerte-elevee">
-    <div class="d-flex align-items-center gap-2 mb-2">
-        <strong>&#9888; {{ anomalies_elevees|length }} anomalie{{ anomalies_elevees|length|pluralize }} de gravité élevée en cours</strong>
-        <a href="{% url 'supervision:anomalies' %}?statut=TOUS&gravite=ELEVEE" class="btn btn-sm btn-danger ms-auto">Voir toutes &raquo;</a>
+<div class="alerte-card mb-4" id="alerte-elevee">
+    <div class="alerte-header">
+        <span class="alerte-icon"><i class="bi bi-exclamation-triangle-fill"></i></span>
+        <strong>{{ anomalies_elevees|length }} anomalie{{ anomalies_elevees|length|pluralize }} de gravité élevée</strong>
+        <span class="alerte-sub">non résolue{{ anomalies_elevees|length|pluralize }}</span>
+        <a href="{% url 'supervision:anomalies' %}?statut=TOUS&gravite=ELEVEE"
+           class="alerte-btn ms-auto">Voir toutes <i class="bi bi-arrow-right"></i></a>
     </div>
-    <ul class="mb-0 ps-3">
+    <ul class="alerte-list">
         {% for a in anomalies_elevees %}
-        <li>
-            <a href="{% url 'supervision:anomalie-detail' a.id %}" class="text-danger fw-semibold">{{ a.type_anomalie }}</a>
-            — {{ a.programme.utilisateur.code_livreur }}
-            {% if a.plv %} · {{ a.plv.libelle }}{% endif %}
-            <span class="badge badge-statut-{{ a.statut }} ms-1">{{ a.get_statut_display }}</span>
-            <span class="text-muted small ms-1">{{ a.date_heure|date:"H:i" }}</span>
+        <li class="alerte-item">
+            <span class="alerte-bullet"></span>
+            <a href="{% url 'supervision:anomalie-detail' a.id %}" class="alerte-link">{{ a.type_anomalie }}</a>
+            <span class="alerte-meta">{{ a.programme.utilisateur.code_livreur }}{% if a.plv %} · {{ a.plv.libelle }}{% endif %}</span>
+            <span class="alerte-statut alerte-statut-{{ a.statut }}">
+                {% if a.statut == "OUVERTE" %}Ouverte
+                {% elif a.statut == "EN_TRAITEMENT" %}En traitement
+                {% else %}Résolue{% endif %}
+            </span>
+            <span class="alerte-heure">{{ a.date_heure|date:"H:i" }}</span>
         </li>
         {% endfor %}
     </ul>
 </div>
 {% endif %}
 
-<div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3">
-        <div class="kpi-card">
-            <div>
-                <div class="kpi-label">Programmes du jour</div>
-                <div class="kpi-value" data-stat="nb_programmes">{{ nb_programmes }}</div>
-                <div class="kpi-sub">
-                    <span data-stat="nb_programmes_en_cours">{{ nb_programmes_en_cours }}</span> en cours &middot;
-                    <span data-stat="nb_programmes_clotures">{{ nb_programmes_clotures }}</span> clotures
-                </div>
+<!-- ── KPI cards ── -->
+<div class="kpi-grid mb-4">
+
+    <div class="kpi-card-v2" id="kpi-programmes">
+        <div class="kpi-card-icon kpi-icon-blue"><i class="bi bi-clipboard-list"></i></div>
+        <div class="kpi-card-body">
+            <div class="kpi-card-label">Programmes du jour</div>
+            <div class="kpi-card-value" data-stat="nb_programmes">{{ nb_programmes }}</div>
+            <div class="kpi-card-sub">
+                <span class="kpi-sub-blue">
+                    <span data-stat="nb_programmes_en_cours">{{ nb_programmes_en_cours }}</span> en cours
+                </span>
+                <span class="kpi-sub-sep">·</span>
+                <span class="kpi-sub-green">
+                    <span data-stat="nb_programmes_clotures">{{ nb_programmes_clotures }}</span> clôturés
+                </span>
             </div>
-            <div class="kpi-icon text-primary"><i class="bi bi-clipboard-list"></i></div>
+        </div>
+        <a href="{% url 'supervision:programmes' %}" class="kpi-card-link"></a>
+    </div>
+
+    <div class="kpi-card-v2">
+        <div class="kpi-card-icon kpi-icon-navy"><i class="bi bi-lightning-charge"></i></div>
+        <div class="kpi-card-body">
+            <div class="kpi-card-label">Opérations réalisées</div>
+            <div class="kpi-card-value" data-stat="nb_operations">{{ nb_operations }}</div>
+            <div class="kpi-card-sub">livraisons du jour</div>
+        </div>
+        <a href="{% url 'supervision:operations' %}" class="kpi-card-link"></a>
+    </div>
+
+    <div class="kpi-card-v2">
+        <div class="kpi-card-icon kpi-icon-orange"><i class="bi bi-cash-coin"></i></div>
+        <div class="kpi-card-body">
+            <div class="kpi-card-label">Montant encaissé</div>
+            <div class="kpi-card-value kpi-value-orange" data-stat="montant_encaisse">{{ montant_encaisse|floatformat:0 }}</div>
+            <div class="kpi-card-sub">FCFA</div>
         </div>
     </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="kpi-card kpi-success">
-            <div>
-                <div class="kpi-label">Operations realisees</div>
-                <div class="kpi-value" data-stat="nb_operations">{{ nb_operations }}</div>
-                <div class="kpi-sub">livraisons du jour</div>
+
+    <div class="kpi-card-v2 {% if nb_anomalies_ouvertes > 0 %}kpi-card-danger{% endif %}" id="kpi-anomalies">
+        <div class="kpi-card-icon kpi-icon-red"><i class="bi bi-exclamation-circle"></i></div>
+        <div class="kpi-card-body">
+            <div class="kpi-card-label">Anomalies ouvertes</div>
+            <div class="kpi-card-value kpi-value-red" data-stat="nb_anomalies_ouvertes">{{ nb_anomalies_ouvertes }}</div>
+            <div class="kpi-card-sub">
+                {% if nb_anomalies_ouvertes == 0 %}
+                <span class="kpi-sub-green"><i class="bi bi-check-circle-fill me-1"></i>Aucune</span>
+                {% else %}
+                <span class="kpi-link-anomalie">Voir les anomalies &rsaquo;</span>
+                {% endif %}
             </div>
-            <div class="kpi-icon text-success"><i class="bi bi-lightning-charge"></i></div>
         </div>
+        {% if nb_anomalies_ouvertes > 0 %}
+        <a href="{% url 'supervision:anomalies' %}" class="kpi-card-link" id="anomalies-link"></a>
+        {% endif %}
     </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="kpi-card kpi-warning">
-            <div>
-                <div class="kpi-label">Montant encaisse</div>
-                <div class="kpi-value" data-stat="montant_encaisse">{{ montant_encaisse|floatformat:0 }}</div>
-                <div class="kpi-sub">FCFA</div>
-            </div>
-            <div class="kpi-icon" style="color:var(--brand-orange);"><i class="bi bi-cash-coin"></i></div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="kpi-card kpi-danger">
-            <div>
-                <div class="kpi-label">Anomalies ouvertes</div>
-                <div class="kpi-value" data-stat="nb_anomalies_ouvertes">{{ nb_anomalies_ouvertes }}</div>
-                <div class="kpi-sub">
-                    <a href="{% url 'supervision:anomalies' %}" id="anomalies-link"
-                       style="{% if nb_anomalies_ouvertes == 0 %}display:none{% endif %}">Voir &raquo;</a>
-                    {% if nb_anomalies_ouvertes == 0 %}<span>aucune</span>{% endif %}
-                </div>
-            </div>
-            <div class="kpi-icon text-danger"><i class="bi bi-exclamation-circle"></i></div>
-        </div>
-    </div>
+
 </div>
 
-<div class="row g-3 mb-3">
-    <div class="col-lg-8">
-        <div class="card h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h5 class="card-title mb-0">Cartographie des PLV et operations</h5>
-                    <button id="toggleParcours" class="btn btn-sm btn-outline-secondary">
-                        Parcours &#8250;&#8250; Afficher
+<!-- ── Corps principal : carte + bilan produits ── -->
+<div class="dash-main-row">
+
+    <!-- Carte Leaflet -->
+    <div class="dash-map-col">
+        <div class="section-card">
+            <div class="section-header d-flex align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="section-icon"><i class="bi bi-map"></i></span>
+                    <span class="section-title">Cartographie PLV</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span id="parcours-msg" class="parcours-msg" style="display:none;"></span>
+                    <button id="toggleParcours" class="btn-parcours">
+                        <i class="bi bi-signpost-split me-1"></i>Afficher parcours
                     </button>
-                    <span id="parcours-msg" class="small text-muted ms-2" style="display:none;"></span>
                 </div>
-                <div id="map"></div>
+            </div>
+            <div id="map"></div>
+            <div class="map-legend">
+                <div class="map-legend-item"><span class="map-dot map-dot-blue"></span>PLV à visiter</div>
+                <div class="map-legend-item"><span class="map-dot map-dot-green"></span>PLV visitée</div>
+                <div class="map-legend-item"><span class="map-dot map-dot-orange"></span>Opération géolocalisée</div>
             </div>
         </div>
     </div>
-    <div class="col-lg-4">
-        <div class="card h-100">
-            <div class="card-body d-flex flex-column p-0">
-                <div class="px-3 pt-3 pb-2 border-bottom">
-                    <h5 class="card-title mb-0">Bilan produits du jour</h5>
+
+    <!-- Bilan produits du jour -->
+    <div class="dash-bilan-col">
+        <div class="section-card d-flex flex-column" style="height:100%;">
+            <div class="section-header">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="section-icon"><i class="bi bi-bar-chart-line"></i></span>
+                    <span class="section-title">Bilan produits</span>
                 </div>
-                <div style="flex:1;overflow-y:auto;">
-                    <!-- Section Collecte -->
-                    <div class="px-3 pt-2 pb-1">
-                        <span class="badge bg-warning text-dark mb-1">Collecte</span>
-                    </div>
-                    <table class="table table-sm table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Produit</th>
-                                <th class="text-end">Collecte</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bilanCollecteTbody">
-                            <tr><td colspan="2" class="text-center text-muted py-2">Chargement...</td></tr>
-                        </tbody>
-                    </table>
-                    <!-- Section Restitution -->
-                    <div class="px-3 pt-2 pb-1 border-top mt-1">
-                        <span class="badge mb-1" style="background:#198754;">Restitution</span>
-                        <small class="text-muted ms-1">Prév. / Réal. / Écart</small>
-                    </div>
-                    <table class="table table-sm table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Produit</th>
-                                <th class="text-end">Prev.</th>
-                                <th class="text-end">Real.</th>
-                                <th class="text-end">Ecart</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bilanRestitutionTbody">
-                            <tr><td colspan="4" class="text-center text-muted py-2">Chargement...</td></tr>
-                        </tbody>
-                    </table>
+            </div>
+            <div style="flex:1; overflow-y:auto;">
+
+                <div class="bilan-section-head bilan-collecte">
+                    <i class="bi bi-arrow-down-circle-fill me-1"></i>Collecte
                 </div>
+                <table class="bilan-table">
+                    <thead>
+                        <tr><th>Produit</th><th class="text-end">Réalisé</th></tr>
+                    </thead>
+                    <tbody id="bilanCollecteTbody">
+                        <tr><td colspan="2" class="bilan-loading">Chargement…</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="bilan-section-head bilan-restit">
+                    <i class="bi bi-arrow-up-circle-fill me-1"></i>Restitution
+                    <span class="bilan-section-sub">Prév. / Réal. / Écart</span>
+                </div>
+                <table class="bilan-table">
+                    <thead>
+                        <tr>
+                            <th>Produit</th>
+                            <th class="text-end">Prév.</th>
+                            <th class="text-end">Réal.</th>
+                            <th class="text-end">Écart</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bilanRestitutionTbody">
+                        <tr><td colspan="4" class="bilan-loading">Chargement…</td></tr>
+                    </tbody>
+                </table>
+
             </div>
         </div>
     </div>
+
 </div>
 
 <style>
-    .status-dot { font-size: 0.8em; }
-    @keyframes pulse-update {
-        0% { background-color: #ffeaa7; }
-        100% { background-color: transparent; }
-    }
-    .stat-updated { animation: pulse-update 1.2s ease-out; }
-    @keyframes pulse-danger {
-        0%, 100% { border-left-color: #dc3545; }
-        50% { border-left-color: #ff8fa3; }
-    }
+/* ─── Page icon ─── */
+.pg-icon {
+    width: 42px; height: 42px; border-radius: 11px; flex-shrink: 0;
+    background: rgba(26,127,186,.12); color: #1a7fba;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+}
+
+/* ─── En-tête dashboard ─── */
+.dash-header {
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+}
+.page-title { font-size: 1.35rem; font-weight: 800; color: #0a1628; margin: 0; }
+.page-sub   { font-size: .88rem; color: #6c757d; margin: 0; }
+
+.hist-badge {
+    display: inline-flex; align-items: center; gap: .3rem;
+    background: rgba(244,121,32,.1); color: #c45a00;
+    border: 1px solid rgba(244,121,32,.28);
+    padding: .22rem .72rem; border-radius: 20px;
+    font-size: .8rem; font-weight: 600;
+}
+
+.dash-date-input {
+    border-radius: 8px; border-color: #d1d9e0;
+    font-size: .82rem; color: #0a1628; cursor: pointer;
+}
+.btn-today {
+    display: inline-flex; align-items: center; gap: .25rem;
+    padding: .36rem .85rem; border-radius: 8px;
+    border: 1.5px solid #d1d9e0; background: #fff;
+    font-size: .82rem; font-weight: 600; color: #0a1628;
+    text-decoration: none; white-space: nowrap; transition: all .15s;
+}
+.btn-today:hover { border-color: #1a7fba; color: #1a7fba; background: rgba(26,127,186,.04); }
+
+/* ─── Indicateur temps réel ─── */
+.live-indicator {
+    display: flex; align-items: center; gap: .45rem;
+    background: #fff; border: 1px solid #e8edf3;
+    border-radius: 20px; padding: .32rem .9rem;
+    font-size: .78rem; color: #6c757d;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.live-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    background: #198754; box-shadow: 0 0 0 2px rgba(25,135,84,.2);
+    animation: pulse-live 2s infinite;
+}
+.live-dot.offline { background: #f47920; box-shadow: 0 0 0 2px rgba(244,121,32,.2); animation: none; }
+.live-dot.paused  { background: #94a3b8; box-shadow: none; animation: none; }
+@keyframes pulse-live {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: .4; }
+}
+.live-sep { color: #d1d9e0; }
+#live-status { font-weight: 600; color: #0a1628; font-size: .8rem; }
+
+/* ─── Alerte anomalies élevées ─── */
+.alerte-card {
+    background: #fff5f5;
+    border: 1.5px solid #fca5a5;
+    border-left: 4px solid #dc3545;
+    border-radius: 12px; overflow: hidden;
+    animation: pulse-danger 2.5s ease-in-out infinite;
+}
+@keyframes pulse-danger {
+    0%, 100% { border-left-color: #dc3545; }
+    50%       { border-left-color: #fca5a5; }
+}
+.alerte-header {
+    display: flex; align-items: center; gap: .65rem; flex-wrap: wrap;
+    padding: .75rem 1.25rem;
+    background: rgba(220,53,69,.05);
+    border-bottom: 1px solid #fca5a5;
+}
+.alerte-icon { font-size: 1.1rem; color: #dc3545; flex-shrink: 0; }
+.alerte-header strong { color: #991b1b; font-size: .92rem; }
+.alerte-sub { color: #ef4444; font-size: .82rem; }
+.alerte-btn {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .3rem .9rem; border-radius: 7px;
+    background: #dc3545; color: #fff;
+    font-size: .78rem; font-weight: 700;
+    text-decoration: none; transition: background .15s;
+}
+.alerte-btn:hover { background: #b91c1c; color: #fff; }
+.alerte-list {
+    list-style: none; margin: 0; padding: .55rem 1.25rem .65rem;
+    display: flex; flex-direction: column; gap: .35rem;
+}
+.alerte-item {
+    display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+    font-size: .83rem;
+}
+.alerte-bullet {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #dc3545; flex-shrink: 0;
+}
+.alerte-link { color: #991b1b; font-weight: 700; text-decoration: none; }
+.alerte-link:hover { text-decoration: underline; }
+.alerte-meta  { color: #6c757d; }
+.alerte-heure { color: #94a3b8; font-size: .78rem; margin-left: auto; }
+.alerte-statut {
+    font-size: .7rem; font-weight: 700; padding: .12rem .5rem; border-radius: 20px;
+}
+.alerte-statut-OUVERTE       { background: #fde8e8; color: #dc3545; }
+.alerte-statut-EN_TRAITEMENT { background: rgba(244,121,32,.1); color: #c45a00; }
+.alerte-statut-RESOLUE       { background: #d1f5e0; color: #198754; }
+
+/* ─── KPI Grid ─── */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+.kpi-card-v2 {
+    position: relative;
+    background: #fff; border-radius: 14px;
+    border: 1px solid #e8edf3;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
+    display: flex; align-items: flex-start; gap: 1rem;
+    padding: 1.15rem 1.2rem; overflow: hidden;
+    transition: box-shadow .18s, transform .18s;
+}
+.kpi-card-v2:hover { box-shadow: 0 4px 18px rgba(10,22,40,.11); transform: translateY(-1px); }
+.kpi-card-v2::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: #e8edf3; transition: background .2s;
+}
+.kpi-card-danger { border-color: rgba(220,53,69,.3); }
+.kpi-card-danger::before { background: #dc3545; }
+
+.kpi-card-icon {
+    width: 44px; height: 44px; border-radius: 11px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+}
+.kpi-icon-blue   { background: rgba(26,127,186,.1);  color: #1a7fba; }
+.kpi-icon-navy   { background: rgba(10,22,40,.08);   color: #0a1628; }
+.kpi-icon-orange { background: rgba(244,121,32,.1);  color: #f47920; }
+.kpi-icon-red    { background: rgba(220,53,69,.1);   color: #dc3545; }
+
+.kpi-card-body  { flex: 1; min-width: 0; }
+.kpi-card-label {
+    font-size: .7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: #94a3b8; margin-bottom: .35rem;
+}
+.kpi-card-value {
+    font-size: 1.85rem; font-weight: 800; line-height: 1;
+    color: #0a1628; letter-spacing: -.02em;
+}
+.kpi-value-orange { color: #f47920; }
+.kpi-value-red    { color: #dc3545; }
+.kpi-card-sub { font-size: .78rem; color: #94a3b8; margin-top: .4rem; }
+.kpi-sub-blue     { color: #1a7fba; font-weight: 600; }
+.kpi-sub-green    { color: #198754; font-weight: 600; }
+.kpi-sub-sep      { color: #d1d9e0; margin: 0 .25rem; }
+.kpi-link-anomalie { color: #dc3545; font-weight: 700; font-size: .8rem; }
+.kpi-card-link {
+    position: absolute; inset: 0; z-index: 1; cursor: pointer;
+}
+
+@keyframes pulse-update {
+    0%   { background: rgba(26,127,186,.18); }
+    100% { background: transparent; }
+}
+.stat-updated { animation: pulse-update 1s ease-out; border-radius: 4px; }
+
+/* ─── Layout principal ─── */
+.dash-main-row {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1rem;
+}
+
+/* ─── Section card ─── */
+.section-card {
+    background: #fff; border-radius: 14px;
+    border: 1px solid #e8edf3;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
+    overflow: hidden;
+}
+.section-header {
+    padding: .85rem 1.25rem;
+    background: #f8fafc; border-bottom: 1px solid #eef1f6;
+}
+.section-icon {
+    width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+    background: rgba(26,127,186,.1); color: #1a7fba;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .95rem;
+}
+.section-title { font-size: .92rem; font-weight: 700; color: #0a1628; }
+
+/* ─── Carte ─── */
+#map { height: 400px; }
+
+.btn-parcours {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .34rem .85rem; border-radius: 8px;
+    border: 1.5px solid #d1d9e0; background: #fff;
+    font-size: .8rem; font-weight: 600; color: #0a1628;
+    cursor: pointer; transition: all .15s;
+}
+.btn-parcours:hover  { border-color: #1a7fba; color: #1a7fba; }
+.btn-parcours.active { background: rgba(26,127,186,.08); border-color: #1a7fba; color: #1a7fba; }
+
+.parcours-msg {
+    font-size: .78rem; color: #f47920; font-weight: 600; max-width: 220px;
+}
+
+.map-legend {
+    display: flex; gap: 1.2rem; flex-wrap: wrap;
+    padding: .55rem 1.1rem;
+    border-top: 1px solid #eef1f6;
+    background: #f8fafc;
+}
+.map-legend-item {
+    display: flex; align-items: center; gap: .4rem;
+    font-size: .75rem; color: #6c757d;
+}
+.map-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.15);
+}
+.map-dot-blue   { background: #1a7fba; }
+.map-dot-green  { background: #198754; }
+.map-dot-orange { background: #f47920; }
+
+/* ─── Bilan produits ─── */
+.bilan-section-head {
+    display: flex; align-items: center; gap: .4rem;
+    padding: .55rem 1rem .4rem;
+    font-size: .78rem; font-weight: 700;
+    border-bottom: 1px solid #f0f2f5;
+    background: #fafbfc;
+}
+.bilan-collecte { color: #1a7fba; border-top: 1px solid #f0f2f5; }
+.bilan-restit   { color: #198754; border-top: 1px solid #f0f2f5; }
+.bilan-section-sub {
+    font-size: .7rem; font-weight: 400; color: #94a3b8; margin-left: .4rem;
+}
+.bilan-table {
+    width: 100%; border-collapse: collapse; font-size: .8rem;
+}
+.bilan-table thead th {
+    padding: .28rem 1rem;
+    font-size: .68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: #94a3b8;
+    border-bottom: 1px solid #f0f2f5; background: #f8fafc;
+    text-align: right;
+}
+.bilan-table thead th:first-child { text-align: left; }
+.bilan-table tbody tr:hover { background: #f8fafc; }
+.bilan-table tbody td {
+    padding: .42rem 1rem; color: #1a2332;
+    border-bottom: 1px solid #f8fafc; text-align: right;
+}
+.bilan-table tbody td:first-child { text-align: left; }
+.bilan-table tfoot td {
+    padding: .42rem 1rem;
+    font-weight: 700; font-size: .82rem;
+    border-top: 1.5px solid #e8edf3;
+    background: #f8fafc; text-align: right;
+}
+.bilan-table tfoot td:first-child { text-align: left; }
+.bilan-code-x3 {
+    display: inline-block;
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: .68rem; font-weight: 600; color: #6c757d;
+    background: #f1f5f9; padding: .08rem .35rem; border-radius: 4px;
+    margin-right: .3rem;
+}
+.bilan-loading { text-align: center; color: #94a3b8; padding: 1.5rem 1rem; }
+.bilan-ecart-pos { color: #198754; font-weight: 700; }
+.bilan-ecart-neg { color: #dc3545; font-weight: 700; }
+.bilan-ecart-nul { color: #94a3b8; }
+.bilan-montant-sm { font-size: .72rem; color: #94a3b8; margin-left: .3rem; }
+.bilan-total-collecte td { background: rgba(26,127,186,.05) !important; color: #1a7fba !important; }
+.bilan-total-restit   td { background: rgba(25,135,84,.05)  !important; color: #198754 !important; }
+
+/* ─── Responsive ─── */
+@media (max-width: 1200px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+    .dash-main-row { grid-template-columns: 1fr; }
+    #map { height: 300px; }
+}
+@media (max-width: 600px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+    .dash-header { flex-direction: column; align-items: flex-start; }
+}
 </style>
+
 {% endblock %}
 
 {% block scripts %}
@@ -182,14 +503,18 @@
 // =============================================================================
 // Configuration
 // =============================================================================
-const REFRESH_INTERVAL_MS = 15000;  // 15 secondes
+const REFRESH_INTERVAL_MS = 15000;
 const DATE_FILTER = "{{ date_filter|date:'Y-m-d' }}";
-const CARTE_URL  = `{% url 'supervision:carte-data' %}?date=${DATE_FILTER}`;
-const STATS_URL  = `{% url 'supervision:stats-data' %}?date=${DATE_FILTER}`;
-const BILAN_URL  = `{% url 'supervision:bilan-produits-data' %}?date=${DATE_FILTER}`;
+const CARTE_URL = `{% url 'supervision:carte-data' %}?date=${DATE_FILTER}`;
+const STATS_URL = `{% url 'supervision:stats-data' %}?date=${DATE_FILTER}`;
+const BILAN_URL = `{% url 'supervision:bilan-produits-data' %}?date=${DATE_FILTER}`;
+
+// Références UI
+const liveDot    = document.getElementById('live-dot');
+const liveStatus = document.getElementById('live-status');
 
 // =============================================================================
-// Bilan produits du jour (collecte + restitution)
+// Bilan produits du jour
 // =============================================================================
 function refreshBilanProduits() {
     return fetch(BILAN_URL, { credentials: 'same-origin' })
@@ -197,43 +522,43 @@ function refreshBilanProduits() {
         .then(d => {
             const tbodyC = document.getElementById('bilanCollecteTbody');
             const tbodyR = document.getElementById('bilanRestitutionTbody');
-            const vide2 = '<tr><td colspan="2" class="text-center text-muted py-2">Aucune donnee</td></tr>';
-            const vide4 = '<tr><td colspan="4" class="text-center text-muted py-2">Aucune donnee</td></tr>';
+            const vide2 = '<tr><td colspan="2" class="bilan-loading">Aucune donnée</td></tr>';
+            const vide4 = '<tr><td colspan="4" class="bilan-loading">Aucune donnée</td></tr>';
 
-            // Section collecte
             if (!d.collecte || d.collecte.length === 0) {
                 tbodyC.innerHTML = vide2;
             } else {
                 const totalC = d.collecte.reduce((s, p) => s + p.realise, 0);
                 tbodyC.innerHTML = d.collecte.map(p =>
                     `<tr>
-                        <td><span class="badge bg-light text-secondary border font-monospace me-1" style="font-size:0.7em">${p.code_x3}</span>${p.libelle}</td>
-                        <td class="text-end fw-semibold">${p.realise}</td>
+                        <td><span class="bilan-code-x3">${escapeHtml(p.code_x3)}</span>${escapeHtml(p.libelle)}</td>
+                        <td class="fw-semibold">${p.realise}</td>
                     </tr>`
-                ).join('') + `<tr class="table-warning fw-bold">
-                    <td>Total collecte</td>
-                    <td class="text-end">${totalC}</td>
+                ).join('') +
+                `<tr class="bilan-total-collecte">
+                    <td>Total collecté</td>
+                    <td>${totalC}</td>
                 </tr>`;
             }
 
-            // Section restitution
             if (!d.restitution || d.restitution.length === 0) {
                 tbodyR.innerHTML = vide4;
             } else {
                 const totalR = d.restitution.reduce((s, p) => s + p.realise, 0);
                 tbodyR.innerHTML = d.restitution.map(p => {
-                    const ecartSign = p.ecart >= 0 ? '+' : '';
-                    const ecartClass = p.ecart < 0 ? 'text-danger fw-semibold' : p.ecart > 0 ? 'text-success fw-semibold' : 'text-muted';
-                    const montantFmt = p.montant > 0 ? ` <small class="text-muted">${p.montant.toLocaleString('fr-FR')} F</small>` : '';
+                    const sign  = p.ecart >= 0 ? '+' : '';
+                    const cls   = p.ecart < 0 ? 'bilan-ecart-neg' : p.ecart > 0 ? 'bilan-ecart-pos' : 'bilan-ecart-nul';
+                    const mont  = p.montant > 0 ? `<span class="bilan-montant-sm">${p.montant.toLocaleString('fr-FR')} F</span>` : '';
                     return `<tr>
-                        <td><span class="badge bg-light text-secondary border font-monospace me-1" style="font-size:0.7em">${p.code_x3}</span>${p.libelle}${montantFmt}</td>
-                        <td class="text-end text-muted">${p.prevu}</td>
-                        <td class="text-end fw-semibold">${p.realise}</td>
-                        <td class="text-end ${ecartClass}">${ecartSign}${p.ecart}</td>
+                        <td><span class="bilan-code-x3">${escapeHtml(p.code_x3)}</span>${escapeHtml(p.libelle)}${mont}</td>
+                        <td class="text-muted">${p.prevu}</td>
+                        <td class="fw-semibold">${p.realise}</td>
+                        <td class="${cls}">${sign}${p.ecart}</td>
                     </tr>`;
-                }).join('') + `<tr class="table-primary fw-bold">
-                    <td colspan="2">Total restitue</td>
-                    <td class="text-end">${totalR}</td>
+                }).join('') +
+                `<tr class="bilan-total-restit">
+                    <td colspan="2">Total restitué</td>
+                    <td>${totalR}</td>
                     <td></td>
                 </tr>`;
             }
@@ -250,70 +575,64 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 const blueIcon = L.divIcon({
-    className: 'plv-icon',
-    html: '<div style="background:#1a7fba;width:14px;height:14px;border-radius:50%;border:2px solid white;"></div>',
-    iconSize: [18, 18],
+    className: '',
+    html: '<div style="background:#1a7fba;width:14px;height:14px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);"></div>',
+    iconSize: [18, 18], iconAnchor: [9, 9],
 });
 const greenIcon = L.divIcon({
-    className: 'plv-icon',
-    html: '<div style="background:#198754;width:14px;height:14px;border-radius:50%;border:2px solid white;"></div>',
-    iconSize: [18, 18],
+    className: '',
+    html: '<div style="background:#198754;width:14px;height:14px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);"></div>',
+    iconSize: [18, 18], iconAnchor: [9, 9],
 });
 const opIcon = L.divIcon({
-    className: 'op-icon',
-    html: '<div style="background:#fd7e14;width:10px;height:10px;border-radius:50%;border:2px solid white;"></div>',
-    iconSize: [14, 14],
+    className: '',
+    html: '<div style="background:#f47920;width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25);"></div>',
+    iconSize: [14, 14], iconAnchor: [7, 7],
 });
 
-// Cache des marqueurs deja affiches, indexe par cle stable
 const plvMarkers = new Map();
 const opMarkers  = new Map();
-
-// Polylines des parcours réels (une par livreur)
 let routePolylines = [];
-let showParcours = false;
+let showParcours   = false;
 const LIVREUR_COLORS = ['#1a7fba', '#dc3545', '#198754', '#f47920', '#6f42c1'];
 
-document.getElementById('toggleParcours').addEventListener('click', function () {
+const toggleBtn = document.getElementById('toggleParcours');
+toggleBtn.addEventListener('click', function () {
     showParcours = !showParcours;
     const parcoursMsg = document.getElementById('parcours-msg');
 
     if (showParcours && routePolylines.length === 0) {
-        // Pas encore d'opérations géolocalisées pour aujourd'hui.
-        // On revient en arrière pour que le bouton reste cliquable.
         showParcours = false;
-        parcoursMsg.textContent = 'Aucun parcours disponible — le mobile doit d\'abord synchroniser des opérations.';
+        parcoursMsg.textContent = "Aucun parcours — synchronisez d'abord des opérations.";
         parcoursMsg.style.display = '';
         setTimeout(() => { parcoursMsg.style.display = 'none'; }, 5000);
         return;
     }
 
     parcoursMsg.style.display = 'none';
-    this.textContent = showParcours ? 'Parcours ›› Masquer' : 'Parcours ›› Afficher';
+    this.innerHTML = showParcours
+        ? '<i class="bi bi-signpost-split me-1"></i>Masquer parcours'
+        : '<i class="bi bi-signpost-split me-1"></i>Afficher parcours';
+    this.classList.toggle('active', showParcours);
     routePolylines.forEach(p => showParcours ? p.addTo(map) : map.removeLayer(p));
 });
 
 function redessinerParcours(operations) {
-    // Supprimer les anciennes polylines
     routePolylines.forEach(p => map.removeLayer(p));
     routePolylines = [];
-
-    // Grouper par livreur, trier par timestamp
     const byLivreur = {};
     operations.forEach(op => {
         if (!byLivreur[op.livreur]) byLivreur[op.livreur] = [];
         byLivreur[op.livreur].push(op);
     });
-
     let colorIdx = 0;
     for (const [livreur, ops] of Object.entries(byLivreur)) {
         ops.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
         if (ops.length < 2) { colorIdx++; continue; }
         const color = LIVREUR_COLORS[colorIdx % LIVREUR_COLORS.length];
         const latlngs = ops.map(op => [op.latitude, op.longitude]);
-        const poly = L.polyline(latlngs, {
-            color, weight: 3, opacity: 0.75, dashArray: '6 8',
-        }).bindTooltip(`Parcours ${livreur}`, { permanent: false, sticky: true });
+        const poly = L.polyline(latlngs, { color, weight: 3, opacity: .75, dashArray: '6 8' })
+            .bindTooltip(`Parcours ${livreur}`, { permanent: false, sticky: true });
         if (showParcours) poly.addTo(map);
         routePolylines.push(poly);
         colorIdx++;
@@ -324,58 +643,37 @@ function refreshCarte() {
     return fetch(CARTE_URL, { credentials: 'same-origin' })
         .then(r => r.json())
         .then(data => {
-            // ----- PLV -----
             const seenPlvIds = new Set();
             data.plvs.forEach(plv => {
                 const key = String(plv.id);
                 seenPlvIds.add(key);
-                const icon = plv.visite ? greenIcon : blueIcon;
-                const popup = '<strong>' + escapeHtml(plv.libelle) + '</strong><br>' +
-                              escapeHtml(plv.client) +
-                              (plv.visite ? '<br><em style="color:#198754">Visite aujourd\'hui</em>' : '');
+                const icon  = plv.visite ? greenIcon : blueIcon;
+                const popup = `<strong>${escapeHtml(plv.libelle)}</strong><br>${escapeHtml(plv.client)}` +
+                    (plv.visite ? '<br><em style="color:#198754">Visitée aujourd\'hui</em>' : '');
                 if (plvMarkers.has(key)) {
-                    const marker = plvMarkers.get(key);
-                    marker.setIcon(icon);
-                    marker.setPopupContent(popup);
+                    plvMarkers.get(key).setIcon(icon).setPopupContent(popup);
                 } else {
-                    const m = L.marker([plv.latitude, plv.longitude], { icon })
-                        .bindPopup(popup)
-                        .addTo(map);
-                    plvMarkers.set(key, m);
+                    plvMarkers.set(key, L.marker([plv.latitude, plv.longitude], { icon }).bindPopup(popup).addTo(map));
                 }
             });
-            // Retirer ceux qui ont disparu
-            for (const [key, marker] of plvMarkers.entries()) {
-                if (!seenPlvIds.has(key)) {
-                    map.removeLayer(marker);
-                    plvMarkers.delete(key);
-                }
+            for (const [key, m] of plvMarkers) {
+                if (!seenPlvIds.has(key)) { map.removeLayer(m); plvMarkers.delete(key); }
             }
 
-            // ----- OPERATIONS -----
             const seenOpUuids = new Set();
             data.operations.forEach(op => {
                 const key = op.uuid;
                 seenOpUuids.add(key);
-                const typeColor = op.type === 'COLLECTE' ? '#fd7e14' : '#198754';
-                const popup =
-                    '<strong style="color:' + typeColor + '">' + escapeHtml(op.type) + '</strong><br>' +
-                    'Livreur ' + escapeHtml(op.livreur) + '<br>' +
-                    'PLV : ' + escapeHtml(op.plv);
+                const typeColor = op.type === 'COLLECTE' ? '#1a7fba' : '#198754';
+                const popup = `<strong style="color:${typeColor}">${escapeHtml(op.type)}</strong><br>Livreur ${escapeHtml(op.livreur)}<br>PLV : ${escapeHtml(op.plv)}`;
                 if (opMarkers.has(key)) {
                     opMarkers.get(key).setPopupContent(popup);
                 } else {
-                    const m = L.marker([op.latitude, op.longitude], { icon: opIcon })
-                        .bindPopup(popup)
-                        .addTo(map);
-                    opMarkers.set(key, m);
+                    opMarkers.set(key, L.marker([op.latitude, op.longitude], { icon: opIcon }).bindPopup(popup).addTo(map));
                 }
             });
-            for (const [key, marker] of opMarkers.entries()) {
-                if (!seenOpUuids.has(key)) {
-                    map.removeLayer(marker);
-                    opMarkers.delete(key);
-                }
+            for (const [key, m] of opMarkers) {
+                if (!seenOpUuids.has(key)) { map.removeLayer(m); opMarkers.delete(key); }
             }
 
             redessinerParcours(data.operations);
@@ -383,7 +681,7 @@ function refreshCarte() {
 }
 
 // =============================================================================
-// Stats (KPI en haut)
+// Stats KPI
 // =============================================================================
 function refreshStats() {
     return fetch(STATS_URL, { credentials: 'same-origin' })
@@ -398,59 +696,49 @@ function refreshStats() {
                     if (el.textContent.trim() !== String(formatted)) {
                         el.textContent = formatted;
                         el.classList.remove('stat-updated');
-                        void el.offsetWidth;  // force reflow pour rejouer l'animation
+                        void el.offsetWidth;
                         el.classList.add('stat-updated');
                     }
                 }
             }
-            // Lien anomalies : visible seulement si > 0
+            // Lien anomalies visible seulement si > 0
             const link = document.getElementById('anomalies-link');
-            if (link) {
-                link.style.display = stats.nb_anomalies_ouvertes > 0 ? '' : 'none';
-            }
-            // Mise en evidence si anomalies ELEVEE
-            const alerteCard = document.querySelector('.card.stat-card.danger');
-            if (alerteCard) {
-                if (stats.nb_anomalies_elevees > 0) {
-                    alerteCard.style.borderLeftColor = '#dc3545';
-                    alerteCard.style.animation = 'pulse-danger 1.5s infinite';
-                } else {
-                    alerteCard.style.animation = '';
-                }
-            }
+            if (link) link.style.display = stats.nb_anomalies_ouvertes > 0 ? '' : 'none';
+            // Accent rouge sur la card si anomalies élevées
+            const kpiAnom = document.getElementById('kpi-anomalies');
+            if (kpiAnom) kpiAnom.classList.toggle('kpi-card-danger', stats.nb_anomalies_elevees > 0);
         });
 }
 
 // =============================================================================
-// Indicateur de fraicheur
+// Fraîcheur de l'indicateur
 // =============================================================================
 let lastUpdateAt = Date.now();
+
 function updateFreshnessIndicator() {
-    const secondsAgo = Math.floor((Date.now() - lastUpdateAt) / 1000);
+    const s = Math.floor((Date.now() - lastUpdateAt) / 1000);
     let label;
-    if (secondsAgo < 5) label = "a l'instant";
-    else if (secondsAgo < 60) label = `il y a ${secondsAgo}s`;
-    else label = `il y a ${Math.floor(secondsAgo / 60)} min`;
+    if (s < 5) label = "à l'instant";
+    else if (s < 60) label = `il y a ${s}s`;
+    else label = `il y a ${Math.floor(s / 60)} min`;
     document.getElementById('last-update').textContent = label;
 }
 setInterval(updateFreshnessIndicator, 1000);
 
 // =============================================================================
-// Cycle de rafraichissement avec pause auto sur onglet inactif
+// Cycle de rafraîchissement (pause auto sur onglet inactif)
 // =============================================================================
-const indicator = document.getElementById('status-indicator');
-
 function tick() {
     Promise.all([refreshCarte(), refreshStats(), refreshBilanProduits()])
         .then(() => {
             lastUpdateAt = Date.now();
-            indicator.className = 'badge bg-success';
-            indicator.innerHTML = '<span class="status-dot">&#9679;</span> Connecte';
+            liveDot.className = 'live-dot';
+            liveStatus.textContent = 'En ligne';
         })
         .catch(err => {
-            console.warn('Refresh echoue :', err);
-            indicator.className = 'badge bg-warning text-dark';
-            indicator.innerHTML = '<span class="status-dot">&#9679;</span> Hors ligne';
+            console.warn('Refresh échoué :', err);
+            liveDot.className = 'live-dot offline';
+            liveStatus.textContent = 'Hors ligne';
         });
 }
 
@@ -460,37 +748,28 @@ function startAutoRefresh() {
     intervalId = setInterval(tick, REFRESH_INTERVAL_MS);
 }
 function stopAutoRefresh() {
-    if (intervalId !== null) {
-        clearInterval(intervalId);
-        intervalId = null;
-    }
+    if (intervalId !== null) { clearInterval(intervalId); intervalId = null; }
 }
 
-// API Page Visibility : on coupe le polling quand l'onglet est cache,
-// on le reactive (avec un tick immediat) au retour.
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
         stopAutoRefresh();
-        indicator.className = 'badge bg-secondary';
-        indicator.innerHTML = '<span class="status-dot">&#9679;</span> En pause';
+        liveDot.className = 'live-dot paused';
+        liveStatus.textContent = 'En pause';
     } else {
         tick();
         startAutoRefresh();
     }
 });
 
-// Helpers
 function escapeHtml(s) {
     if (s == null) return '';
     return String(s)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-// Demarrage : premier appel immediat puis cycle
+// Démarrage
 tick();
 startAutoRefresh();
 </script>

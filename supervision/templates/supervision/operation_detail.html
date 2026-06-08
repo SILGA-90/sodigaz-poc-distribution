@@ -1,240 +1,412 @@
 {% extends "supervision/base.html" %}
-{% block title %}Operation {{ operation.uuid|truncatechars:8 }}{% endblock %}
+{% block title %}Opération {{ operation.uuid|truncatechars:8 }}{% endblock %}
 {% block content %}
 
 {% with prog=operation.etape.programme plv=operation.etape.plv %}
 
+<!-- ── Retour ── -->
 <a href="{% url 'supervision:operations' %}?date={{ prog.date_programme|date:'Y-m-d' }}&livreur={{ prog.utilisateur.code_livreur }}"
-   class="btn btn-sm btn-outline-secondary mb-3">&laquo; Retour aux operations</a>
+   class="back-link">
+    <i class="bi bi-chevron-left"></i> Retour aux opérations
+</a>
 
-{# ── En-tete ── #}
-<div class="d-flex align-items-start justify-content-between mb-1">
-    <div>
-        <h1 class="h3 mb-1">
+<!-- ── En-tête ── -->
+<div class="op-header op-header-{{ operation.type_operation }}">
+    <div class="op-header-left">
+        <span class="pg-icon">
             {% if operation.type_operation == "COLLECTE" %}
-            <span class="badge bg-primary fs-6">Collecte</span>
+            <i class="bi bi-arrow-down-circle"></i>
             {% else %}
-            <span class="badge bg-success fs-6">Restitution</span>
+            <i class="bi bi-arrow-up-circle"></i>
             {% endif %}
-            {% if operation.sous_type %}
-            <span class="badge bg-secondary fs-6">{{ operation.sous_type }}</span>
-            {% endif %}
-        </h1>
-        <div class="text-muted">
-            {{ operation.date_heure|date:"l j F Y \à H\hi" }}
+        </span>
+        <div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                {% if operation.type_operation == "COLLECTE" %}
+                <span class="type-chip type-collecte"><i class="bi bi-arrow-down-circle"></i> Collecte</span>
+                {% else %}
+                <span class="type-chip type-restitution"><i class="bi bi-arrow-up-circle"></i> Restitution</span>
+                {% endif %}
+                {% if operation.sous_type %}
+                <span class="sous-type-chip">{{ operation.sous_type }}</span>
+                {% endif %}
+            </div>
+            <p class="page-sub mb-0 mt-1">
+                <i class="bi bi-calendar3 me-1"></i>
+                {{ operation.date_heure|date:"l j F Y \à H\hi"|capfirst }}
+            </p>
         </div>
     </div>
-    <div class="text-end">
-        {% if operation.type_operation == "COLLECTE" %}
-        {% if operation.montant_total > 0 %}
-        <div class="display-6 fw-bold text-warning">{{ operation.montant_total|floatformat:0 }} <small class="fs-6 text-muted fw-normal">FCFA</small></div>
-        <span class="badge bg-warning text-dark">Acompte encaisse</span>
-        {% if operation.mode_paiement %}
-        <div class="text-muted small mt-1">{{ operation.get_mode_paiement_display }}</div>
-        {% endif %}
-        {% else %}
-        <div class="text-muted fst-italic">Aucun paiement</div>
-        <div class="text-muted small">(normal pour une collecte)</div>
-        {% endif %}
-    {% else %}
-        <div class="display-6 fw-bold text-primary">{{ operation.montant_total|floatformat:0 }} <small class="fs-6 text-muted fw-normal">FCFA</small></div>
-        {% if operation.est_encaissee %}
-        <span class="badge bg-success">Encaisse — {{ operation.montant_encaisse|floatformat:0 }} FCFA</span>
-        {% else %}
-        <span class="badge bg-warning text-dark">Non encaisse</span>
-        {% endif %}
-        {% if operation.mode_paiement %}
-        <div class="text-muted small mt-1">{{ operation.get_mode_paiement_display }}</div>
-        {% endif %}
+    <div class="op-amount-block">
+        <div class="op-amount-value">{{ operation.montant_total|floatformat:0 }}</div>
+        <div class="op-amount-devise">FCFA</div>
+        <div class="mt-1">
+            {% if operation.type_operation == "COLLECTE" %}
+                {% if operation.montant_total > 0 %}
+                <span class="enc-pill enc-pill-orange"><i class="bi bi-cash-coin me-1"></i>Acompte versé</span>
+                {% else %}
+                <span class="enc-pill enc-pill-gray">Aucun paiement</span>
+                {% endif %}
+            {% else %}
+                {% if operation.est_encaissee %}
+                <span class="enc-pill enc-pill-green">
+                    <i class="bi bi-check-circle me-1"></i>Encaissé — {{ operation.montant_encaisse|floatformat:0 }} FCFA
+                </span>
+                {% else %}
+                <span class="enc-pill enc-pill-warn"><i class="bi bi-exclamation-circle me-1"></i>Non encaissé</span>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ── Info row ── -->
+<div class="info-row mb-4">
+
+    <!-- Livreur -->
+    <div class="info-card">
+        <div class="info-avatar">{{ prog.utilisateur.code_livreur|slice:":1"|upper }}</div>
+        <div>
+            <div class="info-label">Livreur</div>
+            <div class="info-value">{{ prog.utilisateur.get_full_name }}</div>
+            <div class="info-sub">{{ prog.utilisateur.code_livreur }}
+                {% if prog.vehicule %}&nbsp;·&nbsp;{{ prog.vehicule.immatriculation }}{% endif %}
+            </div>
+            <a href="{% url 'supervision:programme-detail' prog.id %}" class="info-link mt-1">
+                <i class="bi bi-clipboard2-check me-1"></i>{{ prog.numero_x3 }}
+            </a>
+        </div>
+    </div>
+
+    <!-- PLV / Client -->
+    <div class="info-card">
+        <div class="info-icon-box"><i class="bi bi-building"></i></div>
+        <div>
+            <div class="info-label">Point de livraison</div>
+            <div class="info-value">{{ plv.client.raison_sociale }}</div>
+            <div class="info-sub">{{ plv.libelle }}</div>
+        </div>
+    </div>
+
+    <!-- GPS -->
+    <div class="info-card">
+        <div class="info-icon-box {% if not operation.localisation_saisie %}info-icon-muted{% endif %}">
+            <i class="bi bi-geo-alt{% if not operation.localisation_saisie %}-fill{% endif %}"></i>
+        </div>
+        <div>
+            <div class="info-label">Position GPS</div>
+            {% if operation.localisation_saisie %}
+            <div class="info-gps">
+                {{ operation.localisation_saisie.y|floatformat:5 }},
+                {{ operation.localisation_saisie.x|floatformat:5 }}
+                {% if operation.gps_precision %}
+                <span class="gps-prec">&nbsp;±{{ operation.gps_precision|floatformat:0 }} m</span>
+                {% endif %}
+            </div>
+            <a href="https://www.google.com/maps?q={{ operation.localisation_saisie.y }},{{ operation.localisation_saisie.x }}"
+               target="_blank" class="info-link mt-1">
+                <i class="bi bi-box-arrow-up-right me-1"></i>Ouvrir dans Maps
+            </a>
+            {% else %}
+            <div class="info-sub">Position non disponible</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Paiement (si pertinent) -->
+    {% if operation.mode_paiement or operation.montant_total > 0 %}
+    <div class="info-card">
+        <div class="info-icon-box"><i class="bi bi-cash-stack"></i></div>
+        <div>
+            <div class="info-label">
+                {% if operation.type_operation == "COLLECTE" %}Acompte{% else %}Paiement{% endif %}
+            </div>
+            <div class="info-value">{{ operation.montant_total|floatformat:0 }} FCFA</div>
+            {% if operation.mode_paiement %}
+            <div class="info-sub">{{ operation.get_mode_paiement_display }}</div>
+            {% endif %}
+            {% if operation.nom_signataire_client %}
+            <div class="info-sub"><i class="bi bi-pen me-1"></i>{{ operation.nom_signataire_client }}</div>
+            {% endif %}
+        </div>
+    </div>
     {% endif %}
-    </div>
+
 </div>
 
-<hr>
-
-<div class="row g-4">
-
-    {# ── Colonne gauche : infos contextuelles ── #}
-    <div class="col-lg-4">
-
-        {# Livreur #}
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Livreur</div>
-            <div class="card-body">
-                <div class="fw-bold">{{ prog.utilisateur.code_livreur }}</div>
-                <div>{{ prog.utilisateur.get_full_name }}</div>
-                {% if prog.vehicule %}
-                <div class="text-muted small mt-1">{{ prog.vehicule.immatriculation }}</div>
-                {% endif %}
-                <div class="mt-2">
-                    <a href="{% url 'supervision:programme-detail' prog.id %}" class="btn btn-sm btn-outline-primary">
-                        Voir programme {{ prog.numero_x3 }}
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        {# Client / PLV #}
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Point de livraison</div>
-            <div class="card-body">
-                <div class="fw-bold">{{ plv.client.raison_sociale }}</div>
-                <div class="text-muted">{{ plv.libelle }}</div>
-                {% if operation.localisation_saisie %}
-                <div class="mt-2 p-2 rounded bg-light font-monospace small gps-mono">
-                    {{ operation.localisation_saisie.y|floatformat:6 }},
-                    {{ operation.localisation_saisie.x|floatformat:6 }}
-                    {% if operation.gps_precision %}
-                    <span class="text-muted">&plusmn;{{ operation.gps_precision|floatformat:0 }}m</span>
-                    {% endif %}
-                </div>
-                <a href="https://www.google.com/maps?q={{ operation.localisation_saisie.y }},{{ operation.localisation_saisie.x }}"
-                   target="_blank" class="btn btn-sm btn-outline-secondary mt-1">Ouvrir dans Maps</a>
-                {% else %}
-                <div class="text-muted small mt-2">Position GPS non disponible</div>
-                {% endif %}
-            </div>
-        </div>
-
-        {# Paiement (card distincte uniquement si pertinent) #}
-        {% if operation.type_operation == "RESTITUTION" or operation.montant_total > 0 %}
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">
-                {% if operation.type_operation == "COLLECTE" %}Acompte verse{% else %}Paiement{% endif %}
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-5">Montant</dt>
-                    <dd class="col-sm-7 fw-bold">{{ operation.montant_total|floatformat:0 }} FCFA</dd>
-                    {% if operation.type_operation == "RESTITUTION" %}
-                    <dt class="col-sm-5">Encaissement</dt>
-                    <dd class="col-sm-7">
-                        {% if operation.est_encaissee %}
-                        <span class="badge bg-success">{{ operation.montant_encaisse|floatformat:0 }} FCFA encaisse</span>
-                        {% else %}
-                        <span class="badge bg-warning text-dark">Non encaisse</span>
-                        {% endif %}
-                    </dd>
-                    {% endif %}
-                    {% if operation.mode_paiement %}
-                    <dt class="col-sm-5">Mode</dt>
-                    <dd class="col-sm-7">{{ operation.get_mode_paiement_display }}</dd>
-                    {% endif %}
-                </dl>
-            </div>
-        </div>
-        {% endif %}
-
-        {# Signataire #}
-        {% if operation.nom_signataire_client %}
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Signataire</div>
-            <div class="card-body">{{ operation.nom_signataire_client }}</div>
-        </div>
-        {% endif %}
-
+<!-- ── Produits ── -->
+{% with lignes=operation.lignes.all %}
+{% if lignes %}
+<div class="section-card mb-4">
+    <div class="section-header">
+        <i class="bi bi-box-seam me-2"></i>Produits
+        <span class="section-count">{{ lignes|length }}</span>
     </div>
-
-    {# ── Colonne droite : produits, signatures, photos ── #}
-    <div class="col-lg-8">
-
-        {# Produits #}
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Produits</div>
-            <div class="card-body p-0">
-                {% with lignes=operation.lignes.all %}
-                {% if lignes %}
-                <div class="table-responsive">
-                <table class="table table-sm mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Produit</th>
-                            <th class="text-end">Qte realisee</th>
-                            <th class="text-end">Montant ligne</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for l in lignes %}
-                        {% if not l.is_deleted %}
-                        <tr>
-                            <td>{{ l.produit.libelle }} <small class="text-muted">({{ l.produit.code_x3 }})</small></td>
-                            <td class="text-end fw-semibold">{{ l.quantite_realisee }}</td>
-                            <td class="text-end">{{ l.montant_ligne|floatformat:0 }} FCFA</td>
-                        </tr>
-                        {% endif %}
-                        {% endfor %}
-                    </tbody>
-                </table>
-                </div>
-                {% else %}
-                <p class="text-muted p-3 mb-0">Aucune ligne produit.</p>
-                {% endif %}
-                {% endwith %}
-            </div>
-        </div>
-
-        {# Signatures #}
-        {% if operation.signature_livreur or operation.signature_client %}
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Signatures</div>
-            <div class="card-body">
-                <div class="d-flex gap-4 flex-wrap">
-                    {% if operation.signature_livreur %}
-                    <div class="sig-box-wrap">
-                        <div class="text-muted small fw-semibold mb-2">Livreur — {{ prog.utilisateur.get_full_name }}</div>
-                        <div class="sig-box" style="border:1px solid #dee2e6;border-radius:8px;background:#fff;width:240px;height:120px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
-                            {{ operation.signature_livreur|safe }}
-                        </div>
-                    </div>
-                    {% endif %}
-                    {% if operation.signature_client %}
-                    <div class="sig-box-wrap">
-                        <div class="text-muted small fw-semibold mb-2">Client {% if operation.nom_signataire_client %}— {{ operation.nom_signataire_client }}{% endif %}</div>
-                        <div class="sig-box" style="border:1px solid #dee2e6;border-radius:8px;background:#fff;width:240px;height:120px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
-                            {{ operation.signature_client|safe }}
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        {# Photos #}
-        {% with photos=operation.photos.all %}
-        {% if photos %}
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Photos ({{ photos|length }})</div>
-            <div class="card-body">
-                <div class="d-flex flex-wrap gap-3">
-                    {% for photo in photos %}
-                    {% if not photo.is_deleted and photo.fichier and photo.fichier != "placeholder.bin" %}
-                    <div class="text-center">
-                        <a href="{{ photo.fichier.url }}" target="_blank">
-                            <img src="{{ photo.fichier.url }}" class="photo-thumb"
-                                 style="height:120px;width:120px;object-fit:cover;border-radius:8px;border:1px solid #dee2e6;">
-                        </a>
-                        <div class="text-muted small mt-1">{{ photo.get_type_photo_display }}</div>
-                        <div class="text-muted small">{{ photo.date_heure|date:"H:i" }}</div>
-                    </div>
-                    {% endif %}
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-        {% endif %}
-        {% endwith %}
-
-        {# Commentaire #}
-        {% if operation.commentaire %}
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Commentaire</div>
-            <div class="card-body text-muted">{{ operation.commentaire }}</div>
-        </div>
-        {% endif %}
-
+    <div class="recon-table-wrap">
+        <table class="recon-table">
+            <thead>
+                <tr>
+                    <th>Produit</th>
+                    <th>Code X3</th>
+                    <th class="text-end">Qté réalisée</th>
+                    <th class="text-end">Montant ligne</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for l in lignes %}
+            {% if not l.is_deleted %}
+            <tr>
+                <td><span class="produit-dot"></span>{{ l.produit.libelle }}</td>
+                <td><span class="code-x3">{{ l.produit.code_x3 }}</span></td>
+                <td class="text-end fw-semibold">{{ l.quantite_realisee }}</td>
+                <td class="text-end fw-semibold">{{ l.montant_ligne|floatformat:0 }}&nbsp;<span class="ops-devise">FCFA</span></td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
+{% endif %}
+{% endwith %}
+
+<!-- ── Signatures ── -->
+{% if operation.signature_livreur or operation.signature_client %}
+<div class="section-card mb-4">
+    <div class="section-header"><i class="bi bi-pen me-2"></i>Signatures</div>
+    <div class="section-body sig-row">
+        {% if operation.signature_livreur %}
+        <div class="sig-block">
+            <div class="sig-label">
+                <i class="bi bi-truck me-1"></i>Livreur — {{ prog.utilisateur.get_full_name }}
+            </div>
+            <div class="sig-box">{{ operation.signature_livreur|safe }}</div>
+        </div>
+        {% endif %}
+        {% if operation.signature_client %}
+        <div class="sig-block">
+            <div class="sig-label">
+                <i class="bi bi-person me-1"></i>Client
+                {% if operation.nom_signataire_client %}— {{ operation.nom_signataire_client }}{% endif %}
+            </div>
+            <div class="sig-box">{{ operation.signature_client|safe }}</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- ── Photos ── -->
+{% with photos=operation.photos.all %}
+{% if photos %}
+<div class="section-card mb-4">
+    <div class="section-header">
+        <i class="bi bi-images me-2"></i>Photos
+        <span class="section-count">{{ photos|length }}</span>
+    </div>
+    <div class="section-body photo-grid">
+        {% for photo in photos %}
+        {% if not photo.is_deleted and photo.fichier and photo.fichier != "placeholder.bin" %}
+        <a href="{{ photo.fichier.url }}" target="_blank" class="photo-thumb-wrap">
+            <img src="{{ photo.fichier.url }}" class="photo-thumb" alt="{{ photo.get_type_photo_display }}">
+            <div class="photo-label">{{ photo.get_type_photo_display }}</div>
+            <div class="photo-time">{{ photo.date_heure|date:"H:i" }}</div>
+        </a>
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- ── Commentaire ── -->
+{% if operation.commentaire %}
+<div class="section-card mb-4">
+    <div class="section-header"><i class="bi bi-chat-left-text me-2"></i>Commentaire</div>
+    <div class="section-body">
+        <p class="mb-0" style="color:#4a5568;font-size:.9rem;line-height:1.6;">
+            {{ operation.commentaire }}
+        </p>
+    </div>
+</div>
+{% endif %}
 
 {% endwith %}
+
+<style>
+/* ─── Retour ─── */
+.back-link {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .82rem; font-weight: 600; color: #1a7fba;
+    text-decoration: none; margin-bottom: 1.2rem; transition: gap .15s;
+}
+.back-link:hover { gap: .55rem; color: #1568a0; }
+
+/* ─── En-tête ─── */
+.op-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 1rem;
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
+    padding: 1.4rem 1.5rem;
+    border-left: 4px solid #1a7fba;
+    margin-bottom: 1.25rem;
+}
+.op-header-RESTITUTION { border-left-color: #198754; }
+.op-header-left { display: flex; align-items: flex-start; gap: 1rem; }
+
+.pg-icon {
+    width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+    background: rgba(26,127,186,.1);
+    display: flex; align-items: center; justify-content: center;
+    color: #1a7fba; font-size: 1.3rem;
+}
+.op-header-RESTITUTION .pg-icon { background: rgba(25,135,84,.1); color: #198754; }
+
+.type-chip {
+    font-size: .72rem; font-weight: 700; padding: .25rem .65rem; border-radius: 20px;
+    display: inline-flex; align-items: center; gap: .3rem;
+}
+.type-collecte    { background: #dbeafe; color: #1d4ed8; }
+.type-restitution { background: #dcfce7; color: #166534; }
+.sous-type-chip {
+    font-size: .72rem; font-weight: 700;
+    padding: .22rem .6rem; border-radius: 6px;
+    background: #f1f5f9; color: #6c757d;
+}
+
+/* Amount block */
+.op-amount-block { text-align: right; }
+.op-amount-value { font-size: 2.4rem; font-weight: 800; color: #1a2332; line-height: 1; }
+.op-amount-devise { font-size: .75rem; font-weight: 700; color: #94a3b8; margin-top: .15rem; }
+.enc-pill {
+    display: inline-flex; align-items: center; font-size: .72rem; font-weight: 700;
+    padding: .3rem .85rem; border-radius: 20px;
+}
+.enc-pill-green  { background: #d1f5e0; color: #198754; }
+.enc-pill-warn   { background: rgba(244,121,32,.1); color: #c45a00; }
+.enc-pill-orange { background: rgba(244,121,32,.1); color: #c45a00; }
+.enc-pill-gray   { background: #f1f5f9; color: #6c757d; }
+
+/* ─── Info row ─── */
+.info-row { display: flex; flex-wrap: wrap; gap: .75rem; }
+.info-card {
+    display: flex; align-items: flex-start; gap: .75rem;
+    background: #fff; border-radius: 12px;
+    padding: .85rem 1rem; border: 1px solid #eef1f6;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    flex: 1; min-width: 180px;
+}
+.info-avatar {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, #1a7fba, #1568a0);
+    color: #fff; font-size: .9rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(26,127,186,.3);
+}
+.info-icon-box {
+    width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+    background: rgba(26,127,186,.1);
+    display: flex; align-items: center; justify-content: center;
+    color: #1a7fba; font-size: 1.1rem;
+}
+.info-icon-muted { background: #f1f5f9; color: #94a3b8; }
+.info-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #94a3b8; }
+.info-value { font-size: .88rem; font-weight: 700; color: #1a2332; margin-top: .1rem; }
+.info-sub   { font-size: .75rem; color: #94a3b8; margin-top: .1rem; }
+.info-gps {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: .76rem; color: #1a2332; margin-top: .1rem;
+}
+.gps-prec { color: #94a3b8; }
+.info-link {
+    display: inline-flex; align-items: center; gap: .2rem;
+    font-size: .75rem; font-weight: 600; color: #1a7fba;
+    text-decoration: none; transition: color .15s;
+}
+.info-link:hover { color: #1568a0; }
+
+/* ─── Section cards ─── */
+.section-card {
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
+    overflow: hidden;
+}
+.section-header {
+    display: flex; align-items: center;
+    padding: .85rem 1.25rem;
+    font-size: .82rem; font-weight: 700; color: #1a2332;
+    background: #f8fafc; border-bottom: 1px solid #eef1f6;
+}
+.section-count {
+    margin-left: .5rem; background: #e8f4fc; color: #1a7fba;
+    font-size: .68rem; font-weight: 700;
+    padding: .1rem .5rem; border-radius: 20px;
+}
+.section-body { padding: 1.1rem 1.25rem; }
+
+/* ─── Tableau produits ─── */
+.recon-table-wrap { overflow: hidden; }
+.recon-table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+.recon-table thead th {
+    padding: .5rem 1.25rem;
+    font-size: .67rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: #94a3b8;
+}
+.recon-table tbody td {
+    padding: .65rem 1.25rem; border-bottom: 1px solid #f0f2f5;
+    color: #1a2332; vertical-align: middle;
+}
+.recon-table tbody tr:last-child td { border-bottom: none; }
+.recon-table tbody tr:hover td { background: #f8fafc; }
+.produit-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: #1a7fba; margin-right: .4rem; vertical-align: middle;
+}
+.code-x3 {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: .78rem; color: #94a3b8;
+    background: #f1f5f9; padding: .1rem .4rem; border-radius: 4px;
+}
+.ops-devise { font-size: .72rem; color: #94a3b8; }
+
+/* ─── Signatures ─── */
+.sig-row { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+.sig-block { display: flex; flex-direction: column; gap: .5rem; }
+.sig-label {
+    font-size: .75rem; font-weight: 700; color: #94a3b8;
+    text-transform: uppercase; letter-spacing: .04em;
+}
+.sig-box {
+    border: 1px solid #eef1f6; border-radius: 10px; background: #fafafa;
+    width: 260px; height: 130px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* ─── Photos ─── */
+.photo-grid { display: flex; flex-wrap: wrap; gap: 1rem; }
+.photo-thumb-wrap {
+    display: flex; flex-direction: column; align-items: center; gap: .3rem;
+    text-decoration: none; transition: transform .15s;
+}
+.photo-thumb-wrap:hover { transform: scale(1.03); }
+.photo-thumb {
+    width: 130px; height: 130px; object-fit: cover;
+    border-radius: 10px; border: 1px solid #eef1f6;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+.photo-label { font-size: .72rem; font-weight: 600; color: #6c757d; }
+.photo-time  { font-size: .68rem; color: #94a3b8; }
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+    .op-header         { flex-direction: column; }
+    .op-amount-block   { text-align: left; }
+    .info-row          { flex-direction: column; }
+    .sig-row           { flex-direction: column; }
+    .sig-box           { width: 100%; }
+    .photo-thumb       { width: 110px; height: 110px; }
+}
+</style>
+
 {% endblock %}

@@ -1,4 +1,6 @@
 """Vues des programmes de livraison."""
+from datetime import date, timedelta
+
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, render
 
@@ -12,7 +14,7 @@ from ._base import _get_date_filter
 def programmes_list(request):
     date_filter = _get_date_filter(request, write_session=True)
 
-    programmes = (
+    programmes = list(
         Programme.objects
         .filter(date_programme=date_filter, is_deleted=False)
         .select_related("utilisateur", "vehicule")
@@ -31,8 +33,15 @@ def programmes_list(request):
     )
 
     return render(request, "supervision/programmes_list.html", {
-        "programmes": programmes,
-        "date_filter": date_filter,
+        "programmes":   programmes,
+        "date_filter":  date_filter,
+        "date_prev":    date_filter - timedelta(days=1),
+        "date_next":    date_filter + timedelta(days=1),
+        "date_today":   date.today(),
+        "nb_total":     len(programmes),
+        "nb_planifie":  sum(1 for p in programmes if p.statut == "PLANIFIE"),
+        "nb_en_cours":  sum(1 for p in programmes if p.statut == "EN_COURS"),
+        "nb_cloture":   sum(1 for p in programmes if p.statut == "CLOTURE"),
     })
 
 

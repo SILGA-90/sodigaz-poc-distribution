@@ -1,121 +1,323 @@
 {% extends "supervision/base.html" %}
 {% block title %}Anomalies{% endblock %}
 {% block content %}
-<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+
+<!-- ── En-tête ── -->
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
     <div>
-        <p class="page-title"><i class="bi bi-exclamation-triangle me-2 text-danger"></i>Anomalies</p>
-        <p class="page-sub">Suivi et traitement des incidents terrain</p>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="pg-icon pg-icon-red"><i class="bi bi-exclamation-triangle"></i></span>
+            <h1 class="page-title mb-0">Anomalies</h1>
+        </div>
+        <p class="page-sub mb-0">Suivi et traitement des incidents terrain</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <div class="kpi-pill">
+            <span class="kpi-pill-n">{{ nb_total }}</span>
+            <span class="kpi-pill-l">Résultats</span>
+        </div>
+        <div class="kpi-pill kpi-pill-red">
+            <span class="kpi-pill-n">{{ nb_elevee }}</span>
+            <span class="kpi-pill-l">Élevées</span>
+        </div>
+        <div class="kpi-pill kpi-pill-orange">
+            <span class="kpi-pill-n">{{ nb_moyenne }}</span>
+            <span class="kpi-pill-l">Moyennes</span>
+        </div>
+        <div class="kpi-pill kpi-pill-green">
+            <span class="kpi-pill-n">{{ nb_faible }}</span>
+            <span class="kpi-pill-l">Faibles</span>
+        </div>
     </div>
 </div>
 
-<div class="filter-card">
-    <form method="get" class="d-flex gap-2 flex-wrap align-items-end">
-        <div>
-            <label class="form-label small text-muted mb-1">Date</label>
-            <input type="date" name="date" value="{{ date_filter }}" class="form-control form-control-sm" style="width:150px;" title="Filtrer par date du programme">
-        </div>
-        <div>
-            <label class="form-label small text-muted mb-1">Livreur</label>
-            <select name="livreur" class="form-select form-select-sm" style="width:160px;">
-                <option value="">Tous</option>
-                {% for l in livreurs %}
-                <option value="{{ l.code_livreur }}" {% if livreur_filter == l.code_livreur %}selected{% endif %}>
-                    {{ l.code_livreur }} — {{ l.get_full_name }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div>
-            <label class="form-label small text-muted mb-1">N° programme</label>
-            <input type="text" name="programme" value="{{ prog_filter }}" class="form-control form-control-sm" style="width:140px;" placeholder="ex. PGM-001">
-        </div>
-        <div>
-            <label class="form-label small text-muted mb-1">Statut</label>
-            <select name="statut" class="form-select form-select-sm" style="width:150px;">
-                <option value="OUVERTE" {% if statut_filter == "OUVERTE" %}selected{% endif %}>Ouvertes</option>
-                <option value="EN_TRAITEMENT" {% if statut_filter == "EN_TRAITEMENT" %}selected{% endif %}>En traitement</option>
-                <option value="RESOLUE" {% if statut_filter == "RESOLUE" %}selected{% endif %}>Résolues</option>
-                <option value="TOUS" {% if statut_filter == "TOUS" %}selected{% endif %}>Toutes</option>
-            </select>
-        </div>
-        <div>
-            <label class="form-label small text-muted mb-1">Gravité</label>
-            <select name="gravite" class="form-select form-select-sm" style="width:130px;">
-                <option value="" {% if not gravite_filter %}selected{% endif %}>Toutes</option>
-                <option value="ELEVEE" {% if gravite_filter == "ELEVEE" %}selected{% endif %}>Élevée</option>
-                <option value="MOYENNE" {% if gravite_filter == "MOYENNE" %}selected{% endif %}>Moyenne</option>
-                <option value="FAIBLE" {% if gravite_filter == "FAIBLE" %}selected{% endif %}>Faible</option>
-            </select>
-        </div>
-        <div class="d-flex gap-2 align-items-end">
-            <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-funnel me-1"></i>Filtrer</button>
-            <a href="{% url 'supervision:anomalies' %}" class="btn btn-sm btn-outline-secondary">Réinit.</a>
-        </div>
-    </form>
+<!-- ── Filtres ── -->
+<div class="filter-card mb-4">
+    <div class="d-flex flex-wrap align-items-end gap-3">
+        <i class="bi bi-funnel text-muted" style="margin-bottom:.4rem;"></i>
+        <form method="get" class="d-flex flex-wrap gap-3 align-items-end">
+            <div>
+                <label class="filter-label">Date programme</label>
+                <input type="date" name="date" value="{{ date_filter }}"
+                       class="form-control form-control-sm" style="width:auto;">
+            </div>
+            <div>
+                <label class="filter-label">Livreur</label>
+                <select name="livreur" class="form-select form-select-sm" style="width:auto;">
+                    <option value="">Tous</option>
+                    {% for l in livreurs %}
+                    <option value="{{ l.code_livreur }}" {% if livreur_filter == l.code_livreur %}selected{% endif %}>
+                        {{ l.code_livreur }} — {{ l.get_full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="filter-label">N° programme</label>
+                <input type="text" name="programme" value="{{ prog_filter }}"
+                       class="form-control form-control-sm" style="width:auto;" placeholder="ex. PGM-001">
+            </div>
+            <div>
+                <label class="filter-label">Statut</label>
+                <select name="statut" class="form-select form-select-sm" style="width:auto;">
+                    <option value="OUVERTE"       {% if statut_filter == "OUVERTE"       %}selected{% endif %}>Ouvertes</option>
+                    <option value="EN_TRAITEMENT" {% if statut_filter == "EN_TRAITEMENT" %}selected{% endif %}>En traitement</option>
+                    <option value="RESOLUE"       {% if statut_filter == "RESOLUE"       %}selected{% endif %}>Résolues</option>
+                    <option value="TOUS"          {% if statut_filter == "TOUS"          %}selected{% endif %}>Toutes</option>
+                </select>
+            </div>
+            <div>
+                <label class="filter-label">Gravité</label>
+                <select name="gravite" class="form-select form-select-sm" style="width:auto;">
+                    <option value="" {% if not gravite_filter %}selected{% endif %}>Toutes</option>
+                    <option value="ELEVEE"  {% if gravite_filter == "ELEVEE"  %}selected{% endif %}>Élevée</option>
+                    <option value="MOYENNE" {% if gravite_filter == "MOYENNE" %}selected{% endif %}>Moyenne</option>
+                    <option value="FAIBLE"  {% if gravite_filter == "FAIBLE"  %}selected{% endif %}>Faible</option>
+                </select>
+            </div>
+            <div class="d-flex gap-2 align-items-end">
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="bi bi-search me-1"></i>Filtrer
+                </button>
+                <a href="{% url 'supervision:anomalies' %}" class="btn btn-sm btn-outline-secondary">
+                    Réinit.
+                </a>
+            </div>
+        </form>
+    </div>
 </div>
 
+<!-- ── Cards ── -->
 {% if anomalies %}
-<div class="table-responsive table-card">
-<table class="table table-hover mb-0">
-    <thead>
-        <tr>
-            <th>Date</th>
-            <th>Programme / Livreur</th>
-            <th>Type</th>
-            <th>Gravité</th>
-            <th>Description</th>
-            <th>PLV</th>
-            <th>Statut</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for a in anomalies %}
-        <tr class="cursor-pointer {% if a.gravite == 'ELEVEE' and a.statut != 'RESOLUE' %}table-danger{% endif %}"
-            onclick="window.location='{% url 'supervision:anomalie-detail' a.id %}'">
-            <td class="text-muted small">{{ a.date_heure|date:"d/m H:i" }}</td>
-            <td>
-                <span class="fw-medium">{{ a.programme.numero_x3 }}</span><br>
-                <small class="text-muted">{{ a.programme.utilisateur.code_livreur }}</small>
-            </td>
-            <td>{{ a.type_anomalie }}</td>
-            <td>
-                {% if a.gravite == "ELEVEE" %}
-                <span class="badge bg-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Élevée</span>
-                {% elif a.gravite == "MOYENNE" %}
-                <span class="badge bg-warning text-dark">Moyenne</span>
-                {% elif a.gravite == "FAIBLE" %}
-                <span class="badge bg-success">Faible</span>
-                {% else %}
-                <span class="badge bg-secondary">À classer</span>
-                {% endif %}
-            </td>
-            <td class="text-muted">{{ a.description|truncatewords:12 }}</td>
-            <td class="text-muted">{{ a.plv.libelle|default:"—" }}</td>
-            <td><span class="badge badge-statut-{{ a.statut }}">{{ a.get_statut_display }}</span></td>
-            <td onclick="event.stopPropagation()">
-                {% if a.statut == "OUVERTE" %}
-                <form method="post" action="{% url 'supervision:anomalie-statut' a.id %}" class="d-inline">
-                    {% csrf_token %}
-                    <input type="hidden" name="statut" value="EN_TRAITEMENT">
-                    <button type="submit" class="btn btn-sm btn-warning">Prendre en charge</button>
-                </form>
-                {% elif a.statut == "EN_TRAITEMENT" %}
-                <form method="post" action="{% url 'supervision:anomalie-statut' a.id %}" class="d-inline">
-                    {% csrf_token %}
-                    <input type="hidden" name="statut" value="RESOLUE">
-                    <button type="submit" class="btn btn-sm btn-success">Marquer résolue</button>
-                </form>
-                {% else %}
-                <span class="text-muted">—</span>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="anom-list">
+{% for a in anomalies %}
+<div class="anom-card anom-grav-{{ a.gravite }}"
+     onclick="window.location='{% url 'supervision:anomalie-detail' a.id %}'">
+
+    <!-- En-tête de card -->
+    <div class="anom-card-header">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="anom-date"><i class="bi bi-clock me-1"></i>{{ a.date_heure|date:"d/m/Y H:i" }}</span>
+            <span class="anom-prog-chip">{{ a.programme.numero_x3 }}</span>
+            <div class="anom-livreur">
+                <div class="anom-avatar">{{ a.programme.utilisateur.code_livreur|slice:":1"|upper }}</div>
+                <span class="anom-code">{{ a.programme.utilisateur.code_livreur }}</span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            {% if a.gravite == "ELEVEE" %}
+            <span class="grav-pill grav-elevee">
+                <i class="bi bi-exclamation-triangle-fill"></i> Élevée
+            </span>
+            {% elif a.gravite == "MOYENNE" %}
+            <span class="grav-pill grav-moyenne">
+                <i class="bi bi-dash-circle-fill"></i> Moyenne
+            </span>
+            {% else %}
+            <span class="grav-pill grav-faible">
+                <i class="bi bi-check-circle-fill"></i> Faible
+            </span>
+            {% endif %}
+            <span class="statut-anom-pill statut-anom-{{ a.statut }}">
+                {% if a.statut == "OUVERTE" %}Ouverte
+                {% elif a.statut == "EN_TRAITEMENT" %}En traitement
+                {% else %}Résolue{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Corps -->
+    <div class="anom-card-body">
+        <div class="anom-type-label">{{ a.type_anomalie }}</div>
+        {% if a.description %}
+        <p class="anom-desc">{{ a.description|truncatewords:20 }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Pied -->
+    <div class="anom-card-footer">
+        <div class="anom-plv-info">
+            {% if a.plv %}
+            <i class="bi bi-building me-1"></i>{{ a.plv.libelle }}
+            {% if a.plv.client %}&nbsp;·&nbsp;{{ a.plv.client.raison_sociale }}{% endif %}
+            {% else %}
+            <span class="text-muted">—</span>
+            {% endif %}
+        </div>
+        <div onclick="event.stopPropagation()">
+            {% if a.statut == "OUVERTE" %}
+            <form method="post" action="{% url 'supervision:anomalie-statut' a.id %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="statut" value="EN_TRAITEMENT">
+                <button type="submit" class="btn-action btn-action-warn">
+                    <i class="bi bi-hand-index me-1"></i>Prendre en charge
+                </button>
+            </form>
+            {% elif a.statut == "EN_TRAITEMENT" %}
+            <form method="post" action="{% url 'supervision:anomalie-statut' a.id %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="statut" value="RESOLUE">
+                <button type="submit" class="btn-action btn-action-green">
+                    <i class="bi bi-check-lg me-1"></i>Marquer résolue
+                </button>
+            </form>
+            {% else %}
+            <span class="anom-resolved-tag">
+                <i class="bi bi-check-circle me-1"></i>Résolue
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
 </div>
+{% endfor %}
+</div>
+
 {% else %}
-<div class="alert alert-info"><i class="bi bi-info-circle me-1"></i>Aucune anomalie pour ce filtre.</div>
+<div class="anom-empty text-center">
+    <i class="bi bi-exclamation-triangle"></i>
+    <p class="anom-empty-title">Aucune anomalie</p>
+    <p class="anom-empty-sub">Aucun incident ne correspond aux critères actuels.</p>
+</div>
 {% endif %}
+
+<style>
+/* ─── Page icon ─── */
+.pg-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; flex-shrink: 0;
+    background: rgba(26,127,186,.1); color: #1a7fba;
+}
+.pg-icon-red { background: rgba(220,53,69,.1); color: #dc3545; }
+
+/* ─── KPI pills ─── */
+.kpi-pill {
+    display: flex; flex-direction: column; align-items: center;
+    padding: .55rem 1rem; border-radius: 12px;
+    background: #fff; border: 1px solid #e8edf3;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05); min-width: 72px;
+}
+.kpi-pill-n { font-size: 1.35rem; font-weight: 700; line-height: 1.1; color: #1a2332; }
+.kpi-pill-l {
+    font-size: .62rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: #94a3b8; margin-top: .15rem;
+}
+.kpi-pill-red    .kpi-pill-n { color: #dc3545; }
+.kpi-pill-orange .kpi-pill-n { color: #f47920; }
+.kpi-pill-green  .kpi-pill-n { color: #198754; }
+
+/* ─── Filter label ─── */
+.filter-label {
+    display: block; font-size: .68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: #94a3b8; margin-bottom: .28rem;
+}
+
+/* ─── Cards ─── */
+.anom-list { display: flex; flex-direction: column; gap: .85rem; }
+
+.anom-card {
+    background: #fff; border-radius: 12px;
+    border-left: 4px solid #94a3b8;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
+    cursor: pointer; overflow: hidden;
+    transition: box-shadow .18s, transform .18s;
+}
+.anom-card:hover { box-shadow: 0 4px 18px rgba(10,22,40,.11); transform: translateY(-1px); }
+.anom-grav-ELEVEE  { border-left-color: #dc3545; }
+.anom-grav-MOYENNE { border-left-color: #f47920; }
+.anom-grav-FAIBLE  { border-left-color: #198754; }
+
+/* Card header */
+.anom-card-header {
+    display: flex; justify-content: space-between;
+    align-items: center; flex-wrap: wrap; gap: .5rem;
+    padding: .72rem 1.25rem;
+    background: #f8fafc; border-bottom: 1px solid #eef1f6;
+}
+.anom-date { font-size: .78rem; color: #6c757d; display: flex; align-items: center; }
+.anom-prog-chip {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: .78rem; font-weight: 700; color: #1a2332;
+    background: #f1f5f9; padding: .18rem .55rem; border-radius: 6px;
+}
+.anom-livreur { display: flex; align-items: center; gap: .45rem; }
+.anom-avatar {
+    width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, #1a7fba, #1568a0);
+    color: #fff; font-size: .65rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+}
+.anom-code { font-size: .78rem; font-weight: 700; color: #1a2332; }
+
+/* Gravité pills */
+.grav-pill {
+    font-size: .72rem; font-weight: 700; padding: .28rem .8rem; border-radius: 20px;
+    display: inline-flex; align-items: center; gap: .3rem;
+}
+.grav-elevee  { background: #fde8e8; color: #dc3545; }
+.grav-moyenne { background: rgba(244,121,32,.1); color: #c45a00; }
+.grav-faible  { background: #d1f5e0; color: #198754; }
+
+/* Statut pills */
+.statut-anom-pill {
+    font-size: .7rem; font-weight: 700; padding: .25rem .72rem; border-radius: 20px;
+}
+.statut-anom-OUVERTE       { background: #fde8e8; color: #dc3545; }
+.statut-anom-EN_TRAITEMENT { background: rgba(244,121,32,.1); color: #c45a00; }
+.statut-anom-RESOLUE       { background: #d1f5e0; color: #198754; }
+
+/* Card body */
+.anom-card-body { padding: .85rem 1.25rem .65rem; }
+.anom-type-label { font-size: .98rem; font-weight: 700; color: #1a2332; }
+.anom-desc {
+    font-size: .83rem; color: #6c757d; margin: .35rem 0 0;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* Card footer */
+.anom-card-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: .5rem;
+    padding: .65rem 1.25rem;
+    border-top: 1px solid #f0f2f5;
+}
+.anom-plv-info { font-size: .78rem; color: #94a3b8; }
+
+/* Action buttons */
+.btn-action {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .38rem .9rem; border-radius: 8px;
+    font-size: .78rem; font-weight: 600;
+    border: 1.5px solid transparent; cursor: pointer; transition: all .15s;
+}
+.btn-action-warn  {
+    background: rgba(244,121,32,.08); color: #c45a00;
+    border-color: rgba(244,121,32,.28);
+}
+.btn-action-warn:hover  { background: #f47920; color: #fff; border-color: #f47920; }
+.btn-action-green {
+    background: rgba(25,135,84,.08); color: #198754;
+    border-color: rgba(25,135,84,.25);
+}
+.btn-action-green:hover { background: #198754; color: #fff; border-color: #198754; }
+.anom-resolved-tag { font-size: .78rem; font-weight: 600; color: #198754; }
+
+/* ─── Empty ─── */
+.anom-empty {
+    background: #fff; border-radius: 12px; padding: 3.5rem 2rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.anom-empty .bi-exclamation-triangle { font-size: 3.5rem; color: #cbd5e1; }
+.anom-empty-title { font-weight: 700; color: #6c757d; margin: 1rem 0 .25rem; }
+.anom-empty-sub   { font-size: .85rem; color: #94a3b8; }
+
+@media (max-width: 640px) {
+    .anom-card-header { flex-direction: column; align-items: flex-start; }
+    .anom-card-footer { flex-direction: column; align-items: flex-start; }
+}
+</style>
+
 {% endblock %}

@@ -47,14 +47,24 @@ def anomalies_list(request):
         role=Role.LIVREUR, is_active=True
     ).order_by("code_livreur")
 
+    anomalies     = list(anomalies_qs)
+    nb_total      = len(anomalies)
+    nb_elevee     = sum(1 for a in anomalies if a.gravite == "ELEVEE")
+    nb_moyenne    = sum(1 for a in anomalies if a.gravite == "MOYENNE")
+    nb_faible     = sum(1 for a in anomalies if a.gravite == "FAIBLE")
+
     return render(request, "supervision/anomalies_list.html", {
-        "anomalies":      anomalies_qs,
+        "anomalies":      anomalies,
         "statut_filter":  statut_filter,
         "gravite_filter": gravite_filter,
         "livreur_filter": livreur_filter,
         "prog_filter":    prog_filter,
         "date_filter":    date_str,
         "livreurs":       livreurs,
+        "nb_total":       nb_total,
+        "nb_elevee":      nb_elevee,
+        "nb_moyenne":     nb_moyenne,
+        "nb_faible":      nb_faible,
     })
 
 

@@ -1,197 +1,520 @@
 {% extends "supervision/base.html" %}
 {% block title %}Programme {{ programme.numero_x3 }}{% endblock %}
 {% block content %}
-<a href="{% url 'supervision:programmes' %}?date={{ programme.date_programme|date:'Y-m-d' }}" class="btn btn-sm btn-outline-secondary mb-3">&laquo; Retour aux programmes</a>
 
-<h1 class="h3">{{ programme.numero_x3 }}</h1>
-<div class="mb-3">
-    <span class="badge bg-secondary">{{ programme.get_type_programme_display }}</span>
-    <span class="badge badge-statut-{{ programme.statut }}">{{ programme.get_statut_display }}</span>
+<!-- ── Retour ── -->
+<a href="{% url 'supervision:programmes' %}?date={{ programme.date_programme|date:'Y-m-d' }}"
+   class="back-link">
+    <i class="bi bi-chevron-left"></i> Retour aux programmes
+</a>
+
+<!-- ── En-tête ── -->
+<div class="detail-header">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <span class="pg-icon"><i class="bi bi-clipboard2-check"></i></span>
+        <div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h1 class="page-title mb-0 font-monospace">{{ programme.numero_x3 }}</h1>
+                {% if programme.type_programme == "COLLECTE" %}
+                <span class="type-chip type-collecte">
+                    <i class="bi bi-arrow-down-circle"></i> Collecte
+                </span>
+                {% else %}
+                <span class="type-chip type-restitution">
+                    <i class="bi bi-arrow-up-circle"></i> Restitution
+                </span>
+                {% endif %}
+                <span class="statut-pill statut-{{ programme.statut }}">
+                    {% if programme.statut == "PLANIFIE" %}<i class="bi bi-clock"></i> Planifié
+                    {% elif programme.statut == "EN_COURS" %}<i class="bi bi-play-circle-fill"></i> En cours
+                    {% else %}<i class="bi bi-check-circle-fill"></i> Clôturé
+                    {% endif %}
+                </span>
+            </div>
+            <p class="page-sub mb-0 mt-1">
+                <i class="bi bi-calendar3 me-1"></i>{{ programme.date_programme|date:"l j F Y"|capfirst }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Infos contextuelles -->
+    <div class="info-row mt-3">
+        <div class="info-card">
+            <div class="info-avatar">{{ programme.utilisateur.code_livreur|slice:":1"|upper }}</div>
+            <div>
+                <div class="info-label">Livreur</div>
+                <div class="info-value">{{ programme.utilisateur.get_full_name }}</div>
+                <div class="info-sub">{{ programme.utilisateur.code_livreur }}</div>
+            </div>
+        </div>
+        <div class="info-card">
+            <div class="info-icon-box"><i class="bi bi-car-front"></i></div>
+            <div>
+                <div class="info-label">Véhicule</div>
+                <div class="info-value">{{ programme.vehicule.immatriculation|default:"—" }}</div>
+            </div>
+        </div>
+        <div class="info-card">
+            <div class="info-icon-box"><i class="bi bi-clock-history"></i></div>
+            <div>
+                <div class="info-label">Horaires</div>
+                <div class="info-value">
+                    {% if programme.heure_debut %}
+                        {{ programme.heure_debut|time:"H:i" }}
+                        {% if programme.heure_fin %}&nbsp;→&nbsp;{{ programme.heure_fin|time:"H:i" }}{% else %}&nbsp;→&nbsp;<span class="text-muted fw-normal">en cours</span>{% endif %}
+                    {% else %}—{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<dl class="row">
-    <dt class="col-sm-3">Livreur</dt><dd class="col-sm-9">{{ programme.utilisateur.code_livreur }} - {{ programme.utilisateur.get_full_name }}</dd>
-    <dt class="col-sm-3">Date</dt><dd class="col-sm-9">{{ programme.date_programme|date:"l j F Y" }}</dd>
-    <dt class="col-sm-3">Vehicule</dt><dd class="col-sm-9">{{ programme.vehicule.immatriculation|default:"-" }}</dd>
-    <dt class="col-sm-3">Demarre a</dt><dd class="col-sm-9">{{ programme.heure_debut|default:"-" }}</dd>
-    <dt class="col-sm-3">Cloture a</dt><dd class="col-sm-9">{{ programme.heure_fin|default:"-" }}</dd>
-</dl>
-
-{# ── Onglets Vue par etapes / Chronologie ── #}
-<ul class="nav nav-tabs mt-4 mb-3" id="progTabs" role="tablist">
+<!-- ── Onglets ── -->
+<ul class="nav nav-tabs mt-0 mb-0" id="progTabs" role="tablist">
     <li class="nav-item">
         <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-etapes">
-            Vue par etapes
+            <i class="bi bi-map me-1"></i>Étapes
+            <span class="tab-count">{{ reconciliation|length }}</span>
         </button>
     </li>
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-timeline">
-            Chronologie
-            {% if timeline %}
-            <span class="badge bg-secondary ms-1">{{ timeline|length }}</span>
-            {% endif %}
+            <i class="bi bi-clock-history me-1"></i>Chronologie
+            {% if timeline %}<span class="tab-count">{{ timeline|length }}</span>{% endif %}
         </button>
     </li>
 </ul>
 
-<div class="tab-content">
+<div class="tab-content tab-body">
 
-{# ──── Onglet 1 : vue par étapes (existant) ──── #}
+<!-- ──── Onglet 1 : étapes ──── -->
 <div class="tab-pane fade show active" id="tab-etapes">
 
-<div class="mb-3 d-flex gap-2 align-items-center">
-    <span class="text-muted small">Filtrer :</span>
-    <a href="?{% if filtre_statut %}&{% endif %}"
-       class="btn btn-sm {% if not filtre_statut %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
-        Toutes
-    </a>
-    <a href="?filtre_statut=A_VISITER"
-       class="btn btn-sm {% if filtre_statut == 'A_VISITER' %}btn-warning{% else %}btn-outline-warning{% endif %}">
-        A visiter
-    </a>
-    <a href="?filtre_statut=VISITEE"
-       class="btn btn-sm {% if filtre_statut == 'VISITEE' %}btn-success{% else %}btn-outline-success{% endif %}">
-        Visitees
-    </a>
-    <a href="?filtre_statut=ECHEC"
-       class="btn btn-sm {% if filtre_statut == 'ECHEC' %}btn-danger{% else %}btn-outline-danger{% endif %}">
-        Echecs
-    </a>
-</div>
-
-{% for r in reconciliation %}
-<div class="card mb-3">
-    <div class="card-header d-flex justify-content-between">
-        <div>
-            <strong>Etape {{ r.etape.ordre_prevu }}</strong> &mdash;
-            {{ r.etape.plv.libelle }}
-            <span class="text-muted">({{ r.etape.plv.client.raison_sociale }})</span>
-        </div>
-        <span class="badge badge-statut-{{ r.etape.statut_visite }}">{{ r.etape.get_statut_visite_display }}</span>
+    <!-- Filtre statut -->
+    <div class="filter-pill-bar mb-4">
+        <span class="filter-pill-label">Filtrer :</span>
+        <a href="?" class="filter-pill {% if not filtre_statut %}active{% endif %}">Toutes</a>
+        <a href="?filtre_statut=A_VISITER"
+           class="filter-pill filter-pill-gray {% if filtre_statut == 'A_VISITER' %}active{% endif %}">
+            <i class="bi bi-hourglass-split"></i> À visiter
+        </a>
+        <a href="?filtre_statut=VISITEE"
+           class="filter-pill filter-pill-green {% if filtre_statut == 'VISITEE' %}active{% endif %}">
+            <i class="bi bi-check-circle"></i> Visitées
+        </a>
+        <a href="?filtre_statut=ECHEC"
+           class="filter-pill filter-pill-red {% if filtre_statut == 'ECHEC' %}active{% endif %}">
+            <i class="bi bi-x-circle"></i> Échecs
+        </a>
     </div>
-    <div class="card-body">
-        {% if r.lignes %}
-        <div class="table-responsive">
-        <table class="table table-sm mb-0">
-            <thead><tr><th>Produit</th><th class="text-end">Prevu</th><th class="text-end">Realise</th><th class="text-end">Ecart</th></tr></thead>
-            <tbody>
-            {% for l in r.lignes %}
-                <tr>
-                    <td>{{ l.produit.libelle }}</td>
-                    <td class="text-end">{{ l.prevu }}</td>
-                    <td class="text-end">{{ l.realise }}</td>
-                    <td class="text-end {% if l.ecart > 0 %}ecart-positif{% elif l.ecart < 0 %}ecart-negatif{% else %}ecart-nul{% endif %}">
-                        {% if l.ecart > 0 %}+{% endif %}{{ l.ecart }}
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-        </div>
-        {% else %}
-        {% if programme.type_programme == "COLLECTE" %}
-        <p class="text-muted mb-0">Programme de collecte : les quantites prevues ne sont pas connues a l'avance. Les realisations s'afficheront apres le push des operations.</p>
-        {% else %}
-        <p class="text-muted mb-0">Aucune ligne prevue ni realisee.</p>
-        {% endif %}
-        {% endif %}
 
-        {% for op in r.etape.operations.all %}
+    <!-- Étapes -->
+    {% for r in reconciliation %}
+    <div class="etape-card etape-{{ r.etape.statut_visite }} mb-3">
+
+        <div class="etape-header">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div class="etape-ordre">{{ r.etape.ordre_prevu }}</div>
+                <div>
+                    <div class="etape-plv">{{ r.etape.plv.libelle }}</div>
+                    <div class="etape-client">
+                        <i class="bi bi-building me-1"></i>{{ r.etape.plv.client.raison_sociale }}
+                    </div>
+                </div>
+            </div>
+            <span class="statut-visite-pill statut-v-{{ r.etape.statut_visite }}">
+                {% if r.etape.statut_visite == "A_VISITER" %}
+                    <i class="bi bi-hourglass-split"></i> À visiter
+                {% elif r.etape.statut_visite == "VISITEE" %}
+                    <i class="bi bi-check-circle-fill"></i> Visitée
+                {% else %}
+                    <i class="bi bi-x-circle-fill"></i> Échec
+                {% endif %}
+            </span>
+        </div>
+
+        <div class="etape-body">
+            {% if r.lignes %}
+            <div class="recon-table-wrap">
+                <table class="recon-table">
+                    <thead>
+                        <tr>
+                            <th>Produit</th>
+                            <th class="text-end">Prévu</th>
+                            <th class="text-end">Réalisé</th>
+                            <th class="text-end">Écart</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for l in r.lignes %}
+                        <tr>
+                            <td><span class="produit-dot"></span>{{ l.produit.libelle }}</td>
+                            <td class="text-end fw-semibold">{{ l.prevu }}</td>
+                            <td class="text-end fw-semibold">{{ l.realise }}</td>
+                            <td class="text-end">
+                                <span class="ecart-badge {% if l.ecart > 0 %}ecart-pos{% elif l.ecart < 0 %}ecart-neg{% else %}ecart-nul{% endif %}">
+                                    {% if l.ecart > 0 %}+{% endif %}{{ l.ecart }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="etape-note">
+                {% if programme.type_programme == "COLLECTE" %}
+                <i class="bi bi-info-circle me-1"></i>
+                Programme de collecte — les quantités prévues ne sont pas connues à l'avance.
+                {% else %}
+                <i class="bi bi-dash-circle me-1"></i>
+                Aucune ligne prévue ni réalisée.
+                {% endif %}
+            </p>
+            {% endif %}
+
+            {% for op in r.etape.operations.all %}
             {% if not op.is_deleted %}
+            <div class="op-link-row mt-3">
                 {% with doc=op.document_x3 %}
                 {% if doc %}
-                <div class="mt-2 p-2 rounded border border-success-subtle bg-success-subtle d-flex align-items-center gap-3">
+                <div class="doc-x3-badge">
                     <span class="badge bg-success">{{ doc.type_document }}</span>
-                    <span class="fw-semibold font-monospace">{{ doc.numero_x3 }}</span>
-                    <span class="text-muted small">{{ doc.statut }}</span>
+                    <span class="doc-numero">{{ doc.numero_x3 }}</span>
+                    <span class="doc-statut">{{ doc.statut }}</span>
                     {% if doc.bcr %}
-                    <span class="text-muted small">&#8594; BCR : <span class="font-monospace">{{ doc.bcr.numero_x3 }}</span></span>
+                    <span class="doc-bcr">→ BCR <span class="font-monospace">{{ doc.bcr.numero_x3 }}</span></span>
                     {% endif %}
-                    <span class="text-muted small ms-auto">{{ doc.created_at|date:"d/m/Y H:i" }}</span>
+                    <span class="doc-date ms-auto">{{ doc.created_at|date:"d/m H:i" }}</span>
                 </div>
                 {% endif %}
                 {% endwith %}
-                <div class="mt-2">
-                    <a href="{% url 'supervision:operation-detail' op.uuid %}"
-                       class="btn btn-sm btn-outline-primary">
-                        Voir le detail (signatures, photos, GPS) &rarr;
-                    </a>
-                </div>
+                <a href="{% url 'supervision:operation-detail' op.uuid %}" class="btn-op-detail">
+                    <i class="bi bi-eye me-1"></i>Signatures, photos, GPS
+                    <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
             {% endif %}
-        {% endfor %}
+            {% endfor %}
+        </div>
+
     </div>
-</div>
-{% empty %}
-<div class="alert alert-info">Pas d'etapes dans ce programme.</div>
-{% endfor %}
+    {% empty %}
+    <div class="empty-state text-center">
+        <i class="bi bi-map"></i>
+        <p class="empty-title">Aucune étape</p>
+        <p class="empty-sub">Ce programme ne contient pas encore d'étapes.</p>
+    </div>
+    {% endfor %}
 
 </div>{# /tab-etapes #}
 
-{# ──── Onglet 2 : chronologie ──── #}
+<!-- ──── Onglet 2 : chronologie ──── -->
 <div class="tab-pane fade" id="tab-timeline">
 {% if timeline %}
-<p class="text-muted small mb-3">
-    Les operations sont listees dans l'ordre chronologique reel (heure de saisie).
-    La colonne <strong>Circuit #</strong> indique la position prevue dans le circuit optimise.
-    Une sequence croissante signifie que le livreur a suivi l'ordre recommande.
+<p class="text-muted small mb-4">
+    Opérations dans l'ordre chronologique réel.
+    <strong>Circuit #</strong> = position dans le circuit optimisé.
+    Une séquence croissante signifie que le livreur suit l'ordre recommandé.
 </p>
-<div class="card">
-    <div class="card-body p-0">
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th class="text-center" style="width:52px;">#</th>
-                    <th>Heure</th>
-                    <th>PLV</th>
-                    <th class="text-center">Circuit #</th>
-                    <th>Type</th>
-                    <th>Ecart ordre</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in timeline %}
-                <tr class="{% if not item.conforme %}table-warning{% endif %}">
-                    <td class="text-center fw-bold text-muted">{{ forloop.counter }}</td>
-                    <td class="font-monospace">{{ item.op.date_heure|date:"H:i" }}</td>
-                    <td>
-                        {{ item.op.etape.plv.libelle }}
-                    </td>
-                    <td class="text-center">
-                        <span class="badge {% if item.conforme %}bg-success{% else %}bg-warning text-dark{% endif %}">
-                            {{ item.op.etape.ordre_prevu }}
-                        </span>
-                    </td>
-                    <td>
-                        {% if item.op.type_operation == "COLLECTE" %}
-                        <span class="badge bg-primary">Collecte</span>
-                        {% else %}
-                        <span class="badge bg-success">Restitution</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if item.conforme %}
-                        <span class="text-success small">&#10003; Conforme</span>
-                        {% else %}
-                        <span class="text-warning small">&#9888; Hors ordre</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{% url 'supervision:operation-detail' item.op.uuid %}"
-                           class="btn btn-sm btn-outline-primary">Detail</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+
+<div class="timeline">
+{% for item in timeline %}
+<div class="tl-item {% if not item.conforme %}tl-hors-ordre{% endif %}">
+    <div class="tl-dot {% if item.conforme %}tl-dot-ok{% else %}tl-dot-warn{% endif %}"></div>
+    <div class="tl-card">
+        <div class="tl-row">
+            <span class="tl-time"><i class="bi bi-clock me-1"></i>{{ item.op.date_heure|date:"H:i" }}</span>
+            <span class="tl-plv">{{ item.op.etape.plv.libelle }}</span>
+            <span class="tl-circuit {% if item.conforme %}tl-circuit-ok{% else %}tl-circuit-warn{% endif %}">
+                #{{ item.op.etape.ordre_prevu }}
+            </span>
+            {% if item.op.type_operation == "COLLECTE" %}
+            <span class="type-chip type-collecte" style="font-size:.68rem;padding:.2rem .55rem;">Collecte</span>
+            {% else %}
+            <span class="type-chip type-restitution" style="font-size:.68rem;padding:.2rem .55rem;">Restitution</span>
+            {% endif %}
+            {% if item.conforme %}
+            <span class="tl-conform"><i class="bi bi-check-lg"></i> Conforme</span>
+            {% else %}
+            <span class="tl-nonconform"><i class="bi bi-exclamation-triangle"></i> Hors ordre</span>
+            {% endif %}
+            <a href="{% url 'supervision:operation-detail' item.op.uuid %}" class="btn-op-detail ms-auto">
+                Détail <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
     </div>
 </div>
+{% endfor %}
+</div>
+
 {% else %}
-<div class="alert alert-info">Aucune operation saisie pour ce programme.</div>
+<div class="empty-state text-center">
+    <i class="bi bi-clock-history"></i>
+    <p class="empty-title">Aucune opération saisie</p>
+    <p class="empty-sub">La chronologie s'affichera dès que des opérations auront été synchronisées.</p>
+</div>
 {% endif %}
 </div>{# /tab-timeline #}
 
 </div>{# /tab-content #}
+
+<style>
+/* ─── Retour ─── */
+.back-link {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .82rem; font-weight: 600; color: #1a7fba;
+    text-decoration: none; margin-bottom: 1.2rem;
+    transition: gap .15s;
+}
+.back-link:hover { gap: .55rem; color: #1568a0; }
+
+/* ─── En-tête ─── */
+.detail-header {
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
+    padding: 1.4rem 1.5rem 1.25rem;
+    border-left: 4px solid #1a7fba;
+    margin-bottom: 1.5rem;
+}
+.pg-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: rgba(26,127,186,.1);
+    display: flex; align-items: center; justify-content: center;
+    color: #1a7fba; font-size: 1.3rem; flex-shrink: 0;
+}
+.type-chip {
+    font-size: .72rem; font-weight: 700;
+    padding: .25rem .65rem; border-radius: 20px;
+    display: inline-flex; align-items: center; gap: .3rem;
+}
+.type-collecte    { background: #dbeafe; color: #1d4ed8; }
+.type-restitution { background: #dcfce7; color: #166534; }
+.statut-pill {
+    font-size: .73rem; font-weight: 700; padding: .3rem .85rem;
+    border-radius: 20px; display: inline-flex; align-items: center; gap: .35rem;
+}
+.statut-PLANIFIE { background: #f1f3f5; color: #6c757d; }
+.statut-EN_COURS  { background: #dbeafe; color: #1a7fba; }
+.statut-CLOTURE   { background: #d1f5e0; color: #198754; }
+
+/* Info row */
+.info-row { display: flex; flex-wrap: wrap; gap: .75rem; }
+.info-card {
+    display: flex; align-items: center; gap: .75rem;
+    background: #f8fafc; border-radius: 10px;
+    padding: .65rem 1rem; border: 1px solid #eef1f6;
+    flex: 1; min-width: 150px;
+}
+.info-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, #1a7fba, #1568a0);
+    color: #fff; font-size: .88rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(26,127,186,.3);
+}
+.info-icon-box {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(26,127,186,.1);
+    display: flex; align-items: center; justify-content: center;
+    color: #1a7fba; font-size: 1.1rem; flex-shrink: 0;
+}
+.info-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #94a3b8; }
+.info-value { font-size: .88rem; font-weight: 700; color: #1a2332; margin-top: .1rem; }
+.info-sub   { font-size: .72rem; color: #94a3b8; }
+
+/* ─── Onglets ─── */
+.nav-tabs { border-bottom: 2px solid #eef1f6; }
+.nav-tabs .nav-link {
+    display: flex; align-items: center; gap: .4rem;
+    font-weight: 600; font-size: .88rem; color: #6c757d;
+    border: none; padding: .7rem 1.1rem; border-radius: 0;
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
+}
+.nav-tabs .nav-link:hover { color: #1a2332; border-bottom-color: #cbd5e1; }
+.nav-tabs .nav-link.active { color: #1a7fba; border-bottom-color: #1a7fba; background: none; }
+.tab-count {
+    background: #e8f4fc; color: #1a7fba;
+    font-size: .68rem; font-weight: 700;
+    padding: .12rem .5rem; border-radius: 20px;
+}
+.nav-tabs .nav-link.active .tab-count { background: rgba(26,127,186,.15); }
+.tab-body { padding-top: 1.5rem; }
+
+/* ─── Filtre pills ─── */
+.filter-pill-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.filter-pill-label {
+    font-size: .72rem; font-weight: 700; color: #94a3b8;
+    text-transform: uppercase; letter-spacing: .06em;
+}
+.filter-pill {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .32rem .85rem; border-radius: 20px;
+    font-size: .78rem; font-weight: 600; text-decoration: none;
+    background: #f1f5f9; color: #64748b;
+    transition: all .15s;
+}
+.filter-pill:hover { background: #e2e8f0; color: #1a2332; }
+.filter-pill.active               { background: #1a2332; color: #fff; }
+.filter-pill-gray.active          { background: #6c757d; color: #fff; }
+.filter-pill-green.active         { background: #198754; color: #fff; }
+.filter-pill-red.active           { background: #dc3545; color: #fff; }
+
+/* ─── Étape cards ─── */
+.etape-card {
+    background: #fff; border-radius: 12px;
+    border-left: 4px solid #94a3b8;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
+    overflow: hidden; transition: box-shadow .18s;
+}
+.etape-card:hover { box-shadow: 0 4px 18px rgba(10,22,40,.1); }
+.etape-A_VISITER { border-left-color: #94a3b8; }
+.etape-VISITEE   { border-left-color: #198754; }
+.etape-ECHEC     { border-left-color: #dc3545; }
+
+.etape-header {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: .5rem;
+    padding: .9rem 1.25rem;
+    background: #f8fafc; border-bottom: 1px solid #eef1f6;
+}
+.etape-ordre {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: #64748b; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; font-weight: 700; flex-shrink: 0;
+}
+.etape-VISITEE .etape-ordre { background: #198754; }
+.etape-ECHEC   .etape-ordre { background: #dc3545; }
+.etape-plv    { font-size: .92rem; font-weight: 700; color: #1a2332; }
+.etape-client { font-size: .76rem; color: #94a3b8; margin-top: .12rem; }
+
+.statut-visite-pill {
+    font-size: .72rem; font-weight: 700;
+    padding: .3rem .85rem; border-radius: 20px;
+    display: inline-flex; align-items: center; gap: .35rem;
+}
+.statut-v-A_VISITER { background: #f1f3f5; color: #6c757d; }
+.statut-v-VISITEE   { background: #d1f5e0; color: #198754; }
+.statut-v-ECHEC     { background: #fde8e8; color: #dc3545; }
+
+.etape-body { padding: 1rem 1.25rem; }
+.etape-note {
+    font-size: .82rem; color: #94a3b8;
+    background: #f8fafc; border-radius: 8px;
+    padding: .65rem 1rem; margin: 0;
+}
+
+/* ─── Tableau réconciliation ─── */
+.recon-table-wrap { border-radius: 8px; overflow: hidden; border: 1px solid #eef1f6; }
+.recon-table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+.recon-table thead th {
+    background: #f8fafc; padding: .5rem 1rem;
+    font-size: .67rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: #94a3b8; border-bottom: 1px solid #eef1f6;
+}
+.recon-table tbody td {
+    padding: .55rem 1rem; border-bottom: 1px solid #f0f2f5;
+    color: #1a2332; vertical-align: middle;
+}
+.recon-table tbody tr:last-child td { border-bottom: none; }
+.recon-table tbody tr:hover td { background: #f8fafc; }
+.produit-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: #1a7fba; margin-right: .4rem; vertical-align: middle;
+}
+.ecart-badge {
+    display: inline-block; padding: .18rem .55rem;
+    border-radius: 20px; font-size: .78rem; font-weight: 700;
+}
+.ecart-pos { background: #d1f5e0; color: #198754; }
+.ecart-neg { background: #fde8e8; color: #dc3545; }
+.ecart-nul { background: #f1f5f9; color: #94a3b8; }
+
+/* ─── Document X3 ─── */
+.doc-x3-badge {
+    display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+    background: #f0fdf4; border: 1px solid #bbf7d0;
+    border-radius: 8px; padding: .55rem .85rem;
+    font-size: .8rem; margin-bottom: .5rem;
+}
+.doc-numero { font-family: 'SFMono-Regular', Consolas, monospace; font-weight: 600; color: #1a2332; }
+.doc-statut { color: #6c757d; }
+.doc-bcr    { color: #198754; }
+.doc-date   { color: #94a3b8; font-size: .72rem; }
+
+/* ─── Lien opération ─── */
+.op-link-row { display: flex; flex-direction: column; gap: .4rem; }
+.btn-op-detail {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .42rem .9rem; border-radius: 8px;
+    font-size: .79rem; font-weight: 600;
+    background: rgba(26,127,186,.08); color: #1a7fba;
+    border: 1.5px solid rgba(26,127,186,.2);
+    text-decoration: none; transition: all .15s; align-self: flex-start;
+}
+.btn-op-detail:hover { background: #1a7fba; color: #fff; border-color: #1a7fba; }
+
+/* ─── Timeline ─── */
+.timeline {
+    display: flex; flex-direction: column;
+    position: relative; padding-left: 2rem;
+}
+.timeline::before {
+    content: ''; position: absolute;
+    left: .55rem; top: 1rem; bottom: 1rem;
+    width: 2px; background: #e2e8f0; border-radius: 2px;
+}
+.tl-item { position: relative; padding-bottom: .85rem; }
+.tl-dot {
+    position: absolute; left: -1.65rem; top: 1rem;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2.5px solid #fff; z-index: 1;
+}
+.tl-dot-ok   { background: #198754; box-shadow: 0 0 0 2.5px #d1f5e0; }
+.tl-dot-warn { background: #f47920; box-shadow: 0 0 0 2.5px rgba(244,121,32,.2); }
+
+.tl-card {
+    background: #fff; border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 2px 8px rgba(10,22,40,.04);
+    padding: .75rem 1rem;
+    border-left: 3px solid transparent;
+}
+.tl-hors-ordre .tl-card { border-left-color: #f47920; background: #fffaf6; }
+
+.tl-row {
+    display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+}
+.tl-time {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: .8rem; font-weight: 700; color: #1a2332; flex-shrink: 0;
+}
+.tl-plv    { font-size: .88rem; font-weight: 600; color: #1a2332; flex: 1; min-width: 100px; }
+.tl-circuit {
+    font-size: .72rem; font-weight: 700;
+    padding: .22rem .6rem; border-radius: 6px; flex-shrink: 0;
+}
+.tl-circuit-ok   { background: #d1f5e0; color: #198754; }
+.tl-circuit-warn { background: rgba(244,121,32,.12); color: #c45a00; }
+.tl-conform    { font-size: .75rem; font-weight: 600; color: #198754; display: flex; align-items: center; gap: .25rem; }
+.tl-nonconform { font-size: .75rem; font-weight: 600; color: #f47920; display: flex; align-items: center; gap: .25rem; }
+
+/* ─── Empty state ─── */
+.empty-state {
+    background: #fff; border-radius: 12px; padding: 3rem 2rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.empty-state i    { font-size: 3rem; color: #cbd5e1; }
+.empty-title { font-weight: 700; color: #6c757d; margin: .8rem 0 .25rem; }
+.empty-sub   { font-size: .85rem; color: #94a3b8; }
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+    .info-row      { flex-direction: column; }
+    .tl-row        { gap: .45rem; }
+    .btn-op-detail { align-self: stretch; justify-content: center; }
+    .etape-header  { flex-direction: column; align-items: flex-start; }
+}
+</style>
+
 {% endblock %}

@@ -1,8 +1,6 @@
 """Vues des opérations terrain (liste, détail, export CSV)."""
 import csv
 
-from django.db.models import DecimalField, Sum
-from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
 
@@ -30,27 +28,31 @@ def operations_list(request):
     livreur_code = request.GET.get("livreur", "").strip()
     type_filter = request.GET.get("type", "").strip()
 
-    operations = _filter_operations(
+    operations = list(_filter_operations(
         Operation.objects
         .filter(etape__programme__date_programme=date_filter, is_deleted=False)
         .select_related("etape__plv__client", "etape__programme__utilisateur")
         .order_by("-date_heure"),
         livreur_code,
         type_filter,
-    )
+    ))
 
     livreurs = Utilisateur.objects.filter(role=Role.LIVREUR, is_active=True).order_by("code_livreur")
-    total_montant = operations.aggregate(
-        total=Coalesce(Sum("montant_total"), 0, output_field=DecimalField())
-    )["total"]
+    nb_total       = len(operations)
+    nb_collecte    = sum(1 for op in operations if op.type_operation == "COLLECTE")
+    nb_restitution = sum(1 for op in operations if op.type_operation == "RESTITUTION")
+    total_montant  = sum(op.montant_total or 0 for op in operations)
 
     return render(request, "supervision/operations_list.html", {
-        "operations": operations,
-        "date_filter": date_filter,
-        "livreur_code": livreur_code,
-        "type_filter": type_filter,
-        "livreurs": livreurs,
-        "total_montant": total_montant,
+        "operations":     operations,
+        "date_filter":    date_filter,
+        "livreur_code":   livreur_code,
+        "type_filter":    type_filter,
+        "livreurs":       livreurs,
+        "total_montant":  total_montant,
+        "nb_total":       nb_total,
+        "nb_collecte":    nb_collecte,
+        "nb_restitution": nb_restitution,
     })
 
 

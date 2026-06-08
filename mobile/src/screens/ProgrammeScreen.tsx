@@ -158,62 +158,124 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
     <View style={styles.container}>
       {programme && (
         <View style={styles.header}>
-          <Text style={styles.numero}>{programme.numero_x3}</Text>
-          <Text style={styles.meta}>
-            {programme.type_programme === 'COLLECTE' ? 'Collecte' : 'Restitution'} · {programme.date_programme}
-          </Text>
-          <View style={styles.progressionRow}>
-            <View style={styles.progressionBar}>
-              <View style={[
-                styles.progressionFill,
-                { width: `${progression.total > 0 ? Math.round(progression.visitees / progression.total * 100) : 0}%` as any },
-              ]} />
+          {/* Cercles décoratifs arrière-plan */}
+          <View style={styles.bgCircle1} pointerEvents="none" />
+          <View style={styles.bgCircle2} pointerEvents="none" />
+
+          {/* ── Zone navy : identifiant + compteurs + progression ── */}
+          <View style={styles.headerNavy}>
+
+            {/* Numéro + chips statut/type */}
+            <View style={styles.headerTopRow}>
+              <Text style={styles.numero}>{programme.numero_x3}</Text>
+              <View style={styles.headerChips}>
+                <View style={[
+                  styles.typeChip,
+                  programme.type_programme === 'COLLECTE' ? styles.typeChipCollecte : styles.typeChipRestit,
+                ]}>
+                  <Text style={styles.typeChipText}>
+                    {programme.type_programme === 'COLLECTE' ? 'Collecte' : 'Restitution'}
+                  </Text>
+                </View>
+                <View style={[
+                  styles.statutChip,
+                  programme.statut === 'CLOTURE' ? styles.statutCloture :
+                  programme.statut === 'EN_COURS' ? styles.statutEnCours : styles.statutPlanifie,
+                ]}>
+                  <Text style={styles.statutChipText}>
+                    {programme.statut === 'CLOTURE' ? 'Clôturé' :
+                     programme.statut === 'EN_COURS' ? 'En cours' : 'Planifié'}
+                  </Text>
+                </View>
+              </View>
             </View>
-            <Text style={styles.progressionLabel}>
-              {progression.visitees}/{progression.total} visitées
-            </Text>
-            {progression.echec > 0 && (
-              <View style={styles.echecCount}>
-                <Text style={styles.echecCountText}>{progression.echec} échec</Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.triBar}>
-            {TRI_MODES.map((m) => (
-              <TouchableOpacity
-                key={m.key}
-                style={[styles.triBtn, triMode === m.key && styles.triBtnActive]}
-                onPress={() => setTriMode(m.key)}
-              >
-                <Text style={[styles.triBtnText, triMode === m.key && styles.triBtnTextActive]}>
-                  {m.label}
+
+            {/* Date */}
+            <Text style={styles.dateText}>{programme.date_programme}</Text>
+
+            {/* Compteurs */}
+            <View style={styles.statsRow}>
+              <View style={styles.statBox}>
+                <Text style={styles.statNum}>{progression.visitees}</Text>
+                <Text style={styles.statLabel}>
+                  {progression.visitees > 1 ? 'visitées' : 'visitée'}
                 </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('MesAnomalies', {
-                programmeUuid: programme.uuid,
-                programmeNumero: programme.numero_x3,
-              })}
-            >
-              <Text style={styles.voirAnomaliesLink}>Voir les anomalies &rsaquo;</Text>
-            </TouchableOpacity>
-            {programme.statut !== 'CLOTURE' && (
-              <TouchableOpacity
-                style={styles.clotureBtn}
-                onPress={() => navigation.navigate('Cloture', { programmeId: programme.id })}
-              >
-                <Text style={styles.clotureBtnText}>Clôturer le programme</Text>
-              </TouchableOpacity>
-            )}
-            {programme.statut === 'CLOTURE' && (
-              <View style={styles.clotureBadge}>
-                <Text style={styles.clotureBadgeText}>Programme clôturé — saisie impossible</Text>
               </View>
-            )}
+              <View style={[styles.statBox, progression.echec > 0 && styles.statBoxEchec]}>
+                <Text style={[styles.statNum, progression.echec > 0 && styles.statNumEchec]}>
+                  {progression.echec}
+                </Text>
+                <Text style={styles.statLabel}>échec</Text>
+              </View>
+              <View style={styles.statBox}>
+                <Text style={[styles.statNum, styles.statNumAFaire]}>
+                  {Math.max(0, progression.total - progression.visitees - progression.echec)}
+                </Text>
+                <Text style={styles.statLabel}>à faire</Text>
+              </View>
+            </View>
+
+            {/* Barre de progression bicolore */}
+            <View style={styles.progressRow}>
+              <View style={styles.progressBar}>
+                <View style={[styles.progressVisitee, {
+                  flex: progression.total > 0 ? progression.visitees / progression.total : 0,
+                }]} />
+                {progression.echec > 0 && (
+                  <View style={[styles.progressEchec, {
+                    flex: progression.echec / progression.total,
+                  }]} />
+                )}
+              </View>
+              <Text style={styles.progressPct}>
+                {progression.total > 0
+                  ? Math.round(progression.visitees / progression.total * 100)
+                  : 0}%
+              </Text>
+            </View>
+
           </View>
+
+          {/* ── Tiroir blanc : tri + actions ── */}
+          <View style={styles.headerWhite}>
+            <View style={styles.triBar}>
+              {TRI_MODES.map((m) => (
+                <TouchableOpacity
+                  key={m.key}
+                  style={[styles.triBtn, triMode === m.key && styles.triBtnActive]}
+                  onPress={() => setTriMode(m.key)}
+                >
+                  <Text style={[styles.triBtnText, triMode === m.key && styles.triBtnTextActive]}>
+                    {m.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={styles.actionsRow}>
+              <TouchableOpacity
+                style={styles.anomaliesBtn}
+                onPress={() => navigation.navigate('MesAnomalies', {
+                  programmeUuid: programme.uuid,
+                  programmeNumero: programme.numero_x3,
+                })}
+              >
+                <Text style={styles.anomaliesBtnText}>! Anomalies</Text>
+              </TouchableOpacity>
+              {programme.statut !== 'CLOTURE' ? (
+                <TouchableOpacity
+                  style={styles.clotureBtn}
+                  onPress={() => navigation.navigate('Cloture', { programmeId: programme.id })}
+                >
+                  <Text style={styles.clotureBtnText}>Clôturer →</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.clotureDoneBadge}>
+                  <Text style={styles.clotureDoneText}>✓ Programme clôturé</Text>
+                </View>
+              )}
+            </View>
+          </View>
+
         </View>
       )}
       <FlatList
@@ -244,37 +306,127 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { backgroundColor: '#1a7fba', padding: 16 },
-  numero: { fontSize: 18, fontWeight: '700', color: '#fff' },
-  meta: { fontSize: 13, color: '#d0e8f5', marginTop: 2 },
-  progressionRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
-  progressionBar: {
-    flex: 1, height: 8, backgroundColor: 'rgba(255,255,255,0.25)',
-    borderRadius: 4, overflow: 'hidden',
+  // ── Header global
+  header: { backgroundColor: '#0a1628', overflow: 'hidden' },
+  bgCircle1: {
+    position: 'absolute', width: 220, height: 220, borderRadius: 110,
+    backgroundColor: 'rgba(26,127,186,0.22)', top: -70, right: -50, zIndex: 0,
   },
-  progressionFill: { height: 8, backgroundColor: '#fff', borderRadius: 4 },
-  progressionLabel: { fontSize: 12, color: '#d0e8f5', fontWeight: '600' },
-  echecCount: {
-    backgroundColor: 'rgba(220,53,69,0.85)', paddingHorizontal: 8, paddingVertical: 2,
-    borderRadius: 10,
+  bgCircle2: {
+    position: 'absolute', width: 130, height: 130, borderRadius: 65,
+    backgroundColor: 'rgba(26,127,186,0.12)', top: 55, right: 95, zIndex: 0,
   },
-  echecCountText: { fontSize: 11, color: '#fff', fontWeight: '700' },
+
+  // ── Zone navy
+  headerNavy: { padding: 16, paddingBottom: 18, zIndex: 1 },
+  headerTopRow: {
+    flexDirection: 'row' as const, alignItems: 'center' as const,
+    justifyContent: 'space-between' as const, flexWrap: 'wrap' as const,
+    gap: 8, marginBottom: 2,
+  },
+  numero: { fontSize: 20, fontWeight: '800' as const, color: '#fff', letterSpacing: -0.5 },
+  headerChips: { flexDirection: 'row' as const, gap: 6 },
+
+  typeChip: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20 },
+  typeChipCollecte: {
+    backgroundColor: 'rgba(26,127,186,0.4)', borderWidth: 1,
+    borderColor: 'rgba(96,165,250,0.55)',
+  },
+  typeChipRestit: {
+    backgroundColor: 'rgba(25,135,84,0.4)', borderWidth: 1,
+    borderColor: 'rgba(74,222,128,0.55)',
+  },
+  typeChipText: { fontSize: 11, fontWeight: '700' as const, color: '#e2e8f0' },
+
+  statutChip: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20 },
+  statutCloture: {
+    backgroundColor: 'rgba(25,135,84,0.3)', borderWidth: 1,
+    borderColor: 'rgba(74,222,128,0.45)',
+  },
+  statutEnCours: {
+    backgroundColor: 'rgba(244,121,32,0.3)', borderWidth: 1,
+    borderColor: 'rgba(251,146,60,0.5)',
+  },
+  statutPlanifie: {
+    backgroundColor: 'rgba(148,163,184,0.2)', borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.3)',
+  },
+  statutChipText: { fontSize: 11, fontWeight: '700' as const, color: '#e2e8f0' },
+
+  dateText: { fontSize: 12, color: 'rgba(255,255,255,0.48)', marginBottom: 14, marginTop: 3 },
+
+  // ── Compteurs
+  statsRow: { flexDirection: 'row' as const, gap: 8, marginBottom: 14 },
+  statBox: {
+    flex: 1, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 10,
+    paddingVertical: 10, alignItems: 'center' as const,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+  },
+  statBoxEchec: {
+    backgroundColor: 'rgba(220,53,69,0.22)',
+    borderColor: 'rgba(220,53,69,0.38)',
+  },
+  statNum: { fontSize: 22, fontWeight: '800' as const, color: '#fff', lineHeight: 26 },
+  statNumEchec:  { color: '#fca5a5' },
+  statNumAFaire: { color: '#fdba74' },
+  statLabel: {
+    fontSize: 10, fontWeight: '600' as const,
+    color: 'rgba(255,255,255,0.48)', marginTop: 2,
+    textTransform: 'uppercase' as const, letterSpacing: 0.4,
+  },
+
+  // ── Progression bicolore
+  progressRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 10 },
+  progressBar: {
+    flex: 1, height: 6, backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 3, flexDirection: 'row' as const, overflow: 'hidden' as const,
+  },
+  progressVisitee: { height: 6, backgroundColor: '#4ade80', borderRadius: 3 },
+  progressEchec:   { height: 6, backgroundColor: '#f87171' },
+  progressPct: {
+    fontSize: 12, fontWeight: '700' as const, color: 'rgba(255,255,255,0.62)',
+    minWidth: 32, textAlign: 'right' as const,
+  },
+
+  // ── Tiroir blanc
+  headerWhite: {
+    backgroundColor: '#f8fafc',
+    borderTopLeftRadius: 18, borderTopRightRadius: 18,
+    paddingTop: 14, paddingHorizontal: 12, paddingBottom: 10,
+  },
   triBar: {
-    flexDirection: 'row', marginTop: 12,
-    backgroundColor: 'rgba(0,0,0,0.18)', borderRadius: 8, padding: 3, gap: 3,
+    flexDirection: 'row' as const, backgroundColor: '#eef1f6',
+    borderRadius: 10, padding: 3, gap: 3, marginBottom: 10,
   },
-  triBtn: { flex: 1, paddingVertical: 6, borderRadius: 6, alignItems: 'center' },
-  triBtnActive: { backgroundColor: '#fff' },
-  triBtnText: { fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.7)' },
+  triBtn: { flex: 1, paddingVertical: 7, borderRadius: 8, alignItems: 'center' as const },
+  triBtnActive: {
+    backgroundColor: '#fff',
+    shadowColor: '#0a1628', shadowOpacity: 0.09, shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 }, elevation: 2,
+  },
+  triBtnText: { fontSize: 12, fontWeight: '600' as const, color: '#94a3b8' },
   triBtnTextActive: { color: '#1a7fba' },
-  headerActions: { marginTop: 10, gap: 6 },
-  voirAnomaliesLink: { fontSize: 13, color: '#d0e8f5', textDecorationLine: 'underline' },
-  clotureBtn: {
-    marginTop: 4, padding: 10, borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)',
-    alignItems: 'center',
+
+  // ── Actions
+  actionsRow: { flexDirection: 'row' as const, gap: 8, alignItems: 'center' as const },
+  anomaliesBtn: {
+    paddingVertical: 9, paddingHorizontal: 14, borderRadius: 9,
+    backgroundColor: 'rgba(244,121,32,0.07)',
+    borderWidth: 1.5, borderColor: 'rgba(244,121,32,0.28)',
   },
-  clotureBtnText: { color: '#fff', fontWeight: '700' },
+  anomaliesBtnText: { fontSize: 13, fontWeight: '700' as const, color: '#c45a00' },
+  clotureBtn: {
+    flex: 1, paddingVertical: 9, borderRadius: 9,
+    backgroundColor: '#0a1628', alignItems: 'center' as const,
+  },
+  clotureBtnText: { color: '#fff', fontWeight: '700' as const, fontSize: 13 },
+  clotureDoneBadge: {
+    flex: 1, paddingVertical: 9, borderRadius: 9,
+    backgroundColor: 'rgba(25,135,84,0.08)',
+    borderWidth: 1.5, borderColor: 'rgba(25,135,84,0.3)',
+    alignItems: 'center' as const,
+  },
+  clotureDoneText: { color: '#198754', fontWeight: '700' as const, fontSize: 12 },
   list: { padding: 12 },
   card: {
     backgroundColor: '#fff',
@@ -314,11 +466,6 @@ const styles = StyleSheet.create({
   itineraireTxt: { fontSize: 12, fontWeight: '700', color: '#1a7fba' },
   empty: { textAlign: 'center', color: '#888', padding: 32 },
   cardDisabled: { opacity: 0.45 },
-  clotureBadge: {
-    marginTop: 4, padding: 10, borderRadius: 8,
-    backgroundColor: 'rgba(25,135,84,0.85)', alignItems: 'center',
-  },
-  clotureBadgeText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   fab: {
     position: 'absolute', bottom: 20, right: 16,
     backgroundColor: '#fd7e14',

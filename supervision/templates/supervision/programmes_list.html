@@ -1,78 +1,307 @@
 {% extends "supervision/base.html" %}
 {% block title %}Programmes{% endblock %}
 {% block content %}
-<div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+
+<!-- ── En-tête ── -->
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
     <div>
-        <p class="page-title"><i class="bi bi-truck me-2 text-primary"></i>Programmes</p>
-        <p class="page-sub">{{ date_filter|date:"l j F Y"|capfirst }}</p>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="pg-icon"><i class="bi bi-truck"></i></span>
+            <h1 class="page-title mb-0">Programmes</h1>
+        </div>
+        <p class="page-sub mb-0">
+            <i class="bi bi-calendar3 me-1"></i>{{ date_filter|date:"l j F Y"|capfirst }}
+        </p>
     </div>
-    <form method="get" class="d-flex gap-2 flex-wrap filter-form">
-        <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}" class="form-control form-control-sm" style="width:auto;">
-        <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-funnel me-1"></i>Filtrer</button>
-    </form>
+    <!-- KPI pills -->
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <div class="kpi-pill">
+            <span class="kpi-pill-n">{{ nb_total }}</span>
+            <span class="kpi-pill-l">Total</span>
+        </div>
+        <div class="kpi-pill kpi-pill-gray">
+            <span class="kpi-pill-n">{{ nb_planifie }}</span>
+            <span class="kpi-pill-l">Planifiés</span>
+        </div>
+        <div class="kpi-pill kpi-pill-blue">
+            <span class="kpi-pill-n">{{ nb_en_cours }}</span>
+            <span class="kpi-pill-l">En cours</span>
+        </div>
+        <div class="kpi-pill kpi-pill-green">
+            <span class="kpi-pill-n">{{ nb_cloture }}</span>
+            <span class="kpi-pill-l">Clôturés</span>
+        </div>
+    </div>
 </div>
 
-{% if programmes %}
-<div class="table-responsive table-card">
-<table class="table table-hover mb-0">
-    <thead>
-        <tr>
-            <th>N° X3</th>
-            <th>Livreur</th>
-            <th>Type</th>
-            <th>Véhicule</th>
-            <th>Statut</th>
-            <th>Progression</th>
-            <th>Échecs</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for p in programmes %}
-        <tr>
-            <td><code class="text-secondary">{{ p.numero_x3 }}</code></td>
-            <td>
-                <span class="fw-semibold">{{ p.utilisateur.code_livreur }}</span>
-                <span class="text-muted"> — {{ p.utilisateur.get_full_name }}</span>
-            </td>
-            <td>
-                {% if p.type_programme == "COLLECTE" %}
-                <span class="badge bg-primary">Collecte</span>
-                {% else %}
-                <span class="badge bg-success">Restitution</span>
-                {% endif %}
-            </td>
-            <td class="text-muted">{{ p.vehicule.immatriculation|default:"—" }}</td>
-            <td><span class="badge badge-statut-{{ p.statut }}">{{ p.get_statut_display }}</span></td>
-            <td style="min-width:130px;">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="progress flex-grow-1" style="height:7px;" title="{{ p.etapes_visitees }}/{{ p.total_etapes }} étapes visitées">
-                        {% if p.total_etapes > 0 %}
-                        <div class="progress-bar {% if p.statut == 'CLOTURE' %}bg-success{% endif %}" role="progressbar"
-                             style="width:{% widthratio p.etapes_visitees p.total_etapes 100 %}%"></div>
-                        {% endif %}
-                    </div>
-                    <small class="text-muted text-nowrap">{{ p.etapes_visitees }}/{{ p.total_etapes }}</small>
-                </div>
-            </td>
-            <td>
-                {% if p.etapes_echec > 0 %}
-                <span class="badge bg-danger">{{ p.etapes_echec }} échec{% if p.etapes_echec > 1 %}s{% endif %}</span>
-                {% else %}
-                <span class="text-muted">—</span>
-                {% endif %}
-            </td>
-            <td>
-                <a href="{% url 'supervision:programme-detail' p.id %}" class="btn btn-sm btn-outline-primary">
-                    Détail <i class="bi bi-chevron-right"></i>
-                </a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<!-- ── Filtre + navigation dates ── -->
+<div class="filter-card mb-4">
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <i class="bi bi-funnel text-muted"></i>
+        <form method="get" class="d-flex gap-2 align-items-center">
+            <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}"
+                   class="form-control form-control-sm" style="width:auto;">
+            <button type="submit" class="btn btn-sm btn-primary px-3">
+                <i class="bi bi-search me-1"></i>Filtrer
+            </button>
+        </form>
+        <div class="ms-auto d-flex gap-1">
+            <a href="?date={{ date_prev|date:'Y-m-d' }}"
+               class="btn btn-sm btn-outline-secondary" title="Jour précédent">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+            <a href="?date={{ date_today|date:'Y-m-d' }}"
+               class="btn btn-sm {% if date_filter == date_today %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                Aujourd'hui
+            </a>
+            <a href="?date={{ date_next|date:'Y-m-d' }}"
+               class="btn btn-sm btn-outline-secondary" title="Jour suivant">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </div>
+    </div>
 </div>
+
+<!-- ── Liste des programmes ── -->
+{% if programmes %}
+<div class="prog-list">
+    {% for p in programmes %}
+    <div class="prog-card prog-{{ p.statut }}">
+        <div class="prog-card-inner">
+
+            <!-- Ligne 1 : identité + statut -->
+            <div class="prog-row-top">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="prog-numero">{{ p.numero_x3 }}</span>
+                    {% if p.type_programme == "COLLECTE" %}
+                    <span class="type-chip type-collecte">
+                        <i class="bi bi-arrow-down-circle"></i> Collecte
+                    </span>
+                    {% else %}
+                    <span class="type-chip type-restitution">
+                        <i class="bi bi-arrow-up-circle"></i> Restitution
+                    </span>
+                    {% endif %}
+                    {% if p.vehicule %}
+                    <span class="vehicule-tag">
+                        <i class="bi bi-car-front"></i> {{ p.vehicule.immatriculation }}
+                    </span>
+                    {% endif %}
+                </div>
+                <span class="statut-pill statut-{{ p.statut }}">
+                    {% if p.statut == "PLANIFIE" %}<i class="bi bi-clock"></i> Planifié
+                    {% elif p.statut == "EN_COURS" %}<i class="bi bi-play-circle-fill"></i> En cours
+                    {% else %}<i class="bi bi-check-circle-fill"></i> Clôturé
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="prog-divider"></div>
+
+            <!-- Ligne 2 : livreur + progression + action -->
+            <div class="prog-row-bottom">
+
+                <!-- Livreur -->
+                <div class="prog-livreur">
+                    <div class="prog-avatar">
+                        {{ p.utilisateur.code_livreur|slice:":1"|upper }}
+                    </div>
+                    <div>
+                        <div class="prog-livreur-nom">{{ p.utilisateur.get_full_name }}</div>
+                        <div class="prog-livreur-code">{{ p.utilisateur.code_livreur }}</div>
+                    </div>
+                </div>
+
+                <!-- Progression -->
+                <div class="prog-prog">
+                    <div class="prog-prog-header">
+                        <span class="prog-prog-label">Progression</span>
+                        <span class="prog-prog-ratio">
+                            {{ p.etapes_visitees }}/{{ p.total_etapes }} étapes
+                            {% if p.total_etapes > 0 %}
+                            &nbsp;·&nbsp;{% widthratio p.etapes_visitees p.total_etapes 100 %}%
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="prog-bar">
+                        <div class="prog-bar-fill prog-bar-{{ p.statut }}"
+                             style="width:{% if p.total_etapes > 0 %}{% widthratio p.etapes_visitees p.total_etapes 100 %}{% else %}0{% endif %}%">
+                        </div>
+                    </div>
+                    {% if p.etapes_echec > 0 %}
+                    <span class="echec-chip">
+                        <i class="bi bi-x-circle-fill"></i>
+                        {{ p.etapes_echec }}&nbsp;échec{% if p.etapes_echec > 1 %}s{% endif %}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Action -->
+                <a href="{% url 'supervision:programme-detail' p.id %}" class="btn-detail">
+                    Voir le détail <i class="bi bi-arrow-right"></i>
+                </a>
+
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
 {% else %}
-<div class="alert alert-info"><i class="bi bi-info-circle me-1"></i>Aucun programme pour cette date.</div>
+<div class="prog-empty text-center">
+    <i class="bi bi-truck"></i>
+    <p class="prog-empty-title">Aucun programme pour cette date</p>
+    <p class="prog-empty-sub">Modifiez le filtre ou générez des programmes via la commande de gestion.</p>
+</div>
 {% endif %}
+
+<style>
+/* ── Page icon ── */
+.pg-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: rgba(26,127,186,.1);
+    display: flex; align-items: center; justify-content: center;
+    color: #1a7fba; font-size: 1.2rem; flex-shrink: 0;
+}
+
+/* ── KPI pills ── */
+.kpi-pill {
+    display: flex; flex-direction: column; align-items: center;
+    padding: .55rem 1rem; border-radius: 12px;
+    background: #fff; border: 1px solid #e8edf3;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05); min-width: 72px;
+}
+.kpi-pill-n { font-size: 1.45rem; font-weight: 700; line-height: 1.1; color: #1a2332; }
+.kpi-pill-l {
+    font-size: .62rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: #94a3b8; margin-top: .15rem;
+}
+.kpi-pill-gray  .kpi-pill-n { color: #6c757d; }
+.kpi-pill-blue  .kpi-pill-n { color: #1a7fba; }
+.kpi-pill-green .kpi-pill-n { color: #198754; }
+
+/* ── Cards ── */
+.prog-list { display: flex; flex-direction: column; gap: .85rem; }
+
+.prog-card {
+    background: #fff; border-radius: 12px;
+    border-left: 4px solid #6c757d;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
+    transition: box-shadow .18s, transform .18s;
+}
+.prog-card:hover {
+    box-shadow: 0 4px 18px rgba(10,22,40,.11);
+    transform: translateY(-1px);
+}
+.prog-PLANIFIE { border-left-color: #6c757d; }
+.prog-EN_COURS  { border-left-color: #1a7fba; }
+.prog-CLOTURE   { border-left-color: #198754; }
+
+.prog-card-inner { padding: 1.1rem 1.25rem; }
+
+/* Row top */
+.prog-row-top {
+    display: flex; justify-content: space-between;
+    align-items: center; flex-wrap: wrap; gap: .5rem;
+}
+.prog-numero {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: .88rem; font-weight: 700; color: #1a2332;
+    background: #f1f5f9; padding: .22rem .6rem; border-radius: 6px;
+}
+.type-chip {
+    font-size: .72rem; font-weight: 700;
+    padding: .25rem .65rem; border-radius: 20px;
+    display: inline-flex; align-items: center; gap: .3rem;
+}
+.type-collecte    { background: #dbeafe; color: #1d4ed8; }
+.type-restitution { background: #dcfce7; color: #166534; }
+.vehicule-tag {
+    font-size: .78rem; color: #94a3b8;
+    display: inline-flex; align-items: center; gap: .3rem;
+}
+.statut-pill {
+    font-size: .73rem; font-weight: 700;
+    padding: .3rem .85rem; border-radius: 20px;
+    display: inline-flex; align-items: center; gap: .35rem;
+    white-space: nowrap;
+}
+.statut-PLANIFIE { background: #f1f3f5; color: #6c757d; }
+.statut-EN_COURS  { background: #dbeafe; color: #1a7fba; }
+.statut-CLOTURE   { background: #d1f5e0; color: #198754; }
+
+/* Divider */
+.prog-divider { height: 1px; background: #f0f2f5; margin: .9rem 0; }
+
+/* Row bottom */
+.prog-row-bottom {
+    display: flex; align-items: center;
+    gap: 1.5rem; flex-wrap: wrap;
+}
+
+/* Livreur */
+.prog-livreur { display: flex; align-items: center; gap: .65rem; flex-shrink: 0; min-width: 160px; }
+.prog-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, #1a7fba 0%, #1568a0 100%);
+    color: #fff; font-size: .88rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(26,127,186,.3);
+}
+.prog-livreur-nom  { font-size: .82rem; font-weight: 600; color: #1a2332; }
+.prog-livreur-code { font-size: .72rem; color: #94a3b8; margin-top: 1px; }
+
+/* Progression */
+.prog-prog { flex: 1; min-width: 160px; }
+.prog-prog-header {
+    display: flex; justify-content: space-between;
+    align-items: baseline; margin-bottom: .45rem;
+}
+.prog-prog-label {
+    font-size: .68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: #94a3b8;
+}
+.prog-prog-ratio { font-size: .78rem; font-weight: 700; color: #1a2332; }
+.prog-bar {
+    height: 8px; background: #eef1f6; border-radius: 4px; overflow: hidden;
+}
+.prog-bar-fill { height: 8px; border-radius: 4px; transition: width .4s ease; }
+.prog-bar-PLANIFIE { background: #adb5bd; }
+.prog-bar-EN_COURS  { background: linear-gradient(90deg, #1a7fba, #3b9fd5); }
+.prog-bar-CLOTURE   { background: linear-gradient(90deg, #198754, #25a56a); }
+.echec-chip {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .69rem; font-weight: 700; color: #dc3545;
+    background: rgba(220,53,69,.08); border-radius: 20px;
+    padding: .18rem .55rem; margin-top: .4rem;
+}
+
+/* Action button */
+.btn-detail {
+    flex-shrink: 0; display: inline-flex; align-items: center; gap: .4rem;
+    padding: .5rem 1.1rem; border-radius: 8px;
+    font-size: .8rem; font-weight: 600;
+    background: #1a7fba; color: #fff; text-decoration: none;
+    transition: background .15s, gap .15s;
+    white-space: nowrap;
+}
+.btn-detail:hover { background: #1568a0; color: #fff; gap: .65rem; }
+
+/* Empty state */
+.prog-empty {
+    background: #fff; border-radius: 12px; padding: 3.5rem 2rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.prog-empty .bi-truck { font-size: 3.5rem; color: #cbd5e1; }
+.prog-empty-title { font-weight: 700; color: #6c757d; margin: 1rem 0 .25rem; }
+.prog-empty-sub   { font-size: .85rem; color: #94a3b8; }
+
+/* Responsive */
+@media (max-width: 640px) {
+    .prog-row-bottom { gap: .85rem; }
+    .prog-livreur    { min-width: unset; }
+    .btn-detail      { width: 100%; justify-content: center; }
+}
+</style>
+
 {% endblock %}

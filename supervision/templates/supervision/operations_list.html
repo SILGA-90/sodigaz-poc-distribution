@@ -1,51 +1,82 @@
 {% extends "supervision/base.html" %}
 {% block title %}Opérations{% endblock %}
 {% block content %}
-<div class="d-flex flex-wrap gap-2 justify-content-between align-items-start mb-3">
+
+<!-- ── En-tête ── -->
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
     <div>
-        <p class="page-title"><i class="bi bi-lightning-charge me-2 text-primary"></i>Opérations</p>
-        <p class="page-sub">{{ date_filter|date:"l j F Y"|capfirst }}</p>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="pg-icon"><i class="bi bi-lightning-charge"></i></span>
+            <h1 class="page-title mb-0">Opérations</h1>
+        </div>
+        <p class="page-sub mb-0">
+            <i class="bi bi-calendar3 me-1"></i>{{ date_filter|date:"l j F Y"|capfirst }}
+        </p>
     </div>
-    <a href="{% url 'supervision:operations-export' %}?date={{ date_filter|date:'Y-m-d' }}{% if livreur_code %}&livreur={{ livreur_code }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}"
-       class="btn btn-sm btn-outline-success">
-        <i class="bi bi-download me-1"></i>Exporter CSV
-    </a>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <div class="kpi-pill">
+            <span class="kpi-pill-n">{{ nb_total }}</span>
+            <span class="kpi-pill-l">Total</span>
+        </div>
+        <div class="kpi-pill kpi-pill-blue">
+            <span class="kpi-pill-n">{{ nb_collecte }}</span>
+            <span class="kpi-pill-l">Collectes</span>
+        </div>
+        <div class="kpi-pill kpi-pill-green">
+            <span class="kpi-pill-n">{{ nb_restitution }}</span>
+            <span class="kpi-pill-l">Restitutions</span>
+        </div>
+        <div class="kpi-pill kpi-pill-orange">
+            <span class="kpi-pill-n" style="font-size:1rem;">{{ total_montant|floatformat:0 }}</span>
+            <span class="kpi-pill-l">FCFA total</span>
+        </div>
+        <a href="{% url 'supervision:operations-export' %}?date={{ date_filter|date:'Y-m-d' }}{% if livreur_code %}&livreur={{ livreur_code }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}"
+           class="btn-export">
+            <i class="bi bi-download me-1"></i>Exporter CSV
+        </a>
+    </div>
 </div>
 
-<div class="filter-card d-flex gap-2 flex-wrap align-items-end">
-    <form method="get" class="d-flex gap-2 flex-wrap filter-form w-100">
-        <div>
-            <label class="form-label small text-muted mb-1">Date</label>
-            <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}" class="form-control form-control-sm" style="width:auto;">
-        </div>
-        <div>
-            <label class="form-label small text-muted mb-1">Livreur</label>
-            <select name="livreur" class="form-select form-select-sm" style="width:auto;">
-                <option value="">Tous</option>
-                {% for liv in livreurs %}
-                <option value="{{ liv.code_livreur }}" {% if liv.code_livreur == livreur_code %}selected{% endif %}>
-                    {{ liv.code_livreur }} — {{ liv.get_full_name }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div>
-            <label class="form-label small text-muted mb-1">Type</label>
-            <select name="type" class="form-select form-select-sm" style="width:auto;">
-                <option value="" {% if not type_filter %}selected{% endif %}>Tous</option>
-                <option value="COLLECTE" {% if type_filter == "COLLECTE" %}selected{% endif %}>Collecte</option>
-                <option value="RESTITUTION" {% if type_filter == "RESTITUTION" %}selected{% endif %}>Restitution</option>
-            </select>
-        </div>
-        <div class="d-flex align-items-end">
-            <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-funnel me-1"></i>Filtrer</button>
-        </div>
-    </form>
+<!-- ── Filtres ── -->
+<div class="filter-card mb-4">
+    <div class="d-flex flex-wrap align-items-end gap-3">
+        <i class="bi bi-funnel text-muted" style="margin-bottom:.4rem;"></i>
+        <form method="get" class="d-flex flex-wrap gap-3 align-items-end">
+            <div>
+                <label class="filter-label">Date</label>
+                <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}"
+                       class="form-control form-control-sm" style="width:auto;">
+            </div>
+            <div>
+                <label class="filter-label">Livreur</label>
+                <select name="livreur" class="form-select form-select-sm" style="width:auto;">
+                    <option value="">Tous</option>
+                    {% for liv in livreurs %}
+                    <option value="{{ liv.code_livreur }}" {% if liv.code_livreur == livreur_code %}selected{% endif %}>
+                        {{ liv.code_livreur }} — {{ liv.get_full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="filter-label">Type</label>
+                <select name="type" class="form-select form-select-sm" style="width:auto;">
+                    <option value="" {% if not type_filter %}selected{% endif %}>Tous</option>
+                    <option value="COLLECTE"    {% if type_filter == "COLLECTE"    %}selected{% endif %}>Collecte</option>
+                    <option value="RESTITUTION" {% if type_filter == "RESTITUTION" %}selected{% endif %}>Restitution</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-search me-1"></i>Filtrer
+            </button>
+        </form>
+    </div>
 </div>
 
+<!-- ── Table ── -->
 {% if operations %}
-<div class="table-responsive table-card">
-<table class="table table-hover mb-0">
+<div class="table-card ops-table-wrap">
+<table class="ops-table">
     <thead>
         <tr>
             <th>Heure</th>
@@ -55,45 +86,189 @@
             <th class="text-end">Montant</th>
             <th>Paiement</th>
             <th>Signataire</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
-        {% for op in operations %}
-        <tr class="cursor-pointer" onclick="window.location='{% url 'supervision:operation-detail' op.uuid %}'">
-            <td class="text-muted small">{{ op.date_heure|date:"H:i" }}</td>
-            <td><span class="fw-semibold">{{ op.etape.programme.utilisateur.code_livreur }}</span></td>
-            <td>
-                {% if op.type_operation == "COLLECTE" %}
-                <span class="badge bg-primary">Collecte</span>
-                {% elif op.type_operation == "RESTITUTION" %}
-                <span class="badge bg-success">Restitution</span>
-                {% else %}
-                <span class="badge bg-secondary">{{ op.get_type_operation_display }}</span>
-                {% endif %}
-                {% if op.sous_type %}<small class="text-muted ms-1">{{ op.sous_type }}</small>{% endif %}
-            </td>
-            <td>
-                <span class="fw-medium">{{ op.etape.plv.client.raison_sociale }}</span>
-                <br><small class="text-muted">{{ op.etape.plv.libelle }}</small>
-            </td>
-            <td class="text-end fw-semibold">{{ op.montant_total|floatformat:0 }} <small class="text-muted fw-normal">FCFA</small></td>
-            <td class="text-muted">{{ op.get_mode_paiement_display|default:"—" }}</td>
-            <td class="text-muted">{{ op.nom_signataire_client|default:"—" }}</td>
-        </tr>
-        {% endfor %}
+    {% for op in operations %}
+    <tr class="ops-row ops-row-{{ op.type_operation }}"
+        onclick="window.location='{% url 'supervision:operation-detail' op.uuid %}'">
+        <td>
+            <span class="ops-time">{{ op.date_heure|date:"H:i" }}</span>
+        </td>
+        <td>
+            <div class="ops-livreur">
+                <div class="ops-avatar">{{ op.etape.programme.utilisateur.code_livreur|slice:":1"|upper }}</div>
+                <span class="ops-code">{{ op.etape.programme.utilisateur.code_livreur }}</span>
+            </div>
+        </td>
+        <td>
+            {% if op.type_operation == "COLLECTE" %}
+            <span class="type-chip type-collecte"><i class="bi bi-arrow-down-circle"></i> Collecte</span>
+            {% else %}
+            <span class="type-chip type-restitution"><i class="bi bi-arrow-up-circle"></i> Restitution</span>
+            {% endif %}
+            {% if op.sous_type %}<div class="ops-sous-type">{{ op.sous_type }}</div>{% endif %}
+        </td>
+        <td>
+            <div class="ops-client">{{ op.etape.plv.client.raison_sociale }}</div>
+            <div class="ops-plv">{{ op.etape.plv.libelle }}</div>
+        </td>
+        <td class="text-end">
+            <span class="ops-montant">{{ op.montant_total|floatformat:0 }}</span>
+            <span class="ops-devise"> FCFA</span>
+        </td>
+        <td class="ops-muted">{{ op.get_mode_paiement_display|default:"—" }}</td>
+        <td class="ops-muted">{{ op.nom_signataire_client|default:"—" }}</td>
+        <td class="ops-arrow"><i class="bi bi-chevron-right"></i></td>
+    </tr>
+    {% endfor %}
     </tbody>
-    <tfoot class="table-light fw-bold">
-        <tr>
-            <td colspan="4" class="text-end text-muted fw-normal" style="font-size:.85rem;">
-                Total — {{ operations|length }} opération{% if operations|length > 1 %}s{% endif %}
+    <tfoot>
+        <tr class="ops-total-row">
+            <td colspan="4" class="ops-total-label">
+                {{ nb_total }}&nbsp;opération{% if nb_total > 1 %}s{% endif %}
+                &nbsp;·&nbsp; {{ nb_collecte }}&nbsp;collecte{% if nb_collecte > 1 %}s{% endif %}
+                &nbsp;·&nbsp; {{ nb_restitution }}&nbsp;restitution{% if nb_restitution > 1 %}s{% endif %}
             </td>
-            <td class="text-end">{{ total_montant|floatformat:0 }} <small class="fw-normal text-muted">FCFA</small></td>
-            <td colspan="2"></td>
+            <td class="text-end ops-total-amount">
+                {{ total_montant|floatformat:0 }}&nbsp;<span class="ops-devise">FCFA</span>
+            </td>
+            <td colspan="3"></td>
         </tr>
     </tfoot>
 </table>
 </div>
+
 {% else %}
-<div class="alert alert-info"><i class="bi bi-info-circle me-1"></i>Aucune opération pour cette date / livreur.</div>
+<div class="ops-empty text-center">
+    <i class="bi bi-lightning-charge"></i>
+    <p class="ops-empty-title">Aucune opération</p>
+    <p class="ops-empty-sub">Modifiez les filtres ou attendez la synchronisation des opérations terrain.</p>
+</div>
 {% endif %}
+
+<style>
+/* ─── Page icon ─── */
+.pg-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: rgba(26,127,186,.1);
+    display: flex; align-items: center; justify-content: center;
+    color: #1a7fba; font-size: 1.2rem; flex-shrink: 0;
+}
+
+/* ─── KPI pills ─── */
+.kpi-pill {
+    display: flex; flex-direction: column; align-items: center;
+    padding: .55rem 1rem; border-radius: 12px;
+    background: #fff; border: 1px solid #e8edf3;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05); min-width: 72px;
+}
+.kpi-pill-n {
+    font-size: 1.35rem; font-weight: 700; line-height: 1.1; color: #1a2332;
+}
+.kpi-pill-l {
+    font-size: .62rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: #94a3b8; margin-top: .15rem;
+}
+.kpi-pill-blue   .kpi-pill-n { color: #1a7fba; }
+.kpi-pill-green  .kpi-pill-n { color: #198754; }
+.kpi-pill-orange .kpi-pill-n { color: #f47920; }
+
+/* ─── Export ─── */
+.btn-export {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .5rem 1rem; border-radius: 8px;
+    font-size: .8rem; font-weight: 600;
+    background: rgba(25,135,84,.08); color: #198754;
+    border: 1.5px solid rgba(25,135,84,.25);
+    text-decoration: none; transition: all .15s; white-space: nowrap;
+}
+.btn-export:hover { background: #198754; color: #fff; border-color: #198754; }
+
+/* ─── Filter label ─── */
+.filter-label {
+    display: block; font-size: .68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: #94a3b8; margin-bottom: .28rem;
+}
+
+/* ─── Table wrapper ─── */
+.ops-table-wrap { overflow: hidden; }
+.ops-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.ops-table thead th {
+    padding: .6rem 1rem;
+    font-size: .66rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: #94a3b8;
+    border-bottom: 1px solid #eef1f6; background: #f8fafc;
+    white-space: nowrap;
+}
+.ops-table thead th:first-child { padding-left: 1.5rem; }
+
+/* ─── Row ─── */
+.ops-row {
+    border-bottom: 1px solid #f0f2f5;
+    cursor: pointer; transition: background .12s;
+    border-left: 4px solid transparent;
+}
+.ops-row:last-of-type { border-bottom: none; }
+.ops-row:hover { background: #f8fafc; }
+.ops-row-COLLECTE    { border-left-color: #1a7fba; }
+.ops-row-RESTITUTION { border-left-color: #198754; }
+.ops-table tbody td  { padding: .72rem 1rem; vertical-align: middle; }
+.ops-table tbody td:first-child { padding-left: 1.5rem; }
+
+/* ─── Cell content ─── */
+.ops-time {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: .84rem; font-weight: 700; color: #1a2332;
+}
+.ops-livreur { display: flex; align-items: center; gap: .55rem; }
+.ops-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, #1a7fba, #1568a0);
+    color: #fff; font-size: .72rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ops-code { font-size: .84rem; font-weight: 700; color: #1a2332; }
+
+.type-chip {
+    font-size: .7rem; font-weight: 700;
+    padding: .22rem .6rem; border-radius: 20px;
+    display: inline-flex; align-items: center; gap: .3rem;
+}
+.type-collecte    { background: #dbeafe; color: #1d4ed8; }
+.type-restitution { background: #dcfce7; color: #166534; }
+.ops-sous-type { font-size: .7rem; color: #94a3b8; margin-top: .18rem; }
+
+.ops-client { font-size: .85rem; font-weight: 600; color: #1a2332; }
+.ops-plv    { font-size: .74rem; color: #94a3b8; margin-top: .1rem; }
+.ops-montant { font-weight: 700; color: #1a2332; }
+.ops-devise  { font-size: .72rem; color: #94a3b8; }
+.ops-muted   { font-size: .82rem; color: #6c757d; }
+.ops-arrow   { color: #cbd5e1; font-size: .75rem; text-align: center; padding-right: 1rem; }
+
+/* ─── Total row ─── */
+.ops-total-row { background: #f8fafc; border-top: 2px solid #eef1f6; }
+.ops-total-row td { padding: .72rem 1rem; }
+.ops-total-row td:first-child { padding-left: 1.5rem; }
+.ops-total-label  { font-size: .8rem; color: #6c757d; font-style: italic; }
+.ops-total-amount { font-size: 1rem; font-weight: 700; color: #1a2332; white-space: nowrap; }
+
+/* ─── Empty state ─── */
+.ops-empty {
+    background: #fff; border-radius: 12px; padding: 3.5rem 2rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.ops-empty .bi-lightning-charge { font-size: 3.5rem; color: #cbd5e1; }
+.ops-empty-title { font-weight: 700; color: #6c757d; margin: 1rem 0 .25rem; }
+.ops-empty-sub   { font-size: .85rem; color: #94a3b8; }
+
+@media (max-width: 640px) {
+    .ops-muted  { display: none; }
+    .ops-arrow  { display: none; }
+    .ops-table  { font-size: .8rem; }
+}
+</style>
+
 {% endblock %}
