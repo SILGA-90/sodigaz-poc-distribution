@@ -156,30 +156,6 @@
 {% endif %}
 
 <style>
-/* ── Page icon ── */
-.pg-icon {
-    width: 38px; height: 38px; border-radius: 10px;
-    background: rgba(26,127,186,.1);
-    display: flex; align-items: center; justify-content: center;
-    color: #1a7fba; font-size: 1.2rem; flex-shrink: 0;
-}
-
-/* ── KPI pills ── */
-.kpi-pill {
-    display: flex; flex-direction: column; align-items: center;
-    padding: .55rem 1rem; border-radius: 12px;
-    background: #fff; border: 1px solid #e8edf3;
-    box-shadow: 0 1px 3px rgba(0,0,0,.05); min-width: 72px;
-}
-.kpi-pill-n { font-size: 1.45rem; font-weight: 700; line-height: 1.1; color: #1a2332; }
-.kpi-pill-l {
-    font-size: .62rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .07em; color: #94a3b8; margin-top: .15rem;
-}
-.kpi-pill-gray  .kpi-pill-n { color: #6c757d; }
-.kpi-pill-blue  .kpi-pill-n { color: #1a7fba; }
-.kpi-pill-green .kpi-pill-n { color: #198754; }
-
 /* ── Cards ── */
 .prog-list { display: flex; flex-direction: column; gap: .85rem; }
 
@@ -209,27 +185,10 @@
     font-size: .88rem; font-weight: 700; color: #1a2332;
     background: #f1f5f9; padding: .22rem .6rem; border-radius: 6px;
 }
-.type-chip {
-    font-size: .72rem; font-weight: 700;
-    padding: .25rem .65rem; border-radius: 20px;
-    display: inline-flex; align-items: center; gap: .3rem;
-}
-.type-collecte    { background: #dbeafe; color: #1d4ed8; }
-.type-restitution { background: #dcfce7; color: #166534; }
 .vehicule-tag {
     font-size: .78rem; color: #94a3b8;
     display: inline-flex; align-items: center; gap: .3rem;
 }
-.statut-pill {
-    font-size: .73rem; font-weight: 700;
-    padding: .3rem .85rem; border-radius: 20px;
-    display: inline-flex; align-items: center; gap: .35rem;
-    white-space: nowrap;
-}
-.statut-PLANIFIE { background: #f1f3f5; color: #6c757d; }
-.statut-EN_COURS  { background: #dbeafe; color: #1a7fba; }
-.statut-CLOTURE   { background: #d1f5e0; color: #198754; }
-
 /* Divider */
 .prog-divider { height: 1px; background: #f0f2f5; margin: .9rem 0; }
 
@@ -269,13 +228,6 @@
 .prog-bar-PLANIFIE { background: #adb5bd; }
 .prog-bar-EN_COURS  { background: linear-gradient(90deg, #1a7fba, #3b9fd5); }
 .prog-bar-CLOTURE   { background: linear-gradient(90deg, #198754, #25a56a); }
-.echec-chip {
-    display: inline-flex; align-items: center; gap: .3rem;
-    font-size: .69rem; font-weight: 700; color: #dc3545;
-    background: rgba(220,53,69,.08); border-radius: 20px;
-    padding: .18rem .55rem; margin-top: .4rem;
-}
-
 /* Action button */
 .btn-detail {
     flex-shrink: 0; display: inline-flex; align-items: center; gap: .4rem;

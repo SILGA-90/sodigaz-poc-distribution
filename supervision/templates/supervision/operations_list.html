@@ -149,32 +149,6 @@
 {% endif %}
 
 <style>
-/* ─── Page icon ─── */
-.pg-icon {
-    width: 38px; height: 38px; border-radius: 10px;
-    background: rgba(26,127,186,.1);
-    display: flex; align-items: center; justify-content: center;
-    color: #1a7fba; font-size: 1.2rem; flex-shrink: 0;
-}
-
-/* ─── KPI pills ─── */
-.kpi-pill {
-    display: flex; flex-direction: column; align-items: center;
-    padding: .55rem 1rem; border-radius: 12px;
-    background: #fff; border: 1px solid #e8edf3;
-    box-shadow: 0 1px 3px rgba(0,0,0,.05); min-width: 72px;
-}
-.kpi-pill-n {
-    font-size: 1.35rem; font-weight: 700; line-height: 1.1; color: #1a2332;
-}
-.kpi-pill-l {
-    font-size: .62rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .07em; color: #94a3b8; margin-top: .15rem;
-}
-.kpi-pill-blue   .kpi-pill-n { color: #1a7fba; }
-.kpi-pill-green  .kpi-pill-n { color: #198754; }
-.kpi-pill-orange .kpi-pill-n { color: #f47920; }
-
 /* ─── Export ─── */
 .btn-export {
     display: inline-flex; align-items: center; gap: .35rem;
@@ -185,13 +159,6 @@
     text-decoration: none; transition: all .15s; white-space: nowrap;
 }
 .btn-export:hover { background: #198754; color: #fff; border-color: #198754; }
-
-/* ─── Filter label ─── */
-.filter-label {
-    display: block; font-size: .68rem; font-weight: 700;
-    text-transform: uppercase; letter-spacing: .06em;
-    color: #94a3b8; margin-bottom: .28rem;
-}
 
 /* ─── Table wrapper ─── */
 .ops-table-wrap { overflow: hidden; }
@@ -232,19 +199,11 @@
 }
 .ops-code { font-size: .84rem; font-weight: 700; color: #1a2332; }
 
-.type-chip {
-    font-size: .7rem; font-weight: 700;
-    padding: .22rem .6rem; border-radius: 20px;
-    display: inline-flex; align-items: center; gap: .3rem;
-}
-.type-collecte    { background: #dbeafe; color: #1d4ed8; }
-.type-restitution { background: #dcfce7; color: #166534; }
 .ops-sous-type { font-size: .7rem; color: #94a3b8; margin-top: .18rem; }
 
 .ops-client { font-size: .85rem; font-weight: 600; color: #1a2332; }
 .ops-plv    { font-size: .74rem; color: #94a3b8; margin-top: .1rem; }
 .ops-montant { font-weight: 700; color: #1a2332; }
-.ops-devise  { font-size: .72rem; color: #94a3b8; }
 .ops-muted   { font-size: .82rem; color: #6c757d; }
 .ops-arrow   { color: #cbd5e1; font-size: .75rem; text-align: center; padding-right: 1rem; }
 
