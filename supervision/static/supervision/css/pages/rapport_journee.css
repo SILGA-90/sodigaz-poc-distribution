@@ -1,0 +1,272 @@
+/* ─── Bouton imprimer ─── */
+.btn-print {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .5rem 1rem; border-radius: 8px;
+    font-size: .82rem; font-weight: 600; cursor: pointer;
+    background: rgba(10,22,40,.06); color: #0a1628;
+    border: 1.5px solid rgba(10,22,40,.15); transition: all .15s;
+}
+.btn-print:hover { background: #0a1628; color: #fff; }
+
+/* ─── KPI strip ─── */
+.kpi-strip { display: flex; flex-wrap: wrap; gap: 1rem; }
+.kpi-big-card {
+    display: flex; align-items: flex-start; gap: 1rem;
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
+    padding: 1.1rem 1.25rem; flex: 1; min-width: 200px;
+}
+.kpi-big-icon {
+    width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
+}
+.kpi-big-body { min-width: 0; }
+.kpi-big-label {
+    font-size: .67rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: #94a3b8; margin-bottom: .25rem;
+}
+.kpi-big-value {
+    font-size: 1.85rem; font-weight: 800; line-height: 1.05; letter-spacing: -.02em;
+}
+.kpi-big-sub { font-size: .76rem; color: #94a3b8; margin-top: .3rem; }
+.kpi-echec-note {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .72rem; font-weight: 700; color: #dc3545; margin-top: .35rem;
+}
+.kpi-link { font-size: .75rem; font-weight: 700; color: #f47920; text-decoration: none; }
+.kpi-link:hover { color: #c45a00; }
+
+/* ─── Table header ─── */
+.rpt-table-wrap  { overflow: hidden; }
+.rpt-table-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .85rem 1.5rem;
+    background: #f8fafc; border-bottom: 1px solid #eef1f6;
+}
+.rpt-table-title { font-size: .84rem; font-weight: 700; color: #1a2332; }
+.rpt-prog-count {
+    font-size: .72rem; font-weight: 700; color: #1a7fba;
+    background: rgba(26,127,186,.1); padding: .18rem .65rem; border-radius: 20px;
+}
+
+/* ─── Table ─── */
+.rpt-table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+.rpt-table thead th {
+    padding: .55rem 1rem;
+    font-size: .66rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: #94a3b8;
+    border-bottom: 1px solid #eef1f6; background: #fafbfc; white-space: nowrap;
+}
+.rpt-table thead th:first-child { padding-left: 1.5rem; }
+
+.rpt-row {
+    border-bottom: 1px solid #f0f2f5;
+    border-left: 4px solid transparent;
+    transition: background .12s;
+}
+.rpt-row:hover { background: #f8fafc; }
+.rpt-row-PLANIFIE { border-left-color: #94a3b8; }
+.rpt-row-EN_COURS  { border-left-color: #1a7fba; }
+.rpt-row-CLOTURE   { border-left-color: #198754; }
+
+.rpt-table tbody td { padding: .75rem 1rem; vertical-align: middle; }
+.rpt-table tbody td:first-child { padding-left: 1.5rem; }
+
+/* Programme chip */
+.rpt-numero {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: .82rem; font-weight: 700; color: #1a2332;
+    background: #f1f5f9; padding: .2rem .55rem; border-radius: 6px;
+}
+
+/* Livreur */
+.rpt-livreur { display: flex; align-items: center; gap: .6rem; }
+.rpt-avatar {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, #1a7fba, #1568a0);
+    color: #fff; font-size: .75rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+}
+.rpt-livreur-code { font-size: .82rem; font-weight: 700; color: #1a2332; }
+.rpt-livreur-nom  { font-size: .72rem; color: #94a3b8; margin-top: .05rem; }
+
+/* Progress */
+.rpt-prog-header  { display: flex; justify-content: space-between; margin-bottom: .3rem; }
+.rpt-prog-ratio   { font-size: .76rem; font-weight: 600; color: #1a2332; }
+.rpt-prog-pct     { font-size: .76rem; font-weight: 700; color: #6c757d; }
+.rpt-bar          { height: 7px; background: #eef1f6; border-radius: 4px; overflow: hidden; }
+.rpt-bar-fill     { height: 7px; border-radius: 4px; }
+.rpt-bar-full     { background: linear-gradient(90deg, #198754, #25a56a); }
+.rpt-bar-mid      { background: linear-gradient(90deg, #1a7fba, #3b9fd5); }
+.rpt-bar-low      { background: #ffc107; }
+
+/* Misc */
+.rpt-num           { font-size: .88rem; font-weight: 700; color: #1a2332; }
+.rpt-montant       { font-weight: 700; color: #1a2332; }
+.rpt-montant-green { color: #198754; }
+.rpt-devise        { font-size: .72rem; color: #94a3b8; }
+.rpt-dash          { color: #cbd5e1; }
+.anom-chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 24px; height: 24px; padding: 0 .45rem;
+    border-radius: 20px; font-size: .72rem; font-weight: 700;
+    background: rgba(244,121,32,.12); color: #c45a00;
+}
+.btn-detail-sm {
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .3rem .65rem; border-radius: 6px; font-size: .75rem; font-weight: 600;
+    background: rgba(26,127,186,.08); color: #1a7fba;
+    border: 1px solid rgba(26,127,186,.2); text-decoration: none; transition: all .15s;
+}
+.btn-detail-sm:hover { background: #1a7fba; color: #fff; }
+
+/* Total row */
+.rpt-total-row { background: #f8fafc; border-top: 2px solid #eef1f6; }
+.rpt-total-row td { padding: .75rem 1rem; vertical-align: middle; }
+.rpt-total-row td:first-child { padding-left: 1.5rem; }
+.rpt-total-label { font-size: .82rem; color: #6c757d; font-style: italic; }
+
+/* ─── Print : éléments toujours masqués sur écran ─── */
+.print-only   { display: none !important; }
+.print-footer { display: none; }
+
+/* ─── En-tête imprimé ─── */
+.print-header {
+    display: flex; align-items: center; gap: 1.25rem;
+    border-bottom: 2.5px solid #1a7fba; padding-bottom: .85rem;
+}
+.print-title    { font-size: 1.1rem; font-weight: 700; color: #0a1628; }
+.print-subtitle { font-size: .85rem; color: #6c757d; margin-top: .1rem; }
+
+/* ══════════════════════════════════════════════
+   IMPRESSION
+   ══════════════════════════════════════════════ */
+@media print {
+
+    /* ── Format de page A4 paysage ── */
+    @page {
+        size: A4 landscape;
+        margin: 13mm 11mm 20mm; /* marge basse pour le pied de page */
+    }
+
+    /* ── Forcer toutes les couleurs ── */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* ── Réinitialisation du layout sidebar ── */
+    .sidebar, .sidebar-overlay, .topbar, .topbar-toggle { display: none !important; }
+    .main-content { margin-left: 0 !important; }
+    .main-inner   { padding: 0 !important; }
+    body          { background: #fff !important; font-size: 9pt; }
+
+    /* ── Masquer les éléments écran ── */
+    .no-print, .btn-print, .filter-card { display: none !important; }
+
+    /* ── Afficher les éléments print-only ── */
+    .print-only   { display: flex !important; }
+    .print-footer { display: flex !important; }
+
+    /* ── KPI strip : 4 colonnes compactes ── */
+    .kpi-strip {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr);
+        gap: .45rem;
+        margin-bottom: .7rem !important;
+    }
+    .kpi-big-card {
+        box-shadow: none !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 6px !important;
+        padding: .6rem .7rem !important;
+        gap: .5rem !important;
+        min-width: unset !important;
+    }
+    .kpi-big-icon  { width: 30px !important; height: 30px !important; border-radius: 7px !important; font-size: .95rem !important; }
+    .kpi-big-label { font-size: 6pt !important; margin-bottom: .1rem !important; }
+    .kpi-big-value { font-size: 13pt !important; letter-spacing: -.01em !important; }
+    .kpi-big-sub   { font-size: 6.5pt !important; margin-top: .12rem !important; }
+    .kpi-echec-note{ font-size: 6.5pt !important; }
+    .kpi-link      { font-size: 6.5pt !important; }
+
+    /* ── Tableau ── */
+    .rpt-table-wrap {
+        box-shadow: none !important;
+        border: 1px solid #d1d9e0 !important;
+        border-radius: 6px !important;
+        overflow: visible !important;  /* évite la coupure par overflow-x */
+    }
+    /* Annule le clip de table-responsive */
+    .table-responsive {
+        overflow: visible !important;
+        width: 100% !important;
+    }
+    .rpt-table-header {
+        padding: .4rem .7rem !important;
+        background: #f1f5f9 !important;
+    }
+    .rpt-table-title { font-size: 7.5pt !important; }
+    .rpt-prog-count  { font-size: 6.5pt !important; }
+
+    /* Cellules */
+    .rpt-table        { font-size: 7.5pt !important; }
+    .rpt-table thead th {
+        font-size: 6pt !important;
+        padding: .28rem .45rem !important;
+        background: #f8fafc !important;
+        white-space: nowrap;
+    }
+    .rpt-table thead th:first-child { padding-left: .7rem !important; }
+    .rpt-table tbody td             { padding: .3rem .45rem !important; }
+    .rpt-table tbody td:first-child { padding-left: .7rem !important; }
+    .rpt-row:hover                  { background: transparent !important; }
+    .rpt-total-row td               { padding: .3rem .45rem !important; }
+    .rpt-total-row td:first-child   { padding-left: .7rem !important; }
+
+    /* Chips / pills */
+    .rpt-numero  { font-size: 7pt !important; padding: .08rem .3rem !important; }
+    .type-chip   { font-size: 6pt !important; padding: .08rem .35rem !important; }
+    .statut-pill { font-size: 6pt !important; padding: .08rem .4rem !important; }
+    .echec-chip  { font-size: 6pt !important; padding: .08rem .3rem !important; margin-top: .2rem !important; }
+    .anom-chip   { font-size: 6.5pt !important; min-width: 16px !important; height: 16px !important; }
+
+    /* Livreur */
+    .rpt-avatar       { width: 20px !important; height: 20px !important; font-size: .6rem !important; }
+    .rpt-livreur      { gap: .4rem !important; }
+    .rpt-livreur-code { font-size: 7pt !important; }
+    .rpt-livreur-nom  { font-size: 6pt !important; }
+
+    /* Barre de progression */
+    .rpt-prog-header { margin-bottom: .15rem !important; }
+    .rpt-prog-ratio, .rpt-prog-pct { font-size: 6.5pt !important; }
+    .rpt-bar      { height: 5px !important; }
+    .rpt-bar-fill { height: 5px !important; }
+
+    /* Montants */
+    .rpt-montant { font-size: 7.5pt !important; }
+    .rpt-devise  { font-size: 6pt !important; }
+    .rpt-num     { font-size: 7.5pt !important; }
+
+    /* Sauts de page */
+    .kpi-strip      { break-inside: avoid; page-break-inside: avoid; }
+    .rpt-table-wrap { break-inside: auto; }
+
+    /* ── Pied de page (fixe = répété sur chaque page) ── */
+    .print-footer {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        height: 14mm;
+        align-items: center; justify-content: space-between;
+        border-top: 1.5px solid #1a7fba;
+        padding: 0 11mm;
+        font-size: 7pt; color: #6c757d;
+        background: #fff;
+    }
+    .print-footer-brand { font-weight: 700; color: #0a1628; font-size: 7.5pt; }
+}
+
+@media (max-width: 640px) {
+    .kpi-big-card { min-width: calc(50% - .5rem); }
+    .kpi-big-value { font-size: 1.45rem; }
+}

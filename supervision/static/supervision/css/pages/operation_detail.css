@@ -1,0 +1,62 @@
+/* ─── En-tête ─── */
+.op-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 1rem;
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
+    padding: 1.4rem 1.5rem;
+    border-left: 4px solid #1a7fba;
+    margin-bottom: 1.25rem;
+}
+.op-header-RESTITUTION { border-left-color: #198754; }
+.op-header-left { display: flex; align-items: flex-start; gap: 1rem; }
+
+.op-header-RESTITUTION .pg-icon { background: rgba(25,135,84,.1); color: #198754; }
+
+.sous-type-chip {
+    font-size: .72rem; font-weight: 700;
+    padding: .22rem .6rem; border-radius: 6px;
+    background: #f1f5f9; color: #6c757d;
+}
+
+/* Amount block */
+.op-amount-block { text-align: right; }
+.op-amount-value { font-size: 2.4rem; font-weight: 800; color: #1a2332; line-height: 1; }
+.op-amount-devise { font-size: .75rem; font-weight: 700; color: #94a3b8; margin-top: .15rem; }
+.enc-pill {
+    display: inline-flex; align-items: center; font-size: .72rem; font-weight: 700;
+    padding: .3rem .85rem; border-radius: 20px;
+}
+.enc-pill-green  { background: #d1f5e0; color: #198754; }
+.enc-pill-warn   { background: rgba(244,121,32,.1); color: #c45a00; }
+.enc-pill-orange { background: rgba(244,121,32,.1); color: #c45a00; }
+.enc-pill-gray   { background: #f1f5f9; color: #6c757d; }
+
+.code-x3 {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: .78rem; color: #94a3b8;
+    background: #f1f5f9; padding: .1rem .4rem; border-radius: 4px;
+}
+
+/* ─── Signatures ─── */
+.sig-row { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+.sig-block { display: flex; flex-direction: column; gap: .5rem; }
+.sig-label {
+    font-size: .75rem; font-weight: 700; color: #94a3b8;
+    text-transform: uppercase; letter-spacing: .04em;
+}
+.sig-box {
+    border: 1px solid #eef1f6; border-radius: 10px; background: #fafafa;
+    width: 260px; height: 130px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+    .op-header         { flex-direction: column; }
+    .op-amount-block   { text-align: left; }
+    .info-row          { flex-direction: column; }
+    .sig-row           { flex-direction: column; }
+    .sig-box           { width: 100%; }
+    .photo-thumb       { width: 110px; height: 110px; }
+}

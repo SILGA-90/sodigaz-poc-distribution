@@ -1,0 +1,79 @@
+/* ─── Export ─── */
+.btn-export {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .5rem 1rem; border-radius: 8px;
+    font-size: .8rem; font-weight: 600;
+    background: rgba(25,135,84,.08); color: #198754;
+    border: 1.5px solid rgba(25,135,84,.25);
+    text-decoration: none; transition: all .15s; white-space: nowrap;
+}
+.btn-export:hover { background: #198754; color: #fff; border-color: #198754; }
+
+/* ─── Table wrapper ─── */
+.ops-table-wrap { overflow: hidden; }
+.ops-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.ops-table thead th {
+    padding: .6rem 1rem;
+    font-size: .66rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: #94a3b8;
+    border-bottom: 1px solid #eef1f6; background: #f8fafc;
+    white-space: nowrap;
+}
+.ops-table thead th:first-child { padding-left: 1.5rem; }
+
+/* ─── Row ─── */
+.ops-row {
+    border-bottom: 1px solid #f0f2f5;
+    cursor: pointer; transition: background .12s;
+    border-left: 4px solid transparent;
+}
+.ops-row:last-of-type { border-bottom: none; }
+.ops-row:hover { background: #f8fafc; }
+.ops-row-COLLECTE    { border-left-color: #1a7fba; }
+.ops-row-RESTITUTION { border-left-color: #198754; }
+.ops-table tbody td  { padding: .72rem 1rem; vertical-align: middle; }
+.ops-table tbody td:first-child { padding-left: 1.5rem; }
+
+/* ─── Cell content ─── */
+.ops-time {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: .84rem; font-weight: 700; color: #1a2332;
+}
+.ops-livreur { display: flex; align-items: center; gap: .55rem; }
+.ops-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, #1a7fba, #1568a0);
+    color: #fff; font-size: .72rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ops-code { font-size: .84rem; font-weight: 700; color: #1a2332; }
+
+.ops-sous-type { font-size: .7rem; color: #94a3b8; margin-top: .18rem; }
+
+.ops-client { font-size: .85rem; font-weight: 600; color: #1a2332; }
+.ops-plv    { font-size: .74rem; color: #94a3b8; margin-top: .1rem; }
+.ops-montant { font-weight: 700; color: #1a2332; }
+.ops-muted   { font-size: .82rem; color: #6c757d; }
+.ops-arrow   { color: #cbd5e1; font-size: .75rem; text-align: center; padding-right: 1rem; }
+
+/* ─── Total row ─── */
+.ops-total-row { background: #f8fafc; border-top: 2px solid #eef1f6; }
+.ops-total-row td { padding: .72rem 1rem; }
+.ops-total-row td:first-child { padding-left: 1.5rem; }
+.ops-total-label  { font-size: .8rem; color: #6c757d; font-style: italic; }
+.ops-total-amount { font-size: 1rem; font-weight: 700; color: #1a2332; white-space: nowrap; }
+
+/* ─── Empty state ─── */
+.ops-empty {
+    background: #fff; border-radius: 12px; padding: 3.5rem 2rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.ops-empty .bi-lightning-charge { font-size: 3.5rem; color: #cbd5e1; }
+.ops-empty-title { font-weight: 700; color: #6c757d; margin: 1rem 0 .25rem; }
+.ops-empty-sub   { font-size: .85rem; color: #94a3b8; }
+
+@media (max-width: 640px) {
+    .ops-muted  { display: none; }
+    .ops-arrow  { display: none; }
+    .ops-table  { font-size: .8rem; }
+}

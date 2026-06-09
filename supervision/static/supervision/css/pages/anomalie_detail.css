@@ -1,0 +1,51 @@
+/* ─── En-tête ─── */
+.anom-detail-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 1rem;
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
+    padding: 1.4rem 1.5rem;
+    border-left: 4px solid #94a3b8;
+}
+.anom-border-ELEVEE  { border-left-color: #dc3545; }
+.anom-border-MOYENNE { border-left-color: #f47920; }
+.anom-border-FAIBLE  { border-left-color: #198754; }
+
+.anom-header-left { display: flex; align-items: flex-start; gap: 1rem; }
+.anom-detail-type { font-size: 1.35rem; font-weight: 800; color: #1a2332; }
+
+/* ─── Boutons d'action ─── */
+.anom-action-block { display: flex; align-items: center; }
+.btn-action-lg {
+    display: inline-flex; align-items: center;
+    padding: .7rem 1.4rem; border-radius: 10px;
+    font-size: .88rem; font-weight: 700;
+    border: 1.5px solid transparent; cursor: pointer; transition: all .15s;
+}
+.btn-action-warn  { background: rgba(244,121,32,.1); color: #c45a00; border-color: rgba(244,121,32,.3); }
+.btn-action-warn:hover  { background: #f47920; color: #fff; border-color: #f47920; }
+.btn-action-green { background: rgba(25,135,84,.1); color: #198754; border-color: rgba(25,135,84,.3); }
+.btn-action-green:hover { background: #198754; color: #fff; border-color: #198754; }
+.anom-resolved-badge {
+    display: inline-flex; align-items: center;
+    padding: .7rem 1.4rem; border-radius: 10px;
+    font-size: .88rem; font-weight: 700;
+    background: #d1f5e0; color: #198754;
+    border: 1.5px solid rgba(25,135,84,.2);
+}
+
+/* Classification border */
+.classif-border-ELEVEE  { border-left: 3px solid #dc3545; }
+.classif-border-MOYENNE { border-left: 3px solid #f47920; }
+.classif-border-FAIBLE  { border-left: 3px solid #198754; }
+
+/* Description */
+.anom-description { white-space: pre-wrap; color: #4a5568; font-size: .9rem; line-height: 1.65; }
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+    .anom-detail-header { flex-direction: column; }
+    .anom-action-block  { width: 100%; }
+    .btn-action-lg, .anom-resolved-badge { width: 100%; justify-content: center; }
+    .info-row { flex-direction: column; }
+}
