@@ -147,9 +147,13 @@ class Command(BaseCommand):
 
     def _creer_clients(self):
         clients_data = [
-            ("CLI0001", "Boutique Sankariare", TypeClient.REVENDEUR, "+22625300001"),
-            ("CLI0002", "Depot Pissy", TypeClient.DEPOT, "+22625300002"),
-            ("CLI0003", "Restaurant Belko", TypeClient.GROS_CLIENT, "+22625300003"),
+            ("CLI0001", "Boutique Sankariare",   TypeClient.REVENDEUR,   "+22625300001"),
+            ("CLI0002", "Depot Pissy",           TypeClient.DEPOT,       "+22625300002"),
+            ("CLI0003", "Restaurant Belko",      TypeClient.GROS_CLIENT, "+22625300003"),
+            ("CLI0004", "Station Hamdalaye",     TypeClient.REVENDEUR,   "+22625300004"),
+            ("CLI0005", "Mini-marche Tanghin",   TypeClient.REVENDEUR,   "+22625300005"),
+            ("CLI0006", "Hotel Azalai",          TypeClient.GROS_CLIENT, "+22625300006"),
+            ("CLI0007", "Depot Koulouba",        TypeClient.DEPOT,       "+22625300007"),
         ]
         clients = {}
         for code, rs, tc, tel in clients_data:
@@ -164,11 +168,25 @@ class Command(BaseCommand):
 
     def _creer_plvs(self, clients):
         plvs = [
-            (clients["CLI0001"], "Sankariare - face station", "Av. Yennenga", -1.5236, 12.3650),
-            (clients["CLI0001"], "Sankariare - magasin secondaire", "Av. Yennenga", -1.5210, 12.3680),
-            (clients["CLI0002"], "Depot Pissy entree principale", "Secteur 17", -1.5680, 12.3450),
-            (clients["CLI0003"], "Restaurant Belko cour arriere", "Zone du Bois", -1.5050, 12.3720),
-            (clients["CLI0003"], "Restaurant Belko annexe", "Zone du Bois", -1.5020, 12.3750),
+            # CLI0001 — Boutique Sankariare (2 PLV)
+            (clients["CLI0001"], "Sankariare - face station",       "Av. Yennenga",      -1.5236, 12.3650),
+            (clients["CLI0001"], "Sankariare - magasin secondaire", "Av. Yennenga",      -1.5210, 12.3680),
+            # CLI0002 — Depot Pissy (1 PLV)
+            (clients["CLI0002"], "Depot Pissy entree principale",   "Secteur 17",        -1.5680, 12.3450),
+            # CLI0003 — Restaurant Belko (2 PLV)
+            (clients["CLI0003"], "Restaurant Belko cour arriere",   "Zone du Bois",      -1.5050, 12.3720),
+            (clients["CLI0003"], "Restaurant Belko annexe",         "Zone du Bois",      -1.5020, 12.3750),
+            # CLI0004 — Station Hamdalaye (2 PLV)
+            (clients["CLI0004"], "Station Hamdalaye - ile",         "Av. Kadiogo",       -1.5110, 12.3800),
+            (clients["CLI0004"], "Station Hamdalaye - boutique",    "Av. Kadiogo",       -1.5090, 12.3820),
+            # CLI0005 — Mini-marche Tanghin (1 PLV)
+            (clients["CLI0005"], "Mini-marche Tanghin",             "Rue Tanghin",       -1.5300, 12.3950),
+            # CLI0006 — Hotel Azalai (2 PLV)
+            (clients["CLI0006"], "Hotel Azalai - reception",        "Av. Dimdolobsom",   -1.5340, 12.3620),
+            (clients["CLI0006"], "Hotel Azalai - restaurant",       "Av. Dimdolobsom",   -1.5360, 12.3610),
+            # CLI0007 — Depot Koulouba (2 PLV)
+            (clients["CLI0007"], "Depot Koulouba - hangar A",       "Rte Ouaga 2000",    -1.5420, 12.3480),
+            (clients["CLI0007"], "Depot Koulouba - hangar B",       "Rte Ouaga 2000",    -1.5440, 12.3460),
         ]
         for client, libelle, adresse, lng, lat in plvs:
             _, created = Plv.objects.get_or_create(

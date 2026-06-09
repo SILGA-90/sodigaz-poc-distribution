@@ -1,6 +1,7 @@
 """Commande Django simulant l'export quotidien de Sage X3."""
 import random
 import uuid
+from collections import defaultdict
 from datetime import date as date_cls
 from datetime import datetime, timedelta
 
@@ -122,6 +123,24 @@ class Command(BaseCommand):
         heure_base = datetime.now()
         compteur = 0
 
+        # ── Partitionner les PLV par client, puis distribuer les groupes-clients
+        # aux livreurs (round-robin). Un même client ne peut ainsi apparaître que
+        # dans les programmes d'un seul livreur sur la journée.
+        groupes_client: list[list] = list(defaultdict(list, {
+            plv.client_id: [] for plv in plvs
+        }).values())
+        # Reconstruction propre : grouper les PLV par client_id
+        _tmp: dict = defaultdict(list)
+        for plv in plvs:
+            _tmp[plv.client_id].append(plv)
+        groupes_client = list(_tmp.values())
+        random.shuffle(groupes_client)
+
+        pool_livreur: dict[int, list] = defaultdict(list)
+        for i, groupe in enumerate(groupes_client):
+            livreur_dest = livreurs[i % len(livreurs)]
+            pool_livreur[livreur_dest.id].extend(groupe)
+
         with transaction.atomic():
             # Construit la liste (livreur, type) à créer, avec décalage d'1 seconde
             # entre chaque programme pour garantir des numéros X3 distincts.
@@ -149,8 +168,11 @@ class Command(BaseCommand):
                     statut=StatutProgramme.PLANIFIE,
                 )
 
-                nb_etapes = random.randint(3, min(5, len(plvs)))
-                plvs_choisis = random.sample(plvs, nb_etapes)
+                # PLV du livreur uniquement (clients dédupliqués entre livreurs).
+                # Fallback sur le pool global si le pool individuel est trop petit.
+                mon_pool = pool_livreur[livreur.id] or plvs
+                nb_etapes = random.randint(3, min(5, len(mon_pool)))
+                plvs_choisis = random.sample(mon_pool, nb_etapes)
                 for ordre, plv in enumerate(plvs_choisis, start=1):
                     etape = Etape.objects.create(
                         programme=programme,
