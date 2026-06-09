@@ -106,7 +106,7 @@ export default function LoginScreen({ navigation }: Props): React.ReactElement {
           )}
         </TouchableOpacity>
 
-        <Text style={styles.hint}>Démo : LIV001 / demo1234</Text>
+        <Text style={styles.hint}>Démo : LIV001 / @demo12345</Text>
       </View>
     </KeyboardAvoidingView>
   );

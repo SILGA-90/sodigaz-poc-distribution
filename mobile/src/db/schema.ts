@@ -11,7 +11,7 @@
  *   - les timestamps last_modified en INTEGER (epoch ms)
  */
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export const CREATE_TABLES_SQL = `
 -- Table de metadonnees de synchronisation
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS plv (
 
 CREATE TABLE IF NOT EXISTS produit (
   id INTEGER PRIMARY KEY,
-  code_x3 TEXT NOT NULL,
+  code_x3 TEXT NOT NULL UNIQUE,
   libelle TEXT NOT NULL,
   type_emballage TEXT,
   prix_unitaire REAL DEFAULT 0,

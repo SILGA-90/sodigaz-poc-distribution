@@ -101,10 +101,10 @@ export default function EtapeDetailScreen({ route, navigation }: Props): React.R
       <Text style={styles.sectionTitle}>Produits</Text>
       <View style={styles.card}>
         {lignes.length === 0 ? (
-          <Text style={styles.emptyText}>Aucune ligne enregistree.</Text>
+          <Text style={styles.emptyText}>Aucune ligne enregistrée.</Text>
         ) : (
-          lignes.map((l) => (
-            <View key={l.produit_code_x3} style={styles.ligneRow}>
+          lignes.map((l, index) => (
+            <View key={`${l.produit_code_x3}_${index}`} style={styles.ligneRow}>
               <Text style={styles.ligneCode}>{l.produit_code_x3}</Text>
               <Text style={styles.ligneQte}>x{l.quantite_realisee}</Text>
               <Text style={styles.ligneMontant}>

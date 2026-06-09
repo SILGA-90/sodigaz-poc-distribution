@@ -362,7 +362,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
       </View>
       <View style={styles.sectionCard}>
         {lignes.map((ligne, index) => (
-          <View key={ligne.produit.code_x3} style={[styles.ligneRow, index > 0 && styles.ligneRowSep]}>
+          <View key={`${ligne.produit.code_x3}_${index}`} style={[styles.ligneRow, index > 0 && styles.ligneRowSep]}>
             <View style={{ flex: 1 }}>
               <Text style={styles.produitLibelle}>{ligne.produit.libelle}</Text>
               <View style={styles.produitMeta}>

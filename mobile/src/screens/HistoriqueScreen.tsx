@@ -87,7 +87,7 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>Aucun programme synchronise.</Text>
+            <Text style={styles.emptyText}>Aucun programme synchronisé.</Text>
           </View>
         }
       />

@@ -57,6 +57,30 @@ async function _openAndInit(): Promise<SQLite.SQLiteDatabase> {
     await db.execAsync('PRAGMA user_version = 3;');
   }
 
+  // Migration v3 -> v4 : contrainte UNIQUE sur produit.code_x3.
+  // Sans cette contrainte, un reset des données serveur (nouveaux IDs)
+  // créait des doublons via INSERT OR REPLACE (conflit sur id, pas code_x3).
+  if (currentVersion < 4) {
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS produit_v4 (
+        id INTEGER PRIMARY KEY,
+        code_x3 TEXT NOT NULL UNIQUE,
+        libelle TEXT NOT NULL,
+        type_emballage TEXT,
+        prix_unitaire REAL DEFAULT 0,
+        montant_consignation REAL DEFAULT 0,
+        actif INTEGER DEFAULT 1
+      );
+      INSERT OR IGNORE INTO produit_v4 (id, code_x3, libelle, type_emballage, prix_unitaire, montant_consignation, actif)
+        SELECT id, code_x3, libelle, type_emballage, prix_unitaire, montant_consignation, actif
+        FROM produit
+        WHERE id IN (SELECT MAX(id) FROM produit GROUP BY code_x3);
+      DROP TABLE produit;
+      ALTER TABLE produit_v4 RENAME TO produit;
+      PRAGMA user_version = 4;
+    `);
+  }
+
   return db;
 }
 

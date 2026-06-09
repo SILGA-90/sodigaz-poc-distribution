@@ -284,7 +284,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
         renderItem={renderEtape}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
-          <Text style={styles.empty}>Aucune etape dans ce programme.</Text>
+          <Text style={styles.empty}>Aucune étape dans ce programme.</Text>
         }
         ListFooterComponent={<View style={{ height: 80 }} />}
       />
