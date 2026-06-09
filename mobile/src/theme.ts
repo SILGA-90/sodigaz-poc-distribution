@@ -1,50 +1,74 @@
+// Tokens de design SODIGAZ — source unique de vérité.
+
 export const Colors = {
-  brandBlue:    '#1a7fba',
-  brandOrange:  '#f47920',
-  navy:         '#0a1628',
+  // ── Marque ──────────────────────────────────────────────────────────────
+  brandBlue:    '#079BD9',
+  brandBlueD:   '#0670A0',   // état pressé / ombre bleu
+  brandOrange:  '#EE7202',
+  brandOrangeD: '#c45e00',   // état pressé / ombre orange
+  brandAmber:   '#FAB848',
+  navy:         '#0a1628',   // header app, fond branded
+  navyMid:      '#112240',
 
-  success:      '#198754',
-  danger:       '#dc3545',
-  warning:      '#ffc107',
-  warningLight: '#fff3cd',
-  warningBorder:'#ffc107',
-  successLight: '#d1e7dd',
-  dangerLight:  '#f8d7da',
+  // ── Sémantique ──────────────────────────────────────────────────────────
+  success:       '#16a34a',
+  successBg:     '#dcfce7',
+  successBorder: '#86efac',
+  danger:        '#dc2626',
+  dangerBg:      '#fef2f2',
+  dangerBorder:  '#fca5a5',
+  warning:       '#d97706',
+  warningBg:     '#fffbeb',
+  warningBorder: '#fcd34d',
+  info:          '#079BD9',
+  infoBg:        '#e0f2fe',
+  infoBorder:    '#7dd3fc',
 
-  text:         '#1a2332',
-  textSub:      '#555',
-  textMuted:    '#6c757d',
-  textLight:    '#aaa',
-  textOnBrand:  '#fff',
-  textOnBrandSub: '#d0e8f5',
+  // ── Texte ────────────────────────────────────────────────────────────────
+  text:           '#0f172a',   // texte principal — très haut contraste
+  textSub:        '#334155',   // texte secondaire
+  textMuted:      '#64748b',   // libellés, métadonnées — lisible en plein soleil
+  textLight:      '#94a3b8',   // captions only, jamais info critique
+  textOnDark:     '#ffffff',
+  textOnDarkSub:  'rgba(255,255,255,0.65)',
+  textOnDarkMuted:'rgba(255,255,255,0.4)',
 
-  background:   '#f5f5f5',
-  surface:      '#fff',
-  border:       '#e0e0e0',
-  borderLight:  '#f0f0f0',
+  // ── Surfaces ─────────────────────────────────────────────────────────────
+  bg:          '#f0f4f8',   // fond d'écran (body)
+  surface:     '#ffffff',   // cartes
+  surface2:    '#f8fafc',   // surfaces secondaires
+  inputBg:     '#f1f5f9',   // fond des champs de saisie
+  border:      '#e2e8f0',   // bordures par défaut
+  borderLight: '#f1f5f9',   // séparateurs
+
+  // ── Rétrocompatibilité ───────────────────────────────────────────────────
+  successLight:  '#dcfce7',
+  dangerLight:   '#fef2f2',
+  warningLight:  '#fffbeb',
+  background:    '#f0f4f8',
 };
 
 export const Shadow = {
   card: {
-    shadowColor: '#000' as const,
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    shadowColor:  '#0f172a' as const,
+    shadowOpacity: 0.07,
+    shadowRadius:  8,
+    shadowOffset:  { width: 0, height: 2 },
+    elevation: 3,
   },
   elevated: {
-    shadowColor: '#000' as const,
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    shadowColor:  '#0f172a' as const,
+    shadowOpacity: 0.12,
+    shadowRadius:  14,
+    shadowOffset:  { width: 0, height: 4 },
+    elevation: 6,
   },
 };
 
 export const Radius = {
-  sm:   6,
-  md:   10,
-  lg:   12,
-  xl:   14,
+  sm:   8,
+  md:   12,
+  lg:   16,
+  xl:   20,
   pill: 999,
 };

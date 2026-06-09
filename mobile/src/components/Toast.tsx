@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text } from 'react-native';
+import { Colors } from '../theme';
 
 interface Props {
   visible: boolean;
@@ -12,7 +13,7 @@ interface Props {
 const BG: Record<string, string> = {
   success: '#198754',
   error: '#dc3545',
-  info: '#1a7fba',
+  info: Colors.brandBlue,
 };
 
 export default function Toast({

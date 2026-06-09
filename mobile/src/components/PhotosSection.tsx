@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 
 import { prendrePhoto, choisirPhoto, PhotoCapturee } from '../services/photoService';
+import { Colors } from '../theme';
 
 export interface PhotoEnAttente {
   uri: string;
@@ -93,7 +94,7 @@ export default function PhotosSection({ photos, onChange, types = DEFAULT_TYPES,
         )}
       </View>
 
-      {busy && <ActivityIndicator color="#1a7fba" style={{ marginVertical: 8 }} />}
+      {busy && <ActivityIndicator color={Colors.brandBlue} style={{ marginVertical: 8 }} />}
 
       {photos.length > 0 && (
         <ScrollView horizontal style={styles.thumbs} showsHorizontalScrollIndicator={false}>
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
   container: { backgroundColor: '#fff', marginHorizontal: 12, padding: 14, borderRadius: 10 },
   typeRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
   typeChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: '#e9ecef' },
-  typeChipActive: { backgroundColor: '#1a7fba' },
+  typeChipActive: { backgroundColor: Colors.brandBlue },
   typeChipText: { fontSize: 12, color: '#333', fontWeight: '600' },
   typeChipTextActive: { color: '#fff' },
   actionsRow: { flexDirection: 'row', gap: 8 },

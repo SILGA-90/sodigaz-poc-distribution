@@ -29,7 +29,7 @@
 }
 .ops-row:last-of-type { border-bottom: none; }
 .ops-row:hover { background: #f8fafc; }
-.ops-row-COLLECTE    { border-left-color: #1a7fba; }
+.ops-row-COLLECTE    { border-left-color: #079BD9; }
 .ops-row-RESTITUTION { border-left-color: #198754; }
 .ops-table tbody td  { padding: .72rem 1rem; vertical-align: middle; }
 .ops-table tbody td:first-child { padding-left: 1.5rem; }
@@ -42,7 +42,7 @@
 .ops-livreur { display: flex; align-items: center; gap: .55rem; }
 .ops-avatar {
     width: 28px; height: 28px; border-radius: 50%;
-    background: linear-gradient(135deg, #1a7fba, #1568a0);
+    background: linear-gradient(135deg, #079BD9, #0670A0);
     color: #fff; font-size: .72rem; font-weight: 700;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }

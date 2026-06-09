@@ -8,7 +8,7 @@
     border-left: 4px solid #94a3b8;
 }
 .anom-border-ELEVEE  { border-left-color: #dc3545; }
-.anom-border-MOYENNE { border-left-color: #f47920; }
+.anom-border-MOYENNE { border-left-color: #EE7202; }
 .anom-border-FAIBLE  { border-left-color: #198754; }
 
 .anom-header-left { display: flex; align-items: flex-start; gap: 1rem; }
@@ -22,8 +22,8 @@
     font-size: .88rem; font-weight: 700;
     border: 1.5px solid transparent; cursor: pointer; transition: all .15s;
 }
-.btn-action-warn  { background: rgba(244,121,32,.1); color: #c45a00; border-color: rgba(244,121,32,.3); }
-.btn-action-warn:hover  { background: #f47920; color: #fff; border-color: #f47920; }
+.btn-action-warn  { background: rgba(238,114,2,.1); color: #c45a00; border-color: rgba(238,114,2,.3); }
+.btn-action-warn:hover  { background: #EE7202; color: #fff; border-color: #EE7202; }
 .btn-action-green { background: rgba(25,135,84,.1); color: #198754; border-color: rgba(25,135,84,.3); }
 .btn-action-green:hover { background: #198754; color: #fff; border-color: #198754; }
 .anom-resolved-badge {
@@ -36,7 +36,7 @@
 
 /* Classification border */
 .classif-border-ELEVEE  { border-left: 3px solid #dc3545; }
-.classif-border-MOYENNE { border-left: 3px solid #f47920; }
+.classif-border-MOYENNE { border-left: 3px solid #EE7202; }
 .classif-border-FAIBLE  { border-left: 3px solid #198754; }
 
 /* Description */

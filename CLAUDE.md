@@ -144,6 +144,7 @@ est fourni par le mobile au moment du push.
   pour sérialiser les appels concurrents à `openDatabaseAsync()`. Sans ça,
   plusieurs appelants simultanés créent plusieurs instances → NullPointerException
   Android (`prepareAsync`). Ne jamais supprimer ce verrou.
+- **Couleurs de marque (officielles, en l'absence de charte écrite — extraites du logo)**. La couleur primaire est le bleu Sodigaz #079BD9 ; l'accent / action principale est l'orange APC #EE7202 ; l'ambre de la flamme est #FAB848. Ces valeurs font autorité et remplacent le bleu Bootstrap générique #0d6efd ainsi que la valeur erronée #1a7fba présente dans d'anciens fichiers. La couleur doit vivre dans un token unique (thème mobile + surcharge --bs-primary côté web), jamais en dur dans les composants. Référence détaillée : skill design-sodigaz.
 
 ## 6. Environnement & réseau (WSL2)
 

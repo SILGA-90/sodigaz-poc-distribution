@@ -25,16 +25,18 @@ def rapport_journee(request):
         .filter(date_programme=date_filter, is_deleted=False)
         .select_related("utilisateur", "vehicule")
         .annotate(
-            total_etapes=Count("etapes", filter=Q(etapes__is_deleted=False)),
+            total_etapes=Count("etapes", filter=Q(etapes__is_deleted=False), distinct=True),
             etapes_visitees=Count(
                 "etapes",
                 filter=Q(etapes__is_deleted=False, etapes__statut_visite=StatutVisite.VISITEE),
+                distinct=True,
             ),
             etapes_echec=Count(
                 "etapes",
                 filter=Q(etapes__is_deleted=False, etapes__statut_visite="ECHEC"),
+                distinct=True,
             ),
-            nb_anomalies=Count("anomalies", filter=Q(anomalies__is_deleted=False)),
+            nb_anomalies=Count("anomalies", filter=Q(anomalies__is_deleted=False), distinct=True),
         )
         .order_by("type_programme", "utilisateur__code_livreur")
     )

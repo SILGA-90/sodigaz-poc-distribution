@@ -20,6 +20,7 @@ import HistoriqueScreen from '../screens/HistoriqueScreen';
 import { isAuthenticated } from '../api/authService';
 import { repairCachePhotoUris } from '../db/repositories/photoRepository';
 import { RootStackParamList } from '../types/navigation';
+import { Colors } from '../theme';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -37,7 +38,7 @@ export default function RootNavigator(): React.ReactElement {
   if (initialRoute === null) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#1a7fba" />
+        <ActivityIndicator size="large" color={Colors.brandBlue} />
       </View>
     );
   }

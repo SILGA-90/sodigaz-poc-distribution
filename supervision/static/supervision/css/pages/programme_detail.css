@@ -3,7 +3,7 @@
     background: #fff; border-radius: 14px;
     box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
     padding: 1.4rem 1.5rem 1.25rem;
-    border-left: 4px solid #1a7fba;
+    border-left: 4px solid #079BD9;
     margin-bottom: 1.5rem;
 }
 /* ─── Onglets ─── */
@@ -15,13 +15,13 @@
     border-bottom: 2px solid transparent; margin-bottom: -2px;
 }
 .nav-tabs .nav-link:hover { color: #1a2332; border-bottom-color: #cbd5e1; }
-.nav-tabs .nav-link.active { color: #1a7fba; border-bottom-color: #1a7fba; background: none; }
+.nav-tabs .nav-link.active { color: #079BD9; border-bottom-color: #079BD9; background: none; }
 .tab-count {
-    background: #e8f4fc; color: #1a7fba;
+    background: #e8f4fc; color: #079BD9;
     font-size: .68rem; font-weight: 700;
     padding: .12rem .5rem; border-radius: 20px;
 }
-.nav-tabs .nav-link.active .tab-count { background: rgba(26,127,186,.15); }
+.nav-tabs .nav-link.active .tab-count { background: rgba(7,155,217,.15); }
 .tab-body { padding-top: 1.5rem; }
 
 /* ─── Filtre pills ─── */
@@ -114,11 +114,11 @@
     display: inline-flex; align-items: center; gap: .35rem;
     padding: .42rem .9rem; border-radius: 8px;
     font-size: .79rem; font-weight: 600;
-    background: rgba(26,127,186,.08); color: #1a7fba;
-    border: 1.5px solid rgba(26,127,186,.2);
+    background: rgba(7,155,217,.08); color: #079BD9;
+    border: 1.5px solid rgba(7,155,217,.2);
     text-decoration: none; transition: all .15s; align-self: flex-start;
 }
-.btn-op-detail:hover { background: #1a7fba; color: #fff; border-color: #1a7fba; }
+.btn-op-detail:hover { background: #079BD9; color: #fff; border-color: #079BD9; }
 
 /* ─── Timeline ─── */
 .timeline {
@@ -137,7 +137,7 @@
     border: 2.5px solid #fff; z-index: 1;
 }
 .tl-dot-ok   { background: #198754; box-shadow: 0 0 0 2.5px #d1f5e0; }
-.tl-dot-warn { background: #f47920; box-shadow: 0 0 0 2.5px rgba(244,121,32,.2); }
+.tl-dot-warn { background: #EE7202; box-shadow: 0 0 0 2.5px rgba(238,114,2,.2); }
 
 .tl-card {
     background: #fff; border-radius: 10px;
@@ -145,7 +145,7 @@
     padding: .75rem 1rem;
     border-left: 3px solid transparent;
 }
-.tl-hors-ordre .tl-card { border-left-color: #f47920; background: #fffaf6; }
+.tl-hors-ordre .tl-card { border-left-color: #EE7202; background: #fffaf6; }
 
 .tl-row {
     display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
@@ -160,9 +160,9 @@
     padding: .22rem .6rem; border-radius: 6px; flex-shrink: 0;
 }
 .tl-circuit-ok   { background: #d1f5e0; color: #198754; }
-.tl-circuit-warn { background: rgba(244,121,32,.12); color: #c45a00; }
+.tl-circuit-warn { background: rgba(238,114,2,.12); color: #c45a00; }
 .tl-conform    { font-size: .75rem; font-weight: 600; color: #198754; display: flex; align-items: center; gap: .25rem; }
-.tl-nonconform { font-size: .75rem; font-weight: 600; color: #f47920; display: flex; align-items: center; gap: .25rem; }
+.tl-nonconform { font-size: .75rem; font-weight: 600; color: #EE7202; display: flex; align-items: center; gap: .25rem; }
 
 /* ─── Responsive ─── */
 @media (max-width: 640px) {

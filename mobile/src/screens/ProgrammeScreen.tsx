@@ -1,5 +1,6 @@
 /**
- * Ecran d'un programme : liste des etapes (PLV) a visiter dans l'ordre.
+ * Ecran d'un programme : liste des étapes à visiter.
+ * Light thème — header navy, corps blanc.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -21,42 +22,46 @@ import {
 } from '../db/repositories/programmeRepository';
 import { Programme } from '../types/models';
 import { RootStackParamList } from '../types/navigation';
+import { Colors } from '../theme';
+
+const NAVY  = '#0a1628';
+const BG    = '#f0f4f8';
+const CARD  = '#ffffff';
+const INPUT = '#f1f5f9';
+const BORDER= '#e2e8f0';
+const TEXT  = '#0f172a';
+const TEXT2 = '#334155';
+const TEXT3 = '#64748b';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Programme'>;
-
 type TriMode = 'optimise' | 'alpha' | 'a_visiter';
 
 const TRI_MODES: { key: TriMode; label: string }[] = [
   { key: 'optimise',  label: 'Circuit' },
-  { key: 'alpha',     label: 'A-Z' },
-  { key: 'a_visiter', label: 'A faire' },
+  { key: 'alpha',     label: 'A–Z' },
+  { key: 'a_visiter', label: 'À faire' },
 ];
 
 function ouvrirItineraire(lat: number, lon: number): void {
-  // Pas d'origin dans l'URL : Google Maps part de la position courante.
   const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
   Linking.openURL(url).catch(() => Alert.alert('Erreur', "Impossible d'ouvrir la navigation."));
 }
 
 export default function ProgrammeScreen({ route, navigation }: Props): React.ReactElement {
   const { programmeId } = route.params;
-  const [programme, setProgramme] = useState<Programme | null>(null);
-  const [progression, setProgression] = useState<{ visitees: number; echec: number; total: number }>(
-    { visitees: 0, echec: 0, total: 0 },
-  );
-  const [etapes, setEtapes] = useState<EtapeAvecPlv[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [programme, setProgramme]     = useState<Programme | null>(null);
+  const [progression, setProgression] = useState({ visitees: 0, echec: 0, total: 0 });
+  const [etapes, setEtapes]   = useState<EtapeAvecPlv[]>([]);
+  const [loading, setLoading] = useState(true);
   const [triMode, setTriMode] = useState<TriMode>('optimise');
 
   const etapesTri = useMemo((): EtapeAvecPlv[] => {
-    if (triMode === 'alpha') {
-      return [...etapes].sort((a, b) => a.plv_libelle.localeCompare(b.plv_libelle, 'fr'));
-    }
+    if (triMode === 'alpha') return [...etapes].sort((a, b) => a.plv_libelle.localeCompare(b.plv_libelle, 'fr'));
     if (triMode === 'a_visiter') {
       const ordre = { A_VISITER: 0, VISITEE: 1, ECHEC: 2 } as Record<string, number>;
       return [...etapes].sort((a, b) => (ordre[a.statut_visite] ?? 1) - (ordre[b.statut_visite] ?? 1));
     }
-    return etapes; // 'optimise' : ordre DB conservé
+    return etapes;
   }, [etapes, triMode]);
 
   async function chargerDonnees() {
@@ -67,38 +72,29 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
     setProgression({
       total: e.length,
       visitees: e.filter((x) => x.statut_visite === 'VISITEE').length,
-      echec: e.filter((x) => x.statut_visite === 'ECHEC').length,
+      echec:    e.filter((x) => x.statut_visite === 'ECHEC').length,
     });
   }
 
   useEffect(() => {
-    (async () => {
-      await chargerDonnees();
-      setLoading(false);
-    })();
+    (async () => { await chargerDonnees(); setLoading(false); })();
   }, [programmeId]);
 
-  // useCallback est requis AVANT le return anticipé ci-dessous (règle des hooks :
-  // jamais après un return conditionnel).
   const renderEtape = useCallback(({ item }: { item: EtapeAvecPlv }): React.ReactElement => {
     const visite = item.statut_visite === 'VISITEE';
-    const echec = item.statut_visite === 'ECHEC';
+    const echec  = item.statut_visite === 'ECHEC';
     const programmeCloture = programme?.statut === 'CLOTURE';
-    const cardDisabled = programmeCloture || echec;
+    const disabled = echec || (programmeCloture && !visite);
 
-    const statusColor = visite ? '#198754' : echec ? '#dc3545' : '#f47920';
-    const statusBg    = visite ? '#d1f5e0' : echec ? '#ffe4e6' : '#fff7ed';
+    const accentColor = visite ? Colors.success : echec ? Colors.danger : Colors.brandOrange;
+    const badgeBg     = visite ? Colors.successBg : echec ? Colors.dangerBg : Colors.warningBg;
+    const badgeText   = visite ? Colors.success   : echec ? Colors.danger   : Colors.warning;
     const badgeLabel  = visite ? 'Visitée' : echec ? 'Échec' : 'À visiter';
-    const disabled    = echec || (programmeCloture && !visite);
 
     function handleCardPress() {
       if (visite) {
         if (item.op_sync_status === null) {
-          // Étape visitée sur un autre appareil : l'opération n'est pas disponible hors ligne.
-          Alert.alert(
-            'Détail non disponible',
-            "L'opération a été enregistrée sur un autre appareil et n'est pas accessible hors ligne.",
-          );
+          Alert.alert('Détail non disponible', "L'opération a été enregistrée sur un autre appareil et n'est pas accessible hors ligne.");
           return;
         }
         navigation.navigate('EtapeDetail', { etapeId: item.id, etapeUuid: item.uuid });
@@ -108,371 +104,241 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
     }
 
     return (
-      <TouchableOpacity
-        style={[styles.card, { borderLeftColor: statusColor }, disabled && styles.cardDisabled]}
-        onPress={handleCardPress}
-        activeOpacity={disabled ? 1 : 0.75}
-      >
-        {/* Ligne principale */}
-        <View style={styles.cardMain}>
-          <View style={[styles.ordreCircle, { backgroundColor: statusColor }]}>
-            <Text style={styles.ordreText}>{item.ordre_prevu}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.plvLibelle}>{item.plv_libelle}</Text>
-            <Text style={styles.clientName}>{item.client_raison_sociale}</Text>
-          </View>
-          <View style={styles.cardRight}>
-            <View style={[styles.statutBadge, { backgroundColor: statusBg }]}>
-              <Text style={[styles.statutText, { color: statusColor }]}>{badgeLabel}</Text>
+      <View style={[styles.card, disabled && styles.cardDisabled]}>
+        <TouchableOpacity style={styles.cardInner} onPress={handleCardPress} activeOpacity={disabled ? 1 : 0.75}>
+          <View style={[styles.cardAccent, { backgroundColor: accentColor }]} />
+          <View style={styles.cardBody}>
+            <View style={styles.cardMain}>
+              {/* Cercle d'ordre coloré */}
+              <View style={[styles.ordreCircle, { backgroundColor: accentColor }]}>
+                <Text style={styles.ordreText}>{item.ordre_prevu}</Text>
+              </View>
+              <View style={styles.cardInfo}>
+                <Text style={styles.plvLibelle} numberOfLines={1}>{item.plv_libelle}</Text>
+                <Text style={styles.clientName} numberOfLines={1}>{item.client_raison_sociale}</Text>
+              </View>
+              <View style={styles.cardRight}>
+                <View style={[styles.statutBadge, { backgroundColor: badgeBg }]}>
+                  <View style={[styles.statutDot, { backgroundColor: accentColor }]} />
+                  <Text style={[styles.statutText, { color: badgeText }]}>{badgeLabel}</Text>
+                </View>
+                {visite && item.op_sync_status !== null && (
+                  <View style={[styles.syncIndicator,
+                    item.op_sync_status === 'SYNCED' ? styles.syncGreen : styles.syncOrange]} />
+                )}
+              </View>
             </View>
-            {visite && item.op_sync_status !== null && (
-              <View style={[
-                styles.syncDot,
-                item.op_sync_status === 'SYNCED' ? styles.syncDotGreen : styles.syncDotOrange,
-              ]} />
-            )}
+            <TouchableOpacity
+              style={styles.itineraireRow}
+              onPress={(e) => { e.stopPropagation(); ouvrirItineraire(item.plv_latitude, item.plv_longitude); }}
+              activeOpacity={0.65}
+            >
+              <Text style={styles.itineraireTxt}>Ouvrir l'itinéraire  ›</Text>
+            </TouchableOpacity>
           </View>
-        </View>
-        {/* Bouton itinéraire */}
-        <TouchableOpacity
-          style={styles.itineraireRow}
-          onPress={(e) => { e.stopPropagation(); ouvrirItineraire(item.plv_latitude, item.plv_longitude); }}
-          activeOpacity={0.65}
-        >
-          <Text style={styles.itineraireTxt}>Ouvrir l'itinéraire  ›</Text>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </View>
     );
   }, [navigation, programme]);
 
   if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1a7fba" />
-      </View>
-    );
+    return <View style={styles.center}><ActivityIndicator size="large" color={Colors.brandBlue} /></View>;
   }
 
+  const aFaire = Math.max(0, progression.total - progression.visitees - progression.echec);
+  const pct    = progression.total > 0 ? Math.round(progression.visitees / progression.total * 100) : 0;
+
   return (
-    <View style={styles.container}>
+    <View style={styles.root}>
       {programme && (
         <View style={styles.header}>
-          {/* Cercles décoratifs arrière-plan */}
-          <View style={styles.bgCircle1} pointerEvents="none" />
-          <View style={styles.bgCircle2} pointerEvents="none" />
+          <View style={styles.bubble1} pointerEvents="none" />
+          <View style={styles.bubble2} pointerEvents="none" />
 
-          {/* ── Zone navy : identifiant + compteurs + progression ── */}
-          <View style={styles.headerNavy}>
-
-            {/* Numéro + chips statut/type */}
-            <View style={styles.headerTopRow}>
-              <Text style={styles.numero}>{programme.numero_x3}</Text>
-              <View style={styles.headerChips}>
-                <View style={[
-                  styles.typeChip,
-                  programme.type_programme === 'COLLECTE' ? styles.typeChipCollecte : styles.typeChipRestit,
-                ]}>
-                  <Text style={styles.typeChipText}>
-                    {programme.type_programme === 'COLLECTE' ? 'Collecte' : 'Restitution'}
-                  </Text>
-                </View>
-                <View style={[
-                  styles.statutChip,
-                  programme.statut === 'CLOTURE' ? styles.statutCloture :
-                  programme.statut === 'EN_COURS' ? styles.statutEnCours : styles.statutPlanifie,
-                ]}>
-                  <Text style={styles.statutChipText}>
-                    {programme.statut === 'CLOTURE' ? 'Clôturé' :
-                     programme.statut === 'EN_COURS' ? 'En cours' : 'Planifié'}
-                  </Text>
-                </View>
+          <View style={styles.headerTop}>
+            <Text style={styles.numero}>{programme.numero_x3}</Text>
+            <View style={styles.chips}>
+              <View style={[styles.chip, programme.type_programme === 'COLLECTE' ? styles.chipC : styles.chipR]}>
+                <Text style={styles.chipText}>{programme.type_programme === 'COLLECTE' ? 'Collecte' : 'Restitution'}</Text>
               </View>
-            </View>
-
-            {/* Date */}
-            <Text style={styles.dateText}>{programme.date_programme}</Text>
-
-            {/* Compteurs */}
-            <View style={styles.statsRow}>
-              <View style={styles.statBox}>
-                <Text style={styles.statNum}>{progression.visitees}</Text>
-                <Text style={styles.statLabel}>
-                  {progression.visitees > 1 ? 'visitées' : 'visitée'}
+              <View style={[styles.chip,
+                programme.statut === 'CLOTURE'  ? styles.chipCloture :
+                programme.statut === 'EN_COURS' ? styles.chipEnCours : styles.chipPlanifie]}>
+                <Text style={styles.chipText}>
+                  {programme.statut === 'CLOTURE' ? 'Clôturé' : programme.statut === 'EN_COURS' ? 'En cours' : 'Planifié'}
                 </Text>
               </View>
-              <View style={[styles.statBox, progression.echec > 0 && styles.statBoxEchec]}>
-                <Text style={[styles.statNum, progression.echec > 0 && styles.statNumEchec]}>
-                  {progression.echec}
-                </Text>
-                <Text style={styles.statLabel}>échec</Text>
-              </View>
-              <View style={styles.statBox}>
-                <Text style={[styles.statNum, styles.statNumAFaire]}>
-                  {Math.max(0, progression.total - progression.visitees - progression.echec)}
-                </Text>
-                <Text style={styles.statLabel}>à faire</Text>
-              </View>
             </View>
+          </View>
+          <Text style={styles.dateText}>{programme.date_programme}</Text>
 
-            {/* Barre de progression bicolore */}
-            <View style={styles.progressRow}>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressVisitee, {
-                  flex: progression.total > 0 ? progression.visitees / progression.total : 0,
-                }]} />
-                {progression.echec > 0 && (
-                  <View style={[styles.progressEchec, {
-                    flex: progression.echec / progression.total,
-                  }]} />
-                )}
+          {/* Compteurs */}
+          <View style={styles.statsRow}>
+            {[
+              { num: progression.visitees, label: 'visitée(s)', color: '#ffffff', bg: 'rgba(255,255,255,0.15)' },
+              { num: progression.echec,    label: 'échec',      color: progression.echec > 0 ? '#fca5a5' : 'rgba(255,255,255,0.4)', bg: progression.echec > 0 ? 'rgba(248,113,113,0.2)' : 'rgba(255,255,255,0.08)' },
+              { num: aFaire,               label: 'à faire',    color: '#fcd34d', bg: 'rgba(251,191,36,0.18)' },
+            ].map((s, i) => (
+              <View key={i} style={[styles.statBox, { backgroundColor: s.bg }]}>
+                <Text style={[styles.statNum, { color: s.color }]}>{s.num}</Text>
+                <Text style={styles.statLabel}>{s.label}</Text>
               </View>
-              <Text style={styles.progressPct}>
-                {progression.total > 0
-                  ? Math.round(progression.visitees / progression.total * 100)
-                  : 0}%
-              </Text>
-            </View>
-
+            ))}
           </View>
 
-          {/* ── Tiroir blanc : tri + actions ── */}
-          <View style={styles.headerWhite}>
-            <View style={styles.triBar}>
+          {/* Barre de progression */}
+          <View style={styles.progRow}>
+            <View style={styles.progTrack}>
+              <View style={[styles.progFillVisitee, { flex: progression.total > 0 ? progression.visitees / progression.total : 0 }]} />
+              {progression.echec > 0 && <View style={[styles.progFillEchec, { flex: progression.echec / progression.total }]} />}
+            </View>
+            <Text style={styles.progPct}>{pct}%</Text>
+          </View>
+
+          {/* Tri + Actions */}
+          <View style={styles.triActions}>
+            <View style={styles.triTrack}>
               {TRI_MODES.map((m) => (
                 <TouchableOpacity
                   key={m.key}
                   style={[styles.triBtn, triMode === m.key && styles.triBtnActive]}
                   onPress={() => setTriMode(m.key)}
                 >
-                  <Text style={[styles.triBtnText, triMode === m.key && styles.triBtnTextActive]}>
-                    {m.label}
-                  </Text>
+                  <Text style={[styles.triBtnText, triMode === m.key && styles.triBtnTextActive]}>{m.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
+
             <View style={styles.actionsRow}>
               <TouchableOpacity
                 style={styles.anomaliesBtn}
-                onPress={() => navigation.navigate('MesAnomalies', {
-                  programmeUuid: programme.uuid,
-                  programmeNumero: programme.numero_x3,
-                })}
+                onPress={() => navigation.navigate('MesAnomalies', { programmeUuid: programme.uuid, programmeNumero: programme.numero_x3 })}
+                activeOpacity={0.8}
               >
-                <Text style={styles.anomaliesBtnText}>! Anomalies</Text>
+                <Text style={styles.anomaliesBtnText}>⚠ Anomalies</Text>
               </TouchableOpacity>
+
               {programme.statut !== 'CLOTURE' ? (
                 <TouchableOpacity
                   style={styles.clotureBtn}
                   onPress={() => navigation.navigate('Cloture', { programmeId: programme.id })}
+                  activeOpacity={0.82}
                 >
                   <Text style={styles.clotureBtnText}>Clôturer →</Text>
                 </TouchableOpacity>
               ) : (
-                <View style={styles.clotureDoneBadge}>
-                  <Text style={styles.clotureDoneText}>✓ Programme clôturé</Text>
+                <View style={styles.clotureDone}>
+                  <Text style={styles.clotureDoneText}>✓ Clôturé</Text>
                 </View>
               )}
             </View>
           </View>
-
         </View>
       )}
+
       <FlatList
         data={etapesTri}
         keyExtractor={(item) => item.uuid}
         renderItem={renderEtape}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={
-          <Text style={styles.empty}>Aucune étape dans ce programme.</Text>
-        }
-        ListFooterComponent={<View style={{ height: 80 }} />}
+        ListEmptyComponent={<View style={styles.emptyWrap}><Text style={styles.emptyText}>Aucune étape.</Text></View>}
+        ListFooterComponent={<View style={{ height: 100 }} />}
       />
+
       {programme && programme.statut !== 'CLOTURE' && (
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={() => navigation.navigate('Anomalie', {
-            programmeUuid: programme.uuid,
-            programmeId: programme.id,
-          })}
-        >
-          <Text style={styles.fabText}>+ Anomalie</Text>
-        </TouchableOpacity>
+        <View style={styles.fab}>
+          <TouchableOpacity
+            style={styles.fabBtn}
+            onPress={() => navigation.navigate('Anomalie', { programmeUuid: programme.uuid, programmeId: programme.id })}
+            activeOpacity={0.82}
+          >
+            <Text style={styles.fabText}>+ Anomalie</Text>
+          </TouchableOpacity>
+        </View>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  // ── Header global
-  header: { backgroundColor: '#0a1628', overflow: 'hidden' },
-  bgCircle1: {
-    position: 'absolute', width: 220, height: 220, borderRadius: 110,
-    backgroundColor: 'rgba(26,127,186,0.22)', top: -70, right: -50, zIndex: 0,
-  },
-  bgCircle2: {
-    position: 'absolute', width: 130, height: 130, borderRadius: 65,
-    backgroundColor: 'rgba(26,127,186,0.12)', top: 55, right: 95, zIndex: 0,
-  },
+  root:   { flex: 1, backgroundColor: BG },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: BG },
 
-  // ── Zone navy
-  headerNavy: { padding: 16, paddingBottom: 18, zIndex: 1 },
-  headerTopRow: {
-    flexDirection: 'row' as const, alignItems: 'center' as const,
-    justifyContent: 'space-between' as const, flexWrap: 'wrap' as const,
-    gap: 8, marginBottom: 2,
-  },
-  numero: { fontSize: 20, fontWeight: '800' as const, color: '#fff', letterSpacing: -0.5 },
-  headerChips: { flexDirection: 'row' as const, gap: 6 },
+  // ── Header navy ───────────────────────────────────────────────────────────
+  header: { backgroundColor: NAVY, paddingTop: 16, overflow: 'hidden' },
+  bubble1: { position: 'absolute', borderRadius: 999, width: 220, height: 220, top: -70, right: -50, backgroundColor: 'rgba(7,155,217,0.1)' },
+  bubble2: { position: 'absolute', borderRadius: 999, width: 120, height: 120, top: 55,  right: 95,  backgroundColor: 'rgba(7,155,217,0.07)' },
 
-  typeChip: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20 },
-  typeChipCollecte: {
-    backgroundColor: 'rgba(26,127,186,0.4)', borderWidth: 1,
-    borderColor: 'rgba(96,165,250,0.55)',
-  },
-  typeChipRestit: {
-    backgroundColor: 'rgba(25,135,84,0.4)', borderWidth: 1,
-    borderColor: 'rgba(74,222,128,0.55)',
-  },
-  typeChipText: { fontSize: 11, fontWeight: '700' as const, color: '#e2e8f0' },
+  headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, marginBottom: 2 },
+  numero:   { fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
+  chips:    { flexDirection: 'row', gap: 6 },
+  chip:     { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20, borderWidth: 1 },
+  chipC:        { backgroundColor: 'rgba(7,155,217,0.2)',  borderColor: 'rgba(7,155,217,0.4)' },
+  chipR:        { backgroundColor: 'rgba(16,185,129,0.2)', borderColor: 'rgba(16,185,129,0.4)' },
+  chipCloture:  { backgroundColor: 'rgba(16,185,129,0.2)', borderColor: 'rgba(16,185,129,0.4)' },
+  chipEnCours:  { backgroundColor: 'rgba(238,114,2,0.2)',  borderColor: 'rgba(238,114,2,0.4)' },
+  chipPlanifie: { backgroundColor: 'rgba(148,163,184,0.15)', borderColor: 'rgba(148,163,184,0.3)' },
+  chipText: { fontSize: 11, fontWeight: '700', color: '#e2e8f0' },
+  dateText: { fontSize: 12, color: 'rgba(255,255,255,0.45)', paddingHorizontal: 16, marginBottom: 14, marginTop: 3 },
 
-  statutChip: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20 },
-  statutCloture: {
-    backgroundColor: 'rgba(25,135,84,0.3)', borderWidth: 1,
-    borderColor: 'rgba(74,222,128,0.45)',
-  },
-  statutEnCours: {
-    backgroundColor: 'rgba(244,121,32,0.3)', borderWidth: 1,
-    borderColor: 'rgba(251,146,60,0.5)',
-  },
-  statutPlanifie: {
-    backgroundColor: 'rgba(148,163,184,0.2)', borderWidth: 1,
-    borderColor: 'rgba(148,163,184,0.3)',
-  },
-  statutChipText: { fontSize: 11, fontWeight: '700' as const, color: '#e2e8f0' },
+  statsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginBottom: 14 },
+  statBox:  { flex: 1, borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
+  statNum:  { fontSize: 24, fontWeight: '800', lineHeight: 28 },
+  statLabel:{ fontSize: 10, fontWeight: '600', color: 'rgba(255,255,255,0.5)', marginTop: 2, letterSpacing: 0.5 },
 
-  dateText: { fontSize: 12, color: 'rgba(255,255,255,0.48)', marginBottom: 14, marginTop: 3 },
+  progRow:         { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, marginBottom: 14 },
+  progTrack:       { flex: 1, height: 7, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 4, flexDirection: 'row', overflow: 'hidden' },
+  progFillVisitee: { height: 7, backgroundColor: '#34d399', borderRadius: 4 },
+  progFillEchec:   { height: 7, backgroundColor: '#f87171' },
+  progPct:         { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.7)', minWidth: 34, textAlign: 'right' },
 
-  // ── Compteurs
-  statsRow: { flexDirection: 'row' as const, gap: 8, marginBottom: 14 },
-  statBox: {
-    flex: 1, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 10,
-    paddingVertical: 10, alignItems: 'center' as const,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
-  },
-  statBoxEchec: {
-    backgroundColor: 'rgba(220,53,69,0.22)',
-    borderColor: 'rgba(220,53,69,0.38)',
-  },
-  statNum: { fontSize: 22, fontWeight: '800' as const, color: '#fff', lineHeight: 26 },
-  statNumEchec:  { color: '#fca5a5' },
-  statNumAFaire: { color: '#fdba74' },
-  statLabel: {
-    fontSize: 10, fontWeight: '600' as const,
-    color: 'rgba(255,255,255,0.48)', marginTop: 2,
-    textTransform: 'uppercase' as const, letterSpacing: 0.4,
-  },
+  triActions: { paddingHorizontal: 12, paddingBottom: 14, gap: 10 },
+  triTrack:   { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: 3, gap: 3 },
+  triBtn:     { flex: 1, paddingVertical: 9, borderRadius: 8, alignItems: 'center' },
+  triBtnActive: { backgroundColor: '#ffffff' },
+  triBtnText:   { fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.5)' },
+  triBtnTextActive: { color: Colors.brandBlue, fontWeight: '700' },
 
-  // ── Progression bicolore
-  progressRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 10 },
-  progressBar: {
-    flex: 1, height: 6, backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 3, flexDirection: 'row' as const, overflow: 'hidden' as const,
-  },
-  progressVisitee: { height: 6, backgroundColor: '#4ade80', borderRadius: 3 },
-  progressEchec:   { height: 6, backgroundColor: '#f87171' },
-  progressPct: {
-    fontSize: 12, fontWeight: '700' as const, color: 'rgba(255,255,255,0.62)',
-    minWidth: 32, textAlign: 'right' as const,
-  },
+  actionsRow:    { flexDirection: 'row', gap: 8 },
+  anomaliesBtn:  { paddingVertical: 11, paddingHorizontal: 16, borderRadius: 10, backgroundColor: 'rgba(238,114,2,0.15)', borderWidth: 1.5, borderColor: 'rgba(238,114,2,0.4)' },
+  anomaliesBtnText: { fontSize: 13, fontWeight: '700', color: Colors.brandOrange },
+  clotureBtn:    { flex: 1, paddingVertical: 11, borderRadius: 10, alignItems: 'center', backgroundColor: Colors.brandBlue },
+  clotureBtnText:{ color: '#fff', fontWeight: '700', fontSize: 13 },
+  clotureDone:   { flex: 1, paddingVertical: 11, borderRadius: 10, alignItems: 'center', backgroundColor: 'rgba(52,211,153,0.15)', borderWidth: 1.5, borderColor: 'rgba(52,211,153,0.4)' },
+  clotureDoneText: { color: '#34d399', fontWeight: '700', fontSize: 13 },
 
-  // ── Tiroir blanc
-  headerWhite: {
-    backgroundColor: '#f8fafc',
-    borderTopLeftRadius: 18, borderTopRightRadius: 18,
-    paddingTop: 14, paddingHorizontal: 12, paddingBottom: 10,
-  },
-  triBar: {
-    flexDirection: 'row' as const, backgroundColor: '#eef1f6',
-    borderRadius: 10, padding: 3, gap: 3, marginBottom: 10,
-  },
-  triBtn: { flex: 1, paddingVertical: 7, borderRadius: 8, alignItems: 'center' as const },
-  triBtnActive: {
-    backgroundColor: '#fff',
-    shadowColor: '#0a1628', shadowOpacity: 0.09, shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 }, elevation: 2,
-  },
-  triBtnText: { fontSize: 12, fontWeight: '600' as const, color: '#94a3b8' },
-  triBtnTextActive: { color: '#1a7fba' },
-
-  // ── Actions
-  actionsRow: { flexDirection: 'row' as const, gap: 8, alignItems: 'center' as const },
-  anomaliesBtn: {
-    paddingVertical: 9, paddingHorizontal: 14, borderRadius: 9,
-    backgroundColor: 'rgba(244,121,32,0.07)',
-    borderWidth: 1.5, borderColor: 'rgba(244,121,32,0.28)',
-  },
-  anomaliesBtnText: { fontSize: 13, fontWeight: '700' as const, color: '#c45a00' },
-  clotureBtn: {
-    flex: 1, paddingVertical: 9, borderRadius: 9,
-    backgroundColor: '#0a1628', alignItems: 'center' as const,
-  },
-  clotureBtnText: { color: '#fff', fontWeight: '700' as const, fontSize: 13 },
-  clotureDoneBadge: {
-    flex: 1, paddingVertical: 9, borderRadius: 9,
-    backgroundColor: 'rgba(25,135,84,0.08)',
-    borderWidth: 1.5, borderColor: 'rgba(25,135,84,0.3)',
-    alignItems: 'center' as const,
-  },
-  clotureDoneText: { color: '#198754', fontWeight: '700' as const, fontSize: 12 },
+  // ── Cartes étapes ─────────────────────────────────────────────────────────
   list: { padding: 12 },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    shadowColor: '#0a1628',
-    shadowOpacity: 0.09,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-    overflow: 'hidden',
-  },
-  cardMain: {
-    flexDirection: 'row', alignItems: 'center',
-    padding: 14, paddingBottom: 10,
-  },
-  ordreCircle: {
-    width: 40, height: 40, borderRadius: 20,
-    justifyContent: 'center', alignItems: 'center',
-    marginRight: 12, flexShrink: 0,
-  },
-  ordreText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  plvLibelle: { fontSize: 15, fontWeight: '700', color: '#1a1a2e' },
-  clientName: { fontSize: 12, color: '#888', marginTop: 2 },
-  cardRight: { alignItems: 'flex-end', gap: 6 },
-  statutBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  statutText: { fontSize: 11, fontWeight: '700' },
-  syncDot: { width: 8, height: 8, borderRadius: 4 },
-  syncDotGreen: { backgroundColor: '#22c55e' },
-  syncDotOrange: { backgroundColor: '#f97316' },
-  itineraireRow: {
-    borderTopWidth: 1, borderTopColor: '#f0f2f5',
-    paddingVertical: 10, paddingHorizontal: 14,
-    alignItems: 'flex-end',
-  },
-  itineraireTxt: { fontSize: 12, fontWeight: '700', color: '#1a7fba' },
-  empty: { textAlign: 'center', color: '#888', padding: 32 },
+  card: { borderRadius: 14, marginBottom: 10, backgroundColor: CARD, shadowColor: '#0f172a', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 3 },
   cardDisabled: { opacity: 0.45 },
-  fab: {
-    position: 'absolute', bottom: 20, right: 16,
-    backgroundColor: '#fd7e14',
-    paddingHorizontal: 20, paddingVertical: 14,
-    borderRadius: 30,
-    elevation: 6,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 4,
-  },
-  fabText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  cardInner:    { flexDirection: 'row', borderRadius: 14, overflow: 'hidden' },
+  cardAccent:   { width: 4 },
+  cardBody:     { flex: 1 },
+  cardMain:     { flexDirection: 'row', alignItems: 'center', padding: 14, paddingBottom: 10 },
+
+  ordreCircle: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 12, flexShrink: 0 },
+  ordreText:   { color: '#fff', fontWeight: '800', fontSize: 15 },
+
+  cardInfo:   { flex: 1, marginRight: 8 },
+  plvLibelle: { fontSize: 14, fontWeight: '700', color: TEXT },
+  clientName: { fontSize: 12, color: TEXT3, marginTop: 2 },
+
+  cardRight:   { alignItems: 'flex-end', gap: 6 },
+  statutBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  statutDot:   { width: 6, height: 6, borderRadius: 3 },
+  statutText:  { fontSize: 11, fontWeight: '700' },
+  syncIndicator: { width: 8, height: 8, borderRadius: 4 },
+  syncGreen:  { backgroundColor: '#22c55e' },
+  syncOrange: { backgroundColor: '#f97316' },
+
+  itineraireRow: { borderTopWidth: 1, borderTopColor: BORDER, backgroundColor: INPUT, paddingVertical: 10, paddingHorizontal: 14, alignItems: 'flex-end' },
+  itineraireTxt: { fontSize: 12, fontWeight: '700', color: Colors.brandBlue },
+
+  emptyWrap: { padding: 40, alignItems: 'center' },
+  emptyText: { color: TEXT3, textAlign: 'center', fontSize: 14 },
+
+  // FAB
+  fab:    { position: 'absolute', bottom: 24, right: 20 },
+  fabBtn: { backgroundColor: Colors.brandOrange, paddingHorizontal: 22, paddingVertical: 15, borderRadius: 30, shadowColor: Colors.brandOrange, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 8 },
+  fabText:{ color: '#fff', fontWeight: '700', fontSize: 14 },
 });

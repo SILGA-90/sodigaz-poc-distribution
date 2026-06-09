@@ -1,6 +1,6 @@
 /* base.html fournit déjà <div class="login-wrapper"> — on le transforme en conteneur flex */
     .login-wrapper {
-        background: linear-gradient(135deg, #0a1628 0%, #1a3a5c 55%, #1a7fba 100%) !important;
+        background: linear-gradient(135deg, #0a1628 0%, #1a3a5c 55%, #079BD9 100%) !important;
         display: flex; align-items: center; justify-content: center;
         padding: 2rem 1rem;
     }
@@ -20,12 +20,12 @@
     .login-body { padding: 1.75rem 2rem 2rem; }
     .login-body .form-label { font-size: .85rem; font-weight: 600; color: #1a2332; }
     .login-body .form-control { border-radius: 8px; font-size: .9rem; padding: .55rem .85rem; }
-    .login-body .form-control:focus { border-color: #1a7fba; box-shadow: 0 0 0 3px rgba(26,127,186,.15); }
+    .login-body .form-control:focus { border-color: #079BD9; box-shadow: 0 0 0 3px rgba(7,155,217,.15); }
     .btn-login {
-        background: #1a7fba; color: #fff; border: none;
+        background: #079BD9; color: #fff; border: none;
         border-radius: 8px; padding: .65rem; font-weight: 600; font-size: .95rem;
         width: 100%; transition: background .15s; cursor: pointer;
     }
-    .btn-login:hover { background: #1568a0; }
+    .btn-login:hover { background: #0670A0; }
     .demo-hint { font-size: .78rem; color: #6c757d; text-align: center; margin-top: 1rem; }
-    .demo-hint code { color: #1a7fba; }
+    .demo-hint code { color: #079BD9; }

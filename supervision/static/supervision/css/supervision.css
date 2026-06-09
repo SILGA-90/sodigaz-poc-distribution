@@ -10,8 +10,8 @@
     --sidebar-bg:     #0a1628;
     --sidebar-text:   #8daec8;
     --sidebar-hover:  rgba(255,255,255,0.06);
-    --brand-blue:     #1a7fba;
-    --brand-orange:   #f47920;
+    --brand-blue:     #079BD9;
+    --brand-orange:   #EE7202;
     --brand-navy:     #0a1628;
     --body-bg:        #f1f5f9;
     --card-radius:    10px;
@@ -52,7 +52,7 @@ body { font-family: 'Inter', sans-serif; background: var(--body-bg); }
 }
 .sidebar-link:hover { background: var(--sidebar-hover); color: #fff; }
 .sidebar-link.active {
-    background: linear-gradient(90deg, rgba(244,121,32,.2) 0%, rgba(244,121,32,.05) 100%);
+    background: linear-gradient(90deg, rgba(238,114,2,.2) 0%, rgba(238,114,2,.05) 100%);
     color: #fff; border-left-color: var(--brand-orange);
 }
 .sidebar-link i { font-size: 1.05rem; width: 1.2rem; text-align: center; flex-shrink: 0; }
@@ -122,29 +122,29 @@ body { font-family: 'Inter', sans-serif; background: var(--body-bg); }
    BOOTSTRAP PRIMARY → SODIGAZ BLUE
    ══════════════════════════════════════════════════════════ */
 .btn-primary {
-    --bs-btn-bg:              #1a7fba;
-    --bs-btn-border-color:    #1a7fba;
-    --bs-btn-hover-bg:        #1568a0;
-    --bs-btn-hover-border-color: #1568a0;
-    --bs-btn-active-bg:       #1568a0;
-    --bs-btn-active-border-color: #1568a0;
-    --bs-btn-disabled-bg:     #1a7fba;
-    --bs-btn-disabled-border-color: #1a7fba;
+    --bs-btn-bg:              #079BD9;
+    --bs-btn-border-color:    #079BD9;
+    --bs-btn-hover-bg:        #0670A0;
+    --bs-btn-hover-border-color: #0670A0;
+    --bs-btn-active-bg:       #0670A0;
+    --bs-btn-active-border-color: #0670A0;
+    --bs-btn-disabled-bg:     #079BD9;
+    --bs-btn-disabled-border-color: #079BD9;
 }
 .btn-outline-primary {
-    --bs-btn-color:           #1a7fba;
-    --bs-btn-border-color:    #1a7fba;
-    --bs-btn-hover-bg:        #1a7fba;
-    --bs-btn-hover-border-color: #1a7fba;
-    --bs-btn-active-bg:       #1a7fba;
-    --bs-btn-active-border-color: #1a7fba;
+    --bs-btn-color:           #079BD9;
+    --bs-btn-border-color:    #079BD9;
+    --bs-btn-hover-bg:        #079BD9;
+    --bs-btn-hover-border-color: #079BD9;
+    --bs-btn-active-bg:       #079BD9;
+    --bs-btn-active-border-color: #079BD9;
     --bs-btn-hover-color:     #fff;
     --bs-btn-active-color:    #fff;
 }
-.bg-primary     { background-color: #1a7fba !important; }
-.text-primary   { color: #1a7fba !important; }
-.border-primary { border-color: #1a7fba !important; }
-a.text-primary:hover { color: #1568a0 !important; }
+.bg-primary     { background-color: #079BD9 !important; }
+.text-primary   { color: #079BD9 !important; }
+.border-primary { border-color: #079BD9 !important; }
+a.text-primary:hover { color: #0670A0 !important; }
 
 /* ══════════════════════════════════════════════════════════
    CARDS & TABLES (utilitaires Bootstrap étendus)
@@ -218,12 +218,12 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
    ══════════════════════════════════════════════════════════ */
 .pg-icon {
     width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0;
-    background: rgba(26,127,186,.1); color: #1a7fba;
+    background: rgba(7,155,217,.1); color: #079BD9;
     display: flex; align-items: center; justify-content: center;
     font-size: 1.25rem;
 }
 .pg-icon-red     { background: rgba(220,53,69,.1);   color: #dc3545; }
-.pg-icon-orange  { background: rgba(244,121,32,.1);  color: #f47920; }
+.pg-icon-orange  { background: rgba(238,114,2,.1);  color: #EE7202; }
 .pg-icon-lg      { width: 44px; height: 44px; border-radius: 12px; font-size: 1.3rem; }
 
 /* ══════════════════════════════════════════════════════════
@@ -243,9 +243,9 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
     letter-spacing: .07em; color: #94a3b8; margin-top: .15rem;
 }
 .kpi-pill-gray   .kpi-pill-n { color: #6c757d; }
-.kpi-pill-blue   .kpi-pill-n { color: #1a7fba; }
+.kpi-pill-blue   .kpi-pill-n { color: #079BD9; }
 .kpi-pill-green  .kpi-pill-n { color: #198754; }
-.kpi-pill-orange .kpi-pill-n { color: #f47920; }
+.kpi-pill-orange .kpi-pill-n { color: #EE7202; }
 .kpi-pill-red    .kpi-pill-n { color: #dc3545; }
 
 /* ══════════════════════════════════════════════════════════
@@ -274,10 +274,10 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
    ══════════════════════════════════════════════════════════ */
 .back-link {
     display: inline-flex; align-items: center; gap: .3rem;
-    font-size: .82rem; font-weight: 600; color: #1a7fba;
+    font-size: .82rem; font-weight: 600; color: #079BD9;
     text-decoration: none; margin-bottom: 1.2rem; transition: gap .15s;
 }
-.back-link:hover { gap: .55rem; color: #1568a0; }
+.back-link:hover { gap: .55rem; color: #0670A0; }
 
 /* ══════════════════════════════════════════════════════════
    INFO ROW / CARDS  (détails programme, opération, anomalie)
@@ -292,14 +292,14 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
 }
 .info-avatar {
     width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
-    background: linear-gradient(135deg, #1a7fba, #1568a0);
+    background: linear-gradient(135deg, #079BD9, #0670A0);
     color: #fff; font-size: .9rem; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 2px 6px rgba(26,127,186,.3);
+    box-shadow: 0 2px 6px rgba(7,155,217,.3);
 }
 .info-icon-box {
     width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
-    background: rgba(26,127,186,.1); color: #1a7fba; font-size: 1.1rem;
+    background: rgba(7,155,217,.1); color: #079BD9; font-size: 1.1rem;
     display: flex; align-items: center; justify-content: center;
 }
 .info-icon-muted { background: #f1f5f9; color: #94a3b8; }
@@ -316,10 +316,10 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
 .gps-prec { color: #94a3b8; }
 .info-link {
     display: inline-flex; align-items: center; gap: .2rem;
-    font-size: .75rem; font-weight: 600; color: #1a7fba;
+    font-size: .75rem; font-weight: 600; color: #079BD9;
     text-decoration: none; transition: color .15s;
 }
-.info-link:hover { color: #1568a0; }
+.info-link:hover { color: #0670A0; }
 
 /* ══════════════════════════════════════════════════════════
    SECTION CARDS  (opération-détail, anomalie-détail, dashboard)
@@ -338,7 +338,7 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
 }
 .section-body  { padding: 1.1rem 1.25rem; }
 .section-count {
-    margin-left: .5rem; background: #e8f4fc; color: #1a7fba;
+    margin-left: .5rem; background: #e8f4fc; color: #079BD9;
     font-size: .68rem; font-weight: 700;
     padding: .1rem .5rem; border-radius: 20px;
 }
@@ -353,7 +353,7 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
     white-space: nowrap;
 }
 .statut-PLANIFIE { background: #f1f3f5; color: #6c757d; }
-.statut-EN_COURS  { background: #dbeafe; color: #1a7fba; }
+.statut-EN_COURS  { background: #dbeafe; color: #079BD9; }
 .statut-CLOTURE   { background: #d1f5e0; color: #198754; }
 
 /* ══════════════════════════════════════════════════════════
@@ -364,7 +364,7 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
     display: inline-flex; align-items: center; gap: .3rem;
 }
 .grav-elevee  { background: #fde8e8; color: #dc3545; }
-.grav-moyenne { background: rgba(244,121,32,.1); color: #c45a00; }
+.grav-moyenne { background: rgba(238,114,2,.1); color: #c45a00; }
 .grav-faible  { background: #d1f5e0; color: #198754; }
 
 /* ══════════════════════════════════════════════════════════
@@ -375,7 +375,7 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
     display: inline-flex; align-items: center; gap: .3rem;
 }
 .statut-anom-OUVERTE       { background: #fde8e8; color: #dc3545; }
-.statut-anom-EN_TRAITEMENT { background: rgba(244,121,32,.1); color: #c45a00; }
+.statut-anom-EN_TRAITEMENT { background: rgba(238,114,2,.1); color: #c45a00; }
 .statut-anom-RESOLUE       { background: #d1f5e0; color: #198754; }
 
 /* ══════════════════════════════════════════════════════════
@@ -422,7 +422,7 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
 
 .produit-dot {
     display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-    background: #1a7fba; margin-right: .4rem; vertical-align: middle;
+    background: #079BD9; margin-right: .4rem; vertical-align: middle;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -435,10 +435,10 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
     border: 1.5px solid transparent; cursor: pointer; transition: all .15s;
 }
 .btn-action-warn {
-    background: rgba(244,121,32,.08); color: #c45a00;
-    border-color: rgba(244,121,32,.28);
+    background: rgba(238,114,2,.08); color: #c45a00;
+    border-color: rgba(238,114,2,.28);
 }
-.btn-action-warn:hover  { background: #f47920; color: #fff; border-color: #f47920; }
+.btn-action-warn:hover  { background: #EE7202; color: #fff; border-color: #EE7202; }
 .btn-action-green {
     background: rgba(25,135,84,.08); color: #198754;
     border-color: rgba(25,135,84,.25);
@@ -475,16 +475,16 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
    UTILITAIRES COULEUR ICÔNE / VALEUR KPI
    (rapport-journée + dashboard)
    ══════════════════════════════════════════════════════════ */
-.kpi-icon-blue   { background: rgba(26,127,186,.1);  color: #1a7fba; }
+.kpi-icon-blue   { background: rgba(7,155,217,.1);  color: #079BD9; }
 .kpi-icon-navy   { background: rgba(10,22,40,.08);   color: #0a1628; }
 .kpi-icon-green  { background: rgba(25,135,84,.1);   color: #198754; }
-.kpi-icon-orange { background: rgba(244,121,32,.1);  color: #f47920; }
+.kpi-icon-orange { background: rgba(238,114,2,.1);  color: #EE7202; }
 .kpi-icon-gray   { background: #f1f5f9;              color: #94a3b8; }
 .kpi-icon-red    { background: rgba(220,53,69,.1);   color: #dc3545; }
 
-.kpi-value-blue   { color: #1a7fba; }
+.kpi-value-blue   { color: #079BD9; }
 .kpi-value-navy   { color: #0a1628; }
 .kpi-value-green  { color: #198754; }
-.kpi-value-orange { color: #f47920; }
+.kpi-value-orange { color: #EE7202; }
 .kpi-value-red    { color: #dc3545; }
 .kpi-value-gray   { color: #94a3b8; }

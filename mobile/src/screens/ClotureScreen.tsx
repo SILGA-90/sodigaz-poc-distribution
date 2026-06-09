@@ -1,5 +1,6 @@
 /**
  * Ecran de cloture d'un programme : recapitulatif + confirmation.
+ * Design néomorphisme sombre.
  */
 import React, { useEffect, useState } from 'react';
 import {
@@ -23,17 +24,25 @@ import {
 } from '../db/repositories/programmeRepository';
 import { Programme } from '../types/models';
 import { RootStackParamList } from '../types/navigation';
+import { Colors } from '../theme';
+
+// ── Palette néomorphisme ─────────────────────────────────────────────────────
+const BASE    = '#0d1e35';
+const SURFACE = '#112240';
+const DEEPER  = '#07111e';
+const LIFT    = 'rgba(255,255,255,0.06)';
+const INSET   = '#091527';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Cloture'>;
 
 export default function ClotureScreen({ route, navigation }: Props): React.ReactElement {
   const { programmeId } = route.params;
   const [programme, setProgramme] = useState<Programme | null>(null);
-  const [recap, setRecap] = useState<RecapProgramme | null>(null);
+  const [recap, setRecap]         = useState<RecapProgramme | null>(null);
   const [operations, setOperations] = useState<OperationRecap[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [closing, setClosing] = useState<boolean>(false);
-  const [clotureReussie, setClotureReussie] = useState<boolean>(false);
+  const [loading, setLoading]     = useState(true);
+  const [closing, setClosing]     = useState(false);
+  const [clotureReussie, setClotureReussie] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -55,11 +64,11 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
     if (!programme || !recap) return;
     const reste = recap.total_etapes - recap.etapes_visitees;
     const message = reste > 0
-      ? `Attention : ${reste} etape(s) non visitee(s). Cloturer quand meme ?`
-      : 'Toutes les etapes sont visitees. Confirmer la cloture ?';
-    Alert.alert('Cloturer le programme', message, [
+      ? `Attention : ${reste} étape(s) non visitée(s). Clôturer quand même ?`
+      : 'Toutes les étapes sont visitées. Confirmer la clôture ?';
+    Alert.alert('Clôturer le programme', message, [
       { text: 'Annuler', style: 'cancel' },
-      { text: 'Cloturer', style: 'destructive', onPress: faireCloture },
+      { text: 'Clôturer', style: 'destructive', onPress: faireCloture },
     ]);
   }
 
@@ -77,205 +86,272 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
   }
 
   if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1a7fba" />
-      </View>
-    );
+    return <View style={styles.center}><ActivityIndicator size="large" color={Colors.brandBlue} /></View>;
   }
 
   if (!programme || !recap) {
     return (
       <View style={styles.center}>
-        <Text>Programme introuvable.</Text>
+        <Text style={styles.errorText}>Programme introuvable.</Text>
       </View>
     );
   }
 
-  const dejaCloture = programme.statut === 'CLOTURE';
-
-  if (clotureReussie && recap) {
+  // ── État clôture réussie ────────────────────────────────────────────────────
+  if (clotureReussie) {
     const pct = recap.total_etapes > 0
-      ? Math.round((recap.etapes_visitees / recap.total_etapes) * 100)
-      : 0;
+      ? Math.round((recap.etapes_visitees / recap.total_etapes) * 100) : 0;
     return (
-      <View style={styles.container}>
-        <View style={styles.successHeader}>
-          <Text style={styles.successIcon}>✓</Text>
-          <Text style={styles.successTitle}>Tournee terminee</Text>
-          <Text style={styles.successSub}>{programme.numero_x3} · {programme.date_programme}</Text>
+      <View style={styles.successRoot}>
+        <View style={styles.bubble1} pointerEvents="none" />
+        <View style={styles.bubble2} pointerEvents="none" />
+
+        {/* Grande icône ✓ néomorphe */}
+        <View style={styles.successCheckOuter}>
+          <View style={styles.successCheck}>
+            <Text style={styles.successCheckText}>✓</Text>
+          </View>
+        </View>
+        <Text style={styles.successTitle}>Tournée terminée</Text>
+        <Text style={styles.successSub}>{programme.numero_x3} · {programme.date_programme}</Text>
+
+        {/* Bilan */}
+        <View style={styles.cardOuter}>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Bilan de la tournée</Text>
+            <RecapRow label="Étapes visitées"
+              value={`${recap.etapes_visitees} / ${recap.total_etapes} (${pct} %)`} />
+            {recap.etapes_echec > 0 && (
+              <RecapRow label="Étapes en échec" value={String(recap.etapes_echec)} danger />
+            )}
+            <RecapRow label="Opérations réalisées" value={String(recap.nb_operations)} />
+            <RecapRow label="Montant encaissé"
+              value={`${recap.montant_encaisse.toLocaleString('fr-FR')} FCFA`} success />
+            {recap.nb_anomalies > 0 && (
+              <RecapRow label="Anomalies signalées" value={String(recap.nb_anomalies)} warning />
+            )}
+          </View>
         </View>
 
-        <View style={styles.recapCard}>
-          <Text style={styles.recapTitle}>Bilan de la tournee</Text>
-
-          <View style={styles.recapRow}>
-            <Text style={styles.recapLabel}>Etapes visitees</Text>
-            <Text style={styles.recapValue}>{recap.etapes_visitees} / {recap.total_etapes} ({pct} %)</Text>
-          </View>
-          {recap.etapes_echec > 0 && (
-            <View style={styles.recapRow}>
-              <Text style={styles.recapLabel}>Etapes en echec</Text>
-              <Text style={[styles.recapValue, { color: '#dc3545' }]}>{recap.etapes_echec}</Text>
-            </View>
-          )}
-          <View style={styles.recapRow}>
-            <Text style={styles.recapLabel}>Operations realisees</Text>
-            <Text style={styles.recapValue}>{recap.nb_operations}</Text>
-          </View>
-          <View style={styles.recapRow}>
-            <Text style={styles.recapLabel}>Montant encaisse</Text>
-            <Text style={[styles.recapValue, { color: '#198754' }]}>
-              {recap.montant_encaisse.toLocaleString('fr-FR')} FCFA
+        {/* Avertissement sync */}
+        <View style={styles.syncNoticeOuter}>
+          <View style={styles.syncNotice}>
+            <Text style={styles.syncNoticeIcon}>↑</Text>
+            <Text style={styles.syncNoticeText}>
+              Synchronisez dès que possible pour remonter vos données au superviseur.
             </Text>
           </View>
-          {recap.nb_anomalies > 0 && (
-            <View style={styles.recapRow}>
-              <Text style={styles.recapLabel}>Anomalies signalees</Text>
-              <Text style={[styles.recapValue, { color: '#ffc107' }]}>{recap.nb_anomalies}</Text>
-            </View>
-          )}
         </View>
 
-        <View style={styles.syncNotice}>
-          <Text style={styles.syncNoticeText}>
-            Synchronisez des que possible pour remonter vos donnees au superviseur.
-          </Text>
+        {/* Bouton retour tableau de bord */}
+        <View style={styles.backBtnOuter}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.navigate('Dashboard')} activeOpacity={0.85}>
+            <View style={styles.backBtnSheen} pointerEvents="none" />
+            <Text style={styles.backBtnText}>Retour au tableau de bord</Text>
+          </TouchableOpacity>
         </View>
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate('Dashboard')}
-        >
-          <Text style={styles.buttonText}>Retour au tableau de bord</Text>
-        </TouchableOpacity>
       </View>
     );
   }
 
+  // ── Vue principale ──────────────────────────────────────────────────────────
+  const dejaCloture = programme.statut === 'CLOTURE';
+  const isCollecte  = programme.type_programme === 'COLLECTE';
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
+    <ScrollView style={styles.root} contentContainerStyle={styles.scroll}>
+
+      {/* ══ HEADER ══ */}
       <View style={styles.header}>
-        <Text style={styles.numero}>{programme.numero_x3}</Text>
-        <Text style={styles.meta}>{programme.type_programme} - {programme.date_programme}</Text>
+        <View style={styles.bubble1} pointerEvents="none" />
+        <View style={styles.bubble2} pointerEvents="none" />
+        <View style={styles.headerContent}>
+          <View style={[styles.typeChip, isCollecte ? styles.typeChipC : styles.typeChipR]}>
+            <Text style={styles.typeChipText}>{isCollecte ? 'Collecte' : 'Restitution'}</Text>
+          </View>
+          <Text style={styles.numero}>{programme.numero_x3}</Text>
+          <Text style={styles.meta}>{programme.date_programme}</Text>
+        </View>
       </View>
 
-      <View style={styles.recapCard}>
-        <Text style={styles.recapTitle}>Recapitulatif de la tournee</Text>
-        <View style={styles.recapRow}>
-          <Text style={styles.recapLabel}>Etapes visitees</Text>
-          <Text style={styles.recapValue}>{recap.etapes_visitees} / {recap.total_etapes}</Text>
+      {/* ══ RÉCAPITULATIF ══ */}
+      <SectionHeader icon="≡" color="blue" title="Récapitulatif de la tournée" />
+      <View style={styles.cardOuter}>
+        <View style={styles.card}>
+          <RecapRow label="Étapes visitées" value={`${recap.etapes_visitees} / ${recap.total_etapes}`} />
+          {recap.etapes_echec > 0 && (
+            <RecapRow label="Étapes en échec" value={String(recap.etapes_echec)} danger />
+          )}
+          <RecapRow label="Opérations réalisées" value={String(recap.nb_operations)} />
+          <RecapRow label="Montant encaissé"
+            value={`${recap.montant_encaisse.toLocaleString('fr-FR')} FCFA`} success />
+          {recap.nb_anomalies > 0 && (
+            <RecapRow label="Anomalies signalées" value={String(recap.nb_anomalies)} warning />
+          )}
         </View>
-        {recap.etapes_echec > 0 && (
-          <View style={styles.recapRow}>
-            <Text style={styles.recapLabel}>Etapes en echec</Text>
-            <Text style={[styles.recapValue, { color: '#dc3545' }]}>{recap.etapes_echec}</Text>
-          </View>
-        )}
-        <View style={styles.recapRow}>
-          <Text style={styles.recapLabel}>Operations realisees</Text>
-          <Text style={styles.recapValue}>{recap.nb_operations}</Text>
-        </View>
-        <View style={styles.recapRow}>
-          <Text style={styles.recapLabel}>Montant encaisse</Text>
-          <Text style={[styles.recapValue, { color: '#198754' }]}>
-            {recap.montant_encaisse.toLocaleString('fr-FR')} FCFA
-          </Text>
-        </View>
-        {recap.nb_anomalies > 0 && (
-          <View style={styles.recapRow}>
-            <Text style={styles.recapLabel}>Anomalies signalees</Text>
-            <Text style={[styles.recapValue, { color: '#ffc107' }]}>{recap.nb_anomalies}</Text>
-          </View>
-        )}
       </View>
 
+      {/* ══ DÉTAIL DES OPÉRATIONS ══ */}
       {operations.length > 0 && (
-        <View style={styles.recapCard}>
-          <Text style={styles.recapTitle}>Detail des operations</Text>
-          {operations.map((op, i) => (
-            <View key={i} style={styles.opRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.opPlv}>{op.plv_libelle}</Text>
-                <Text style={styles.opType}>{op.type_operation === 'COLLECTE' ? 'Collecte' : 'Restitution'}</Text>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.opMontant}>
-                  {op.montant_total.toLocaleString('fr-FR')} FCFA
-                </Text>
-                <Text style={[styles.opEncaisse, { color: op.est_encaissee ? '#198754' : '#dc3545' }]}>
-                  {op.est_encaissee ? 'Encaisse' : 'Non encaisse'}
-                </Text>
-              </View>
+        <>
+          <SectionHeader icon="↓" color="blue" title="Détail des opérations" />
+          <View style={styles.cardOuter}>
+            <View style={styles.card}>
+              {operations.map((op, i) => (
+                <View key={i} style={[styles.opRow, i > 0 && styles.opRowSep]}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.opPlv}>{op.plv_libelle}</Text>
+                    <Text style={styles.opType}>
+                      {op.type_operation === 'COLLECTE' ? 'Collecte' : 'Restitution'}
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={styles.opMontant}>
+                      {op.montant_total.toLocaleString('fr-FR')} FCFA
+                    </Text>
+                    <Text style={[styles.opEncaisse, { color: op.est_encaissee ? '#34d399' : '#f87171' }]}>
+                      {op.est_encaissee ? 'Encaissé' : 'Non encaissé'}
+                    </Text>
+                  </View>
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
+          </View>
+        </>
       )}
 
+      {/* ══ ACTION ══ */}
       {dejaCloture ? (
-        <View style={styles.clotureBadge}>
-          <Text style={styles.clotureBadgeText}>Programme deja cloture</Text>
+        <View style={styles.clotureBadgeOuter}>
+          <View style={styles.clotureBadge}>
+            <Text style={styles.clotureBadgeText}>✓ Programme déjà clôturé</Text>
+          </View>
         </View>
       ) : (
-        <TouchableOpacity
-          style={[styles.button, closing && styles.buttonDisabled]}
-          onPress={confirmerCloture}
-          disabled={closing}
-        >
-          {closing ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Cloturer le programme</Text>
-          )}
-        </TouchableOpacity>
+        <View style={styles.clotureBtnOuter}>
+          <TouchableOpacity
+            style={[styles.clotureBtn, closing && styles.clotureBtnDisabled]}
+            onPress={confirmerCloture}
+            disabled={closing}
+            activeOpacity={0.85}
+          >
+            <View style={styles.clotureBtnSheen} pointerEvents="none" />
+            {closing
+              ? <ActivityIndicator color="#fff" />
+              : <>
+                  <Text style={styles.clotureBtnText}>Clôturer le programme</Text>
+                  <Text style={styles.clotureBtnSub}>Action irréversible</Text>
+                </>
+            }
+          </TouchableOpacity>
+        </View>
       )}
+
     </ScrollView>
   );
 }
 
+// ── Sous-composants ──────────────────────────────────────────────────────────
+
+type IconColor = 'blue' | 'green' | 'orange' | 'navy' | 'gray';
+function SectionHeader({ icon, color, title }: { icon: string; color: IconColor; title: string }) {
+  const bg: Record<IconColor, string> = { blue: 'rgba(7,155,217,0.15)', green: 'rgba(52,211,153,0.15)', orange: 'rgba(238,114,2,0.15)', navy: 'rgba(255,255,255,0.08)', gray: 'rgba(148,163,184,0.12)' };
+  const fg: Record<IconColor, string> = { blue: Colors.brandBlue, green: '#34d399', orange: Colors.brandOrange, navy: 'rgba(255,255,255,0.7)', gray: '#94a3b8' };
+  return (
+    <View style={sh.row}>
+      <View style={sh.iconOuter}>
+        <View style={[sh.iconBox, { backgroundColor: bg[color] }]}>
+          <Text style={[sh.iconText, { color: fg[color] }]}>{icon}</Text>
+        </View>
+      </View>
+      <Text style={sh.title}>{title}</Text>
+    </View>
+  );
+}
+const sh = StyleSheet.create({
+  row:      { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 14, marginTop: 22, marginBottom: 8 },
+  iconOuter:{ borderRadius: 10, shadowColor: DEEPER, shadowOffset: { width: 3, height: 3 }, shadowOpacity: 0.8, shadowRadius: 5, elevation: 4 },
+  iconBox:  { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderTopWidth: 1, borderLeftWidth: 1, borderBottomWidth: 1, borderRightWidth: 1, borderTopColor: LIFT, borderLeftColor: LIFT, borderBottomColor: 'rgba(0,0,0,0.2)', borderRightColor: 'rgba(0,0,0,0.2)' },
+  iconText: { fontSize: 14, fontWeight: '800' },
+  title:    { fontSize: 14, fontWeight: '800', color: 'rgba(255,255,255,0.85)', letterSpacing: -0.2 },
+});
+
+function RecapRow({ label, value, success, danger, warning }: { label: string; value: string; success?: boolean; danger?: boolean; warning?: boolean }) {
+  const vColor = success ? '#34d399' : danger ? '#f87171' : warning ? '#fbbf24' : '#fff';
+  return (
+    <View style={rr.row}>
+      <Text style={rr.label}>{label}</Text>
+      <Text style={[rr.value, { color: vColor }]}>{value}</Text>
+    </View>
+  );
+}
+const rr = StyleSheet.create({
+  row:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+  label: { fontSize: 14, color: 'rgba(255,255,255,0.45)', flex: 1, marginRight: 8 },
+  value: { fontSize: 15, fontWeight: '700' },
+});
+
+// ── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { backgroundColor: '#1a7fba', padding: 16 },
-  numero: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  meta: { color: '#d0e8f5', fontSize: 14, marginTop: 4 },
-  recapCard: { backgroundColor: '#fff', margin: 16, padding: 16, borderRadius: 12 },
-  recapTitle: { fontSize: 16, fontWeight: '700', color: '#333', marginBottom: 12 },
-  recapRow: {
-    flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4,
-    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
-  },
-  recapLabel: { fontSize: 14, color: '#666', flexShrink: 1, marginRight: 8 },
-  recapValue: { fontSize: 15, fontWeight: '700', color: '#1a7fba' },
-  button: {
-    backgroundColor: '#198754', marginHorizontal: 16, padding: 16,
-    borderRadius: 10, alignItems: 'center',
-  },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  clotureBadge: {
-    marginHorizontal: 16, padding: 16, borderRadius: 10,
-    backgroundColor: '#d1e7dd', alignItems: 'center',
-  },
-  clotureBadgeText: { color: '#0f5132', fontWeight: '700' },
-  successHeader: {
-    backgroundColor: '#198754', padding: 32, alignItems: 'center',
-  },
-  successIcon: { fontSize: 56, color: '#fff', fontWeight: '700' },
-  successTitle: { color: '#fff', fontSize: 22, fontWeight: '700', marginTop: 8 },
-  successSub: { color: '#a3cfbb', fontSize: 14, marginTop: 4 },
-  opRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
-    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
-  },
-  opPlv: { fontSize: 13, fontWeight: '600', color: '#333' },
-  opType: { fontSize: 11, color: '#888', marginTop: 2 },
-  opMontant: { fontSize: 13, fontWeight: '700', color: '#333' },
-  opEncaisse: { fontSize: 11, marginTop: 2 },
-  syncNotice: {
-    marginHorizontal: 16, marginBottom: 8, padding: 12,
-    backgroundColor: '#fff3cd', borderRadius: 8,
-    borderLeftWidth: 4, borderLeftColor: '#ffc107',
-  },
-  syncNoticeText: { fontSize: 13, color: '#664d03', lineHeight: 18 },
+  root:   { flex: 1, backgroundColor: BASE },
+  scroll: { paddingBottom: 40 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: BASE, padding: 32 },
+  errorText: { color: 'rgba(255,255,255,0.4)', fontSize: 15 },
+
+  // Header
+  header: { backgroundColor: BASE, overflow: 'hidden' },
+  bubble1:{ position: 'absolute', width: 200, height: 200, borderRadius: 100, top: -60, right: -50, backgroundColor: 'rgba(7,155,217,0.08)' },
+  bubble2:{ position: 'absolute', width: 110, height: 110, borderRadius: 55,  top: 30, right: 110,  backgroundColor: 'rgba(7,155,217,0.05)' },
+  headerContent: { padding: 16, paddingBottom: 22 },
+  typeChip: { alignSelf: 'flex-start', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20, marginBottom: 8, borderWidth: 1 },
+  typeChipC: { backgroundColor: 'rgba(7,155,217,0.2)',  borderColor: 'rgba(7,155,217,0.4)' },
+  typeChipR: { backgroundColor: 'rgba(52,211,153,0.2)', borderColor: 'rgba(52,211,153,0.4)' },
+  typeChipText: { fontSize: 11, fontWeight: '700', color: '#e2e8f0' },
+  numero: { fontSize: 22, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
+  meta:   { fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 2 },
+
+  // Cards
+  cardOuter: { marginHorizontal: 12, marginBottom: 4, borderRadius: 16, shadowColor: DEEPER, shadowOffset: { width: 6, height: 6 }, shadowOpacity: 0.85, shadowRadius: 12, elevation: 6 },
+  card: { backgroundColor: SURFACE, borderRadius: 16, padding: 14, borderTopWidth: 1, borderLeftWidth: 1, borderBottomWidth: 1, borderRightWidth: 1, borderTopColor: LIFT, borderLeftColor: LIFT, borderBottomColor: 'rgba(0,0,0,0.2)', borderRightColor: 'rgba(0,0,0,0.2)' },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: 'rgba(255,255,255,0.7)', marginBottom: 8 },
+
+  // Opérations
+  opRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 11 },
+  opRowSep: { borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' },
+  opPlv:    { fontSize: 13, fontWeight: '700', color: '#fff' },
+  opType:   { fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2 },
+  opMontant:{ fontSize: 14, fontWeight: '700', color: '#fff' },
+  opEncaisse:{ fontSize: 11, marginTop: 2 },
+
+  // Badges
+  clotureBadgeOuter: { marginHorizontal: 12, marginTop: 20, borderRadius: 12, shadowColor: '#065f46', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.5, shadowRadius: 8, elevation: 4 },
+  clotureBadge: { backgroundColor: 'rgba(52,211,153,0.1)', borderRadius: 12, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(52,211,153,0.3)' },
+  clotureBadgeText: { color: '#34d399', fontWeight: '700', fontSize: 14 },
+
+  // Bouton clôturer
+  clotureBtnOuter: { marginHorizontal: 12, marginTop: 22, marginBottom: 8, borderRadius: 14, shadowColor: '#065f46', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.55, shadowRadius: 14, elevation: 10 },
+  clotureBtn: { backgroundColor: '#059669', borderRadius: 14, paddingVertical: 17, alignItems: 'center', overflow: 'hidden' },
+  clotureBtnSheen: { position: 'absolute', top: 0, left: 0, right: 0, height: '45%', backgroundColor: 'rgba(255,255,255,0.1)', borderTopLeftRadius: 14, borderTopRightRadius: 14 },
+  clotureBtnDisabled: { opacity: 0.5 },
+  clotureBtnText: { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+  clotureBtnSub:  { color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 4 },
+
+  // ── État succès ──
+  successRoot: { flex: 1, backgroundColor: BASE, padding: 24, alignItems: 'center', justifyContent: 'center' },
+  successCheckOuter: { borderRadius: 44, shadowColor: '#065f46', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.7, shadowRadius: 16, elevation: 10, marginBottom: 20 },
+  successCheck: { width: 88, height: 88, borderRadius: 44, backgroundColor: 'rgba(52,211,153,0.15)', borderWidth: 2, borderColor: 'rgba(52,211,153,0.4)', alignItems: 'center', justifyContent: 'center' },
+  successCheckText: { fontSize: 44, color: '#34d399' },
+  successTitle: { fontSize: 24, fontWeight: '800', color: '#fff', letterSpacing: -0.5, marginBottom: 4 },
+  successSub:   { fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 28 },
+
+  syncNoticeOuter: { width: '100%', marginBottom: 14, borderRadius: 12, shadowColor: DEEPER, shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.8, shadowRadius: 8, elevation: 4 },
+  syncNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: 'rgba(251,191,36,0.1)', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(251,191,36,0.25)' },
+  syncNoticeIcon: { fontSize: 18, color: '#fbbf24' },
+  syncNoticeText: { flex: 1, fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 18 },
+
+  backBtnOuter: { width: '100%', borderRadius: 14, shadowColor: Colors.brandBlue, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 14, elevation: 10 },
+  backBtn: { backgroundColor: Colors.brandBlue, borderRadius: 14, paddingVertical: 16, alignItems: 'center', overflow: 'hidden' },
+  backBtnSheen: { position: 'absolute', top: 0, left: 0, right: 0, height: '45%', backgroundColor: 'rgba(255,255,255,0.12)', borderTopLeftRadius: 14, borderTopRightRadius: 14 },
+  backBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

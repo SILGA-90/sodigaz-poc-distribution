@@ -8,8 +8,8 @@
 
 .hist-badge {
     display: inline-flex; align-items: center; gap: .3rem;
-    background: rgba(244,121,32,.1); color: #c45a00;
-    border: 1px solid rgba(244,121,32,.28);
+    background: rgba(238,114,2,.1); color: #c45a00;
+    border: 1px solid rgba(238,114,2,.28);
     padding: .22rem .72rem; border-radius: 20px;
     font-size: .8rem; font-weight: 600;
 }
@@ -25,7 +25,7 @@
     font-size: .82rem; font-weight: 600; color: #0a1628;
     text-decoration: none; white-space: nowrap; transition: all .15s;
 }
-.btn-today:hover { border-color: #1a7fba; color: #1a7fba; background: rgba(26,127,186,.04); }
+.btn-today:hover { border-color: #079BD9; color: #079BD9; background: rgba(7,155,217,.04); }
 
 /* ─── Indicateur temps réel ─── */
 .live-indicator {
@@ -40,7 +40,7 @@
     background: #198754; box-shadow: 0 0 0 2px rgba(25,135,84,.2);
     animation: pulse-live 2s infinite;
 }
-.live-dot.offline { background: #f47920; box-shadow: 0 0 0 2px rgba(244,121,32,.2); animation: none; }
+.live-dot.offline { background: #EE7202; box-shadow: 0 0 0 2px rgba(238,114,2,.2); animation: none; }
 .live-dot.paused  { background: #94a3b8; box-shadow: none; animation: none; }
 @keyframes pulse-live {
     0%, 100% { opacity: 1; }
@@ -98,7 +98,7 @@
     font-size: .7rem; font-weight: 700; padding: .12rem .5rem; border-radius: 20px;
 }
 .alerte-statut-OUVERTE       { background: #fde8e8; color: #dc3545; }
-.alerte-statut-EN_TRAITEMENT { background: rgba(244,121,32,.1); color: #c45a00; }
+.alerte-statut-EN_TRAITEMENT { background: rgba(238,114,2,.1); color: #c45a00; }
 .alerte-statut-RESOLUE       { background: #d1f5e0; color: #198754; }
 
 /* ─── KPI Grid ─── */
@@ -139,7 +139,7 @@
     color: #0a1628; letter-spacing: -.02em;
 }
 .kpi-card-sub { font-size: .78rem; color: #94a3b8; margin-top: .4rem; }
-.kpi-sub-blue     { color: #1a7fba; font-weight: 600; }
+.kpi-sub-blue     { color: #079BD9; font-weight: 600; }
 .kpi-sub-green    { color: #198754; font-weight: 600; }
 .kpi-sub-sep      { color: #d1d9e0; margin: 0 .25rem; }
 .kpi-link-anomalie { color: #dc3545; font-weight: 700; font-size: .8rem; }
@@ -148,7 +148,7 @@
 }
 
 @keyframes pulse-update {
-    0%   { background: rgba(26,127,186,.18); }
+    0%   { background: rgba(7,155,217,.18); }
     100% { background: transparent; }
 }
 .stat-updated { animation: pulse-update 1s ease-out; border-radius: 4px; }
@@ -162,7 +162,7 @@
 
 .section-icon {
     width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
-    background: rgba(26,127,186,.1); color: #1a7fba;
+    background: rgba(7,155,217,.1); color: #079BD9;
     display: flex; align-items: center; justify-content: center;
     font-size: .95rem;
 }
@@ -178,11 +178,11 @@
     font-size: .8rem; font-weight: 600; color: #0a1628;
     cursor: pointer; transition: all .15s;
 }
-.btn-parcours:hover  { border-color: #1a7fba; color: #1a7fba; }
-.btn-parcours.active { background: rgba(26,127,186,.08); border-color: #1a7fba; color: #1a7fba; }
+.btn-parcours:hover  { border-color: #079BD9; color: #079BD9; }
+.btn-parcours.active { background: rgba(7,155,217,.08); border-color: #079BD9; color: #079BD9; }
 
 .parcours-msg {
-    font-size: .78rem; color: #f47920; font-weight: 600; max-width: 220px;
+    font-size: .78rem; color: #EE7202; font-weight: 600; max-width: 220px;
 }
 
 .map-legend {
@@ -199,9 +199,9 @@
     width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
     border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.15);
 }
-.map-dot-blue   { background: #1a7fba; }
+.map-dot-blue   { background: #079BD9; }
 .map-dot-green  { background: #198754; }
-.map-dot-orange { background: #f47920; }
+.map-dot-orange { background: #EE7202; }
 
 /* ─── Bilan produits ─── */
 .bilan-section-head {
@@ -211,7 +211,7 @@
     border-bottom: 1px solid #f0f2f5;
     background: #fafbfc;
 }
-.bilan-collecte { color: #1a7fba; border-top: 1px solid #f0f2f5; }
+.bilan-collecte { color: #079BD9; border-top: 1px solid #f0f2f5; }
 .bilan-restit   { color: #198754; border-top: 1px solid #f0f2f5; }
 .bilan-section-sub {
     font-size: .7rem; font-weight: 400; color: #94a3b8; margin-left: .4rem;
@@ -252,7 +252,7 @@
 .bilan-ecart-neg { color: #dc3545; font-weight: 700; }
 .bilan-ecart-nul { color: #94a3b8; }
 .bilan-montant-sm { font-size: .72rem; color: #94a3b8; margin-left: .3rem; }
-.bilan-total-collecte td { background: rgba(26,127,186,.05) !important; color: #1a7fba !important; }
+.bilan-total-collecte td { background: rgba(7,155,217,.05) !important; color: #079BD9 !important; }
 .bilan-total-restit   td { background: rgba(25,135,84,.05)  !important; color: #198754 !important; }
 
 /* ─── Responsive ─── */

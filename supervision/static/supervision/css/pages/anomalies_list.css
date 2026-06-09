@@ -10,7 +10,7 @@
 }
 .anom-card:hover { box-shadow: 0 4px 18px rgba(10,22,40,.11); transform: translateY(-1px); }
 .anom-grav-ELEVEE  { border-left-color: #dc3545; }
-.anom-grav-MOYENNE { border-left-color: #f47920; }
+.anom-grav-MOYENNE { border-left-color: #EE7202; }
 .anom-grav-FAIBLE  { border-left-color: #198754; }
 
 /* Card header */
@@ -29,7 +29,7 @@
 .anom-livreur { display: flex; align-items: center; gap: .45rem; }
 .anom-avatar {
     width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
-    background: linear-gradient(135deg, #1a7fba, #1568a0);
+    background: linear-gradient(135deg, #079BD9, #0670A0);
     color: #fff; font-size: .65rem; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
 }

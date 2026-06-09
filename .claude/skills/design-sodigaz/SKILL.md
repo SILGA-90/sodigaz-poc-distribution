@@ -216,4 +216,3 @@ Les mots sont du matériau de design, pas de la décoration.
 - Cibles tactiles ≥ 48, corps de texte ≥ 16 (mobile).
 - Cohérent visuellement et verbalement avec les écrans voisins.
 - Contraste suffisant pour une lecture en plein soleil.
-

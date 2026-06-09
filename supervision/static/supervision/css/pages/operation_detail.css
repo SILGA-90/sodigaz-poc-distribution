@@ -5,7 +5,7 @@
     background: #fff; border-radius: 14px;
     box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
     padding: 1.4rem 1.5rem;
-    border-left: 4px solid #1a7fba;
+    border-left: 4px solid #079BD9;
     margin-bottom: 1.25rem;
 }
 .op-header-RESTITUTION { border-left-color: #198754; }
@@ -28,8 +28,8 @@
     padding: .3rem .85rem; border-radius: 20px;
 }
 .enc-pill-green  { background: #d1f5e0; color: #198754; }
-.enc-pill-warn   { background: rgba(244,121,32,.1); color: #c45a00; }
-.enc-pill-orange { background: rgba(244,121,32,.1); color: #c45a00; }
+.enc-pill-warn   { background: rgba(238,114,2,.1); color: #c45a00; }
+.enc-pill-orange { background: rgba(238,114,2,.1); color: #c45a00; }
 .enc-pill-gray   { background: #f1f5f9; color: #6c757d; }
 
 .code-x3 {
