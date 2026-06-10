@@ -81,12 +81,20 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-CORS_ALLOW_ALL_ORIGINS = DEBUG
+# CORS : jamais ouvert en production.
+# En dev, lister explicitement les origines autorisées dans CORS_ALLOWED_ORIGINS.
+# Le mobile React Native n'est pas un navigateur — CORS ne le concerne pas.
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
+])
 
 DEV_ACCESS_CODE = env("DEV_ACCESS_CODE", default="")
 
@@ -121,18 +129,42 @@ REST_FRAMEWORK = {
 
 from datetime import timedelta
 
+# JWT_SIGNING_KEY DOIT être distinct de SECRET_KEY en production.
+# Générer : python3 -c "import secrets; print(secrets.token_urlsafe(64))"
+JWT_SIGNING_KEY = env("JWT_SIGNING_KEY", default=SECRET_KEY)
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "ALGORITHM": "HS256",
-    "SIGNING_KEY": SECRET_KEY,
+    "SIGNING_KEY": JWT_SIGNING_KEY,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
 }
 
+
+# ============================================================================
+# En-têtes de sécurité HTTP
+# ============================================================================
+# Actifs quel que soit le mode (navigateurs modernes les respectent toujours).
+SECURE_BROWSER_XSS_FILTER    = True
+SECURE_CONTENT_TYPE_NOSNIFF  = True
+X_FRAME_OPTIONS              = "DENY"
+SESSION_COOKIE_HTTPONLY      = True
+CSRF_COOKIE_HTTPONLY         = True
+
+# Actifs uniquement en production (DEBUG=False).
+# En dev HTTP, forcer HTTPS/Secure casserait les sessions locales.
+if not DEBUG:
+    SECURE_SSL_REDIRECT             = True
+    SECURE_HSTS_SECONDS             = 31536000    # 1 an
+    SECURE_HSTS_INCLUDE_SUBDOMAINS  = True
+    SECURE_HSTS_PRELOAD             = True
+    SESSION_COOKIE_SECURE           = True
+    CSRF_COOKIE_SECURE              = True
 
 # Redirections d'authentification pour la supervision web
 LOGIN_URL = "/supervision/login/"

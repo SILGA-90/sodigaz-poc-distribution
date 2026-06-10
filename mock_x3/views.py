@@ -4,10 +4,10 @@ from datetime import datetime
 
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from accounts.models import Role
 from distribution.models import Client, Programme
 
 from .serializers import (
@@ -19,7 +19,6 @@ from .serializers import (
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
 def programme_du_jour(request):
     code_livreur = request.query_params.get("code_livreur")
     date_str = request.query_params.get("date")
@@ -29,6 +28,16 @@ def programme_du_jour(request):
             {"detail": "Parametre 'code_livreur' requis."},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+    # Un livreur ne peut consulter que ses propres programmes.
+    # Superviseurs et admins peuvent consulter n'importe quel livreur.
+    u = request.user
+    if not u.is_superuser and u.role not in (Role.SUPERVISEUR, Role.ADMIN):
+        if u.code_livreur != code_livreur:
+            return Response(
+                {"detail": "Vous n'êtes pas autorisé à consulter ce programme."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
     if date_str:
         try:
@@ -114,7 +123,6 @@ def programme_du_jour(request):
 
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
 def remonter_operation(request):
     serializer = OperationRemonteeSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
