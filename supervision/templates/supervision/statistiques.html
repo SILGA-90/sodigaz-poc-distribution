@@ -23,6 +23,7 @@
     <div class="stat-period-toggle">
         <a href="?periode=7"  class="stat-period-btn {% if periode == 7  %}active{% endif %}">7 jours</a>
         <a href="?periode=30" class="stat-period-btn {% if periode == 30 %}active{% endif %}">30 jours</a>
+        <a href="?periode=90" class="stat-period-btn {% if periode == 90 %}active{% endif %}">90 jours</a>
     </div>
 </div>
 
@@ -87,7 +88,45 @@
     </div>
 </div>
 
-<!-- ── Ligne 2 : Couverture + Anomalies gravité ── -->
+<!-- ── Ligne 2 : Répartition par produit ── -->
+<div class="section-card mb-4">
+    <div class="section-header">
+        <span class="section-icon"><i class="bi bi-box-seam"></i></span>
+        <span class="section-title">Quantités par produit</span>
+        <span class="stat-chart-period ms-auto">{{ periode }} derniers jours</span>
+    </div>
+    {% if total_produits > 0 %}
+    <div class="stat-chart-wrap stat-chart-wrap--produits">
+        <canvas id="chart-produits"></canvas>
+    </div>
+    {% else %}
+    <div class="stat-empty">
+        <i class="bi bi-box-seam"></i>
+        <p>Aucune opération enregistrée sur cette période.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ── Ligne 3 : Performance par livreur ── -->
+<div class="section-card mb-4">
+    <div class="section-header">
+        <span class="section-icon"><i class="bi bi-person-lines-fill"></i></span>
+        <span class="section-title">Performance par livreur</span>
+        <span class="stat-chart-period ms-auto">{{ periode }} derniers jours</span>
+    </div>
+    {% if nb_livreurs > 0 %}
+    <div class="stat-chart-wrap stat-chart-wrap--perf" id="wrap-perf">
+        <canvas id="chart-perf"></canvas>
+    </div>
+    {% else %}
+    <div class="stat-empty">
+        <i class="bi bi-person-x"></i>
+        <p>Aucun programme enregistré sur cette période.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ── Ligne 4 : Couverture + Anomalies gravité ── -->
 <div class="stat-row-2 mb-4">
 
     <div class="section-card">
@@ -106,7 +145,9 @@
             <span class="section-title">Anomalies par gravité</span>
         </div>
         <div class="stat-chart-wrap stat-chart-wrap--donut">
-            <canvas id="chart-gravite"></canvas>
+            <div class="stat-donut-canvas-wrap">
+                <canvas id="chart-gravite"></canvas>
+            </div>
             <div class="stat-donut-legend">
                 <div class="stat-donut-item">
                     <span class="stat-donut-dot" style="background:#198754;"></span>Faible
@@ -154,6 +195,12 @@
     var anomTypes    = {{ anom_labels_json|safe }};
     var anomCounts   = {{ anom_counts_json|safe }};
     var graviteData  = {{ gravite_json|safe }};
+    var produitLabels   = {{ produit_labels_json|safe }};
+    var produitCollecte = {{ produit_collecte_json|safe }};
+    var produitRestitut = {{ produit_restit_json|safe }};
+    var perfLabels   = {{ perf_labels_json|safe }};
+    var perfTaux     = {{ perf_taux_json|safe }};
+    var perfMontants = {{ perf_montants_json|safe }};
 
     // ── Defaults globaux Chart.js ────────────────────────────────────────────
     Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
@@ -208,7 +255,113 @@
         });
     })();
 
-    // ── 2. Taux de couverture ─────────────────────────────────────────────────
+    // ── 2. Répartition par produit (barres groupées) ─────────────────────────
+    (function() {
+        var el = document.getElementById('chart-produits');
+        if (!el) return;
+        new Chart(el.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: produitLabels,
+                datasets: [
+                    {
+                        label: 'Collecte',
+                        data: produitCollecte,
+                        backgroundColor: 'rgba(7,155,217,.8)',
+                        borderColor: '#079BD9',
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                    },
+                    {
+                        label: 'Restitution',
+                        data: produitRestitut,
+                        backgroundColor: 'rgba(238,114,2,.8)',
+                        borderColor: '#EE7202',
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true, position: 'top', align: 'end',
+                        labels: { boxWidth: 12, boxHeight: 12, padding: 16,
+                                  font: { size: 11, weight: '600' } }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(74,104,128,.08)' },
+                        ticks: { stepSize: 1 }
+                    }
+                }
+            }
+        });
+    })();
+
+    // ── 3. Performance par livreur (barres horizontales) ─────────────────────
+    (function() {
+        var el = document.getElementById('chart-perf');
+        if (!el) return;
+
+        // Couleur selon performance : vert ≥ 80 %, orange 50–79 %, rouge < 50 %
+        var colors = perfTaux.map(function(v) {
+            if (v >= 80) return '#198754';
+            if (v >= 50) return '#ffc107';
+            return '#dc3545';
+        });
+
+        // Hauteur dynamique : 52 px par livreur, minimum 160 px
+        var wrap = document.getElementById('wrap-perf');
+        if (wrap) wrap.style.height = Math.max(160, perfLabels.length * 52 + 24) + 'px';
+
+        new Chart(el.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: perfLabels,
+                datasets: [{
+                    label: 'Couverture',
+                    data: perfTaux,
+                    backgroundColor: colors,
+                    borderRadius: 6,
+                    borderWidth: 0,
+                    barThickness: 28,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(c) {
+                                var m = perfMontants[c.dataIndex];
+                                return [
+                                    ' Couverture : ' + c.raw + ' %',
+                                    ' Encaissé   : ' + m.toLocaleString('fr-FR') + ' FCFA'
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        min: 0, max: 100,
+                        grid: { color: 'rgba(74,104,128,.08)' },
+                        ticks: { callback: function(v) { return v + '%'; } }
+                    },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+    })();
+
+    // ── 4. Taux de couverture ─────────────────────────────────────────────────
     (function() {
         var ctx = document.getElementById('chart-couverture').getContext('2d');
         new Chart(ctx, {
@@ -245,7 +398,7 @@
         });
     })();
 
-    // ── 3. Anomalies par gravité (donut) ──────────────────────────────────────
+    // ── 4. Anomalies par gravité (donut) ──────────────────────────────────────
     (function() {
         var el = document.getElementById('chart-gravite');
         if (!el) return;
@@ -276,7 +429,7 @@
         });
     })();
 
-    // ── 4. Anomalies par type (bar horizontal) ───────────────────────────────
+    // ── 5. Anomalies par type (bar horizontal) ───────────────────────────────
     (function() {
         var el = document.getElementById('chart-anom-type');
         if (!el) return;

@@ -8,7 +8,7 @@ from django.db.models.functions import Coalesce
 from django.shortcuts import render
 
 from distribution.models import (
-    Anomalie, Etape, Operation, Programme, StatutVisite,
+    Anomalie, Etape, LigneOperation, Operation, Programme, StatutVisite,
 )
 
 from ..decorators import superviseur_required
@@ -17,7 +17,7 @@ from ..decorators import superviseur_required
 @superviseur_required
 def statistiques(request):
     periode = int(request.GET.get("periode", "7"))
-    if periode not in (7, 30):
+    if periode not in (7, 30, 90):
         periode = 7
 
     end_date   = date_cls.today()
@@ -103,6 +103,85 @@ def statistiques(request):
         gravite_map.get("ELEVEE",  0),
     ]
 
+    # ── Répartition par produit (collecte vs restitution) ───────────────────
+    PRODUIT_ORDER  = ["B6", "B12_5", "B38", "VRAC"]
+    PRODUIT_LABELS = {"B6": "6 kg", "B12_5": "12,5 kg", "B38": "38 kg", "VRAC": "Vrac"}
+
+    produit_rows = (
+        LigneOperation.objects
+        .filter(
+            operation__etape__programme__date_programme__range=(start_date, end_date),
+            operation__is_deleted=False,
+            is_deleted=False,
+        )
+        .values("produit__type_emballage", "operation__type_operation")
+        .annotate(qte=Sum("quantite_realisee"))
+    )
+
+    produit_map = {}
+    for row in produit_rows:
+        te   = row["produit__type_emballage"]
+        tops = row["operation__type_operation"]
+        qte  = int(row["qte"] or 0)
+        if te not in produit_map:
+            produit_map[te] = {"COLLECTE": 0, "RESTITUTION": 0}
+        if tops in ("COLLECTE", "RESTITUTION"):
+            produit_map[te][tops] = qte
+
+    produit_chart_labels  = [PRODUIT_LABELS[p] for p in PRODUIT_ORDER]
+    produit_collecte_data = [produit_map.get(p, {}).get("COLLECTE",    0) for p in PRODUIT_ORDER]
+    produit_restit_data   = [produit_map.get(p, {}).get("RESTITUTION", 0) for p in PRODUIT_ORDER]
+    total_produits        = sum(produit_collecte_data) + sum(produit_restit_data)
+
+    # ── Performance par livreur ──────────────────────────────────────────────
+    livreur_etapes_rows = (
+        Etape.objects
+        .filter(
+            programme__date_programme__range=(start_date, end_date),
+            programme__is_deleted=False,
+            is_deleted=False,
+        )
+        .values("programme__utilisateur__code_livreur")
+        .annotate(
+            total=Count("id"),
+            visitees=Count(
+                Case(When(statut_visite=StatutVisite.VISITEE, then=1), output_field=IntegerField())
+            ),
+        )
+    )
+
+    livreur_montants_rows = (
+        Operation.objects
+        .filter(
+            etape__programme__date_programme__range=(start_date, end_date),
+            is_deleted=False,
+        )
+        .values("etape__programme__utilisateur__code_livreur")
+        .annotate(montant=Coalesce(Sum("montant_encaisse"), Decimal("0"), output_field=DecimalField()))
+    )
+
+    perf_map = {}
+    for row in livreur_etapes_rows:
+        code  = row["programme__utilisateur__code_livreur"]
+        total = row["total"]
+        perf_map[code] = {
+            "taux":    round(row["visitees"] / total * 100, 1) if total else 0,
+            "montant": 0,
+        }
+    for row in livreur_montants_rows:
+        code = row["etape__programme__utilisateur__code_livreur"]
+        m    = float(row["montant"] or 0)
+        if code in perf_map:
+            perf_map[code]["montant"] = m
+        else:
+            perf_map[code] = {"taux": 0, "montant": m}
+
+    # Tri : meilleur taux de couverture en premier
+    perf_sorted   = sorted(perf_map.items(), key=lambda x: x[1]["taux"], reverse=True)
+    perf_labels   = [code          for code, _ in perf_sorted]
+    perf_taux     = [d["taux"]     for _, d   in perf_sorted]
+    perf_montants = [d["montant"]  for _, d   in perf_sorted]
+
     # ── KPI résumé ───────────────────────────────────────────────────────────
     total_montant   = sum(montants)
     total_ops       = sum(nb_ops_par_jour)
@@ -130,6 +209,14 @@ def statistiques(request):
         "anom_labels_json": json.dumps(anom_labels),
         "anom_counts_json": json.dumps(anom_counts),
         "gravite_json":    json.dumps(gravite_data),
+        "produit_labels_json":  json.dumps(produit_chart_labels),
+        "produit_collecte_json": json.dumps(produit_collecte_data),
+        "produit_restit_json":   json.dumps(produit_restit_data),
+        "total_produits":        total_produits,
+        "perf_labels_json":   json.dumps(perf_labels),
+        "perf_taux_json":     json.dumps(perf_taux),
+        "perf_montants_json": json.dumps(perf_montants),
+        "nb_livreurs":        len(perf_labels),
         # KPI
         "total_montant":   total_montant,
         "total_ops":       total_ops,
