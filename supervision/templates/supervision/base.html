@@ -73,16 +73,17 @@
         </li>
     </ul>
     <div class="sidebar-footer">
-        <div class="sidebar-user">
-            <div class="avatar">{{ user.get_full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}</div>
-            <div class="sidebar-user-info">
-                <div class="sidebar-user-name">{{ user.get_full_name|default:user.username }}</div>
-                <div class="sidebar-user-role">{{ user.role }}</div>
+        <div class="sidebar-foot-row">
+            <div class="sidebar-foot-avatar">{{ user.get_full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}</div>
+            <div class="sidebar-foot-info">
+                <div class="sidebar-foot-name">{{ user.get_full_name|default:user.username }}</div>
+                <div class="sidebar-foot-role">{{ user.role }}</div>
             </div>
+            <button type="button" class="sidebar-foot-logout" title="Déconnexion"
+                    data-bs-toggle="modal" data-bs-target="#modalLogout">
+                <i class="bi bi-box-arrow-right"></i>
+            </button>
         </div>
-        <a href="{% url 'supervision:logout' %}" class="sidebar-logout">
-            <i class="bi bi-box-arrow-right"></i> Déconnexion
-        </a>
     </div>
 </nav>
 
@@ -101,6 +102,22 @@
 
 {% if user.is_authenticated %}
 </div></div>
+
+<!-- Modal confirmation déconnexion -->
+<div class="modal fade" id="modalLogout" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content logout-modal">
+            <div class="logout-modal-icon"><i class="bi bi-box-arrow-right"></i></div>
+            <h6 class="logout-modal-title">Déconnexion</h6>
+            <p class="logout-modal-body">Voulez-vous vraiment vous déconnecter&nbsp;?</p>
+            <div class="logout-modal-actions">
+                <button type="button" class="logout-btn-cancel" data-bs-dismiss="modal">Annuler</button>
+                <a href="{% url 'supervision:logout' %}" class="logout-btn-confirm">Se déconnecter</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% else %}
 </div>
 {% endif %}
