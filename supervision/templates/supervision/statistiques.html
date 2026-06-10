@@ -118,6 +118,36 @@
     <div class="stat-chart-wrap stat-chart-wrap--perf" id="wrap-perf">
         <canvas id="chart-perf"></canvas>
     </div>
+    <div class="perf-detail-wrap">
+        <table class="perf-detail-table">
+            <thead>
+                <tr>
+                    <th rowspan="2" class="perf-th-livreur">Livreur</th>
+                    <th colspan="4" class="perf-th-group perf-th-coll"><i class="bi bi-arrow-down-circle-fill me-1"></i>Collecte</th>
+                    <th colspan="4" class="perf-th-group perf-th-rest"><i class="bi bi-arrow-up-circle-fill me-1"></i>Restitution</th>
+                </tr>
+                <tr>
+                    <th>6 kg</th><th>12,5 kg</th><th>38 kg</th><th class="perf-th-total">Total</th>
+                    <th>6 kg</th><th>12,5 kg</th><th>38 kg</th><th class="perf-th-total">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for r in perf_detail_rows %}
+            <tr>
+                <td class="perf-td-livreur">{{ r.code }}</td>
+                <td>{{ r.coll_B6 }}</td>
+                <td>{{ r.coll_B12_5 }}</td>
+                <td>{{ r.coll_B38 }}</td>
+                <td class="perf-td-total">{{ r.total_coll }}</td>
+                <td>{{ r.rest_B6 }}</td>
+                <td>{{ r.rest_B12_5 }}</td>
+                <td>{{ r.rest_B38 }}</td>
+                <td class="perf-td-total">{{ r.total_rest }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% else %}
     <div class="stat-empty">
         <i class="bi bi-person-x"></i>

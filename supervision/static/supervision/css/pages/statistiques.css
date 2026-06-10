@@ -111,6 +111,43 @@
 /* ─── Graphe performance livreurs : hauteur ajustée en JS (52px × nb livreurs) ─── */
 .stat-chart-wrap--perf { height: 160px; }
 
+/* ─── Table détail articles par livreur ─── */
+.perf-detail-wrap {
+    padding: .25rem 1.1rem 1rem;
+    overflow-x: auto;
+}
+.perf-detail-table {
+    width: 100%; border-collapse: collapse; font-size: .78rem;
+}
+.perf-detail-table th,
+.perf-detail-table td {
+    padding: .32rem .65rem; text-align: right;
+    border-bottom: 1px solid rgba(74,104,128,.12);
+    color: #3a5060;
+}
+.perf-th-livreur {
+    text-align: left; font-weight: 700; color: #1a2332;
+    min-width: 80px; vertical-align: bottom;
+}
+.perf-td-livreur {
+    text-align: left; font-weight: 700; color: #1a2332;
+    font-family: monospace; font-size: .8rem;
+}
+.perf-th-group {
+    text-align: center; font-size: .7rem; font-weight: 700;
+    letter-spacing: .04em; text-transform: uppercase; padding-bottom: .35rem;
+}
+.perf-th-coll { color: #079BD9; border-bottom: 2px solid rgba(7,155,217,.4); }
+.perf-th-rest { color: #EE7202; border-bottom: 2px solid rgba(238,114,2,.4); }
+.perf-th-total { font-weight: 700; }
+.perf-td-total {
+    font-weight: 700; color: #1a2332;
+    background: rgba(7,155,217,.06);
+}
+.perf-detail-table tbody tr:hover { background: rgba(7,155,217,.04); }
+.perf-detail-table tbody tr:nth-child(even) { background: rgba(74,104,128,.03); }
+.perf-detail-table tbody tr:nth-child(even) .perf-td-total { background: rgba(7,155,217,.08); }
+
 /* ─── État vide ─── */
 .stat-empty {
     padding: 2.5rem 1rem; text-align: center; color: #8aa8c0;

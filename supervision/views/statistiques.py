@@ -182,6 +182,47 @@ def statistiques(request):
     perf_taux     = [d["taux"]     for _, d   in perf_sorted]
     perf_montants = [d["montant"]  for _, d   in perf_sorted]
 
+    # ── Détail articles par livreur (quantités collectées / restituées) ──────
+    DETAIL_EMBS = ["B6", "B12_5", "B38"]
+
+    livreur_articles_rows = (
+        LigneOperation.objects
+        .filter(
+            operation__etape__programme__date_programme__range=(start_date, end_date),
+            operation__is_deleted=False,
+            is_deleted=False,
+            operation__type_operation__in=("COLLECTE", "RESTITUTION"),
+            produit__type_emballage__in=DETAIL_EMBS,
+        )
+        .values(
+            "operation__etape__programme__utilisateur__code_livreur",
+            "operation__type_operation",
+            "produit__type_emballage",
+        )
+        .annotate(qte=Sum("quantite_realisee"))
+    )
+
+    perf_detail_map = {}
+    for row in livreur_articles_rows:
+        code = row["operation__etape__programme__utilisateur__code_livreur"]
+        tops = row["operation__type_operation"]
+        emb  = row["produit__type_emballage"]
+        qte  = int(row["qte"] or 0)
+        if code not in perf_detail_map:
+            perf_detail_map[code] = {"COLLECTE": {}, "RESTITUTION": {}}
+        perf_detail_map[code][tops][emb] = qte
+
+    perf_detail_rows = []
+    for code, _ in perf_sorted:
+        detail = perf_detail_map.get(code, {})
+        r = {"code": code}
+        for emb in DETAIL_EMBS:
+            r[f"coll_{emb}"] = detail.get("COLLECTE",    {}).get(emb, 0)
+            r[f"rest_{emb}"] = detail.get("RESTITUTION", {}).get(emb, 0)
+        r["total_coll"] = sum(r[f"coll_{e}"] for e in DETAIL_EMBS)
+        r["total_rest"] = sum(r[f"rest_{e}"] for e in DETAIL_EMBS)
+        perf_detail_rows.append(r)
+
     # ── KPI résumé ───────────────────────────────────────────────────────────
     total_montant   = sum(montants)
     total_ops       = sum(nb_ops_par_jour)
@@ -217,6 +258,7 @@ def statistiques(request):
         "perf_taux_json":     json.dumps(perf_taux),
         "perf_montants_json": json.dumps(perf_montants),
         "nb_livreurs":        len(perf_labels),
+        "perf_detail_rows":   perf_detail_rows,
         # KPI
         "total_montant":   total_montant,
         "total_ops":       total_ops,
