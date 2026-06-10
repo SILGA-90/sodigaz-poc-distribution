@@ -65,6 +65,12 @@
                 <i class="bi bi-file-earmark-bar-graph"></i> Rapport journée
             </a>
         </li>
+        <li>
+            <a href="{% url 'supervision:statistiques' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'statistiques' %}active{% endif %}">
+                <i class="bi bi-graph-up-arrow"></i> Statistiques
+            </a>
+        </li>
     </ul>
     <div class="sidebar-footer">
         <div class="sidebar-user">

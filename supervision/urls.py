@@ -18,6 +18,7 @@ urlpatterns = [
     path("carte/", views.carte_plein_ecran, name="carte"),
     path("livreurs/", views.tableau_bord_livreurs, name="livreurs"),
     path("rapport/", views.rapport_journee, name="rapport"),
+    path("statistiques/", views.statistiques, name="statistiques"),
     path("programmes/", views.programmes_list, name="programmes"),
     path("programmes/<int:programme_id>/", views.programme_detail, name="programme-detail"),
     path("operations/", views.operations_list, name="operations"),

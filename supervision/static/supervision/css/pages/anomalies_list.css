@@ -45,7 +45,10 @@
     box-shadow: inset 1px 1px 3px rgba(74,104,128,.16),
                 inset -1px -1px 2px rgba(255,255,255,.8);
     padding: .18rem .55rem; border-radius: 6px;
+    text-decoration: none;
+    transition: color .15s;
 }
+.anom-prog-chip:hover { color: #079BD9; }
 .anom-livreur { display: flex; align-items: center; gap: .45rem; }
 .anom-avatar {
     width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
@@ -55,6 +58,42 @@
     box-shadow: 2px 2px 4px rgba(74,104,128,.22), -1px -1px 3px rgba(255,255,255,.7);
 }
 .anom-code { font-size: .78rem; font-weight: 700; color: #1a2332; }
+
+/* ─── Badge âge ─── */
+.anom-age-badge {
+    display: inline-flex; align-items: center; gap: .25rem;
+    font-size: .7rem; font-weight: 700;
+    padding: .16rem .48rem; border-radius: 20px;
+    white-space: nowrap; line-height: 1.4;
+}
+.anom-age-warn  { background: #fff3e0; color: #bf5000; border: 1px solid rgba(191,80,0,.18); }
+.anom-age-alert {
+    background: #ffebee; color: #b71c1c; border: 1px solid rgba(183,28,28,.2);
+    animation: age-pulse 1.8s ease-in-out infinite;
+}
+@keyframes age-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(183,28,28,0); }
+    50%       { box-shadow: 0 0 0 3px rgba(183,28,28,.12); }
+}
+
+/* ─── Badge photos ─── */
+.anom-photo-badge {
+    display: inline-flex; align-items: center; gap: .25rem;
+    font-size: .7rem; font-weight: 700; color: #0670A0;
+    background: #e3f3fb; border: 1px solid rgba(6,112,160,.18);
+    padding: .16rem .48rem; border-radius: 20px;
+}
+
+/* ─── KPI pill urgentes ─── */
+.kpi-pill-urgente {
+    background: linear-gradient(135deg, #dc3545, #b71c1c);
+    color: #fff; display: inline-flex; align-items: center;
+    animation: urgente-pulse 2s ease-in-out infinite;
+}
+@keyframes urgente-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220,53,69,0); }
+    50%       { box-shadow: 0 0 0 5px rgba(220,53,69,.22); }
+}
 
 /* ─── Corps ─── */
 .anom-card-body  { padding: .85rem 1.25rem .65rem; }

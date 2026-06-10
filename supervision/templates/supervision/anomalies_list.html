@@ -34,6 +34,13 @@
             <span class="kpi-pill-n">{{ nb_faible }}</span>
             <span class="kpi-pill-l">Faibles</span>
         </div>
+        {% if nb_urgentes > 0 %}
+        <div class="kpi-pill kpi-pill-urgente">
+            <i class="bi bi-alarm me-1"></i>
+            <span class="kpi-pill-n">{{ nb_urgentes }}</span>
+            <span class="kpi-pill-l">Urgentes</span>
+        </div>
+        {% endif %}
     </div>
 </div>
 
@@ -105,7 +112,9 @@
     <div class="anom-card-header">
         <div class="d-flex align-items-center gap-2 flex-wrap">
             <span class="anom-date"><i class="bi bi-clock me-1"></i>{{ a.date_heure|date:"d/m/Y H:i" }}</span>
-            <span class="anom-prog-chip">{{ a.programme.numero_x3 }}</span>
+            <a href="{% url 'supervision:programme-detail' a.programme.id %}"
+               class="anom-prog-chip"
+               onclick="event.stopPropagation()">{{ a.programme.numero_x3 }}</a>
             <div class="anom-livreur">
                 <div class="anom-avatar">{{ a.programme.utilisateur.code_livreur|slice:":1"|upper }}</div>
                 <span class="anom-code">{{ a.programme.utilisateur.code_livreur }}</span>
@@ -130,6 +139,22 @@
                 {% elif a.statut == "EN_TRAITEMENT" %}En traitement
                 {% else %}Résolue{% endif %}
             </span>
+            {% if a.nb_photos > 0 %}
+            <span class="anom-photo-badge">
+                <i class="bi bi-camera"></i>{{ a.nb_photos }}
+            </span>
+            {% endif %}
+            {% if a.statut != "RESOLUE" %}
+                {% if a.anciennete_jours >= 2 %}
+                <span class="anom-age-badge anom-age-alert">
+                    <i class="bi bi-alarm"></i>{{ a.anciennete_jours }}j
+                </span>
+                {% elif a.anciennete_jours >= 1 %}
+                <span class="anom-age-badge anom-age-warn">
+                    <i class="bi bi-clock-history"></i>{{ a.anciennete_jours }}j
+                </span>
+                {% endif %}
+            {% endif %}
         </div>
     </div>
 

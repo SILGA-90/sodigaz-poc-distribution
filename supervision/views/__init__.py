@@ -28,6 +28,7 @@ from .anomalies import (
     changer_gravite_anomalie,
 )
 from .misc import logout_view, rapport_journee
+from .statistiques import statistiques
 
 __all__ = [
     "dashboard",
@@ -48,4 +49,5 @@ __all__ = [
     "changer_gravite_anomalie",
     "logout_view",
     "rapport_journee",
+    "statistiques",
 ]

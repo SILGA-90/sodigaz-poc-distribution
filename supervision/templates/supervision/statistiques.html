@@ -1,0 +1,314 @@
+{% extends "supervision/base.html" %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'supervision/css/pages/statistiques.css' %}">
+{% endblock %}
+{% block title %}Statistiques{% endblock %}
+
+{% block content %}
+
+<!-- ── En-tête ── -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div class="d-flex align-items-center gap-2">
+        <span class="pg-icon"><i class="bi bi-graph-up-arrow"></i></span>
+        <div>
+            <h1 class="page-title mb-0">Statistiques &amp; Tendances</h1>
+            <p class="page-sub mb-0">
+                <i class="bi bi-calendar-range me-1"></i>
+                {{ start_date|date:"j F" }} — {{ end_date|date:"j F Y" }}
+            </p>
+        </div>
+    </div>
+    <!-- Sélecteur de période -->
+    <div class="stat-period-toggle">
+        <a href="?periode=7"  class="stat-period-btn {% if periode == 7  %}active{% endif %}">7 jours</a>
+        <a href="?periode=30" class="stat-period-btn {% if periode == 30 %}active{% endif %}">30 jours</a>
+    </div>
+</div>
+
+<!-- ── KPI résumé ── -->
+<div class="stat-kpi-row mb-4">
+
+    <div class="stat-kpi-card">
+        <div class="stat-kpi-icon" style="--kc:#079BD9;">
+            <i class="bi bi-cash-stack"></i>
+        </div>
+        <div>
+            <div class="stat-kpi-val">{{ total_montant|floatformat:0 }}</div>
+            <div class="stat-kpi-label">FCFA encaissés</div>
+            <div class="stat-kpi-sub">Moy. {{ moy_journaliere|floatformat:0 }} / jour</div>
+        </div>
+    </div>
+
+    <div class="stat-kpi-card">
+        <div class="stat-kpi-icon" style="--kc:#EE7202;">
+            <i class="bi bi-lightning-charge"></i>
+        </div>
+        <div>
+            <div class="stat-kpi-val">{{ total_ops }}</div>
+            <div class="stat-kpi-label">Opérations</div>
+            <div class="stat-kpi-sub">Sur {{ periode }} jours</div>
+        </div>
+    </div>
+
+    <div class="stat-kpi-card">
+        <div class="stat-kpi-icon" style="--kc:#198754;">
+            <i class="bi bi-check2-circle"></i>
+        </div>
+        <div>
+            <div class="stat-kpi-val">{{ taux_moyen }}%</div>
+            <div class="stat-kpi-label">Couverture moy.</div>
+            <div class="stat-kpi-sub">Étapes visitées / prévues</div>
+        </div>
+    </div>
+
+    <div class="stat-kpi-card">
+        <div class="stat-kpi-icon" style="--kc:#dc3545;">
+            <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <div>
+            <div class="stat-kpi-val">{{ total_anom }}</div>
+            <div class="stat-kpi-label">Anomalies</div>
+            <div class="stat-kpi-sub">{{ nb_programmes }} programme{{ nb_programmes|pluralize }}</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── Ligne 1 : Montant journalier ── -->
+<div class="section-card mb-4">
+    <div class="section-header">
+        <span class="section-icon"><i class="bi bi-graph-up"></i></span>
+        <span class="section-title">Montant encaissé journalier (FCFA)</span>
+        <span class="stat-chart-period ms-auto">{{ periode }} derniers jours</span>
+    </div>
+    <div class="stat-chart-wrap">
+        <canvas id="chart-montant"></canvas>
+    </div>
+</div>
+
+<!-- ── Ligne 2 : Couverture + Anomalies gravité ── -->
+<div class="stat-row-2 mb-4">
+
+    <div class="section-card">
+        <div class="section-header">
+            <span class="section-icon"><i class="bi bi-speedometer2"></i></span>
+            <span class="section-title">Taux de couverture (%)</span>
+        </div>
+        <div class="stat-chart-wrap">
+            <canvas id="chart-couverture"></canvas>
+        </div>
+    </div>
+
+    <div class="section-card">
+        <div class="section-header">
+            <span class="section-icon"><i class="bi bi-pie-chart"></i></span>
+            <span class="section-title">Anomalies par gravité</span>
+        </div>
+        <div class="stat-chart-wrap stat-chart-wrap--donut">
+            <canvas id="chart-gravite"></canvas>
+            <div class="stat-donut-legend">
+                <div class="stat-donut-item">
+                    <span class="stat-donut-dot" style="background:#198754;"></span>Faible
+                </div>
+                <div class="stat-donut-item">
+                    <span class="stat-donut-dot" style="background:#ffc107;"></span>Moyenne
+                </div>
+                <div class="stat-donut-item">
+                    <span class="stat-donut-dot" style="background:#dc3545;"></span>Élevée
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── Ligne 3 : Anomalies par type ── -->
+<div class="section-card mb-4">
+    <div class="section-header">
+        <span class="section-icon"><i class="bi bi-bar-chart-horizontal"></i></span>
+        <span class="section-title">Anomalies par type</span>
+    </div>
+    {% if total_anom > 0 %}
+    <div class="stat-chart-wrap">
+        <canvas id="chart-anom-type"></canvas>
+    </div>
+    {% else %}
+    <div class="stat-empty">
+        <i class="bi bi-check2-circle"></i>
+        <p>Aucune anomalie sur cette période.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    // ── Données injectées depuis Django ──────────────────────────────────────
+    var labels       = {{ labels_json|safe }};
+    var montants     = {{ montants_json|safe }};
+    var couverture   = {{ couverture_json|safe }};
+    var anomTypes    = {{ anom_labels_json|safe }};
+    var anomCounts   = {{ anom_counts_json|safe }};
+    var graviteData  = {{ gravite_json|safe }};
+
+    // ── Defaults globaux Chart.js ────────────────────────────────────────────
+    Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+    Chart.defaults.font.size   = 11;
+    Chart.defaults.color       = '#6080a0';
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function gradientFill(ctx, colorTop, colorBot) {
+        var g = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+        g.addColorStop(0, colorTop);
+        g.addColorStop(1, colorBot);
+        return g;
+    }
+
+    // ── 1. Montant journalier ─────────────────────────────────────────────────
+    (function() {
+        var ctx = document.getElementById('chart-montant').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Montant (FCFA)',
+                    data: montants,
+                    borderColor: '#079BD9',
+                    backgroundColor: gradientFill(ctx, 'rgba(7,155,217,.18)', 'rgba(7,155,217,.01)'),
+                    borderWidth: 2.5,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#079BD9',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 1.5,
+                    tension: 0.35,
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(74,104,128,.08)' }, ticks: { maxRotation: 0 } },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(74,104,128,.08)' },
+                        ticks: {
+                            callback: function(v) {
+                                return v >= 1000 ? (v/1000).toFixed(0)+'k' : v;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    })();
+
+    // ── 2. Taux de couverture ─────────────────────────────────────────────────
+    (function() {
+        var ctx = document.getElementById('chart-couverture').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Couverture (%)',
+                    data: couverture,
+                    borderColor: '#198754',
+                    backgroundColor: gradientFill(ctx, 'rgba(25,135,84,.18)', 'rgba(25,135,84,.01)'),
+                    borderWidth: 2.5,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#198754',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 1.5,
+                    tension: 0.35,
+                    fill: true,
+                    spanGaps: true,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(74,104,128,.08)' }, ticks: { maxRotation: 0 } },
+                    y: {
+                        min: 0, max: 100,
+                        grid: { color: 'rgba(74,104,128,.08)' },
+                        ticks: { callback: function(v) { return v + '%'; } }
+                    }
+                }
+            }
+        });
+    })();
+
+    // ── 3. Anomalies par gravité (donut) ──────────────────────────────────────
+    (function() {
+        var el = document.getElementById('chart-gravite');
+        if (!el) return;
+        new Chart(el.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Faible', 'Moyenne', 'Élevée'],
+                datasets: [{
+                    data: graviteData,
+                    backgroundColor: ['#198754', '#ffc107', '#dc3545'],
+                    borderWidth: 3,
+                    borderColor: '#e8edf2',
+                    hoverOffset: 6,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                cutout: '68%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(c) { return ' ' + c.label + ' : ' + c.raw; }
+                        }
+                    }
+                }
+            }
+        });
+    })();
+
+    // ── 4. Anomalies par type (bar horizontal) ───────────────────────────────
+    (function() {
+        var el = document.getElementById('chart-anom-type');
+        if (!el) return;
+        new Chart(el.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: anomTypes,
+                datasets: [{
+                    label: 'Occurrences',
+                    data: anomCounts,
+                    backgroundColor: 'rgba(238,114,2,.75)',
+                    borderColor: '#EE7202',
+                    borderWidth: 1.5,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(74,104,128,.08)' },
+                        ticks: { stepSize: 1 }
+                    },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+    })();
+
+})();
+</script>
+{% endblock %}

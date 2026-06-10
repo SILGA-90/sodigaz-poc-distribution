@@ -1,5 +1,7 @@
 """Vues des anomalies terrain (liste, détail, changement de statut / gravité)."""
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from accounts.models import Role, Utilisateur
 from distribution.models import Anomalie
@@ -20,6 +22,7 @@ def anomalies_list(request):
         Anomalie.objects
         .filter(is_deleted=False, programme__is_deleted=False)
         .select_related("programme__utilisateur", "plv__client")
+        .annotate(nb_photos=Count("photos", filter=Q(photos__is_deleted=False)))
         .order_by("-date_heure")
     )
 
@@ -47,11 +50,19 @@ def anomalies_list(request):
         role=Role.LIVREUR, is_active=True
     ).order_by("code_livreur")
 
-    anomalies     = list(anomalies_qs)
-    nb_total      = len(anomalies)
-    nb_elevee     = sum(1 for a in anomalies if a.gravite == "ELEVEE")
-    nb_moyenne    = sum(1 for a in anomalies if a.gravite == "MOYENNE")
-    nb_faible     = sum(1 for a in anomalies if a.gravite == "FAIBLE")
+    now = timezone.now()
+    anomalies = list(anomalies_qs)
+    for a in anomalies:
+        a.anciennete_jours = (now - a.date_heure).days
+
+    nb_total    = len(anomalies)
+    nb_elevee   = sum(1 for a in anomalies if a.gravite == "ELEVEE")
+    nb_moyenne  = sum(1 for a in anomalies if a.gravite == "MOYENNE")
+    nb_faible   = sum(1 for a in anomalies if a.gravite == "FAIBLE")
+    nb_urgentes = sum(
+        1 for a in anomalies
+        if a.statut in ("OUVERTE", "EN_TRAITEMENT") and a.anciennete_jours >= 1
+    )
 
     return render(request, "supervision/anomalies_list.html", {
         "anomalies":      anomalies,
@@ -65,6 +76,7 @@ def anomalies_list(request):
         "nb_elevee":      nb_elevee,
         "nb_moyenne":     nb_moyenne,
         "nb_faible":      nb_faible,
+        "nb_urgentes":    nb_urgentes,
     })
 
 
