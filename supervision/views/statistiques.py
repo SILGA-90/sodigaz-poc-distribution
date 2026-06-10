@@ -16,14 +16,23 @@ from ..decorators import superviseur_required
 
 @superviseur_required
 def statistiques(request):
-    periode = int(request.GET.get("periode", "7"))
-    if periode not in (7, 30, 90):
-        periode = 7
+    periode = request.GET.get("periode", "7")
+    if periode not in ("aujourd_hui", "7", "mois", "90"):
+        periode = "7"
 
-    end_date   = date_cls.today()
-    start_date = end_date - timedelta(days=periode - 1)
-    all_days   = [start_date + timedelta(days=i) for i in range(periode)]
-    labels     = [d.strftime("%d/%m") for d in all_days]
+    end_date = date_cls.today()
+    if periode == "aujourd_hui":
+        start_date = end_date
+    elif periode == "7":
+        start_date = end_date - timedelta(days=6)
+    elif periode == "mois":
+        start_date = end_date.replace(day=1)
+    else:  # "90"
+        start_date = end_date - timedelta(days=89)
+
+    nb_jours = (end_date - start_date).days + 1
+    all_days = [start_date + timedelta(days=i) for i in range(nb_jours)]
+    labels   = [d.strftime("%d/%m") for d in all_days]
 
     # ── Montant encaissé + nb opérations par jour ────────────────────────────
     ops_rows = (
@@ -128,9 +137,11 @@ def statistiques(request):
         if tops in ("COLLECTE", "RESTITUTION"):
             article_map[te][tops] = qte
 
-    article_chart_labels  = [ARTICLE_LABELS[p] for p in ARTICLE_ORDER]
-    article_collecte_data = [article_map.get(p, {}).get("COLLECTE",    0) for p in ARTICLE_ORDER]
-    article_restit_data   = [article_map.get(p, {}).get("RESTITUTION", 0) for p in ARTICLE_ORDER]
+    # Seuls les types d'article ayant au moins une quantité sur la période
+    active_articles       = [p for p in ARTICLE_ORDER if p in article_map]
+    article_chart_labels  = [ARTICLE_LABELS[p] for p in active_articles]
+    article_collecte_data = [article_map[p].get("COLLECTE",    0) for p in active_articles]
+    article_restit_data   = [article_map[p].get("RESTITUTION", 0) for p in active_articles]
     total_articles        = sum(article_collecte_data) + sum(article_restit_data)
 
     # ── Performance par livreur ──────────────────────────────────────────────
@@ -165,8 +176,10 @@ def statistiques(request):
         code  = row["programme__utilisateur__code_livreur"]
         total = row["total"]
         perf_map[code] = {
-            "taux":    round(row["visitees"] / total * 100, 1) if total else 0,
-            "montant": 0,
+            "taux":     round(row["visitees"] / total * 100, 1) if total else 0,
+            "visitees": row["visitees"],
+            "total":    total,
+            "montant":  0,
         }
     for row in livreur_montants_rows:
         code = row["etape__programme__utilisateur__code_livreur"]
@@ -174,13 +187,15 @@ def statistiques(request):
         if code in perf_map:
             perf_map[code]["montant"] = m
         else:
-            perf_map[code] = {"taux": 0, "montant": m}
+            perf_map[code] = {"taux": 0, "visitees": 0, "total": 0, "montant": m}
 
     # Tri : meilleur taux de couverture en premier
     perf_sorted   = sorted(perf_map.items(), key=lambda x: x[1]["taux"], reverse=True)
-    perf_labels   = [code          for code, _ in perf_sorted]
-    perf_taux     = [d["taux"]     for _, d   in perf_sorted]
-    perf_montants = [d["montant"]  for _, d   in perf_sorted]
+    perf_labels   = [code              for code, _ in perf_sorted]
+    perf_taux     = [d["taux"]         for _, d   in perf_sorted]
+    perf_montants = [d["montant"]      for _, d   in perf_sorted]
+    perf_visitees = [d["visitees"]     for _, d   in perf_sorted]
+    perf_totaux   = [d["total"]        for _, d   in perf_sorted]
 
     # ── Détail articles par livreur (quantités collectées / restituées) ──────
     DETAIL_EMBS = ["B6", "B12_5", "B38"]
@@ -214,20 +229,23 @@ def statistiques(request):
 
     perf_detail_rows = []
     for code, _ in perf_sorted:
-        detail = perf_detail_map.get(code, {})
+        if code not in perf_detail_map:
+            continue  # livreur sans ligne_operation sur la période
+        detail = perf_detail_map[code]
         r = {"code": code}
         for emb in DETAIL_EMBS:
             r[f"coll_{emb}"] = detail.get("COLLECTE",    {}).get(emb, 0)
             r[f"rest_{emb}"] = detail.get("RESTITUTION", {}).get(emb, 0)
         r["total_coll"] = sum(r[f"coll_{e}"] for e in DETAIL_EMBS)
         r["total_rest"] = sum(r[f"rest_{e}"] for e in DETAIL_EMBS)
-        perf_detail_rows.append(r)
+        if r["total_coll"] + r["total_rest"] > 0:
+            perf_detail_rows.append(r)
 
     # ── KPI résumé ───────────────────────────────────────────────────────────
     total_montant   = sum(montants)
     total_ops       = sum(nb_ops_par_jour)
     total_anom      = sum(anom_counts)
-    moy_journaliere = round(total_montant / periode, 0)
+    moy_journaliere = round(total_montant / nb_jours, 0)
 
     jours_actifs = [t for t in taux_couverture if t is not None]
     taux_moyen   = round(sum(jours_actifs) / len(jours_actifs), 1) if jours_actifs else 0
@@ -257,6 +275,8 @@ def statistiques(request):
         "perf_labels_json":   json.dumps(perf_labels),
         "perf_taux_json":     json.dumps(perf_taux),
         "perf_montants_json": json.dumps(perf_montants),
+        "perf_visitees_json": json.dumps(perf_visitees),
+        "perf_totaux_json":   json.dumps(perf_totaux),
         "nb_livreurs":        len(perf_labels),
         "perf_detail_rows":   perf_detail_rows,
         # KPI

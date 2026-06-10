@@ -21,9 +21,10 @@
     </div>
     <!-- Sélecteur de période -->
     <div class="stat-period-toggle">
-        <a href="?periode=7"  class="stat-period-btn {% if periode == 7  %}active{% endif %}">7 jours</a>
-        <a href="?periode=30" class="stat-period-btn {% if periode == 30 %}active{% endif %}">30 jours</a>
-        <a href="?periode=90" class="stat-period-btn {% if periode == 90 %}active{% endif %}">90 jours</a>
+        <a href="?periode=aujourd_hui" class="stat-period-btn {% if periode == 'aujourd_hui' %}active{% endif %}">Aujourd'hui</a>
+        <a href="?periode=7"           class="stat-period-btn {% if periode == '7'           %}active{% endif %}">7 jours</a>
+        <a href="?periode=mois"        class="stat-period-btn {% if periode == 'mois'        %}active{% endif %}">Ce mois</a>
+        <a href="?periode=90"          class="stat-period-btn {% if periode == '90'          %}active{% endif %}">90 jours</a>
     </div>
 </div>
 
@@ -111,7 +112,7 @@
 <div class="section-card mb-4">
     <div class="section-header">
         <span class="section-icon"><i class="bi bi-person-lines-fill"></i></span>
-        <span class="section-title">Performance par livreur</span>
+        <span class="section-title">Couverture des tournées par livreur</span>
         <span class="stat-chart-period ms-auto">{{ periode }} derniers jours</span>
     </div>
     {% if nb_livreurs > 0 %}
@@ -231,6 +232,8 @@
     var perfLabels   = {{ perf_labels_json|safe }};
     var perfTaux     = {{ perf_taux_json|safe }};
     var perfMontants = {{ perf_montants_json|safe }};
+    var perfVisitees = {{ perf_visitees_json|safe }};
+    var perfTotaux   = {{ perf_totaux_json|safe }};
 
     // ── Defaults globaux Chart.js ────────────────────────────────────────────
     Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
@@ -345,6 +348,11 @@
             return '#dc3545';
         });
 
+        // Libellés enrichis : "LIV001  (8/10 étapes)"
+        var perfLabelsDetail = perfLabels.map(function(code, i) {
+            return code + '  (' + perfVisitees[i] + '/' + perfTotaux[i] + ' PLVs)';
+        });
+
         // Hauteur dynamique : 52 px par livreur, minimum 160 px
         var wrap = document.getElementById('wrap-perf');
         if (wrap) wrap.style.height = Math.max(160, perfLabels.length * 52 + 24) + 'px';
@@ -352,7 +360,7 @@
         new Chart(el.getContext('2d'), {
             type: 'bar',
             data: {
-                labels: perfLabels,
+                labels: perfLabelsDetail,
                 datasets: [{
                     label: 'Couverture',
                     data: perfTaux,
@@ -372,8 +380,8 @@
                             label: function(c) {
                                 var m = perfMontants[c.dataIndex];
                                 return [
-                                    ' Couverture : ' + c.raw + ' %',
-                                    ' Encaissé   : ' + m.toLocaleString('fr-FR') + ' FCFA'
+                                    ' ' + perfVisitees[c.dataIndex] + ' / ' + perfTotaux[c.dataIndex] + ' PLVs — ' + c.raw + ' %',
+                                    ' Encaissé : ' + m.toLocaleString('fr-FR') + ' FCFA'
                                 ];
                             }
                         }
