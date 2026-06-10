@@ -18,16 +18,15 @@
             </p>
         </div>
     </div>
-    <div class="d-flex align-items-center gap-3 flex-wrap">
-        <form method="get" class="d-flex align-items-center gap-2">
-            <i class="bi bi-calendar3 text-muted"></i>
-            <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}"
-                   class="form-control form-control-sm dash-date-input"
-                   onchange="this.form.submit()">
+    <div class="dash-header-right">
+        <div class="dash-date-wrap">
+            <i class="bi bi-calendar3 dash-date-icon"></i>
+            <input type="date" name="date" id="dash-date-fp"
+                   value="{{ date_filter|date:'Y-m-d' }}" class="dash-date-input">
             {% if not is_today %}
-            <a href="?" class="btn-today"><i class="bi bi-house me-1"></i>Aujourd'hui</a>
+            <a href="?" class="btn-today"><i class="bi bi-house"></i> Aujourd'hui</a>
             {% endif %}
-        </form>
+        </div>
         <div class="live-indicator">
             <span class="live-dot" id="live-dot"></span>
             <span id="live-status">Connexion…</span>
@@ -68,7 +67,7 @@
 <!-- ── KPI cards ── -->
 <div class="kpi-grid mb-4">
 
-    <div class="kpi-card-v2" id="kpi-programmes">
+    <div class="kpi-card-v2 kpi-card-blue" id="kpi-programmes">
         <div class="kpi-card-icon kpi-icon-blue"><i class="bi bi-clipboard-list"></i></div>
         <div class="kpi-card-body">
             <div class="kpi-card-label">Programmes du jour</div>
@@ -86,7 +85,7 @@
         <a href="{% url 'supervision:programmes' %}" class="kpi-card-link"></a>
     </div>
 
-    <div class="kpi-card-v2">
+    <div class="kpi-card-v2 kpi-card-navy">
         <div class="kpi-card-icon kpi-icon-navy"><i class="bi bi-lightning-charge"></i></div>
         <div class="kpi-card-body">
             <div class="kpi-card-label">Opérations réalisées</div>
@@ -96,7 +95,7 @@
         <a href="{% url 'supervision:operations' %}" class="kpi-card-link"></a>
     </div>
 
-    <div class="kpi-card-v2">
+    <div class="kpi-card-v2 kpi-card-orange">
         <div class="kpi-card-icon kpi-icon-orange"><i class="bi bi-cash-coin"></i></div>
         <div class="kpi-card-body">
             <div class="kpi-card-label">Montant encaissé</div>
@@ -200,6 +199,7 @@
 </div>
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="{% static 'supervision/css/pages/dashboard.css' %}">
 {% endblock %}
 
@@ -215,4 +215,17 @@ window.SODIGAZ_DASH = {
 };
 </script>
 <script src="{% static 'supervision/js/dashboard.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+<script>
+flatpickr("#dash-date-fp", {
+    dateFormat:    "Y-m-d",
+    defaultDate:   window.SODIGAZ_DASH.dateFilter,
+    locale:        "fr",
+    disableMobile: true,
+    onChange: function(_, dateStr) {
+        if (dateStr) window.location.href = "?date=" + dateStr;
+    }
+});
+</script>
 {% endblock %}

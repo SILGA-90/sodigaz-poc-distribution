@@ -14,8 +14,22 @@
     font-size: .8rem; font-weight: 600;
 }
 
+.dash-header-right {
+    display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+}
+.dash-date-wrap {
+    display: flex; align-items: center; gap: .5rem;
+    background: var(--neo-in-bg, #d4dde6); border-radius: 10px;
+    padding: .35rem .7rem .35rem .6rem;
+    box-shadow: var(--neo-inset, inset 3px 3px 8px rgba(74,104,128,.18), inset -3px -3px 6px rgba(255,255,255,.82));
+    border-top:    1px solid rgba(74,104,128,.15);
+    border-left:   1px solid rgba(74,104,128,.15);
+    border-bottom: 1px solid rgba(255,255,255,.75);
+    border-right:  1px solid rgba(255,255,255,.75);
+}
+.dash-date-icon { color: #94a3b8; font-size: .9rem; flex-shrink: 0; }
 .dash-date-input {
-    border-radius: 8px; border-color: #d1d9e0;
+    border: none; outline: none; background: transparent;
     font-size: .82rem; color: #0a1628; cursor: pointer;
 }
 .btn-today {
@@ -30,10 +44,13 @@
 /* ─── Indicateur temps réel ─── */
 .live-indicator {
     display: flex; align-items: center; gap: .45rem;
-    background: #fff; border: 1px solid #e8edf3;
-    border-radius: 20px; padding: .32rem .9rem;
+    background: var(--neo-bg, #e8edf2); border-radius: 20px; padding: .32rem .9rem;
     font-size: .78rem; color: #6c757d;
-    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    box-shadow: var(--neo-raised-sm, 3px 3px 8px rgba(74,104,128,.18), -3px -3px 7px rgba(255,255,255,.85));
+    border-top:    1px solid var(--neo-bevel-lt, rgba(255,255,255,.82));
+    border-left:   1px solid var(--neo-bevel-lt, rgba(255,255,255,.82));
+    border-bottom: 1px solid var(--neo-bevel-rb, rgba(74,104,128,.18));
+    border-right:  1px solid var(--neo-bevel-rb, rgba(74,104,128,.18));
 }
 .live-dot {
     width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
@@ -109,14 +126,20 @@
 }
 .kpi-card-v2 {
     position: relative;
-    background: #fff; border-radius: 14px;
-    border: 1px solid #e8edf3;
-    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
+    background: var(--neo-bg, #e8edf2); border-radius: 14px;
+    box-shadow: var(--neo-raised, 6px 6px 14px rgba(74,104,128,.22), -5px -5px 12px rgba(255,255,255,.88));
+    border-top:    2px solid var(--neo-bevel-lt, rgba(255,255,255,.95));
+    border-left:   2px solid var(--neo-bevel-lt, rgba(255,255,255,.95));
+    border-bottom: 2px solid var(--neo-bevel-rb, rgba(74,104,128,.38));
+    border-right:  2px solid var(--neo-bevel-rb, rgba(74,104,128,.38));
     display: flex; align-items: flex-start; gap: 1rem;
     padding: 1.15rem 1.2rem; overflow: hidden;
     transition: box-shadow .18s, transform .18s;
 }
-.kpi-card-v2:hover { box-shadow: 0 4px 18px rgba(10,22,40,.11); transform: translateY(-1px); }
+.kpi-card-v2:hover {
+    box-shadow: 8px 8px 18px rgba(74,104,128,.28), -6px -6px 15px rgba(255,255,255,.92);
+    transform: translateY(-1px);
+}
 .kpi-card-v2::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
     background: #e8edf3; transition: background .2s;
@@ -124,11 +147,23 @@
 .kpi-card-danger { border-color: rgba(220,53,69,.3); }
 .kpi-card-danger::before { background: #dc3545; }
 
+.kpi-card-blue   { border-color: rgba(7,155,217,.25); }
+.kpi-card-blue::before   { background: #079BD9; }
+.kpi-card-navy   { border-color: rgba(10,22,40,.18); }
+.kpi-card-navy::before   { background: #0a1628; }
+.kpi-card-orange { border-color: rgba(238,114,2,.25); }
+.kpi-card-orange::before { background: #EE7202; }
+
 .kpi-card-icon {
     width: 44px; height: 44px; border-radius: 11px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     font-size: 1.3rem;
 }
+.kpi-icon-blue   { background: rgba(7,155,217,.1);  color: #079BD9; }
+.kpi-icon-navy   { background: rgba(10,22,40,.08);  color: #0a1628; }
+.kpi-icon-orange { background: rgba(238,114,2,.1);  color: #EE7202; }
+.kpi-icon-red    { background: rgba(220,53,69,.1);  color: #dc3545; }
+
 .kpi-card-body  { flex: 1; min-width: 0; }
 .kpi-card-label {
     font-size: .7rem; font-weight: 700; text-transform: uppercase;
@@ -138,6 +173,7 @@
     font-size: 1.85rem; font-weight: 800; line-height: 1;
     color: #0a1628; letter-spacing: -.02em;
 }
+.kpi-value-orange { color: #EE7202; }
 .kpi-card-sub { font-size: .78rem; color: #94a3b8; margin-top: .4rem; }
 .kpi-sub-blue     { color: #079BD9; font-weight: 600; }
 .kpi-sub-green    { color: #198754; font-weight: 600; }
@@ -188,8 +224,8 @@
 .map-legend {
     display: flex; gap: 1.2rem; flex-wrap: wrap;
     padding: .55rem 1.1rem;
-    border-top: 1px solid #eef1f6;
-    background: #f8fafc;
+    border-top: 1px solid var(--neo-bevel-rb, rgba(74,104,128,.18));
+    background: rgba(255,255,255,0.25);
 }
 .map-legend-item {
     display: flex; align-items: center; gap: .4rem;
@@ -208,8 +244,8 @@
     display: flex; align-items: center; gap: .4rem;
     padding: .55rem 1rem .4rem;
     font-size: .78rem; font-weight: 700;
-    border-bottom: 1px solid #f0f2f5;
-    background: #fafbfc;
+    border-bottom: 1px solid var(--neo-bevel-rb, rgba(74,104,128,.18));
+    background: rgba(255,255,255,0.22);
 }
 .bilan-collecte { color: #079BD9; border-top: 1px solid #f0f2f5; }
 .bilan-restit   { color: #198754; border-top: 1px solid #f0f2f5; }
@@ -223,7 +259,8 @@
     padding: .28rem 1rem;
     font-size: .68rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: .05em; color: #94a3b8;
-    border-bottom: 1px solid #f0f2f5; background: #f8fafc;
+    border-bottom: 1px solid var(--neo-bevel-rb, rgba(74,104,128,.18));
+    background: rgba(255,255,255,0.22);
     text-align: right;
 }
 .bilan-table thead th:first-child { text-align: left; }
@@ -236,8 +273,8 @@
 .bilan-table tfoot td {
     padding: .42rem 1rem;
     font-weight: 700; font-size: .82rem;
-    border-top: 1.5px solid #e8edf3;
-    background: #f8fafc; text-align: right;
+    border-top: 1.5px solid var(--neo-bevel-rb, rgba(74,104,128,.18));
+    background: rgba(255,255,255,0.22); text-align: right;
 }
 .bilan-table tfoot td:first-child { text-align: left; }
 .bilan-code-x3 {
@@ -254,6 +291,142 @@
 .bilan-montant-sm { font-size: .72rem; color: #94a3b8; margin-left: .3rem; }
 .bilan-total-collecte td { background: rgba(7,155,217,.05) !important; color: #079BD9 !important; }
 .bilan-total-restit   td { background: rgba(25,135,84,.05)  !important; color: #198754 !important; }
+
+/* ══════════════════════════════════════════════════════
+   FLATPICKR — Thème NEO SODIGAZ
+   Surcharge la feuille par défaut de Flatpickr.
+   ══════════════════════════════════════════════════════ */
+
+.flatpickr-calendar {
+    background: #e8edf2;
+    box-shadow: 8px 8px 20px rgba(74,104,128,.26), -6px -6px 16px rgba(255,255,255,.9);
+    border-radius: 16px;
+    border-top:    1.5px solid rgba(255,255,255,.82);
+    border-left:   1.5px solid rgba(255,255,255,.82);
+    border-bottom: 1.5px solid rgba(74,104,128,.18);
+    border-right:  1.5px solid rgba(74,104,128,.18);
+    padding: .4rem .5rem .6rem;
+    font-family: 'Inter', sans-serif;
+    width: 294px !important;
+}
+
+/* ── Flèche pointant vers l'input ── */
+.flatpickr-calendar.arrowTop::before { border-bottom-color: rgba(255,255,255,.82); }
+.flatpickr-calendar.arrowTop::after  { border-bottom-color: #e8edf2; }
+.flatpickr-calendar.arrowBottom::before { border-top-color: rgba(74,104,128,.18); }
+.flatpickr-calendar.arrowBottom::after  { border-top-color: #e8edf2; }
+
+/* ── Navigation mois / année ── */
+.flatpickr-months { padding: .3rem .2rem .2rem; align-items: center; }
+.flatpickr-month  { background: transparent; color: #0a1628; height: 38px; }
+
+.flatpickr-prev-month, .flatpickr-next-month {
+    background: #e8edf2;
+    box-shadow: 3px 3px 7px rgba(74,104,128,.2), -2px -2px 5px rgba(255,255,255,.85);
+    border-top:    1px solid rgba(255,255,255,.82);
+    border-left:   1px solid rgba(255,255,255,.82);
+    border-bottom: 1px solid rgba(74,104,128,.15);
+    border-right:  1px solid rgba(74,104,128,.15);
+    border-radius: 9px;
+    width: 30px; height: 30px;
+    padding: 6px;
+    top: 50%; transform: translateY(-50%);
+    color: #3a5060; fill: #3a5060;
+    transition: all .15s;
+}
+.flatpickr-prev-month:hover svg,
+.flatpickr-next-month:hover svg { fill: #fff; }
+.flatpickr-prev-month:hover,
+.flatpickr-next-month:hover {
+    background: #079BD9; color: #fff;
+    box-shadow: 0 3px 10px rgba(7,155,217,.35);
+    border-color: #079BD9;
+}
+
+/* ── Affichage mois courant ── */
+.flatpickr-current-month {
+    font-size: .9rem; font-weight: 700;
+    color: #0a1628; padding-top: 6px;
+}
+.flatpickr-current-month .cur-month {
+    font-weight: 700; color: #0a1628;
+}
+.flatpickr-current-month .numInputWrapper { width: 58px; }
+.flatpickr-current-month .numInputWrapper input {
+    font-weight: 700; color: #0a1628;
+    border: none; background: transparent;
+}
+.flatpickr-current-month .numInputWrapper span {
+    border-color: rgba(74,104,128,.2);
+}
+.flatpickr-current-month .numInputWrapper span:hover { background: rgba(7,155,217,.1); }
+
+/* ── Étiquettes des jours de la semaine ── */
+.flatpickr-weekdays  { background: transparent; margin-top: .2rem; }
+span.flatpickr-weekday {
+    background: transparent;
+    font-size: .64rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: #8aa8c0;
+}
+
+/* ── Séparateur semaines ── */
+.flatpickr-weekwrapper .flatpickr-weeks { display: none; }
+
+/* ── Jours ── */
+.flatpickr-day {
+    border-radius: 9px;
+    color: #1a2a3a;
+    font-size: .82rem; font-weight: 500;
+    border: none;
+    height: 36px; line-height: 36px;
+    max-width: 36px;
+    background: transparent;
+    transition: all .12s;
+}
+.flatpickr-day:hover:not(.selected):not(.today):not(.disabled) {
+    background: rgba(7,155,217,.12);
+    color: #079BD9;
+    box-shadow: 2px 2px 6px rgba(74,104,128,.18), -2px -2px 4px rgba(255,255,255,.8);
+}
+
+/* Aujourd'hui */
+.flatpickr-day.today {
+    border: 2px solid #EE7202 !important;
+    color: #EE7202; font-weight: 700;
+    background: rgba(238,114,2,.07);
+}
+.flatpickr-day.today:hover {
+    background: #EE7202; color: #fff;
+    box-shadow: 0 3px 10px rgba(238,114,2,.35);
+}
+
+/* Jour sélectionné */
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    background: #079BD9; color: #fff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(7,155,217,.38);
+    font-weight: 700;
+}
+
+/* Jours des mois adjacents */
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    color: #b8c8d8;
+}
+.flatpickr-day.prevMonthDay:hover,
+.flatpickr-day.nextMonthDay:hover {
+    background: rgba(7,155,217,.06);
+    color: #94a3b8;
+    box-shadow: none;
+}
+
+/* Jours désactivés */
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover {
+    color: #c8d4de; background: transparent; cursor: not-allowed;
+}
 
 /* ─── Responsive ─── */
 @media (max-width: 1200px) {

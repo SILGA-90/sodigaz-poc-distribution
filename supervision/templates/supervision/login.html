@@ -3,14 +3,32 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'supervision/css/pages/login.css' %}">
 {% endblock %}
-{% block title %}Connexion - Supervision SODIGAZ{% endblock %}
+{% block title %}Connexion — Supervision SODIGAZ{% endblock %}
 {% block content %}
-<div class="login-card">
-    <div class="login-header">
-        <img src="{% static 'supervision/img/logo_name.png' %}" alt="Sodigaz APC">
-        <div class="subtitle">Supervision logistique</div>
+
+<!-- Décorations de fond -->
+<span class="bg-bubble b1"></span>
+<span class="bg-bubble b2"></span>
+<span class="bg-bubble b3"></span>
+
+<!-- Logo au-dessus de la carte -->
+<div class="login-brand">
+    <img src="{% static 'supervision/img/logo_name.png' %}" alt="Sodigaz APC">
+    <p class="login-tagline">Le gaz plus proche de vous</p>
+    <div class="login-badge">
+        <span class="badge-dot"></span>ESPACE SUPERVISEUR
     </div>
+</div>
+
+<!-- Carte -->
+<div class="login-card{% if form.errors and not login_blocked %} login-card-shake{% endif %}">
+
+    <!-- Accent orange -->
+    <div class="login-accent"></div>
+
     <div class="login-body">
+        <h2 class="login-title">Connexion</h2>
+
         {% if login_blocked %}
         <div class="login-blocked-alert">
             <div class="login-blocked-icon"><i class="bi bi-lock-fill"></i></div>
@@ -28,21 +46,41 @@
             <span>Identifiants invalides ou compte sans privilège superviseur.</span>
         </div>
         {% endif %}
-        <form method="post">
+
+        <form method="post" autocomplete="on">
             {% csrf_token %}
-            <div class="mb-3">
-                <label for="id_username" class="form-label">Nom d'utilisateur</label>
-                <input type="text" name="username" id="id_username" class="form-control" required autofocus>
+
+            <div class="field-group">
+                <label for="id_username" class="field-label">Nom d'utilisateur</label>
+                <div class="field-wrap">
+                    <i class="bi bi-person-fill field-icon"></i>
+                    <input type="text" name="username" id="id_username"
+                           class="field-input" required autofocus
+                           autocomplete="username" placeholder="ex : aminata.s">
+                </div>
             </div>
-            <div class="mb-4">
-                <label for="id_password" class="form-label">Mot de passe</label>
-                <input type="password" name="password" id="id_password" class="form-control" required>
+
+            <div class="field-group">
+                <label for="id_password" class="field-label">Mot de passe</label>
+                <div class="field-wrap">
+                    <i class="bi bi-lock-fill field-icon"></i>
+                    <input type="password" name="password" id="id_password"
+                           class="field-input" required
+                           autocomplete="current-password" placeholder="••••••••">
+                </div>
             </div>
-            <button type="submit" class="btn-login">Se connecter</button>
+
+            <button type="submit" class="btn-login" {% if login_blocked %}disabled{% endif %}>
+                Se connecter <i class="bi bi-arrow-right-short"></i>
+            </button>
         </form>
+
         <p class="demo-hint">
-            Compte démo : <code>aminata.s</code> / <code>demo1234</code>
+            Compte démo&nbsp;: <code>aminata.s</code> / <code>demo1234</code>
         </p>
     </div>
 </div>
+
+<p class="login-footer">SODIGAZ APC &nbsp;·&nbsp; Supervision &nbsp;·&nbsp; POC</p>
+
 {% endblock %}
