@@ -25,6 +25,7 @@ urlpatterns = [
     path("operations/export/", views.operations_export_csv, name="operations-export"),
     path("operations/<uuid:operation_uuid>/", views.operation_detail, name="operation-detail"),
     path("api/activite/", views.dashboard_activite_data, name="activite-data"),
+    path("api/activite-recente/", views.dashboard_activite_recente, name="activite-recente"),
     path("api/bilan-produits/", views.dashboard_bilan_produits_data, name="bilan-produits-data"),
     path("anomalies/", views.anomalies_list, name="anomalies"),
     path("anomalies/<int:anomalie_id>/", views.anomalie_detail, name="anomalie-detail"),

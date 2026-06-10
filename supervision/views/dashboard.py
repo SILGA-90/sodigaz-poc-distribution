@@ -39,6 +39,18 @@ def dashboard(request):
         operations_aujourdhui.aggregate(total=Sum("montant_encaisse"))["total"] or 0
     )
 
+    etapes_stats = Etape.objects.filter(
+        programme__date_programme=date_filter,
+        programme__is_deleted=False,
+        is_deleted=False,
+    ).aggregate(
+        total=Count("id"),
+        visitees=Count(Case(When(statut_visite=StatutVisite.VISITEE, then=1), output_field=IntegerField())),
+    )
+    nb_etapes_total    = etapes_stats["total"] or 0
+    nb_etapes_visitees = etapes_stats["visitees"] or 0
+    taux_couverture    = round(nb_etapes_visitees / nb_etapes_total * 100) if nb_etapes_total else 0
+
     nb_anomalies_ouvertes = Anomalie.objects.filter(
         programme__date_programme=date_filter,
         programme__is_deleted=False,
@@ -68,6 +80,9 @@ def dashboard(request):
         "nb_programmes_clotures": nb_programmes_clotures,
         "nb_operations": nb_operations,
         "montant_encaisse": montant_encaisse,
+        "nb_etapes_total": nb_etapes_total,
+        "nb_etapes_visitees": nb_etapes_visitees,
+        "taux_couverture": taux_couverture,
         "nb_anomalies_ouvertes": nb_anomalies_ouvertes,
         "anomalies_elevees": anomalies_elevees,
     })
@@ -118,6 +133,7 @@ def dashboard_carte_data(request):
     ):
         plvs.append({
             "id": plv.id,
+            "code_plv": plv.code_plv or "",
             "libelle": plv.libelle,
             "client": plv.client.raison_sociale,
             "latitude": plv.localisation.y,
@@ -207,6 +223,18 @@ def dashboard_stats_data(request):
         is_deleted=False,
     ).count()
 
+    etapes_stats = Etape.objects.filter(
+        programme__date_programme=date_filter,
+        programme__is_deleted=False,
+        is_deleted=False,
+    ).aggregate(
+        total=Count("id"),
+        visitees=Count(Case(When(statut_visite=StatutVisite.VISITEE, then=1), output_field=IntegerField())),
+    )
+    nb_etapes_total    = etapes_stats["total"] or 0
+    nb_etapes_visitees = etapes_stats["visitees"] or 0
+    taux_couverture    = round(nb_etapes_visitees / nb_etapes_total * 100) if nb_etapes_total else 0
+
     return JsonResponse({
         "nb_programmes": nb_programmes,
         "nb_programmes_en_cours": nb_programmes_en_cours,
@@ -215,6 +243,9 @@ def dashboard_stats_data(request):
         "montant_encaisse": montant_encaisse,
         "nb_anomalies_ouvertes": nb_anomalies_ouvertes,
         "nb_anomalies_elevees": nb_anomalies_elevees,
+        "taux_couverture": taux_couverture,
+        "nb_etapes_visitees": nb_etapes_visitees,
+        "nb_etapes_total": nb_etapes_total,
     })
 
 
@@ -317,6 +348,30 @@ def dashboard_bilan_produits_data(request):
     return JsonResponse({"collecte": collecte_result, "restitution": restit_result})
 
 
+@superviseur_required
+def dashboard_activite_recente(request):
+    """AJAX : 8 dernières opérations de la journée (fil temps réel)."""
+    date_filter = _get_date_filter(request)
+    ops = (
+        Operation.objects
+        .filter(etape__programme__date_programme=date_filter, is_deleted=False)
+        .select_related("etape__plv", "etape__programme__utilisateur")
+        .order_by("-date_heure")[:8]
+    )
+    result = []
+    for op in ops:
+        result.append({
+            "uuid":     str(op.uuid),
+            "heure":    op.date_heure.strftime("%H:%M"),
+            "livreur":  op.etape.programme.utilisateur.code_livreur,
+            "code_plv": op.etape.plv.code_plv or "",
+            "plv":      op.etape.plv.libelle,
+            "type":     op.type_operation,
+            "montant":  float(op.montant_encaisse or 0),
+        })
+    return JsonResponse({"operations": result})
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Tableau de bord livreurs
 # ─────────────────────────────────────────────────────────────────────────────
@@ -330,19 +385,20 @@ def tableau_bord_livreurs(request):
     """Fiche de suivi temps réel par livreur pour la journée."""
     date_filter = _get_date_filter(request, write_session=True)
 
-    livreurs = list(
-        Utilisateur.objects.filter(role=Role.LIVREUR, is_active=True).order_by("code_livreur")
-    )
-
-    # Programmes du jour par utilisateur
+    # Seuls les livreurs ayant un programme ce jour sont affichés.
     programmes = {
         p.utilisateur_id: p
         for p in Programme.objects.filter(
             date_programme=date_filter,
-            utilisateur__in=livreurs,
             is_deleted=False,
         ).select_related("utilisateur", "vehicule")
     }
+
+    livreurs = list(
+        Utilisateur.objects.filter(
+            id__in=programmes.keys(),
+        ).order_by("code_livreur")
+    )
 
     programme_ids = [p.id for p in programmes.values()]
 

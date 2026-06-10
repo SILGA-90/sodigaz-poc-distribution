@@ -171,6 +171,10 @@ class Client(TimestampedModel):
 class Plv(gis_models.Model):
     """Point de Livraison."""
     client = models.ForeignKey(Client, on_delete=models.PROTECT, related_name="plvs")
+    code_plv = models.CharField(
+        max_length=20, unique=True, null=True, blank=True,
+        help_text="Identifiant unique du PLV. Ex : PLVO101 (O=Ouaga), PLVB063 (B=Bobo)",
+    )
     libelle = models.CharField(max_length=255)
     adresse = models.TextField(blank=True)
     # geography(POINT, 4326) : calculs en metres natifs
@@ -187,6 +191,8 @@ class Plv(gis_models.Model):
         ]
 
     def __str__(self) -> str:
+        if self.code_plv:
+            return f"{self.code_plv} — {self.libelle}"
         return self.libelle
 
 

@@ -51,7 +51,7 @@
         <li class="alerte-item">
             <span class="alerte-bullet"></span>
             <a href="{% url 'supervision:anomalie-detail' a.id %}" class="alerte-link">{{ a.type_anomalie }}</a>
-            <span class="alerte-meta">{{ a.programme.utilisateur.code_livreur }}{% if a.plv %} · {{ a.plv.libelle }}{% endif %}</span>
+            <span class="alerte-meta">{{ a.programme.utilisateur.code_livreur }}{% if a.plv %} · {% if a.plv.code_plv %}<span class="plv-code-chip">{{ a.plv.code_plv }}</span> {% endif %}{{ a.plv.libelle }}{% endif %}</span>
             <span class="alerte-statut alerte-statut-{{ a.statut }}">
                 {% if a.statut == "OUVERTE" %}Ouverte
                 {% elif a.statut == "EN_TRAITEMENT" %}En traitement
@@ -120,6 +120,24 @@
         {% if nb_anomalies_ouvertes > 0 %}
         <a href="{% url 'supervision:anomalies' %}" class="kpi-card-link" id="anomalies-link"></a>
         {% endif %}
+    </div>
+
+    <div class="kpi-card-v2 kpi-card-green" id="kpi-couverture">
+        <div class="kpi-card-icon kpi-icon-green"><i class="bi bi-check2-all"></i></div>
+        <div class="kpi-card-body">
+            <div class="kpi-card-label">Couverture journée</div>
+            <div class="kpi-card-value kpi-value-green">
+                <span data-stat="taux_couverture">{{ taux_couverture }}</span><span class="kpi-pct">%</span>
+            </div>
+            <div class="kpi-card-sub">
+                <span data-stat="nb_etapes_visitees">{{ nb_etapes_visitees }}</span> /
+                <span data-stat="nb_etapes_total">{{ nb_etapes_total }}</span> étapes visitées
+            </div>
+            <div class="kpi-progress-bar-wrap">
+                <div class="kpi-progress-bar-fill" id="kpi-coverage-bar"
+                     style="width: {{ taux_couverture }}%;"></div>
+            </div>
+        </div>
     </div>
 
 </div>
@@ -202,6 +220,20 @@
 
 </div>
 
+<!-- ── Fil d'activité récente ── -->
+<div class="section-card mt-4" id="activ-section">
+    <div class="section-header d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+            <span class="section-icon"><i class="bi bi-activity"></i></span>
+            <span class="section-title">Activité récente</span>
+        </div>
+        <span class="activ-refresh-label" id="activ-refresh-label">Chargement…</span>
+    </div>
+    <div class="activ-feed" id="activ-feed">
+        <div class="activ-empty"><i class="bi bi-hourglass-split me-1"></i>Chargement…</div>
+    </div>
+</div>
+
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="{% static 'supervision/css/pages/flatpickr-neo.css' %}">
@@ -213,10 +245,11 @@
 {% block scripts %}
 <script>
 window.SODIGAZ_DASH = {
-    dateFilter: "{{ date_filter|date:'Y-m-d' }}",
-    carteUrl:   "{% url 'supervision:carte-data' %}",
-    statsUrl:   "{% url 'supervision:stats-data' %}",
-    bilanUrl:   "{% url 'supervision:bilan-produits-data' %}",
+    dateFilter:  "{{ date_filter|date:'Y-m-d' }}",
+    carteUrl:    "{% url 'supervision:carte-data' %}",
+    statsUrl:    "{% url 'supervision:stats-data' %}",
+    bilanUrl:    "{% url 'supervision:bilan-produits-data' %}",
+    activiteUrl: "{% url 'supervision:activite-recente' %}",
 };
 </script>
 <script src="{% static 'supervision/js/dashboard.js' %}"></script>

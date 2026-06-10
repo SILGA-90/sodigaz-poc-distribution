@@ -120,7 +120,7 @@
             <div class="d-flex align-items-center gap-3 flex-wrap">
                 <div class="etape-ordre">{{ r.etape.ordre_prevu }}</div>
                 <div>
-                    <div class="etape-plv">{{ r.etape.plv.libelle }}</div>
+                    <div class="etape-plv">{% if r.etape.plv.code_plv %}<span class="plv-code-chip">{{ r.etape.plv.code_plv }}</span> {% endif %}{{ r.etape.plv.libelle }}</div>
                     <div class="etape-client">
                         <i class="bi bi-building me-1"></i>{{ r.etape.plv.client.raison_sociale }}
                     </div>
@@ -229,7 +229,7 @@
     <div class="tl-card">
         <div class="tl-row">
             <span class="tl-time"><i class="bi bi-clock me-1"></i>{{ item.op.date_heure|date:"H:i" }}</span>
-            <span class="tl-plv">{{ item.op.etape.plv.libelle }}</span>
+            <span class="tl-plv">{% if item.op.etape.plv.code_plv %}<span class="plv-code-chip">{{ item.op.etape.plv.code_plv }}</span> {% endif %}{{ item.op.etape.plv.libelle }}</span>
             <span class="tl-circuit {% if item.conforme %}tl-circuit-ok{% else %}tl-circuit-warn{% endif %}">
                 #{{ item.op.etape.ordre_prevu }}
             </span>

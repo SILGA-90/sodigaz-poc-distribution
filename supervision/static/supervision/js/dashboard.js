@@ -4,11 +4,12 @@
  * par un petit bloc <script> inline dans dashboard.html, AVANT ce fichier.
  */
 
-const { dateFilter, carteUrl, statsUrl, bilanUrl } = window.SODIGAZ_DASH;
+const { dateFilter, carteUrl, statsUrl, bilanUrl, activiteUrl } = window.SODIGAZ_DASH;
 const REFRESH_INTERVAL_MS = 15000;
-const CARTE_URL = `${carteUrl}?date=${dateFilter}`;
-const STATS_URL = `${statsUrl}?date=${dateFilter}`;
-const BILAN_URL = `${bilanUrl}?date=${dateFilter}`;
+const CARTE_URL   = `${carteUrl}?date=${dateFilter}`;
+const STATS_URL   = `${statsUrl}?date=${dateFilter}`;
+const BILAN_URL   = `${bilanUrl}?date=${dateFilter}`;
+const ACTIVITE_URL = `${activiteUrl}?date=${dateFilter}`;
 
 // Références UI
 const liveDot    = document.getElementById('live-dot');
@@ -153,7 +154,10 @@ function refreshCarte() {
                 const key  = String(plv.id);
                 seenPlvIds.add(key);
                 const icon  = plv.visite ? greenIcon : blueIcon;
-                const popup = `<strong>${escapeHtml(plv.libelle)}</strong><br>${escapeHtml(plv.client)}`
+                const plvLabel = plv.code_plv
+                    ? `<span style="font-family:monospace;font-size:.78em;color:#0670A0;background:#e3f3fb;padding:1px 5px;border-radius:3px;margin-right:4px;">${escapeHtml(plv.code_plv)}</span>${escapeHtml(plv.libelle)}`
+                    : escapeHtml(plv.libelle);
+                const popup = `<strong>${plvLabel}</strong><br>${escapeHtml(plv.client)}`
                     + (plv.visite ? '<br><em style="color:#198754">Visitée aujourd\'hui</em>' : '');
                 if (plvMarkers.has(key)) {
                     plvMarkers.get(key).setIcon(icon).setPopupContent(popup);
@@ -209,10 +213,60 @@ function refreshStats() {
                     }
                 }
             }
+            // Barre de progression couverture
+            const bar = document.getElementById('kpi-coverage-bar');
+            if (bar && stats.taux_couverture !== undefined) {
+                bar.style.width = Math.min(100, stats.taux_couverture) + '%';
+            }
             const link = document.getElementById('anomalies-link');
             if (link) link.style.display = stats.nb_anomalies_ouvertes > 0 ? '' : 'none';
             const kpiAnom = document.getElementById('kpi-anomalies');
             if (kpiAnom) kpiAnom.classList.toggle('kpi-card-danger', stats.nb_anomalies_elevees > 0);
+        });
+}
+
+// =============================================================================
+// Fil d'activité récente
+// =============================================================================
+const _ACTIV_COLORS = ['#079BD9', '#EE7202', '#6f42c1', '#198754', '#dc3545', '#0dcaf0'];
+
+function _avatarColor(code) {
+    let h = 0;
+    for (let i = 0; i < code.length; i++) h = (h * 31 + code.charCodeAt(i)) & 0xffff;
+    return _ACTIV_COLORS[h % _ACTIV_COLORS.length];
+}
+
+function refreshActivite() {
+    return fetch(ACTIVITE_URL, { credentials: 'same-origin' })
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(d => {
+            const feed  = document.getElementById('activ-feed');
+            const label = document.getElementById('activ-refresh-label');
+            const now   = new Date();
+            if (label) label.textContent = `Actualisé à ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+
+            if (!d.operations || d.operations.length === 0) {
+                feed.innerHTML = '<div class="activ-empty"><i class="bi bi-inbox me-1"></i>Aucune opération remontée pour cette journée.</div>';
+                return;
+            }
+
+            const rows = d.operations.map(op => {
+                const color    = _avatarColor(op.livreur);
+                const initial  = op.livreur.charAt(op.livreur.length - 1).toUpperCase();
+                const typeLabel = op.type === 'COLLECTE' ? 'Collecte' : 'Restitution';
+                const montant  = op.montant > 0
+                    ? `<span class="activ-montant">${Math.round(op.montant).toLocaleString('fr-FR')} F</span>`
+                    : `<span class="activ-montant activ-montant-nil">—</span>`;
+                return `<li class="activ-item">
+                    <span class="activ-time">${escapeHtml(op.heure)}</span>
+                    <div class="activ-av" style="background:${color}">${escapeHtml(initial)}</div>
+                    <span class="activ-livreur">${escapeHtml(op.livreur)}</span>
+                    <span class="activ-plv">${op.code_plv ? `<span class="activ-plv-code">${escapeHtml(op.code_plv)}</span> ` : ''}${escapeHtml(op.plv)}</span>
+                    <span class="activ-type activ-type-${escapeHtml(op.type)}">${escapeHtml(typeLabel)}</span>
+                    ${montant}
+                </li>`;
+            }).join('');
+            feed.innerHTML = `<ul class="activ-list">${rows}</ul>`;
         });
 }
 
@@ -235,7 +289,7 @@ setInterval(updateFreshnessIndicator, 1000);
 // Cycle de rafraîchissement (pause auto sur onglet inactif)
 // =============================================================================
 function tick() {
-    Promise.all([refreshCarte(), refreshStats(), refreshBilanProduits()])
+    Promise.all([refreshCarte(), refreshStats(), refreshBilanProduits(), refreshActivite()])
         .then(() => {
             lastUpdateAt = Date.now();
             liveDot.className = 'live-dot';

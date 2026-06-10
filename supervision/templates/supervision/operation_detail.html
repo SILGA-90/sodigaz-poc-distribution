@@ -88,7 +88,7 @@
         <div>
             <div class="info-label">Point de livraison</div>
             <div class="info-value">{{ plv.client.raison_sociale }}</div>
-            <div class="info-sub">{{ plv.libelle }}</div>
+            <div class="info-sub">{% if plv.code_plv %}<span class="plv-code-chip">{{ plv.code_plv }}</span> {% endif %}{{ plv.libelle }}</div>
         </div>
     </div>
 

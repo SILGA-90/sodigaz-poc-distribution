@@ -118,7 +118,10 @@ function refreshCarte() {
                 const key  = String(plv.id);
                 seenPlv.add(key);
                 const icon = plv.visite ? greenIcon : blueIcon;
-                const popup = `<strong>${esc(plv.libelle)}</strong>`
+                const plvLabel = plv.code_plv
+                    ? `<span style="font-family:monospace;font-size:.76em;color:#0670A0;background:#e3f3fb;padding:1px 5px;border-radius:3px;margin-right:4px;">${esc(plv.code_plv)}</span>${esc(plv.libelle)}`
+                    : esc(plv.libelle);
+                const popup = `<strong>${plvLabel}</strong>`
                     + `<br><span style="color:#8aa8c0;font-size:.78em;">${esc(plv.client)}</span>`
                     + (plv.visite
                         ? '<br><span style="color:#198754;font-weight:700;font-size:.82em;">✓ Visitée</span>'

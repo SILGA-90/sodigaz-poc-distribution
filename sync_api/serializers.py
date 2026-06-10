@@ -55,7 +55,7 @@ class PlvSyncSerializer(serializers.ModelSerializer):
     class Meta:
         model = Plv
         fields = (
-            "id", "client_id", "libelle", "adresse",
+            "id", "client_id", "code_plv", "libelle", "adresse",
             "latitude", "longitude", "statut",
         )
 

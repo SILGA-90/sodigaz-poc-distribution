@@ -642,3 +642,17 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
 .kpi-value-orange { color: #EE7202; }
 .kpi-value-red    { color: #dc3545; }
 .kpi-value-gray   { color: #94a3b8; }
+
+/* ── Code PLV (chip partagé entre toutes les pages) ── */
+.plv-code-chip {
+    display: inline-block;
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: .68rem; font-weight: 700; color: #0670A0;
+    background: #e3f3fb; padding: .06rem .38rem; border-radius: 4px;
+    margin-right: .2rem; letter-spacing: .02em; vertical-align: middle;
+}
+.activ-plv-code {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: .68rem; font-weight: 700; color: #0670A0;
+    background: #e3f3fb; padding: .04rem .32rem; border-radius: 3px;
+}
