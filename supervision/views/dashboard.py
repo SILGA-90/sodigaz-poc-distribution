@@ -1,14 +1,17 @@
-"""Vues du tableau de bord (carte, KPI, activité)."""
+"""Vues du tableau de bord (carte, KPI, activité, fiches livreurs)."""
 from datetime import date as date_cls
 
-from django.db.models import Count, Exists, OuterRef, Sum
+from decimal import Decimal
+
+from django.db.models import Case, Count, DecimalField, Exists, IntegerField, Max, OuterRef, Sum, When
 from django.db.models.functions import Coalesce, ExtractHour
 from django.http import JsonResponse
 from django.shortcuts import render
 
+from accounts.models import Role, Utilisateur
 from distribution.models import (
-    Anomalie, LigneOperation, LigneProgramme,
-    Operation, Plv, Produit, Programme, StatutAnomalie,
+    Anomalie, Etape, LigneOperation, LigneProgramme,
+    Operation, Plv, Produit, Programme, StatutAnomalie, StatutVisite,
 )
 
 from ..decorators import superviseur_required
@@ -72,12 +75,35 @@ def dashboard(request):
 
 @superviseur_required
 def dashboard_carte_data(request):
-    """AJAX : PLV actives + opérations géolocalisées du jour (pour Leaflet)."""
-    date_filter = _get_date_filter(request)
+    """AJAX : PLV actives + opérations géolocalisées du jour (pour Leaflet).
+    Paramètre GET optionnel : livreur (code_livreur) — filtre les opérations.
+    """
+    date_filter  = _get_date_filter(request)
+    livreur_code = request.GET.get("livreur", "").strip()
+
+    # Quand un livreur est sélectionné : n'afficher que ses PLVs assignées,
+    # et marquer "visitée" uniquement selon ses propres opérations.
+    if livreur_code:
+        # related_name="etapes" sur Etape.plv → traversée inverse via "etapes__"
+        plvs_qs = (
+            Plv.objects.filter(
+                statut="ACTIF",
+                etapes__programme__utilisateur__code_livreur=livreur_code,
+                etapes__programme__date_programme=date_filter,
+                etapes__programme__is_deleted=False,
+                etapes__is_deleted=False,
+            ).distinct()
+        )
+        visite_filter = dict(
+            etape__programme__utilisateur__code_livreur=livreur_code,
+        )
+    else:
+        plvs_qs = Plv.objects.filter(statut="ACTIF")
+        visite_filter = {}
 
     plvs = []
     for plv in (
-        Plv.objects.filter(statut="ACTIF")
+        plvs_qs
         .select_related("client")
         .annotate(
             visite=Exists(
@@ -85,6 +111,7 @@ def dashboard_carte_data(request):
                     etape__plv=OuterRef("pk"),
                     etape__programme__date_programme=date_filter,
                     is_deleted=False,
+                    **visite_filter,
                 )
             )
         )
@@ -98,8 +125,7 @@ def dashboard_carte_data(request):
             "visite": plv.visite,
         })
 
-    operations = []
-    for op in (
+    ops_qs = (
         Operation.objects
         .filter(
             etape__programme__date_programme=date_filter,
@@ -108,7 +134,14 @@ def dashboard_carte_data(request):
         )
         .select_related("etape__plv", "etape__programme__utilisateur")
         .order_by("date_heure")
-    ):
+    )
+    if livreur_code:
+        ops_qs = ops_qs.filter(
+            etape__programme__utilisateur__code_livreur=livreur_code
+        )
+
+    operations = []
+    for op in ops_qs:
         operations.append({
             "uuid": str(op.uuid),
             "plv": op.etape.plv.libelle,
@@ -121,6 +154,21 @@ def dashboard_carte_data(request):
         })
 
     return JsonResponse({"plvs": plvs, "operations": operations})
+
+
+@superviseur_required
+def carte_plein_ecran(request):
+    """Page cartographie plein écran avec filtre livreur."""
+    date_filter  = _get_date_filter(request, write_session=True)
+    livreur_code = request.GET.get("livreur", "").strip()
+    livreurs     = Utilisateur.objects.filter(
+        role=Role.LIVREUR, is_active=True,
+    ).order_by("code_livreur")
+    return render(request, "supervision/carte.html", {
+        "date_filter":  date_filter,
+        "livreur_code": livreur_code,
+        "livreurs":     livreurs,
+    })
 
 
 @superviseur_required
@@ -267,3 +315,110 @@ def dashboard_bilan_produits_data(request):
         })
 
     return JsonResponse({"collecte": collecte_result, "restitution": restit_result})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Tableau de bord livreurs
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Couleurs d'avatar cyclées par position dans la liste (stable pour un même jeu de livreurs)
+_AVATAR_PALETTE = ["#079BD9", "#EE7202", "#6f42c1", "#198754", "#dc3545", "#0dcaf0"]
+
+
+@superviseur_required
+def tableau_bord_livreurs(request):
+    """Fiche de suivi temps réel par livreur pour la journée."""
+    date_filter = _get_date_filter(request, write_session=True)
+
+    livreurs = list(
+        Utilisateur.objects.filter(role=Role.LIVREUR, is_active=True).order_by("code_livreur")
+    )
+
+    # Programmes du jour par utilisateur
+    programmes = {
+        p.utilisateur_id: p
+        for p in Programme.objects.filter(
+            date_programme=date_filter,
+            utilisateur__in=livreurs,
+            is_deleted=False,
+        ).select_related("utilisateur", "vehicule")
+    }
+
+    programme_ids = [p.id for p in programmes.values()]
+
+    # Étapes (total / visitées / échecs) par programme — une seule requête
+    etapes_qs = (
+        Etape.objects.filter(programme_id__in=programme_ids, is_deleted=False)
+        .values("programme_id")
+        .annotate(
+            total=Count("id"),
+            visitees=Count(Case(When(statut_visite=StatutVisite.VISITEE, then=1), output_field=IntegerField())),
+            echecs=Count(Case(When(statut_visite=StatutVisite.ECHEC, then=1), output_field=IntegerField())),
+        )
+    )
+    etapes_map = {row["programme_id"]: row for row in etapes_qs}
+
+    # Opérations (count + montant) par programme — une seule requête
+    ops_qs = (
+        Operation.objects.filter(etape__programme_id__in=programme_ids, is_deleted=False)
+        .values("etape__programme_id")
+        .annotate(nb_ops=Count("id"), montant=Coalesce(Sum("montant_encaisse"), Decimal("0"), output_field=DecimalField()))
+    )
+    ops_map = {row["etape__programme_id"]: row for row in ops_qs}
+
+    # Anomalies (ouvertes + total) par programme — une seule requête
+    anom_qs = (
+        Anomalie.objects.filter(programme_id__in=programme_ids, is_deleted=False)
+        .values("programme_id")
+        .annotate(
+            ouvertes=Count(Case(When(statut=StatutAnomalie.OUVERTE, then=1), output_field=IntegerField())),
+            total_anom=Count("id"),
+        )
+    )
+    anom_map = {row["programme_id"]: row for row in anom_qs}
+
+    # Dernière activité (max date_heure d'opération) par programme — une seule requête
+    last_op_map = {
+        row["etape__programme_id"]: row["derniere"]
+        for row in Operation.objects.filter(
+            etape__programme_id__in=programme_ids, is_deleted=False,
+        )
+        .values("etape__programme_id")
+        .annotate(derniere=Max("date_heure"))
+    }
+
+    # Construction des fiches
+    fiches = []
+    for idx, liv in enumerate(livreurs):
+        prog = programmes.get(liv.id)
+        av_color = _AVATAR_PALETTE[idx % len(_AVATAR_PALETTE)]
+
+        if prog:
+            etapes = etapes_map.get(prog.id, {"total": 0, "visitees": 0, "echecs": 0})
+            ops = ops_map.get(prog.id, {"nb_ops": 0, "montant": 0})
+            anom = anom_map.get(prog.id, {"ouvertes": 0, "total_anom": 0})
+            derniere_activite = last_op_map.get(prog.id)
+            pct = round(etapes["visitees"] / etapes["total"] * 100) if etapes["total"] else 0
+        else:
+            etapes = {"total": 0, "visitees": 0, "echecs": 0}
+            ops = {"nb_ops": 0, "montant": 0}
+            anom = {"ouvertes": 0, "total_anom": 0}
+            derniere_activite = None
+            pct = 0
+
+        fiches.append({
+            "livreur": liv,
+            "programme": prog,
+            "av_color": av_color,
+            "etapes": etapes,
+            "ops": ops,
+            "anom": anom,
+            "derniere_activite": derniere_activite,
+            "pct": pct,
+        })
+
+    return render(request, "supervision/livreurs.html", {
+        "date_filter": date_filter,
+        "is_today": date_filter == date_cls.today(),
+        "fiches": fiches,
+    })

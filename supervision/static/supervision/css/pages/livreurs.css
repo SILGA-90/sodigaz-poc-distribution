@@ -1,0 +1,220 @@
+/* ══════════════════════════════════════════════════════════
+   TABLEAU DE BORD LIVREURS — Thème NEO SODIGAZ
+   ══════════════════════════════════════════════════════════ */
+
+/* ─── Badge "Aujourd'hui" ─── */
+.badge-live {
+    display: inline-flex; align-items: center;
+    background: rgba(7,155,217,.12); color: #079BD9;
+    font-size: .68rem; font-weight: 700; letter-spacing: .04em;
+    padding: .18rem .55rem; border-radius: 20px;
+    border: 1px solid rgba(7,155,217,.25);
+}
+
+/* ─── Grille responsive ─── */
+.liv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.35rem;
+}
+@media (max-width: 575.98px) {
+    .liv-grid { grid-template-columns: 1fr; }
+}
+
+/* ─── Fiche livreur — base NEO raised ─── */
+.liv-card {
+    background: var(--neo-bg, #e8edf2);
+    border-radius: 14px;
+    padding: 1.2rem 1.15rem 1rem;
+    box-shadow: 6px 6px 14px rgba(74,104,128,.22),
+               -5px -5px 12px rgba(255,255,255,.88);
+    border-top:  1.5px solid rgba(255,255,255,.92);
+    border-left: 1.5px solid rgba(255,255,255,.92);
+    border-bottom: 1.5px solid rgba(74,104,128,.2);
+    border-right:  1.5px solid rgba(74,104,128,.2);
+    display: flex; flex-direction: column; gap: .85rem;
+    position: relative; overflow: hidden;
+    transition: box-shadow .2s;
+}
+
+/* Accent couleur en haut selon statut */
+.liv-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    border-radius: 14px 14px 0 0;
+    background: rgba(74,104,128,.18);
+}
+.liv-card--en-cours::before {
+    background: linear-gradient(90deg, #079BD9, #FAB848);
+}
+.liv-card--cloture::before {
+    background: #198754;
+}
+.liv-card--sans-programme::before {
+    background: rgba(74,104,128,.1);
+}
+
+/* ─── En-tête de fiche ─── */
+.liv-card-header {
+    display: flex; align-items: center; gap: .75rem;
+    padding-top: .35rem;
+}
+
+/* Avatar rond coloré (couleur via CSS variable --av-color) */
+.liv-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    flex-shrink: 0; font-size: 1.1rem; font-weight: 700;
+    color: #fff;
+    background: var(--av-color, #079BD9);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 3px 3px 8px rgba(74,104,128,.25), -2px -2px 5px rgba(255,255,255,.85);
+    border: 2px solid rgba(255,255,255,.85);
+}
+
+.liv-identity { min-width: 0; }
+.liv-name {
+    font-size: .88rem; font-weight: 700; color: #1a2332;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.liv-code {
+    font-size: .72rem; color: #6080a0; font-weight: 600; font-family: monospace;
+    letter-spacing: .04em;
+}
+
+/* ─── Badges statut programme ─── */
+.liv-badge {
+    display: inline-flex; align-items: center;
+    font-size: .68rem; font-weight: 700; letter-spacing: .03em;
+    padding: .22rem .6rem; border-radius: 20px; white-space: nowrap;
+}
+.liv-badge--sans      { background: rgba(74,104,128,.12); color: #6080a0;
+                         border: 1px solid rgba(74,104,128,.18); }
+.liv-badge--planifie  { background: rgba(255,193,7,.15);  color: #9a6900;
+                         border: 1px solid rgba(255,193,7,.3); }
+.liv-badge--en-cours  { background: rgba(7,155,217,.13);  color: #0670A0;
+                         border: 1px solid rgba(7,155,217,.28); }
+.liv-badge--cloture   { background: rgba(25,135,84,.12);  color: #146844;
+                         border: 1px solid rgba(25,135,84,.25); }
+
+/* ─── Infos programme (type + véhicule + n° X3) ─── */
+.liv-prog-info {
+    display: flex; flex-wrap: wrap; align-items: center; gap: .5rem;
+    font-size: .76rem;
+}
+.liv-prog-type {
+    display: inline-flex; align-items: center;
+    font-weight: 700; padding: .2rem .6rem; border-radius: 8px;
+}
+.type-collecte    { background: rgba(7,155,217,.13);  color: #0670A0; }
+.type-restitution { background: rgba(238,114,2,.13);  color: #b55700; }
+.liv-prog-vehicle { color: #6080a0; }
+.liv-prog-num {
+    background: var(--neo-in-bg, #d4dde6);
+    box-shadow: inset 1px 1px 3px rgba(74,104,128,.15),
+                inset -1px -1px 2px rgba(255,255,255,.75);
+    border-radius: 6px; padding: .15rem .45rem;
+    font-size: .7rem; font-family: monospace; color: #4a6880;
+}
+
+/* ─── Barre de progression ─── */
+.liv-progress-block { }
+.liv-progress-label { font-size: .75rem; color: #6080a0; font-weight: 600; }
+.liv-progress-count { font-size: .75rem; color: #3a5060; }
+.liv-echec-badge {
+    display: inline-flex; align-items: center;
+    background: rgba(220,53,69,.12); color: #842029;
+    border-radius: 10px; padding: .08rem .4rem; font-size: .68rem; font-weight: 700;
+    margin-left: .3rem;
+}
+.liv-bar-track {
+    height: 8px; border-radius: 999px;
+    background: var(--neo-in-bg, #d4dde6);
+    box-shadow: inset 2px 2px 4px rgba(74,104,128,.18),
+                inset -1px -1px 3px rgba(255,255,255,.8);
+    overflow: hidden; position: relative;
+}
+.liv-bar-fill {
+    height: 100%; border-radius: 999px;
+    position: relative; transition: width .4s ease;
+}
+.liv-bar-fill::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,.35) 0%, transparent 60%);
+    border-radius: inherit;
+}
+.liv-bar--done { background: linear-gradient(90deg, #198754, #34d399); }
+.liv-bar--good { background: linear-gradient(90deg, #079BD9, #38bdf8); }
+.liv-bar--mid  { background: linear-gradient(90deg, #EE7202, #FAB848); }
+.liv-bar--low  { background: linear-gradient(90deg, #d97706, #fbbf24); }
+.liv-progress-pct { font-size: .68rem; color: #8aa8c0; text-align: right; margin-top: .2rem; }
+
+/* ─── KPI row ─── */
+.liv-kpi-row {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: .5rem;
+}
+.liv-kpi {
+    background: var(--neo-in-bg, #d4dde6);
+    border-radius: 10px;
+    box-shadow: inset 2px 2px 5px rgba(74,104,128,.16),
+                inset -2px -2px 4px rgba(255,255,255,.82);
+    padding: .55rem .4rem; text-align: center;
+}
+.liv-kpi--alert .liv-kpi-val { color: #dc3545; }
+.liv-kpi--alert .liv-kpi-label { color: #dc3545; opacity: .7; }
+.liv-kpi-val {
+    font-size: 1.1rem; font-weight: 800; color: #1a2332; line-height: 1;
+}
+.liv-kpi-label {
+    font-size: .62rem; color: #8094a8; font-weight: 600;
+    margin-top: .2rem; line-height: 1.2;
+}
+
+/* ─── Dernière activité ─── */
+.liv-last-activity {
+    font-size: .74rem; color: #7a9ab0;
+}
+
+/* ─── Aucun programme ─── */
+.liv-no-prog {
+    font-size: .8rem; color: #94aabf; font-style: italic;
+    text-align: center; padding: .75rem 0;
+}
+
+/* ─── Boutons d'action ─── */
+.liv-actions {
+    display: flex; gap: .55rem; flex-wrap: wrap;
+    margin-top: .15rem;
+}
+.btn-liv-action {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .38rem .85rem; border-radius: 9px;
+    font-size: .77rem; font-weight: 700; cursor: pointer;
+    text-decoration: none; transition: all .16s;
+    border: none;
+}
+.btn-liv-blue {
+    background: linear-gradient(135deg, #079BD9, #0670A0);
+    color: #fff;
+    box-shadow: 3px 3px 8px rgba(7,155,217,.3), -1px -1px 3px rgba(255,255,255,.6);
+}
+.btn-liv-blue:hover {
+    color: #fff;
+    box-shadow: 4px 4px 12px rgba(7,155,217,.45), -1px -1px 3px rgba(255,255,255,.7);
+    transform: translateY(-1px);
+}
+.btn-liv-outline {
+    background: var(--neo-bg, #e8edf2);
+    color: #4a7090;
+    box-shadow: 3px 3px 7px rgba(74,104,128,.2), -2px -2px 5px rgba(255,255,255,.85);
+    border-top:  1px solid rgba(255,255,255,.88);
+    border-left: 1px solid rgba(255,255,255,.88);
+    border-bottom: 1px solid rgba(74,104,128,.18);
+    border-right:  1px solid rgba(74,104,128,.18);
+}
+.btn-liv-outline:hover {
+    color: #079BD9;
+    box-shadow: 4px 4px 10px rgba(74,104,128,.25), -2px -2px 6px rgba(255,255,255,.9);
+    transform: translateY(-1px);
+}

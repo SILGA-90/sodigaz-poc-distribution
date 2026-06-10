@@ -1,62 +1,95 @@
+/* ══════════════════════════════════════════════════════════
+   OPÉRATION DETAIL — Thème NEO SODIGAZ
+   ══════════════════════════════════════════════════════════ */
+
 /* ─── En-tête ─── */
 .op-header {
     display: flex; justify-content: space-between; align-items: flex-start;
     flex-wrap: wrap; gap: 1rem;
-    background: #fff; border-radius: 14px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
+    background: var(--neo-bg, #e8edf2); border-radius: 14px;
+    box-shadow: var(--neo-raised,
+        6px 6px 14px rgba(74,104,128,.22), -5px -5px 12px rgba(255,255,255,.88));
+    border-top:    2px solid rgba(255,255,255,.95);
+    border-left:   5px solid #079BD9;
+    border-bottom: 2px solid rgba(74,104,128,.38);
+    border-right:  2px solid rgba(74,104,128,.38);
     padding: 1.4rem 1.5rem;
-    border-left: 4px solid #079BD9;
     margin-bottom: 1.25rem;
 }
 .op-header-RESTITUTION { border-left-color: #198754; }
 .op-header-left { display: flex; align-items: flex-start; gap: 1rem; }
+.op-header-RESTITUTION .pg-icon { background: rgba(25,135,84,.14); color: #198754; }
 
-.op-header-RESTITUTION .pg-icon { background: rgba(25,135,84,.1); color: #198754; }
-
+/* Sous-type chip */
 .sous-type-chip {
-    font-size: .72rem; font-weight: 700;
-    padding: .22rem .6rem; border-radius: 6px;
-    background: #f1f5f9; color: #6c757d;
+    font-size: .7rem; font-weight: 700;
+    padding: .2rem .6rem; border-radius: 6px;
+    background: var(--neo-in-bg, #d4dde6);
+    box-shadow: inset 1px 1px 3px rgba(74,104,128,.16),
+                inset -1px -1px 2px rgba(255,255,255,.8);
+    color: #5a7080;
 }
 
-/* Amount block */
+/* Bloc montant */
 .op-amount-block { text-align: right; }
-.op-amount-value { font-size: 2.4rem; font-weight: 800; color: #1a2332; line-height: 1; }
-.op-amount-devise { font-size: .75rem; font-weight: 700; color: #94a3b8; margin-top: .15rem; }
-.enc-pill {
-    display: inline-flex; align-items: center; font-size: .72rem; font-weight: 700;
-    padding: .3rem .85rem; border-radius: 20px;
+.op-amount-value {
+    font-size: 2.4rem; font-weight: 800; color: #0a1628; line-height: 1;
+    letter-spacing: -.03em;
 }
-.enc-pill-green  { background: #d1f5e0; color: #198754; }
-.enc-pill-warn   { background: rgba(238,114,2,.1); color: #c45a00; }
-.enc-pill-orange { background: rgba(238,114,2,.1); color: #c45a00; }
-.enc-pill-gray   { background: #f1f5f9; color: #6c757d; }
+.op-amount-devise { font-size: .75rem; font-weight: 700; color: #8aa8c0; margin-top: .15rem; }
 
+/* Pill encaissement */
+.enc-pill {
+    display: inline-flex; align-items: center; gap: .35rem;
+    font-size: .7rem; font-weight: 700;
+    padding: .28rem .85rem; border-radius: 20px;
+}
+.enc-pill-green  { background: rgba(25,135,84,.13);   color: #198754; }
+.enc-pill-warn   { background: rgba(238,114,2,.12);   color: #c45a00; }
+.enc-pill-orange { background: rgba(238,114,2,.12);   color: #c45a00; }
+.enc-pill-gray   { background: rgba(74,104,128,.12);  color: #6a8898; }
+
+/* ─── Code X3 ─── */
 .code-x3 {
     font-family: 'SFMono-Regular', Consolas, monospace;
-    font-size: .78rem; color: #94a3b8;
-    background: #f1f5f9; padding: .1rem .4rem; border-radius: 4px;
+    font-size: .76rem; color: #5a7080;
+    background: var(--neo-in-bg, #d4dde6);
+    box-shadow: inset 1px 1px 2px rgba(74,104,128,.15),
+                inset -1px -1px 2px rgba(255,255,255,.75);
+    padding: .12rem .45rem; border-radius: 5px;
 }
 
 /* ─── Signatures ─── */
-.sig-row { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+.sig-row   { display: flex; flex-wrap: wrap; gap: 1.5rem; }
 .sig-block { display: flex; flex-direction: column; gap: .5rem; }
 .sig-label {
-    font-size: .75rem; font-weight: 700; color: #94a3b8;
-    text-transform: uppercase; letter-spacing: .04em;
+    font-size: .68rem; font-weight: 700; color: #8aa8c0;
+    text-transform: uppercase; letter-spacing: .06em;
+    display: flex; align-items: center; gap: .3rem;
 }
 .sig-box {
-    border: 1px solid #eef1f6; border-radius: 10px; background: #fafafa;
     width: 260px; height: 130px; overflow: hidden;
+    border-radius: 10px;
+    background: var(--neo-in-bg, #d4dde6);
+    box-shadow: inset 3px 3px 8px rgba(74,104,128,.2),
+                inset -3px -3px 6px rgba(255,255,255,.8);
+    border-top:  1px solid rgba(74,104,128,.12);
+    border-left: 1px solid rgba(74,104,128,.12);
+    border-bottom: 1px solid rgba(255,255,255,.85);
+    border-right:  1px solid rgba(255,255,255,.85);
     display: flex; align-items: center; justify-content: center;
 }
+/* Les SVG de signature s'affichent sur fond NEO inset */
+.sig-box svg { max-width: 100%; max-height: 100%; }
+
+/* ─── Commentaire ─── */
+.section-body p { color: #3a5060; font-size: .9rem; line-height: 1.65; }
 
 /* ─── Responsive ─── */
 @media (max-width: 640px) {
-    .op-header         { flex-direction: column; }
-    .op-amount-block   { text-align: left; }
-    .info-row          { flex-direction: column; }
-    .sig-row           { flex-direction: column; }
-    .sig-box           { width: 100%; }
-    .photo-thumb       { width: 110px; height: 110px; }
+    .op-header       { flex-direction: column; }
+    .op-amount-block { text-align: left; }
+    .info-row        { flex-direction: column; }
+    .sig-row         { flex-direction: column; }
+    .sig-box         { width: 100%; }
 }

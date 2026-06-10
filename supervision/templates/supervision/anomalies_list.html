@@ -1,6 +1,8 @@
 {% extends "supervision/base.html" %}
 {% load static %}
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="{% static 'supervision/css/pages/flatpickr-neo.css' %}">
 <link rel="stylesheet" href="{% static 'supervision/css/pages/anomalies_list.css' %}">
 {% endblock %}
 {% block title %}Anomalies{% endblock %}
@@ -42,7 +44,8 @@
         <form method="get" class="d-flex flex-wrap gap-3 align-items-end">
             <div>
                 <label class="filter-label">Date programme</label>
-                <input type="date" name="date" value="{{ date_filter }}"
+                <input type="text" name="date" id="anom-date-fp"
+                       value="{{ date_filter }}"
                        class="form-control form-control-sm" style="width:auto;">
             </div>
             <div>
@@ -185,5 +188,18 @@
 </div>
 {% endif %}
 
+{% endblock %}
 
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+<script>
+flatpickr("#anom-date-fp", {
+    dateFormat:    "Y-m-d",
+    defaultDate:   "{{ date_filter }}" || null,
+    locale:        "fr",
+    disableMobile: true,
+    allowInput:    true
+});
+</script>
 {% endblock %}

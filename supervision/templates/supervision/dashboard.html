@@ -68,7 +68,7 @@
 <div class="kpi-grid mb-4">
 
     <div class="kpi-card-v2 kpi-card-blue" id="kpi-programmes">
-        <div class="kpi-card-icon kpi-icon-blue"><i class="bi bi-clipboard-list"></i></div>
+        <div class="kpi-card-icon kpi-icon-blue"><i class="bi bi-clipboard2-check"></i></div>
         <div class="kpi-card-body">
             <div class="kpi-card-label">Programmes du jour</div>
             <div class="kpi-card-value" data-stat="nb_programmes">{{ nb_programmes }}</div>
@@ -129,7 +129,7 @@
 
     <!-- Carte Leaflet -->
     <div class="dash-map-col">
-        <div class="section-card">
+        <div class="section-card map-card">
             <div class="section-header d-flex align-items-center justify-content-between gap-2">
                 <div class="d-flex align-items-center gap-2">
                     <span class="section-icon"><i class="bi bi-map"></i></span>
@@ -140,6 +140,10 @@
                     <button id="toggleParcours" class="btn-parcours">
                         <i class="bi bi-signpost-split me-1"></i>Afficher parcours
                     </button>
+                    <a href="{% url 'supervision:carte' %}?date={{ date_filter|date:'Y-m-d' }}"
+                       class="btn-carte-fullscreen" title="Ouvrir en plein écran avec filtre livreur">
+                        <i class="bi bi-fullscreen"></i>
+                    </a>
                 </div>
             </div>
             <div id="map"></div>
@@ -200,6 +204,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="{% static 'supervision/css/pages/flatpickr-neo.css' %}">
 <link rel="stylesheet" href="{% static 'supervision/css/pages/dashboard.css' %}">
 {% endblock %}
 

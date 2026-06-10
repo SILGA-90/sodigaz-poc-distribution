@@ -552,7 +552,7 @@ def sync_push(request):
                 )
                 Programme.objects.filter(
                     id__in=prog_ids, statut="PLANIFIE",
-                ).update(statut="EN_COURS")
+                ).update(statut="EN_COURS", heure_debut=timezone.now())
 
             # ----- ETAPES EN ECHEC -----
             if echec_etapes:

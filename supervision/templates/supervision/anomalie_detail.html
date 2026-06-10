@@ -121,14 +121,29 @@
 
     {% if anomalie.localisation %}
     <div class="info-card">
-        <div class="info-icon-box"><i class="bi bi-geo-alt"></i></div>
+        <div class="info-icon-box"><i class="bi bi-geo-alt-fill"></i></div>
         <div>
-            <div class="info-label">Position GPS</div>
+            <div class="info-label">Position GPS saisie</div>
             <div class="info-gps">
                 {{ anomalie.localisation.y|floatformat:5 }},
                 {{ anomalie.localisation.x|floatformat:5 }}
             </div>
-            <a href="https://www.google.com/maps?q={{ anomalie.localisation.y }},{{ anomalie.localisation.x }}"
+            <a href="https://www.google.com/maps?q={{ anomalie.localisation.y|stringformat:'.6f' }},{{ anomalie.localisation.x|stringformat:'.6f' }}"
+               target="_blank" class="info-link mt-1">
+                <i class="bi bi-box-arrow-up-right me-1"></i>Ouvrir dans Maps
+            </a>
+        </div>
+    </div>
+    {% elif anomalie.plv and anomalie.plv.localisation %}
+    <div class="info-card">
+        <div class="info-icon-box" style="color:#8094a8;"><i class="bi bi-geo-alt"></i></div>
+        <div>
+            <div class="info-label">Position du PLV <span class="info-gps-approx">(approximative)</span></div>
+            <div class="info-gps">
+                {{ anomalie.plv.localisation.y|floatformat:5 }},
+                {{ anomalie.plv.localisation.x|floatformat:5 }}
+            </div>
+            <a href="https://www.google.com/maps?q={{ anomalie.plv.localisation.y|stringformat:'.6f' }},{{ anomalie.plv.localisation.x|stringformat:'.6f' }}"
                target="_blank" class="info-link mt-1">
                 <i class="bi bi-box-arrow-up-right me-1"></i>Ouvrir dans Maps
             </a>
@@ -165,7 +180,7 @@
             La gravité est déterminée par le superviseur après évaluation. Elle peut être modifiée à tout moment.
         </p>
         <form method="post" action="{% url 'supervision:anomalie-gravite' anomalie.id %}"
-              class="d-flex gap-2 align-items-center">
+              class="d-flex gap-2 align-items-center classif-form">
             {% csrf_token %}
             <select name="gravite" class="form-select form-select-sm" style="width:auto;">
                 <option value="FAIBLE"  {% if anomalie.gravite == "FAIBLE"  %}selected{% endif %}>Faible — impact limité</option>
@@ -178,10 +193,15 @@
 </div>
 
 <!-- ── Carte minimap ── -->
-{% if anomalie.localisation %}
-<div class="section-card mb-4">
-    <div class="section-header"><i class="bi bi-map me-2"></i>Localisation</div>
-    <div id="minimap" style="height:220px;border-radius:0 0 12px 12px;"></div>
+{% if anomalie.localisation or anomalie.plv and anomalie.plv.localisation %}
+<div class="section-card map-card mb-4">
+    <div class="section-header">
+        <i class="bi bi-map me-2"></i>Localisation
+        {% if not anomalie.localisation %}
+        <span class="minimap-approx-badge ms-2">Position du PLV — GPS non capturé</span>
+        {% endif %}
+    </div>
+    <div id="minimap" style="height:220px;"></div>
 </div>
 {% endif %}
 
@@ -218,15 +238,39 @@
 {% block scripts %}
 {% if anomalie.localisation %}
 <script>
-const minimap = L.map('minimap', { zoomControl: false, dragging: false, scrollWheelZoom: false })
-    .setView([{{ anomalie.localisation.y }}, {{ anomalie.localisation.x }}], 16);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap', maxZoom: 19,
-}).addTo(minimap);
-L.circleMarker([{{ anomalie.localisation.y }}, {{ anomalie.localisation.x }}], {
-    radius: 9, color: '#dc3545', fillColor: '#dc3545', fillOpacity: 0.85,
-    weight: 2.5,
-}).addTo(minimap);
+(function() {
+    var lat = {{ anomalie.localisation.y|stringformat:".6f" }};
+    var lng = {{ anomalie.localisation.x|stringformat:".6f" }};
+    var minimap = L.map('minimap', {
+        zoomControl: false, dragging: false,
+        scrollWheelZoom: false, attributionControl: false
+    }).setView([lat, lng], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(minimap);
+    L.circleMarker([lat, lng], {
+        radius: 9, color: '#dc3545', fillColor: '#dc3545', fillOpacity: 0.85, weight: 2.5
+    }).bindPopup('Position GPS saisie').addTo(minimap);
+    requestAnimationFrame(function() { minimap.invalidateSize(); });
+})();
+</script>
+{% elif anomalie.plv and anomalie.plv.localisation %}
+<script>
+(function() {
+    var lat = {{ anomalie.plv.localisation.y|stringformat:".6f" }};
+    var lng = {{ anomalie.plv.localisation.x|stringformat:".6f" }};
+    var minimap = L.map('minimap', {
+        zoomControl: false, dragging: false,
+        scrollWheelZoom: false, attributionControl: false
+    }).setView([lat, lng], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(minimap);
+    L.circleMarker([lat, lng], {
+        radius: 9, color: '#079BD9', fillColor: '#079BD9', fillOpacity: 0.8, weight: 2.5
+    }).bindPopup('{{ anomalie.plv.libelle|escapejs }} (position PLV)').addTo(minimap);
+    L.circle([lat, lng], {
+        radius: 80, color: '#079BD9', fillColor: '#079BD9',
+        fillOpacity: 0.08, weight: 1, dashArray: '4 4'
+    }).addTo(minimap);
+    requestAnimationFrame(function() { minimap.invalidateSize(); });
+})();
 </script>
 {% endif %}
 {% endblock %}

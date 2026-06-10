@@ -1,0 +1,128 @@
+{% extends "supervision/base.html" %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="{% static 'supervision/css/pages/flatpickr-neo.css' %}">
+<link rel="stylesheet" href="{% static 'supervision/css/pages/carte.css' %}">
+{% endblock %}
+{% block title %}Cartographie{% endblock %}
+
+{% block content %}
+<div class="carte-layout">
+
+    <!-- ── En-tête ── -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <span class="pg-icon"><i class="bi bi-map"></i></span>
+            <div>
+                <h1 class="page-title mb-0">Cartographie PLV</h1>
+                <p class="page-sub mb-0">
+                    <i class="bi bi-calendar3 me-1"></i>{{ date_filter|date:"l j F Y"|capfirst }}
+                </p>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="live-dot" id="carte-live-dot"></span>
+            <span id="carte-live-status" class="carte-live-label">Connexion…</span>
+            <span class="carte-live-sep">·</span>
+            <span id="carte-last-update" class="carte-live-label">à l'instant</span>
+        </div>
+    </div>
+
+    <!-- ── Filtres ── -->
+    <div class="filter-card mb-3">
+        <div class="d-flex flex-wrap align-items-end gap-3">
+            <i class="bi bi-funnel text-muted" style="margin-bottom:.3rem;"></i>
+            <form method="get" class="d-flex flex-wrap gap-3 align-items-end">
+                <div>
+                    <label class="filter-label">Date</label>
+                    <input type="text" name="date" id="carte-date-fp"
+                           value="{{ date_filter|date:'Y-m-d' }}"
+                           class="form-control form-control-sm" style="width:auto;">
+                </div>
+                <div>
+                    <label class="filter-label">Livreur</label>
+                    <select name="livreur" class="form-select form-select-sm" style="width:auto;">
+                        <option value="">Tous</option>
+                        {% for liv in livreurs %}
+                        <option value="{{ liv.code_livreur }}"
+                            {% if liv.code_livreur == livreur_code %}selected{% endif %}>
+                            {{ liv.code_livreur }} — {{ liv.get_full_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="bi bi-search me-1"></i>Filtrer
+                </button>
+            </form>
+            <button id="carte-toggle-parcours" class="btn-parcours ms-auto">
+                <i class="bi bi-signpost-split me-1"></i>Afficher parcours
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Carte plein écran ── -->
+    <div class="section-card carte-map-card">
+
+        <div id="carte-map"></div>
+
+        <!-- Stats overlay centré en bas -->
+        <div class="carte-stats-overlay">
+            <span id="stat-plv"><i class="bi bi-geo-alt me-1"></i>…</span>
+            <span class="carte-stat-sep">·</span>
+            <span id="stat-ops"><i class="bi bi-lightning-charge me-1"></i>…</span>
+        </div>
+
+        <!-- Légende bas droite -->
+        <div class="carte-legend">
+            <div class="carte-legend-item">
+                <span class="carte-dot carte-dot-blue"></span>À visiter
+            </div>
+            <div class="carte-legend-item">
+                <span class="carte-dot carte-dot-green"></span>Visitée
+            </div>
+            <div class="carte-legend-item">
+                <span class="carte-dot carte-dot-orange"></span>Opération
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.SODIGAZ_CARTE = {
+    dateFilter:    "{{ date_filter|date:'Y-m-d' }}",
+    livreurFilter: "{{ livreur_code }}",
+    carteUrl:      "{% url 'supervision:carte-data' %}",
+    opDetailUrl:   "{% url 'supervision:operation-detail' '00000000-0000-0000-0000-000000000000' %}",
+};
+</script>
+<script src="{% static 'supervision/js/carte.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+<script>
+flatpickr("#carte-date-fp", {
+    dateFormat:    "Y-m-d",
+    defaultDate:   "{{ date_filter|date:'Y-m-d' }}",
+    locale:        "fr",
+    disableMobile: true,
+    onChange: function(_, dateStr) {
+        if (!dateStr) return;
+        var url = new URL(window.location.href);
+        url.searchParams.set("date", dateStr);
+        // Conserver la sélection du livreur même si le formulaire n'a pas encore été soumis
+        var sel = document.querySelector('select[name="livreur"]');
+        if (sel && sel.value) {
+            url.searchParams.set("livreur", sel.value);
+        } else {
+            url.searchParams.delete("livreur");
+        }
+        window.location.href = url.toString();
+    }
+});
+</script>
+{% endblock %}

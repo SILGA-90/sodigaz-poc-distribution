@@ -48,6 +48,18 @@
             </a>
         </li>
         <li>
+            <a href="{% url 'supervision:livreurs' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'livreurs' %}active{% endif %}">
+                <i class="bi bi-people"></i> Livreurs
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'supervision:carte' %}"
+               class="sidebar-link {% if request.resolver_match.url_name == 'carte' %}active{% endif %}">
+                <i class="bi bi-map"></i> Cartographie
+            </a>
+        </li>
+        <li>
             <a href="{% url 'supervision:rapport' %}"
                class="sidebar-link {% if request.resolver_match.url_name == 'rapport' %}active{% endif %}">
                 <i class="bi bi-file-earmark-bar-graph"></i> Rapport journée
@@ -57,9 +69,9 @@
     <div class="sidebar-footer">
         <div class="sidebar-user">
             <div class="avatar">{{ user.get_full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}</div>
-            <div>
-                <div class="fw-semibold text-white" style="font-size:.8rem;">{{ user.get_full_name|default:user.username }}</div>
-                <div style="font-size:.7rem;">{{ user.role }}</div>
+            <div class="sidebar-user-info">
+                <div class="sidebar-user-name">{{ user.get_full_name|default:user.username }}</div>
+                <div class="sidebar-user-role">{{ user.role }}</div>
             </div>
         </div>
         <a href="{% url 'supervision:logout' %}" class="sidebar-logout">

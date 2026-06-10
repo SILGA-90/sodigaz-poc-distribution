@@ -1,6 +1,8 @@
 {% extends "supervision/base.html" %}
 {% load static %}
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="{% static 'supervision/css/pages/flatpickr-neo.css' %}">
 <link rel="stylesheet" href="{% static 'supervision/css/pages/rapport_journee.css' %}">
 {% endblock %}
 {% block title %}Rapport journée {{ date_filter|date:"d/m/Y" }}{% endblock %}
@@ -21,7 +23,8 @@
     <div class="d-flex flex-wrap gap-2 align-items-center">
         <form method="get" class="d-flex gap-2 align-items-center">
             <label class="filter-label mb-0 me-1">Date</label>
-            <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}"
+            <input type="text" name="date" id="rapport-date-fp"
+                   value="{{ date_filter|date:'Y-m-d' }}"
                    class="form-control form-control-sm" style="width:auto;">
             <button type="submit" class="btn btn-sm btn-primary px-3">
                 <i class="bi bi-search me-1"></i>Filtrer
@@ -278,4 +281,20 @@
 </div>
 
 
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+<script>
+flatpickr("#rapport-date-fp", {
+    dateFormat:    "Y-m-d",
+    defaultDate:   "{{ date_filter|date:'Y-m-d' }}",
+    locale:        "fr",
+    disableMobile: true,
+    onChange: function(_, dateStr) {
+        if (dateStr) window.location.href = "?date=" + dateStr;
+    }
+});
+</script>
 {% endblock %}

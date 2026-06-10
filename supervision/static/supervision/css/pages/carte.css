@@ -1,0 +1,102 @@
+/* ══════════════════════════════════════════════════════════
+   CARTOGRAPHIE PLEIN ÉCRAN — Thème NEO SODIGAZ
+   ══════════════════════════════════════════════════════════ */
+
+/* ─── Layout plein écran ─── */
+.carte-layout {
+    display: flex; flex-direction: column;
+    /* 2× padding main-inner (1.75rem) */
+    height: calc(100vh - 3.5rem);
+}
+@media (max-width: 991.98px) {
+    /* topbar ≈54px + 2× padding mobile (1rem) */
+    .carte-layout { height: calc(100vh - 2rem - 54px); }
+}
+
+/* ─── Live indicator (inline dans l'en-tête) ─── */
+.carte-live-label { font-size: .76rem; color: #8aa8c0; }
+.carte-live-sep   { font-size: .76rem; color: #b0c4d4; }
+
+/* ─── Bouton parcours — NEO raised ─── */
+.btn-parcours {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .42rem 1rem; border-radius: 9px;
+    font-size: .8rem; font-weight: 700; cursor: pointer;
+    background: var(--neo-bg, #e8edf2);
+    box-shadow: 3px 3px 8px rgba(74,104,128,.18), -2px -2px 6px rgba(255,255,255,.85);
+    border-top:  1.5px solid rgba(255,255,255,.9);
+    border-left: 1.5px solid rgba(255,255,255,.9);
+    border-bottom: 1.5px solid rgba(74,104,128,.25);
+    border-right:  1.5px solid rgba(74,104,128,.25);
+    color: #3a5060; transition: all .15s;
+}
+.btn-parcours:hover {
+    background: #079BD9; color: #fff;
+    box-shadow: 0 3px 10px rgba(7,155,217,.32);
+    border-color: #079BD9;
+}
+.btn-parcours--unavail {
+    background: var(--neo-in-bg, #d4dde6); color: #8094a8; cursor: default;
+    box-shadow: inset 2px 2px 5px rgba(74,104,128,.15),
+                inset -1px -1px 3px rgba(255,255,255,.8);
+    border-color: transparent;
+}
+.btn-parcours.active {
+    background: var(--neo-in-bg, #d4dde6); color: #079BD9;
+    box-shadow: inset 3px 3px 7px rgba(74,104,128,.2),
+                inset -2px -2px 5px rgba(255,255,255,.82);
+    border-top:  1.5px solid rgba(74,104,128,.18);
+    border-left: 1.5px solid rgba(74,104,128,.18);
+    border-bottom: 1.5px solid rgba(255,255,255,.85);
+    border-right:  1.5px solid rgba(255,255,255,.85);
+}
+
+/* ─── Carte principale ─── */
+.carte-map-card {
+    flex: 1; min-height: 0;
+    position: relative;
+    display: flex; flex-direction: column;
+    /* Surcharge overflow:hidden de .section-card pour les tuiles Leaflet */
+    overflow: hidden;
+}
+#carte-map {
+    flex: 1; min-height: 0; width: 100%;
+}
+
+/* ─── Overlay stats (centré en bas) ─── */
+.carte-stats-overlay {
+    position: absolute; bottom: 36px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; align-items: center; gap: .7rem;
+    background: rgba(10,22,40,.75);
+    backdrop-filter: blur(6px);
+    color: #fff; font-size: .78rem; font-weight: 600;
+    padding: .38rem 1.1rem; border-radius: 20px;
+    pointer-events: none; z-index: 800;
+    border: 1px solid rgba(255,255,255,.12);
+    white-space: nowrap;
+}
+.carte-stat-sep { color: rgba(255,255,255,.35); }
+
+/* ─── Légende (bas droite) ─── */
+.carte-legend {
+    position: absolute; bottom: 8px; right: 12px;
+    display: flex; align-items: center; gap: .75rem;
+    background: rgba(232,237,242,.9);
+    backdrop-filter: blur(4px);
+    padding: .3rem .75rem; border-radius: 8px;
+    font-size: .72rem; font-weight: 600; color: #3a5060;
+    z-index: 800; pointer-events: none;
+    box-shadow: 2px 2px 6px rgba(74,104,128,.15),
+                -1px -1px 3px rgba(255,255,255,.8);
+}
+.carte-legend-item { display: flex; align-items: center; gap: .35rem; }
+.carte-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.85);
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    flex-shrink: 0;
+}
+.carte-dot-blue   { background: #079BD9; }
+.carte-dot-green  { background: #198754; }
+.carte-dot-orange { background: #EE7202; }

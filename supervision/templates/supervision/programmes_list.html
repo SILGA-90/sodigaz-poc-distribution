@@ -1,6 +1,8 @@
 {% extends "supervision/base.html" %}
 {% load static %}
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="{% static 'supervision/css/pages/flatpickr-neo.css' %}">
 <link rel="stylesheet" href="{% static 'supervision/css/pages/programmes_list.css' %}">
 {% endblock %}
 {% block title %}Programmes{% endblock %}
@@ -43,23 +45,22 @@
     <div class="d-flex flex-wrap align-items-center gap-2">
         <i class="bi bi-funnel text-muted"></i>
         <form method="get" class="d-flex gap-2 align-items-center">
-            <input type="date" name="date" value="{{ date_filter|date:'Y-m-d' }}"
+            <input type="date" name="date" id="prog-date-fp"
+                   value="{{ date_filter|date:'Y-m-d' }}"
                    class="form-control form-control-sm" style="width:auto;">
-            <button type="submit" class="btn btn-sm btn-primary px-3">
+            <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold">
                 <i class="bi bi-search me-1"></i>Filtrer
             </button>
         </form>
-        <div class="ms-auto d-flex gap-1">
-            <a href="?date={{ date_prev|date:'Y-m-d' }}"
-               class="btn btn-sm btn-outline-secondary" title="Jour précédent">
+        <div class="ms-auto d-flex gap-2 align-items-center">
+            <a href="?date={{ date_prev|date:'Y-m-d' }}" class="btn-nav-date" title="Jour précédent">
                 <i class="bi bi-chevron-left"></i>
             </a>
             <a href="?date={{ date_today|date:'Y-m-d' }}"
-               class="btn btn-sm {% if date_filter == date_today %}btn-primary{% else %}btn-outline-primary{% endif %}">
+               class="btn-today-prog {% if date_filter == date_today %}active{% endif %}">
                 Aujourd'hui
             </a>
-            <a href="?date={{ date_next|date:'Y-m-d' }}"
-               class="btn btn-sm btn-outline-secondary" title="Jour suivant">
+            <a href="?date={{ date_next|date:'Y-m-d' }}" class="btn-nav-date" title="Jour suivant">
                 <i class="bi bi-chevron-right"></i>
             </a>
         </div>
@@ -123,7 +124,7 @@
                         <span class="prog-prog-ratio">
                             {{ p.etapes_visitees }}/{{ p.total_etapes }} étapes
                             {% if p.total_etapes > 0 %}
-                            &nbsp;·&nbsp;{% widthratio p.etapes_visitees p.total_etapes 100 %}%
+                            <span class="prog-pct-badge prog-pct-{{ p.statut }}">{% widthratio p.etapes_visitees p.total_etapes 100 %}%</span>
                             {% endif %}
                         </span>
                     </div>
@@ -159,5 +160,20 @@
 </div>
 {% endif %}
 
+{% endblock %}
 
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+<script>
+flatpickr("#prog-date-fp", {
+    dateFormat:    "Y-m-d",
+    defaultDate:   "{{ date_filter|date:'Y-m-d' }}",
+    locale:        "fr",
+    disableMobile: true,
+    onChange: function(_, dateStr) {
+        if (dateStr) window.location.href = "?date=" + dateStr;
+    }
+});
+</script>
 {% endblock %}

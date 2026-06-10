@@ -1,46 +1,107 @@
+/* ══════════════════════════════════════════════════════════
+   ANOMALIE DETAIL — Thème NEO SODIGAZ
+   ══════════════════════════════════════════════════════════ */
+
 /* ─── En-tête ─── */
 .anom-detail-header {
     display: flex; justify-content: space-between; align-items: flex-start;
     flex-wrap: wrap; gap: 1rem;
-    background: #fff; border-radius: 14px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 14px rgba(10,22,40,.05);
+    background: var(--neo-bg, #e8edf2); border-radius: 14px;
+    box-shadow: var(--neo-raised,
+        6px 6px 14px rgba(74,104,128,.22), -5px -5px 12px rgba(255,255,255,.88));
+    border-top:    2px solid rgba(255,255,255,.95);
+    border-left:   5px solid #94a3b8;
+    border-bottom: 2px solid rgba(74,104,128,.38);
+    border-right:  2px solid rgba(74,104,128,.38);
     padding: 1.4rem 1.5rem;
-    border-left: 4px solid #94a3b8;
 }
 .anom-border-ELEVEE  { border-left-color: #dc3545; }
 .anom-border-MOYENNE { border-left-color: #EE7202; }
 .anom-border-FAIBLE  { border-left-color: #198754; }
 
-.anom-header-left { display: flex; align-items: flex-start; gap: 1rem; }
-.anom-detail-type { font-size: 1.35rem; font-weight: 800; color: #1a2332; }
+.anom-header-left  { display: flex; align-items: flex-start; gap: 1rem; }
+.anom-detail-type  {
+    font-size: 1.35rem; font-weight: 800; color: #0a1628;
+    letter-spacing: -.02em;
+}
 
-/* ─── Boutons d'action ─── */
+/* ─── Bloc action (grand bouton) ─── */
 .anom-action-block { display: flex; align-items: center; }
+
 .btn-action-lg {
-    display: inline-flex; align-items: center;
-    padding: .7rem 1.4rem; border-radius: 10px;
-    font-size: .88rem; font-weight: 700;
-    border: 1.5px solid transparent; cursor: pointer; transition: all .15s;
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .78rem 1.5rem; border-radius: 12px;
+    font-size: .88rem; font-weight: 700; cursor: pointer;
+    background: var(--neo-bg, #e8edf2);
+    box-shadow: 4px 4px 10px rgba(74,104,128,.2), -3px -3px 8px rgba(255,255,255,.85);
+    border-top:  2px solid rgba(255,255,255,.9);
+    border-left: 2px solid rgba(255,255,255,.9);
+    transition: all .15s;
 }
-.btn-action-warn  { background: rgba(238,114,2,.1); color: #c45a00; border-color: rgba(238,114,2,.3); }
-.btn-action-warn:hover  { background: #EE7202; color: #fff; border-color: #EE7202; }
-.btn-action-green { background: rgba(25,135,84,.1); color: #198754; border-color: rgba(25,135,84,.3); }
-.btn-action-green:hover { background: #198754; color: #fff; border-color: #198754; }
+.btn-action-lg.btn-action-warn {
+    color: #c45a00;
+    border-bottom: 2px solid rgba(238,114,2,.32);
+    border-right:  2px solid rgba(238,114,2,.32);
+}
+.btn-action-lg.btn-action-warn:hover {
+    background: #EE7202; color: #fff;
+    box-shadow: 0 5px 16px rgba(238,114,2,.38);
+    border-color: #EE7202;
+}
+.btn-action-lg.btn-action-green {
+    color: #198754;
+    border-bottom: 2px solid rgba(25,135,84,.3);
+    border-right:  2px solid rgba(25,135,84,.3);
+}
+.btn-action-lg.btn-action-green:hover {
+    background: #198754; color: #fff;
+    box-shadow: 0 5px 16px rgba(25,135,84,.38);
+    border-color: #198754;
+}
+
 .anom-resolved-badge {
-    display: inline-flex; align-items: center;
-    padding: .7rem 1.4rem; border-radius: 10px;
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .78rem 1.5rem; border-radius: 12px;
     font-size: .88rem; font-weight: 700;
-    background: #d1f5e0; color: #198754;
-    border: 1.5px solid rgba(25,135,84,.2);
+    background: var(--neo-in-bg, #d4dde6);
+    box-shadow: inset 3px 3px 7px rgba(74,104,128,.2),
+                inset -3px -3px 6px rgba(255,255,255,.8);
+    border-top:  2px solid rgba(74,104,128,.14);
+    border-left: 2px solid rgba(74,104,128,.14);
+    border-bottom: 2px solid rgba(255,255,255,.85);
+    border-right:  2px solid rgba(255,255,255,.85);
+    color: #198754;
 }
 
-/* Classification border */
-.classif-border-ELEVEE  { border-left: 3px solid #dc3545; }
-.classif-border-MOYENNE { border-left: 3px solid #EE7202; }
-.classif-border-FAIBLE  { border-left: 3px solid #198754; }
+/* ─── Section classification (accent gauche coloré) ─── */
+.classif-border-ELEVEE  { border-left: 4px solid #dc3545 !important; }
+.classif-border-MOYENNE { border-left: 4px solid #EE7202 !important; }
+.classif-border-FAIBLE  { border-left: 4px solid #198754 !important; }
 
-/* Description */
-.anom-description { white-space: pre-wrap; color: #4a5568; font-size: .9rem; line-height: 1.65; }
+/* Select gravité en NEO inset — scoped au form de classification uniquement */
+.classif-form .form-select {
+    background-color: var(--neo-in-bg, #d4dde6);
+    box-shadow: inset 2px 2px 5px rgba(74,104,128,.18),
+                inset -2px -2px 4px rgba(255,255,255,.8);
+    border: none; border-radius: 8px;
+    color: #1a2332; font-size: .84rem;
+}
+.classif-form .form-select:focus {
+    background-color: var(--neo-in-bg, #d4dde6);
+    box-shadow: inset 2px 2px 5px rgba(74,104,128,.22),
+                inset -2px -2px 4px rgba(255,255,255,.8),
+                0 0 0 3px rgba(7,155,217,.15);
+    outline: none;
+}
+
+/* ─── Description ─── */
+.anom-description {
+    white-space: pre-wrap; color: #3a5060;
+    font-size: .9rem; line-height: 1.65;
+}
+
+/* ─── Minimap ─── */
+#minimap { border-radius: 0 0 10px 10px; }
 
 /* ─── Responsive ─── */
 @media (max-width: 640px) {
@@ -48,4 +109,13 @@
     .anom-action-block  { width: 100%; }
     .btn-action-lg, .anom-resolved-badge { width: 100%; justify-content: center; }
     .info-row { flex-direction: column; }
+}
+
+.minimap-approx-badge {
+    font-size: .7rem; font-weight: 600; color: #8094a8;
+    background: rgba(74,104,128,.1); border-radius: 6px;
+    padding: .15rem .5rem; vertical-align: middle;
+}
+.info-gps-approx {
+    font-size: .68rem; color: #8094a8; font-weight: 400;
 }

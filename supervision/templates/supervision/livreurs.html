@@ -1,0 +1,189 @@
+{% extends "supervision/base.html" %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="{% static 'supervision/css/pages/flatpickr-neo.css' %}">
+<link rel="stylesheet" href="{% static 'supervision/css/pages/livreurs.css' %}">
+{% endblock %}
+{% block title %}Livreurs{% endblock %}
+
+{% block content %}
+
+<!-- ── En-tête ── -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div class="d-flex align-items-center gap-2">
+        <span class="pg-icon"><i class="bi bi-people"></i></span>
+        <div>
+            <h1 class="page-title mb-0">Tableau de bord livreurs</h1>
+            <p class="page-sub mb-0">
+                <i class="bi bi-calendar3 me-1"></i>{{ date_filter|date:"l j F Y"|capfirst }}
+                {% if is_today %}<span class="badge-live ms-2">Aujourd'hui</span>{% endif %}
+            </p>
+        </div>
+    </div>
+    <!-- Filtre date -->
+    <div class="filter-card py-2 px-3">
+        <label class="filter-label me-2">Date</label>
+        <input type="text" id="liv-date-fp"
+               value="{{ date_filter|date:'Y-m-d' }}"
+               class="form-control form-control-sm d-inline-block"
+               style="width:auto;">
+    </div>
+</div>
+
+{% if not fiches %}
+<!-- État vide -->
+<div class="section-card text-center py-5">
+    <i class="bi bi-people" style="font-size:2.5rem;color:#8aa8c0;"></i>
+    <p class="mt-3 text-muted">Aucun livreur actif trouvé.</p>
+</div>
+
+{% else %}
+<!-- ── Grille de fiches ── -->
+<div class="liv-grid">
+
+{% for fiche in fiches %}
+{% with liv=fiche.livreur prog=fiche.programme %}
+<div class="liv-card {% if not prog %}liv-card--sans-programme{% elif prog.statut == 'CLOTURE' %}liv-card--cloture{% elif prog.statut == 'EN_COURS' %}liv-card--en-cours{% endif %}">
+
+    <!-- ──── En-tête fiche ──── -->
+    <div class="liv-card-header">
+        <div class="liv-avatar" style="--av-color:{{ fiche.av_color }};">
+            {{ liv.get_full_name|slice:":1"|upper|default:liv.username|slice:":1"|upper }}
+        </div>
+        <div class="liv-identity">
+            <div class="liv-name">{{ liv.get_full_name|default:liv.username }}</div>
+            <div class="liv-code">{{ liv.code_livreur }}</div>
+        </div>
+        <div class="ms-auto">
+            {% if not prog %}
+                <span class="liv-badge liv-badge--sans">Aucun programme</span>
+            {% elif prog.statut == 'PLANIFIE' %}
+                <span class="liv-badge liv-badge--planifie">Planifié</span>
+            {% elif prog.statut == 'EN_COURS' %}
+                <span class="liv-badge liv-badge--en-cours">En cours</span>
+            {% else %}
+                <span class="liv-badge liv-badge--cloture">Clôturé</span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if prog %}
+    <!-- ──── Programme ──── -->
+    <div class="liv-prog-info">
+        <span class="liv-prog-type {% if prog.type_programme == 'COLLECTE' %}type-collecte{% else %}type-restitution{% endif %}">
+            {% if prog.type_programme == 'COLLECTE' %}
+                <i class="bi bi-arrow-down-circle-fill me-1"></i>Collecte
+            {% else %}
+                <i class="bi bi-arrow-up-circle-fill me-1"></i>Restitution
+            {% endif %}
+        </span>
+        {% if prog.vehicule %}
+        <span class="liv-prog-vehicle">
+            <i class="bi bi-truck me-1"></i>{{ prog.vehicule.immatriculation }}
+        </span>
+        {% endif %}
+        {% if prog.numero_x3 %}
+        <span class="liv-prog-num">{{ prog.numero_x3 }}</span>
+        {% endif %}
+    </div>
+
+    <!-- ──── Progression étapes ──── -->
+    <div class="liv-progress-block">
+        <div class="d-flex justify-content-between align-items-baseline mb-1">
+            <span class="liv-progress-label">Étapes</span>
+            <span class="liv-progress-count">
+                <strong>{{ fiche.etapes.visitees }}</strong> / {{ fiche.etapes.total }}
+                {% if fiche.etapes.echecs > 0 %}
+                <span class="liv-echec-badge">{{ fiche.etapes.echecs }} échec{{ fiche.etapes.echecs|pluralize }}</span>
+                {% endif %}
+            </span>
+        </div>
+        <div class="liv-bar-track">
+            <div class="liv-bar-fill
+                {% if fiche.pct == 100 %}liv-bar--done
+                {% elif fiche.pct >= 60 %}liv-bar--good
+                {% elif fiche.pct >= 20 %}liv-bar--mid
+                {% else %}liv-bar--low{% endif %}"
+                style="width:{{ fiche.pct }}%;">
+            </div>
+        </div>
+        <div class="liv-progress-pct">{{ fiche.pct }} %</div>
+    </div>
+
+    <!-- ──── KPI ──── -->
+    <div class="liv-kpi-row">
+        <div class="liv-kpi">
+            <div class="liv-kpi-val">{{ fiche.ops.nb_ops }}</div>
+            <div class="liv-kpi-label">Opération{{ fiche.ops.nb_ops|pluralize }}</div>
+        </div>
+        <div class="liv-kpi">
+            <div class="liv-kpi-val">{{ fiche.ops.montant|floatformat:0 }}</div>
+            <div class="liv-kpi-label">FCFA encaissés</div>
+        </div>
+        <div class="liv-kpi {% if fiche.anom.ouvertes > 0 %}liv-kpi--alert{% endif %}">
+            <div class="liv-kpi-val">{{ fiche.anom.ouvertes }}</div>
+            <div class="liv-kpi-label">Anomalie{{ fiche.anom.ouvertes|pluralize }} ouverte{{ fiche.anom.ouvertes|pluralize }}</div>
+        </div>
+    </div>
+
+    <!-- ──── Dernière activité ──── -->
+    <div class="liv-last-activity">
+        <i class="bi bi-clock-history me-1"></i>
+        {% if fiche.derniere_activite %}
+            Dernière activité : {{ fiche.derniere_activite|date:"H:i" }}
+        {% else %}
+            Aucune activité enregistrée
+        {% endif %}
+    </div>
+
+    <!-- ──── Actions ──── -->
+    <div class="liv-actions">
+        <a href="{% url 'supervision:programme-detail' prog.id %}" class="btn-liv-action btn-liv-blue">
+            <i class="bi bi-clipboard2-check"></i> Programme
+        </a>
+        <a href="{% url 'supervision:operations' %}?livreur={{ liv.code_livreur }}&date={{ date_filter|date:'Y-m-d' }}"
+           class="btn-liv-action btn-liv-outline">
+            <i class="bi bi-lightning-charge"></i> Opérations
+        </a>
+        <a href="{% url 'supervision:carte' %}?livreur={{ liv.code_livreur }}&date={{ date_filter|date:'Y-m-d' }}"
+           class="btn-liv-action btn-liv-outline">
+            <i class="bi bi-map"></i>
+        </a>
+    </div>
+
+    {% else %}
+    <!-- ──── Aucun programme ──── -->
+    <div class="liv-no-prog">
+        <i class="bi bi-calendar-x me-2"></i>Aucun programme pour cette journée
+    </div>
+    {% endif %}
+
+</div>
+{% endwith %}
+{% endfor %}
+
+</div><!-- .liv-grid -->
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+<script>
+flatpickr("#liv-date-fp", {
+    dateFormat:    "Y-m-d",
+    defaultDate:   "{{ date_filter|date:'Y-m-d' }}",
+    locale:        "fr",
+    disableMobile: true,
+    onChange: function(_, dateStr) {
+        if (!dateStr) return;
+        var url = new URL(window.location.href);
+        url.searchParams.set("date", dateStr);
+        window.location.href = url.toString();
+    }
+});
+
+</script>
+{% endblock %}

@@ -16,6 +16,8 @@ from .dashboard import (
     dashboard_stats_data,
     dashboard_activite_data,
     dashboard_bilan_produits_data,
+    carte_plein_ecran,
+    tableau_bord_livreurs,
 )
 from .programmes import programmes_list, programme_detail
 from .operations import operations_list, operation_detail, operations_export_csv
@@ -33,6 +35,8 @@ __all__ = [
     "dashboard_stats_data",
     "dashboard_activite_data",
     "dashboard_bilan_produits_data",
+    "carte_plein_ecran",
+    "tableau_bord_livreurs",
     "programmes_list",
     "programme_detail",
     "operations_list",
