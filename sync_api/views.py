@@ -38,7 +38,7 @@ from distribution.models import (
     Operation,
     Photo,
     Plv,
-    Produit,
+    Article,
     Programme,
 )
 
@@ -56,8 +56,8 @@ from .serializers import (
     LigneOperationSyncSerializer,
     LigneProgrammeSyncSerializer,
     OperationSyncSerializer,
+    ArticleSyncSerializer,
     PlvSyncSerializer,
-    ProduitSyncSerializer,
     ProgrammeSyncSerializer,
 )
 
@@ -85,7 +85,7 @@ def sync_pull(request):
       - Operations, LigneOperation, Photo : idem en remontant la chaine
       - Anomalies : celles des programmes ci-dessus
 
-      - Referentiels (Client, PLV, Produit) : tous (pas de filtre
+      - Referentiels (Client, PLV, Article) : tous (pas de filtre
         livreur sur les referentiels, ils sont partages).
     """
     last_pulled_at = request.data.get("lastPulledAt", 0) or 0
@@ -115,8 +115,8 @@ def sync_pull(request):
         Plv.objects.all(), last_pulled_at, PlvSyncSerializer,
         has_soft_delete=False, has_last_modified=False,
     )
-    produits_changes = _build_changes(
-        Produit.objects.all(), last_pulled_at, ProduitSyncSerializer,
+    articles_changes = _build_changes(
+        Article.objects.all(), last_pulled_at, ArticleSyncSerializer,
         has_soft_delete=False, has_last_modified=False,
     )
 
@@ -170,7 +170,7 @@ def sync_pull(request):
         "changes": {
             "client": clients_changes,
             "plv": plvs_changes,
-            "produit": produits_changes,
+            "article": articles_changes,
             "programme": programmes_changes,
             "etape": etapes_changes,
             "ligne_programme": lignes_prog_changes,
@@ -358,13 +358,13 @@ def sync_push(request):
                         status=status.HTTP_403_FORBIDDEN,
                     )
 
-                produit = get_object_or_404(Produit, code_x3=d["produit_code_x3"])
+                article = get_object_or_404(Article, code_x3=d["produit_code_x3"])
 
                 _, created = LigneOperation.objects.update_or_create(
                     uuid=d["uuid"],
                     defaults={
                         "operation_id": operation.id,
-                        "produit_id": produit.id,
+                        "produit_id": article.id,
                         "quantite_realisee": d["quantite_realisee"],
                         "quantite_collectee_vide": d["quantite_collectee_vide"],
                         "quantite_consignee": d["quantite_consignee"],

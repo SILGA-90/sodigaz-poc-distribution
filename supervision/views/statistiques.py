@@ -103,11 +103,11 @@ def statistiques(request):
         gravite_map.get("ELEVEE",  0),
     ]
 
-    # ── Répartition par produit (collecte vs restitution) ───────────────────
-    PRODUIT_ORDER  = ["B6", "B12_5", "B38", "VRAC"]
-    PRODUIT_LABELS = {"B6": "6 kg", "B12_5": "12,5 kg", "B38": "38 kg", "VRAC": "Vrac"}
+    # ── Répartition par article (collecte vs restitution) ───────────────────
+    ARTICLE_ORDER  = ["B6", "B12_5", "B38", "VRAC"]
+    ARTICLE_LABELS = {"B6": "6 kg", "B12_5": "12,5 kg", "B38": "38 kg", "VRAC": "Vrac"}
 
-    produit_rows = (
+    article_rows = (
         LigneOperation.objects
         .filter(
             operation__etape__programme__date_programme__range=(start_date, end_date),
@@ -118,20 +118,20 @@ def statistiques(request):
         .annotate(qte=Sum("quantite_realisee"))
     )
 
-    produit_map = {}
-    for row in produit_rows:
+    article_map = {}
+    for row in article_rows:
         te   = row["produit__type_emballage"]
         tops = row["operation__type_operation"]
         qte  = int(row["qte"] or 0)
-        if te not in produit_map:
-            produit_map[te] = {"COLLECTE": 0, "RESTITUTION": 0}
+        if te not in article_map:
+            article_map[te] = {"COLLECTE": 0, "RESTITUTION": 0}
         if tops in ("COLLECTE", "RESTITUTION"):
-            produit_map[te][tops] = qte
+            article_map[te][tops] = qte
 
-    produit_chart_labels  = [PRODUIT_LABELS[p] for p in PRODUIT_ORDER]
-    produit_collecte_data = [produit_map.get(p, {}).get("COLLECTE",    0) for p in PRODUIT_ORDER]
-    produit_restit_data   = [produit_map.get(p, {}).get("RESTITUTION", 0) for p in PRODUIT_ORDER]
-    total_produits        = sum(produit_collecte_data) + sum(produit_restit_data)
+    article_chart_labels  = [ARTICLE_LABELS[p] for p in ARTICLE_ORDER]
+    article_collecte_data = [article_map.get(p, {}).get("COLLECTE",    0) for p in ARTICLE_ORDER]
+    article_restit_data   = [article_map.get(p, {}).get("RESTITUTION", 0) for p in ARTICLE_ORDER]
+    total_articles        = sum(article_collecte_data) + sum(article_restit_data)
 
     # ── Performance par livreur ──────────────────────────────────────────────
     livreur_etapes_rows = (
@@ -209,10 +209,10 @@ def statistiques(request):
         "anom_labels_json": json.dumps(anom_labels),
         "anom_counts_json": json.dumps(anom_counts),
         "gravite_json":    json.dumps(gravite_data),
-        "produit_labels_json":  json.dumps(produit_chart_labels),
-        "produit_collecte_json": json.dumps(produit_collecte_data),
-        "produit_restit_json":   json.dumps(produit_restit_data),
-        "total_produits":        total_produits,
+        "article_labels_json":   json.dumps(article_chart_labels),
+        "article_collecte_json": json.dumps(article_collecte_data),
+        "article_restit_json":   json.dumps(article_restit_data),
+        "total_articles":        total_articles,
         "perf_labels_json":   json.dumps(perf_labels),
         "perf_taux_json":     json.dumps(perf_taux),
         "perf_montants_json": json.dumps(perf_montants),

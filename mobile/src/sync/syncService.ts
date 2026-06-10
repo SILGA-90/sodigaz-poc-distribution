@@ -112,10 +112,10 @@ async function applyPlvs(db: any, changes?: TableChanges): Promise<number> {
   );
 }
 
-async function applyProduits(db: any, changes?: TableChanges): Promise<number> {
+async function applyArticles(db: any, changes?: TableChanges): Promise<number> {
   return applyRows(db, changes, (r) =>
     db.runAsync(
-      `INSERT OR REPLACE INTO produit
+      `INSERT OR REPLACE INTO article
        (id, code_x3, libelle, type_emballage, prix_unitaire, montant_consignation, actif)
        VALUES (?, ?, ?, ?, ?, ?, ?);`,
       [r.id, r.code_x3, r.libelle, r.type_emballage ?? '', r.prix_unitaire ?? 0, r.montant_consignation ?? 0, bool(r.actif)],
@@ -245,7 +245,7 @@ export async function pull(): Promise<PullResult> {
     await db.withTransactionAsync(async () => {
       counts.client           = await applyClients(db, changes.client);
       counts.plv              = await applyPlvs(db, changes.plv);
-      counts.produit          = await applyProduits(db, changes.produit);
+      counts.article          = await applyArticles(db, changes.article);
       counts.programme        = await applyProgrammes(db, changes.programme);
       counts.etape            = await applyEtapes(db, changes.etape);
       counts.ligne_programme  = await applyLignesProgramme(db, changes.ligne_programme);

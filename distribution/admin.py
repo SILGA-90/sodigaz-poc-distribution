@@ -4,7 +4,7 @@ from django.contrib.gis.admin import GISModelAdmin
 
 from .models import (
     Anomalie, Etape, LigneOperation, LigneProgramme, Operation,
-    Photo, Plv, Produit, Programme, Vehicule,
+    Article, Photo, Plv, Programme, Vehicule,
 )
 from .models import Client as ClientModel
 
@@ -24,8 +24,8 @@ class PlvAdmin(GISModelAdmin):
     autocomplete_fields = ("client",)
 
 
-@admin.register(Produit)
-class ProduitAdmin(admin.ModelAdmin):
+@admin.register(Article)
+class ArticleAdmin(admin.ModelAdmin):
     list_display = ("code_x3", "libelle", "type_emballage", "prix_unitaire", "actif")
     list_filter = ("type_emballage", "actif")
     search_fields = ("code_x3", "libelle")

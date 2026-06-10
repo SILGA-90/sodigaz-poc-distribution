@@ -5,10 +5,10 @@
 import * as Crypto from 'expo-crypto';
 
 import { getDatabase } from '../database';
-import { Produit, TypeOperation, SousTypeCollecte, ModePaiement } from '../../types/models';
+import { Article, TypeOperation, SousTypeCollecte, ModePaiement } from '../../types/models';
 
-export interface ProduitSaisie extends Produit {
-  quantite_prevue: number | null; // non null si produit prevu (restitution)
+export interface ArticleSaisie extends Article {
+  quantite_prevue: number | null; // non null si article prévu (restitution)
 }
 
 export interface EtapeInfo {
@@ -45,33 +45,33 @@ export async function getEtapeInfo(etapeId: number): Promise<EtapeInfo | null> {
 }
 
 /**
- * Produits saisissables selon le type de programme :
- *   - RESTITUTION : produits G* (gaz emballé) pré-planifiés, avec quantite_prevue.
+ * Articles saisissables selon le type de programme :
+ *   - RESTITUTION : articles G* (gaz emballé) pré-planifiés, avec quantite_prevue.
  *   - COLLECTE    : tous les emballages vides E* actifs, quantite_prevue = null.
  *     La collecte est opportuniste : le livreur ramasse ce qu'il trouve, sans plan.
  */
-export async function getProduitsSaisissables(
+export async function getArticlesSaisissables(
   etapeId: number,
   typeProgramme: 'COLLECTE' | 'RESTITUTION',
-): Promise<ProduitSaisie[]> {
+): Promise<ArticleSaisie[]> {
   const db = await getDatabase();
 
   if (typeProgramme === 'RESTITUTION') {
-    return db.getAllAsync<ProduitSaisie>(
+    return db.getAllAsync<ArticleSaisie>(
       `SELECT
           pr.*,
           lp.quantite_prevue AS quantite_prevue
        FROM ligne_programme lp
-       JOIN produit pr ON pr.id = lp.produit_id
+       JOIN article pr ON pr.id = lp.produit_id
        WHERE lp.etape_id = ? AND lp.is_deleted = 0
        ORDER BY pr.libelle;`,
       [etapeId],
     );
   }
 
-  return db.getAllAsync<ProduitSaisie>(
+  return db.getAllAsync<ArticleSaisie>(
     `SELECT *, NULL AS quantite_prevue
-     FROM produit
+     FROM article
      WHERE actif = 1 AND code_x3 LIKE 'E%'
      ORDER BY libelle;`,
   );

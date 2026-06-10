@@ -15,7 +15,7 @@ from distribution.models import (
     Operation,
     Photo,
     Plv,
-    Produit,
+    Article,
     Programme,
     StatutPlv,
     TypeClient,
@@ -50,7 +50,7 @@ class Command(BaseCommand):
             Programme.objects.all().delete()
             Plv.objects.all().delete()
             Client.objects.all().delete()
-            Produit.objects.all().delete()
+            Article.objects.all().delete()
             Vehicule.objects.all().delete()
             Utilisateur.objects.filter(code_livreur__startswith="LIV").delete()
             Utilisateur.objects.filter(username__in=["aminata.s"]).delete()
@@ -58,7 +58,7 @@ class Command(BaseCommand):
         with transaction.atomic():
             self._creer_utilisateurs()
             self._creer_vehicules()
-            self._creer_produits()
+            self._creer_articles()
             clients = self._creer_clients()
             self._creer_plvs(clients)
 
@@ -135,7 +135,7 @@ class Command(BaseCommand):
             if created:
                 self.stdout.write(f"  + Vehicule cree : {immat}")
 
-    def _creer_produits(self):
+    def _creer_articles(self):
         # Emballages vides (articles E* Sage X3) — utilisés en COLLECTE.
         # prix_unitaire = 0 : pas de facturation gaz sur une bouteille vide.
         emballages = [
@@ -151,7 +151,7 @@ class Command(BaseCommand):
             ("G3800", "Gaz emballé de 38 kg",   TypeEmballage.B38,   "20000", "50000"),
         ]
         for code, libelle, emb, prix, consign in emballages + gaz_plein:
-            _, created = Produit.objects.get_or_create(
+            _, created = Article.objects.get_or_create(
                 code_x3=code,
                 defaults={
                     "libelle": libelle,
@@ -161,7 +161,7 @@ class Command(BaseCommand):
                 },
             )
             if created:
-                self.stdout.write(f"  + Produit cree : {code}")
+                self.stdout.write(f"  + Article créé : {code}")
 
     def _creer_clients(self):
         clients_data = [

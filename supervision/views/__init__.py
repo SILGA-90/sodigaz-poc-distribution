@@ -16,7 +16,7 @@ from .dashboard import (
     dashboard_stats_data,
     dashboard_activite_data,
     dashboard_activite_recente,
-    dashboard_bilan_produits_data,
+    dashboard_bilan_articles_data,
     carte_plein_ecran,
     tableau_bord_livreurs,
 )
@@ -37,7 +37,7 @@ __all__ = [
     "dashboard_stats_data",
     "dashboard_activite_data",
     "dashboard_activite_recente",
-    "dashboard_bilan_produits_data",
+    "dashboard_bilan_articles_data",
     "carte_plein_ecran",
     "tableau_bord_livreurs",
     "programmes_list",

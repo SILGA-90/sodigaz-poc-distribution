@@ -142,7 +142,7 @@
 
 </div>
 
-<!-- ── Corps principal : carte + bilan produits ── -->
+<!-- ── Corps principal : carte + bilan articles ── -->
 <div class="dash-main-row">
 
     <!-- Carte Leaflet -->
@@ -173,13 +173,13 @@
         </div>
     </div>
 
-    <!-- Bilan produits du jour -->
+    <!-- Bilan articles du jour -->
     <div class="dash-bilan-col">
         <div class="section-card d-flex flex-column" style="height:100%;">
             <div class="section-header">
                 <div class="d-flex align-items-center gap-2">
                     <span class="section-icon"><i class="bi bi-bar-chart-line"></i></span>
-                    <span class="section-title">Bilan produits</span>
+                    <span class="section-title">Bilan articles</span>
                 </div>
             </div>
             <div style="flex:1; overflow-y:auto;">
@@ -189,7 +189,7 @@
                 </div>
                 <table class="bilan-table">
                     <thead>
-                        <tr><th>Produit</th><th class="text-end">Réalisé</th></tr>
+                        <tr><th>Article</th><th class="text-end">Réalisé</th></tr>
                     </thead>
                     <tbody id="bilanCollecteTbody">
                         <tr><td colspan="2" class="bilan-loading">Chargement…</td></tr>
@@ -203,7 +203,7 @@
                 <table class="bilan-table">
                     <thead>
                         <tr>
-                            <th>Produit</th>
+                            <th>Article</th>
                             <th class="text-end">Prév.</th>
                             <th class="text-end">Réal.</th>
                             <th class="text-end">Écart</th>
@@ -248,7 +248,7 @@ window.SODIGAZ_DASH = {
     dateFilter:  "{{ date_filter|date:'Y-m-d' }}",
     carteUrl:    "{% url 'supervision:carte-data' %}",
     statsUrl:    "{% url 'supervision:stats-data' %}",
-    bilanUrl:    "{% url 'supervision:bilan-produits-data' %}",
+    bilanUrl:    "{% url 'supervision:bilan-articles-data' %}",
     activiteUrl: "{% url 'supervision:activite-recente' %}",
 };
 </script>

@@ -196,7 +196,7 @@ class Plv(gis_models.Model):
         return self.libelle
 
 
-class Produit(TimestampedModel):
+class Article(TimestampedModel):
     code_x3 = models.CharField(max_length=30, unique=True)
     libelle = models.CharField(max_length=255)
     type_emballage = models.CharField(max_length=10, choices=TypeEmballage.choices)
@@ -205,7 +205,7 @@ class Produit(TimestampedModel):
     actif = models.BooleanField(default=True)
 
     class Meta:
-        db_table = "produit"
+        db_table = "produit"  # conservé pour ne pas altérer la base de données
         indexes = [models.Index(fields=["code_x3"])]
         constraints = [
             models.CheckConstraint(
@@ -284,7 +284,7 @@ class Etape(SyncableModel):
 class LigneProgramme(SyncableModel):
     uuid = models.UUIDField(unique=True, default=uuid_lib.uuid4, editable=False)
     etape = models.ForeignKey(Etape, on_delete=models.CASCADE, related_name="lignes_prevues")
-    produit = models.ForeignKey(Produit, on_delete=models.PROTECT)
+    produit = models.ForeignKey(Article, on_delete=models.PROTECT)
     quantite_prevue = models.PositiveIntegerField()
 
     class Meta:
@@ -355,7 +355,7 @@ class Operation(SyncableModel):
 class LigneOperation(SyncableModel):
     uuid = models.UUIDField(unique=True, editable=False, help_text="Genere cote mobile")
     operation = models.ForeignKey(Operation, on_delete=models.CASCADE, related_name="lignes")
-    produit = models.ForeignKey(Produit, on_delete=models.PROTECT)
+    produit = models.ForeignKey(Article, on_delete=models.PROTECT)
     quantite_realisee = models.PositiveIntegerField(default=0)
     quantite_collectee_vide = models.PositiveIntegerField(default=0)
     quantite_consignee = models.PositiveIntegerField(default=0)

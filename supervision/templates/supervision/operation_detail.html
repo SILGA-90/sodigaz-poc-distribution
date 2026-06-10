@@ -138,19 +138,19 @@
 
 </div>
 
-<!-- ── Produits ── -->
+<!-- ── Articles ── -->
 {% with lignes=operation.lignes.all %}
 {% if lignes %}
 <div class="section-card mb-4">
     <div class="section-header">
-        <i class="bi bi-box-seam me-2"></i>Produits
+        <i class="bi bi-box-seam me-2"></i>Articles
         <span class="section-count">{{ lignes|length }}</span>
     </div>
     <div class="recon-table-wrap">
         <table class="recon-table">
             <thead>
                 <tr>
-                    <th>Produit</th>
+                    <th>Article</th>
                     <th>Code X3</th>
                     <th class="text-end">Qté réalisée</th>
                     <th class="text-end">Montant ligne</th>

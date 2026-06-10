@@ -9,7 +9,7 @@ export interface TableCounts {
 }
 
 const TABLES = [
-  'client', 'plv', 'produit',
+  'client', 'plv', 'article',
   'programme', 'etape', 'ligne_programme',
   'operation', 'ligne_operation', 'anomalie', 'photo',
 ];

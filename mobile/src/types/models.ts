@@ -40,7 +40,7 @@ export interface Plv {
   statut: string;
 }
 
-export interface Produit {
+export interface Article {
   id: number;
   code_x3: string;
   libelle: string;

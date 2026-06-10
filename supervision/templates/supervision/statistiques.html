@@ -88,16 +88,16 @@
     </div>
 </div>
 
-<!-- ── Ligne 2 : Répartition par produit ── -->
+<!-- ── Ligne 2 : Répartition par article ── -->
 <div class="section-card mb-4">
     <div class="section-header">
         <span class="section-icon"><i class="bi bi-box-seam"></i></span>
-        <span class="section-title">Quantités par produit</span>
+        <span class="section-title">Quantités par article</span>
         <span class="stat-chart-period ms-auto">{{ periode }} derniers jours</span>
     </div>
-    {% if total_produits > 0 %}
-    <div class="stat-chart-wrap stat-chart-wrap--produits">
-        <canvas id="chart-produits"></canvas>
+    {% if total_articles > 0 %}
+    <div class="stat-chart-wrap stat-chart-wrap--articles">
+        <canvas id="chart-articles"></canvas>
     </div>
     {% else %}
     <div class="stat-empty">
@@ -195,9 +195,9 @@
     var anomTypes    = {{ anom_labels_json|safe }};
     var anomCounts   = {{ anom_counts_json|safe }};
     var graviteData  = {{ gravite_json|safe }};
-    var produitLabels   = {{ produit_labels_json|safe }};
-    var produitCollecte = {{ produit_collecte_json|safe }};
-    var produitRestitut = {{ produit_restit_json|safe }};
+    var articleLabels   ={{ article_labels_json|safe }};
+    var articleCollecte ={{ article_collecte_json|safe }};
+    var articleRestitut ={{ article_restit_json|safe }};
     var perfLabels   = {{ perf_labels_json|safe }};
     var perfTaux     = {{ perf_taux_json|safe }};
     var perfMontants = {{ perf_montants_json|safe }};
@@ -255,18 +255,18 @@
         });
     })();
 
-    // ── 2. Répartition par produit (barres groupées) ─────────────────────────
+    // ── 2. Répartition par article (barres groupées) ─────────────────────────
     (function() {
-        var el = document.getElementById('chart-produits');
+        var el = document.getElementById('chart-articles');
         if (!el) return;
         new Chart(el.getContext('2d'), {
             type: 'bar',
             data: {
-                labels: produitLabels,
+                labels: articleLabels,
                 datasets: [
                     {
                         label: 'Collecte',
-                        data: produitCollecte,
+                        data: articleCollecte,
                         backgroundColor: 'rgba(7,155,217,.8)',
                         borderColor: '#079BD9',
                         borderWidth: 1.5,
@@ -274,7 +274,7 @@
                     },
                     {
                         label: 'Restitution',
-                        data: produitRestitut,
+                        data: articleRestitut,
                         backgroundColor: 'rgba(238,114,2,.8)',
                         borderColor: '#EE7202',
                         borderWidth: 1.5,

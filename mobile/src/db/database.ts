@@ -57,7 +57,7 @@ async function _openAndInit(): Promise<SQLite.SQLiteDatabase> {
     await db.execAsync('PRAGMA user_version = 3;');
   }
 
-  // Migration v3 -> v4 : contrainte UNIQUE sur produit.code_x3.
+  // Migration v3 -> v4 : contrainte UNIQUE sur produit.code_x3 (table encore nommée produit).
   // Sans cette contrainte, un reset des données serveur (nouveaux IDs)
   // créait des doublons via INSERT OR REPLACE (conflit sur id, pas code_x3).
   if (currentVersion < 4) {
@@ -78,6 +78,14 @@ async function _openAndInit(): Promise<SQLite.SQLiteDatabase> {
       DROP TABLE produit;
       ALTER TABLE produit_v4 RENAME TO produit;
       PRAGMA user_version = 4;
+    `);
+  }
+
+  // Migration v4 -> v5 : renommage de la table produit en article.
+  if (currentVersion < 5) {
+    await db.execAsync(`
+      ALTER TABLE produit RENAME TO article;
+      PRAGMA user_version = 5;
     `);
   }
 
@@ -106,7 +114,7 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
 export async function resetDatabase(): Promise<void> {
   const db = await getDatabase();
   const tables = [
-    'sync_meta', 'client', 'plv', 'produit',
+    'sync_meta', 'client', 'plv', 'article',
     'programme', 'etape', 'ligne_programme',
     'operation', 'ligne_operation', 'anomalie', 'photo',
   ];

@@ -21,7 +21,7 @@ from distribution.models import (
     Operation,
     Photo,
     Plv,
-    Produit,
+    Article,
     Programme,
     Vehicule,
 )
@@ -66,9 +66,9 @@ class PlvSyncSerializer(serializers.ModelSerializer):
         return obj.localisation.x if obj.localisation else None
 
 
-class ProduitSyncSerializer(serializers.ModelSerializer):
+class ArticleSyncSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Produit
+        model = Article
         fields = (
             "id", "code_x3", "libelle", "type_emballage",
             "prix_unitaire", "montant_consignation", "actif",

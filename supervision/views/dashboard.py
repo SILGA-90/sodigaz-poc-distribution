@@ -10,8 +10,8 @@ from django.shortcuts import render
 
 from accounts.models import Role, Utilisateur
 from distribution.models import (
-    Anomalie, Etape, LigneOperation, LigneProgramme,
-    Operation, Plv, Produit, Programme, StatutAnomalie, StatutVisite,
+    Anomalie, Article, Etape, LigneOperation, LigneProgramme,
+    Operation, Plv, Programme, StatutAnomalie, StatutVisite,
 )
 
 from ..decorators import superviseur_required
@@ -271,11 +271,11 @@ def dashboard_activite_data(request):
 
 
 @superviseur_required
-def dashboard_bilan_produits_data(request):
+def dashboard_bilan_articles_data(request):
     """
-    AJAX : bilan produits du jour séparé par flux.
-    - collecte   : quantités réalisées par produit sur opérations COLLECTE
-    - restitution: prévu / réalisé / écart par produit sur opérations RESTITUTION
+    AJAX : bilan articles du jour séparé par flux.
+    - collecte   : quantités réalisées par article sur opérations COLLECTE
+    - restitution: prévu / réalisé / écart par article sur opérations RESTITUTION
     """
     date_filter = _get_date_filter(request)
     base_lo = dict(
@@ -316,33 +316,33 @@ def dashboard_bilan_produits_data(request):
     if not tous_ids:
         return JsonResponse({"collecte": [], "restitution": []})
 
-    produits_map = {
-        p.id: p
-        for p in Produit.objects.filter(id__in=tous_ids).only("id", "code_x3", "libelle", "prix_unitaire")
+    articles_map = {
+        a.id: a
+        for a in Article.objects.filter(id__in=tous_ids).only("id", "code_x3", "libelle", "prix_unitaire")
     }
 
     collecte_result = [
         {
-            "code_x3": produits_map[pid].code_x3,
-            "libelle": produits_map[pid].libelle,
+            "code_x3": articles_map[pid].code_x3,
+            "libelle": articles_map[pid].libelle,
             "realise": collecte_map[pid],
         }
-        for pid in sorted(collecte_map, key=lambda i: produits_map[i].code_x3)
+        for pid in sorted(collecte_map, key=lambda i: articles_map[i].code_x3)
     ]
 
     restit_ids = set(restit_realise_map) | set(prevus_map)
     restit_result = []
-    for pid in sorted(restit_ids, key=lambda i: produits_map[i].code_x3):
-        prod = produits_map[pid]
+    for pid in sorted(restit_ids, key=lambda i: articles_map[i].code_x3):
+        art = articles_map[pid]
         prevu = prevus_map.get(pid, 0)
         realise = restit_realise_map.get(pid, 0)
         restit_result.append({
-            "code_x3": prod.code_x3,
-            "libelle": prod.libelle,
+            "code_x3": art.code_x3,
+            "libelle": art.libelle,
             "prevu": prevu,
             "realise": realise,
             "ecart": realise - prevu,
-            "montant": realise * int(prod.prix_unitaire or 0),
+            "montant": realise * int(art.prix_unitaire or 0),
         })
 
     return JsonResponse({"collecte": collecte_result, "restitution": restit_result})

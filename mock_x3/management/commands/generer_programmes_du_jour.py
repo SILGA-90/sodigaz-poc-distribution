@@ -17,7 +17,7 @@ from distribution.models import (
     GraviteAnomalie,
     LigneProgramme,
     Plv,
-    Produit,
+    Article,
     Programme,
     StatutAnomalie,
     StatutProgramme,
@@ -88,9 +88,9 @@ class Command(BaseCommand):
                 f"Pas assez de PLV actifs ({len(plvs)}). Lance d'abord 'seed_demo'."
             )
         vehicules = list(Vehicule.objects.filter(actif=True))
-        produits_gaz = list(Produit.objects.filter(actif=True, code_x3__startswith='G'))
-        if not produits_gaz:
-            raise CommandError("Produits G* (gaz emballé) manquants. Lance d'abord 'seed_demo'.")
+        articles_gaz = list(Article.objects.filter(actif=True, code_x3__startswith='G'))
+        if not articles_gaz:
+            raise CommandError("Articles G* (gaz emballé) manquants. Lance d'abord 'seed_demo'.")
 
         if options["reset"]:
             # Soft-delete en cascade : anomalies d'abord, puis programmes.
@@ -182,8 +182,8 @@ class Command(BaseCommand):
                     # COLLECTE : pas de LigneProgramme — quantités non planifiées.
                     # RESTITUTION : lignes G* avec quantite_prevue.
                     if type_prog == TypeProgramme.RESTITUTION:
-                        nb_articles = random.randint(1, min(3, len(produits_gaz)))
-                        for prod in random.sample(produits_gaz, nb_articles):
+                        nb_articles = random.randint(1, min(3, len(articles_gaz)))
+                        for prod in random.sample(articles_gaz, nb_articles):
                             LigneProgramme.objects.create(
                                 etape=etape,
                                 produit=prod,
