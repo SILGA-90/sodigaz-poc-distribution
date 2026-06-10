@@ -30,6 +30,12 @@ export interface RecapProgramme {
   nb_anomalies: number;
 }
 
+/**
+ * Programmes actifs du livreur : tous les programmes non clôturés, quelle que
+ * soit leur date. Un programme reste visible sur le dashboard jusqu'à sa
+ * clôture explicite — y compris les programmes de la veille ou antérieurs
+ * (livreurs en province, tournées longues).
+ */
 export async function getProgrammesRecents(): Promise<ProgrammeAvecProgression[]> {
   const db = await getDatabase();
   const userIdStr = await getItem(STORAGE_KEYS.USER_ID);
@@ -48,12 +54,17 @@ export async function getProgrammesRecents(): Promise<ProgrammeAvecProgression[]
      FROM programme pr
      WHERE pr.is_deleted = 0
        AND pr.utilisateur_id = ?
-       AND date(pr.date_programme) = date('now')
-     ORDER BY pr.type_programme;`,
+       AND pr.statut != 'CLOTURE'
+     ORDER BY pr.date_programme DESC, pr.type_programme;`,
     [utilisateurId],
   );
 }
 
+/**
+ * Historique : uniquement les programmes clôturés, du plus récent au plus
+ * ancien. Les programmes non clôturés restent sur le dashboard jusqu'à leur
+ * clôture explicite.
+ */
 export async function getTousLesProgrammes(): Promise<ProgrammeAvecProgression[]> {
   const db = await getDatabase();
   const userIdStr = await getItem(STORAGE_KEYS.USER_ID);
@@ -68,6 +79,7 @@ export async function getTousLesProgrammes(): Promise<ProgrammeAvecProgression[]
      FROM programme pr
      WHERE pr.is_deleted = 0
        AND pr.utilisateur_id = ?
+       AND pr.statut = 'CLOTURE'
      ORDER BY pr.date_programme DESC, pr.type_programme;`,
     [utilisateurId],
   );

@@ -11,10 +11,21 @@
         <div class="subtitle">Supervision logistique</div>
     </div>
     <div class="login-body">
-        {% if form.errors %}
-        <div class="alert alert-danger py-2 mb-3" style="font-size:.85rem;">
-            <i class="bi bi-exclamation-circle me-1"></i>
-            Identifiants invalides ou compte sans privilège superviseur.
+        {% if login_blocked %}
+        <div class="login-blocked-alert">
+            <div class="login-blocked-icon"><i class="bi bi-lock-fill"></i></div>
+            <div>
+                <div class="login-blocked-title">Accès temporairement bloqué</div>
+                <div class="login-blocked-sub">
+                    Trop de tentatives échouées. Réessayez dans
+                    <strong>{{ retry_minutes }} minute{{ retry_minutes|pluralize }}</strong>.
+                </div>
+            </div>
+        </div>
+        {% elif form.errors %}
+        <div class="login-error-alert">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            <span>Identifiants invalides ou compte sans privilège superviseur.</span>
         </div>
         {% endif %}
         <form method="post">

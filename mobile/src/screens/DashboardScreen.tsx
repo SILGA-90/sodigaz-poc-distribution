@@ -291,7 +291,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
 
       {/* ── Section titre ── */}
       <View style={styles.sectionRow}>
-        <Text style={styles.sectionTitle}>Mes programmes du jour</Text>
+        <Text style={styles.sectionTitle}>Programmes en cours</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Historique')}>
           <Text style={styles.sectionLink}>Historique ›</Text>
         </TouchableOpacity>
@@ -312,8 +312,8 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
                 <Text style={styles.emptyIconText}>📋</Text>
               </View>
             </View>
-            <Text style={styles.emptyTitle}>Aucun programme</Text>
-            <Text style={styles.emptySub}>Appuie sur « Synchroniser » pour récupérer ton programme du jour.</Text>
+            <Text style={styles.emptyTitle}>Aucun programme en cours</Text>
+            <Text style={styles.emptySub}>Tous tes programmes sont clôturés. Synchronise pour récupérer de nouveaux programmes.</Text>
             {/* Bouton sync vide raised bleu */}
             <View style={styles.emptyBtnOuter}>
               <TouchableOpacity style={styles.emptyBtnInner} onPress={handleSync} disabled={syncing} activeOpacity={0.82}>

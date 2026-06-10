@@ -119,8 +119,8 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
                 <Ionicons name="calendar-outline" size={32} color={TEXT3} />
               </View>
             </View>
-            <Text style={styles.emptyTitle}>Aucun programme</Text>
-            <Text style={styles.emptyText}>Synchronise d'abord pour charger les programmes disponibles.</Text>
+            <Text style={styles.emptyTitle}>Aucun programme clôturé</Text>
+            <Text style={styles.emptyText}>Les programmes terminés apparaissent ici une fois clôturés.</Text>
           </View>
         }
       />

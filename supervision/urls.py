@@ -1,12 +1,12 @@
-from django.contrib.auth.views import LoginView
 from django.urls import path
 
 from . import views
+from .views.login import RateLimitedLoginView
 
 app_name = "supervision"
 
 urlpatterns = [
-    path("login/", LoginView.as_view(
+    path("login/", RateLimitedLoginView.as_view(
         template_name="supervision/login.html",
         redirect_authenticated_user=True,
     ), name="login"),

@@ -29,3 +29,35 @@
     .btn-login:hover { background: #0670A0; }
     .demo-hint { font-size: .78rem; color: #6c757d; text-align: center; margin-top: 1rem; }
     .demo-hint code { color: #079BD9; }
+
+    /* Alerte identifiants invalides */
+    .login-error-alert {
+        display: flex; align-items: flex-start; gap: .55rem;
+        background: #fef2f2; border: 1.5px solid #fca5a5;
+        border-radius: 9px; padding: .7rem .9rem;
+        font-size: .84rem; color: #dc3545; margin-bottom: 1.1rem;
+        line-height: 1.4;
+    }
+    .login-error-alert i { font-size: 1rem; flex-shrink: 0; margin-top: .05rem; }
+
+    /* Alerte blocage IP */
+    .login-blocked-alert {
+        display: flex; align-items: flex-start; gap: .85rem;
+        background: #fff5f5; border: 1.5px solid #fca5a5;
+        border-left: 4px solid #dc3545;
+        border-radius: 9px; padding: .9rem 1rem;
+        margin-bottom: 1.1rem;
+    }
+    .login-blocked-icon {
+        width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+        background: rgba(220,53,69,.12); color: #dc3545;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem;
+    }
+    .login-blocked-title {
+        font-size: .88rem; font-weight: 700; color: #991b1b; margin-bottom: .2rem;
+    }
+    .login-blocked-sub {
+        font-size: .8rem; color: #ef4444; line-height: 1.4;
+    }
+    .login-blocked-sub strong { color: #991b1b; }

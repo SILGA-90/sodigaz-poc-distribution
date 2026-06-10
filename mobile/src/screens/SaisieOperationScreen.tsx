@@ -173,14 +173,6 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
     if (paiement === null) { Alert.alert('Acompte invalide', "Saisis un montant d'acompte supérieur à 0."); return; }
     if (!signatureLivreur || !signatureClient) {
       setShowSigError(true);
-      Alert.alert(
-        'Signatures manquantes',
-        !signatureLivreur && !signatureClient
-          ? 'La signature du livreur et celle du client sont obligatoires.'
-          : !signatureLivreur
-          ? 'La signature du livreur est obligatoire.'
-          : 'La signature du client est obligatoire.',
-      );
       return;
     }
     setShowSigError(false);
@@ -383,6 +375,18 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
           <Text style={styles.label}>Nom du signataire (client)</Text>
           <FieldInput value={nomSignataire} onChangeText={setNomSignataire} placeholder="Nom complet du client" />
           <View style={styles.fieldSep} />
+          {showSigError && (!signatureLivreur || !signatureClient) && (
+            <View style={styles.sigErrorBanner}>
+              <Ionicons name="alert-circle-outline" size={16} color={Colors.danger} style={{ marginTop: 1 }} />
+              <Text style={styles.sigErrorText}>
+                {!signatureLivreur && !signatureClient
+                  ? 'Les deux signatures sont obligatoires avant d\'enregistrer.'
+                  : !signatureLivreur
+                  ? 'La signature du livreur est obligatoire.'
+                  : 'La signature du client est obligatoire.'}
+              </Text>
+            </View>
+          )}
           <View style={styles.sigRow}>
             {(['LIVREUR', 'CLIENT'] as const).map((who) => {
               const signed  = who === 'LIVREUR' ? !!signatureLivreur : !!signatureClient;
@@ -758,6 +762,15 @@ const styles = StyleSheet.create({
   sigIconError:  { color: Colors.danger },
   sigLabelError: { color: Colors.danger },
   sigSubError:   { color: Colors.danger, fontWeight: '700' },
+  sigErrorBanner: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+    marginBottom: 12, padding: 11, borderRadius: 10,
+    backgroundColor: Colors.dangerBg,
+    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
+    borderTopColor: '#fdd',              borderLeftColor: '#fdd',
+    borderBottomColor: Colors.dangerBorder, borderRightColor: Colors.dangerBorder,
+  },
+  sigErrorText: { flex: 1, fontSize: 13, color: Colors.danger, lineHeight: 18 },
 
   /* ── Commentaire — inset ── */
   commentaire: {
