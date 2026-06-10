@@ -101,6 +101,8 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         # 3 tentatives par heure par utilisateur sur l'endpoint dev-access
         "dev_access": "3/hour",
+        # 5 tentatives par minute par IP sur l'endpoint login (anti brute-force)
+        "login": "5/minute",
     },
 }
 

@@ -1,6 +1,6 @@
 /**
- * Ecran d'un programme : liste des étapes à visiter.
- * Light thème — header navy, corps blanc.
+ * ProgrammeScreen — Néomorphisme clair.
+ * Header navy (infos programme), corps NEO #e8edf2, cartes étapes raised.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -24,14 +24,13 @@ import { Programme } from '../types/models';
 import { RootStackParamList } from '../types/navigation';
 import { Colors } from '../theme';
 
-const NAVY  = '#0a1628';
-const BG    = '#f0f4f8';
-const CARD  = '#ffffff';
-const INPUT = '#f1f5f9';
-const BORDER= '#e2e8f0';
-const TEXT  = '#0f172a';
-const TEXT2 = '#334155';
-const TEXT3 = '#64748b';
+/* ── Palette néo ─────────────────────────────────────────────────────── */
+const NEO     = '#e8edf2';
+const NEO_SHD = '#4a6880';
+const NEO_IN  = '#d4dde6';
+const NAVY    = '#0a1628';
+const TEXT    = '#1a2a3a';
+const TEXT3   = '#5a7080';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Programme'>;
 type TriMode = 'optimise' | 'alpha' | 'a_visiter';
@@ -70,7 +69,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
     setProgramme(p);
     setEtapes(e);
     setProgression({
-      total: e.length,
+      total:    e.length,
       visitees: e.filter((x) => x.statut_visite === 'VISITEE').length,
       echec:    e.filter((x) => x.statut_visite === 'ECHEC').length,
     });
@@ -80,6 +79,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
     (async () => { await chargerDonnees(); setLoading(false); })();
   }, [programmeId]);
 
+  /* ── Carte étape ─────────────────────────────────────────────────────── */
   const renderEtape = useCallback(({ item }: { item: EtapeAvecPlv }): React.ReactElement => {
     const visite = item.statut_visite === 'VISITEE';
     const echec  = item.statut_visite === 'ECHEC';
@@ -104,39 +104,45 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
     }
 
     return (
-      <View style={[styles.card, disabled && styles.cardDisabled]}>
-        <TouchableOpacity style={styles.cardInner} onPress={handleCardPress} activeOpacity={disabled ? 1 : 0.75}>
-          <View style={[styles.cardAccent, { backgroundColor: accentColor }]} />
-          <View style={styles.cardBody}>
-            <View style={styles.cardMain}>
-              {/* Cercle d'ordre coloré */}
-              <View style={[styles.ordreCircle, { backgroundColor: accentColor }]}>
-                <Text style={styles.ordreText}>{item.ordre_prevu}</Text>
-              </View>
-              <View style={styles.cardInfo}>
-                <Text style={styles.plvLibelle} numberOfLines={1}>{item.plv_libelle}</Text>
-                <Text style={styles.clientName} numberOfLines={1}>{item.client_raison_sociale}</Text>
-              </View>
-              <View style={styles.cardRight}>
-                <View style={[styles.statutBadge, { backgroundColor: badgeBg }]}>
-                  <View style={[styles.statutDot, { backgroundColor: accentColor }]} />
-                  <Text style={[styles.statutText, { color: badgeText }]}>{badgeLabel}</Text>
+      <View style={[styles.cardOuter, disabled && styles.cardDisabled]}>
+        <View style={styles.cardShadowLight}>
+          <TouchableOpacity
+            style={styles.cardContent}
+            onPress={handleCardPress}
+            activeOpacity={disabled ? 1 : 0.8}
+          >
+            <View style={[styles.cardAccent, { backgroundColor: accentColor }]} />
+            <View style={styles.cardBody}>
+              <View style={styles.cardMain}>
+                <View style={[styles.ordreCircle, { backgroundColor: accentColor }]}>
+                  <Text style={styles.ordreText}>{item.ordre_prevu}</Text>
                 </View>
-                {visite && item.op_sync_status !== null && (
-                  <View style={[styles.syncIndicator,
-                    item.op_sync_status === 'SYNCED' ? styles.syncGreen : styles.syncOrange]} />
-                )}
+                <View style={styles.cardInfo}>
+                  <Text style={styles.plvLibelle} numberOfLines={1}>{item.plv_libelle}</Text>
+                  <Text style={styles.clientName} numberOfLines={1}>{item.client_raison_sociale}</Text>
+                </View>
+                <View style={styles.cardRight}>
+                  <View style={[styles.statutBadge, { backgroundColor: badgeBg }]}>
+                    <View style={[styles.statutDot, { backgroundColor: accentColor }]} />
+                    <Text style={[styles.statutText, { color: badgeText }]}>{badgeLabel}</Text>
+                  </View>
+                  {visite && item.op_sync_status !== null && (
+                    <View style={[styles.syncIndicator,
+                      item.op_sync_status === 'SYNCED' ? styles.syncGreen : styles.syncOrange]} />
+                  )}
+                </View>
               </View>
+              {/* Itinéraire — inset */}
+              <TouchableOpacity
+                style={styles.itineraireRow}
+                onPress={(e) => { e.stopPropagation(); ouvrirItineraire(item.plv_latitude, item.plv_longitude); }}
+                activeOpacity={0.65}
+              >
+                <Text style={styles.itineraireTxt}>Ouvrir l'itinéraire  ›</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={styles.itineraireRow}
-              onPress={(e) => { e.stopPropagation(); ouvrirItineraire(item.plv_latitude, item.plv_longitude); }}
-              activeOpacity={0.65}
-            >
-              <Text style={styles.itineraireTxt}>Ouvrir l'itinéraire  ›</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }, [navigation, programme]);
@@ -150,6 +156,8 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
 
   return (
     <View style={styles.root}>
+
+      {/* ── Header navy ── */}
       {programme && (
         <View style={styles.header}>
           <View style={styles.bubble1} pointerEvents="none" />
@@ -175,9 +183,9 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
           {/* Compteurs */}
           <View style={styles.statsRow}>
             {[
-              { num: progression.visitees, label: 'visitée(s)', color: '#ffffff', bg: 'rgba(255,255,255,0.15)' },
+              { num: progression.visitees, label: 'visitée(s)', color: '#ffffff',  bg: 'rgba(255,255,255,0.15)' },
               { num: progression.echec,    label: 'échec',      color: progression.echec > 0 ? '#fca5a5' : 'rgba(255,255,255,0.4)', bg: progression.echec > 0 ? 'rgba(248,113,113,0.2)' : 'rgba(255,255,255,0.08)' },
-              { num: aFaire,               label: 'à faire',    color: '#fcd34d', bg: 'rgba(251,191,36,0.18)' },
+              { num: aFaire,               label: 'à faire',    color: '#fcd34d',  bg: 'rgba(251,191,36,0.18)' },
             ].map((s, i) => (
               <View key={i} style={[styles.statBox, { backgroundColor: s.bg }]}>
                 <Text style={[styles.statNum, { color: s.color }]}>{s.num}</Text>
@@ -236,24 +244,32 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
         </View>
       )}
 
+      {/* ── Liste des étapes ── */}
       <FlatList
         data={etapesTri}
         keyExtractor={(item) => item.uuid}
         renderItem={renderEtape}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={<View style={styles.emptyWrap}><Text style={styles.emptyText}>Aucune étape.</Text></View>}
+        ListEmptyComponent={
+          <View style={styles.emptyWrap}>
+            <Text style={styles.emptyText}>Aucune étape.</Text>
+          </View>
+        }
         ListFooterComponent={<View style={{ height: 100 }} />}
       />
 
+      {/* ── FAB Anomalie — raised orange ── */}
       {programme && programme.statut !== 'CLOTURE' && (
         <View style={styles.fab}>
-          <TouchableOpacity
-            style={styles.fabBtn}
-            onPress={() => navigation.navigate('Anomalie', { programmeUuid: programme.uuid, programmeId: programme.id })}
-            activeOpacity={0.82}
-          >
-            <Text style={styles.fabText}>+ Anomalie</Text>
-          </TouchableOpacity>
+          <View style={styles.fabOuter}>
+            <TouchableOpacity
+              style={styles.fabInner}
+              onPress={() => navigation.navigate('Anomalie', { programmeUuid: programme.uuid, programmeId: programme.id })}
+              activeOpacity={0.82}
+            >
+              <Text style={styles.fabText}>+ Anomalie</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </View>
@@ -261,10 +277,10 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
 }
 
 const styles = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: BG },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: BG },
+  root:   { flex: 1, backgroundColor: NEO },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: NEO },
 
-  // ── Header navy ───────────────────────────────────────────────────────────
+  /* ── Header navy ─────────────────────────────────────────────────────── */
   header: { backgroundColor: NAVY, paddingTop: 16, overflow: 'hidden' },
   bubble1: { position: 'absolute', borderRadius: 999, width: 220, height: 220, top: -70, right: -50, backgroundColor: 'rgba(7,155,217,0.1)' },
   bubble2: { position: 'absolute', borderRadius: 999, width: 120, height: 120, top: 55,  right: 95,  backgroundColor: 'rgba(7,155,217,0.07)' },
@@ -273,48 +289,112 @@ const styles = StyleSheet.create({
   numero:   { fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
   chips:    { flexDirection: 'row', gap: 6 },
   chip:     { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20, borderWidth: 1 },
-  chipC:        { backgroundColor: 'rgba(7,155,217,0.2)',  borderColor: 'rgba(7,155,217,0.4)' },
-  chipR:        { backgroundColor: 'rgba(16,185,129,0.2)', borderColor: 'rgba(16,185,129,0.4)' },
-  chipCloture:  { backgroundColor: 'rgba(16,185,129,0.2)', borderColor: 'rgba(16,185,129,0.4)' },
-  chipEnCours:  { backgroundColor: 'rgba(238,114,2,0.2)',  borderColor: 'rgba(238,114,2,0.4)' },
+  chipC:        { backgroundColor: 'rgba(7,155,217,0.2)',   borderColor: 'rgba(7,155,217,0.4)' },
+  chipR:        { backgroundColor: 'rgba(16,185,129,0.2)',  borderColor: 'rgba(16,185,129,0.4)' },
+  chipCloture:  { backgroundColor: 'rgba(16,185,129,0.2)',  borderColor: 'rgba(16,185,129,0.4)' },
+  chipEnCours:  { backgroundColor: 'rgba(238,114,2,0.2)',   borderColor: 'rgba(238,114,2,0.4)' },
   chipPlanifie: { backgroundColor: 'rgba(148,163,184,0.15)', borderColor: 'rgba(148,163,184,0.3)' },
   chipText: { fontSize: 11, fontWeight: '700', color: '#e2e8f0' },
   dateText: { fontSize: 12, color: 'rgba(255,255,255,0.45)', paddingHorizontal: 16, marginBottom: 14, marginTop: 3 },
 
   statsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginBottom: 14 },
-  statBox:  { flex: 1, borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
+  statBox: {
+    flex: 1, borderRadius: 12, paddingVertical: 12, alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+  },
   statNum:  { fontSize: 24, fontWeight: '800', lineHeight: 28 },
   statLabel:{ fontSize: 10, fontWeight: '600', color: 'rgba(255,255,255,0.5)', marginTop: 2, letterSpacing: 0.5 },
 
-  progRow:         { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, marginBottom: 14 },
-  progTrack:       { flex: 1, height: 7, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 4, flexDirection: 'row', overflow: 'hidden' },
-  progFillVisitee: { height: 7, backgroundColor: '#34d399', borderRadius: 4 },
-  progFillEchec:   { height: 7, backgroundColor: '#f87171' },
-  progPct:         { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.7)', minWidth: 34, textAlign: 'right' },
+  progRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, marginBottom: 14 },
+  progTrack: {
+    flex: 1, height: 8, borderRadius: 4, flexDirection: 'row', overflow: 'hidden',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.4)',
+  },
+  progFillVisitee: { height: 8, backgroundColor: '#34d399' },
+  progFillEchec:   { height: 8, backgroundColor: '#f87171' },
+  progPct: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.8)', minWidth: 34, textAlign: 'right' },
 
   triActions: { paddingHorizontal: 12, paddingBottom: 14, gap: 10 },
-  triTrack:   { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: 3, gap: 3 },
-  triBtn:     { flex: 1, paddingVertical: 9, borderRadius: 8, alignItems: 'center' },
-  triBtnActive: { backgroundColor: '#ffffff' },
-  triBtnText:   { fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.5)' },
+  /* Piste tri — inset dark neo (dark top-left, light bottom-right) */
+  triTrack: {
+    flexDirection: 'row', borderRadius: 12, padding: 4, gap: 3,
+    backgroundColor: 'rgba(0,0,0,0.28)',
+    borderTopWidth:    1, borderLeftWidth:    1,
+    borderBottomWidth: 1, borderRightWidth:   1,
+    borderTopColor:    'rgba(0,0,0,0.45)', borderLeftColor:    'rgba(0,0,0,0.45)',
+    borderBottomColor: 'rgba(255,255,255,0.07)', borderRightColor: 'rgba(255,255,255,0.07)',
+  },
+  triBtn:           { flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center' },
+  triBtnActive: {
+    backgroundColor: '#ffffff',
+    shadowColor: '#040d1a', shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.5, shadowRadius: 3, elevation: 2,
+  },
+  triBtnText:       { fontSize: 12, fontWeight: '600', color: '#ffffff' },
   triBtnTextActive: { color: Colors.brandBlue, fontWeight: '700' },
 
   actionsRow:    { flexDirection: 'row', gap: 8 },
-  anomaliesBtn:  { paddingVertical: 11, paddingHorizontal: 16, borderRadius: 10, backgroundColor: 'rgba(238,114,2,0.15)', borderWidth: 1.5, borderColor: 'rgba(238,114,2,0.4)' },
+  anomaliesBtn: {
+    paddingVertical: 12, paddingHorizontal: 18, borderRadius: 12,
+    backgroundColor: 'rgba(238,114,2,0.22)',
+    borderWidth: 1.5, borderColor: Colors.brandOrange,
+  },
   anomaliesBtnText: { fontSize: 13, fontWeight: '700', color: Colors.brandOrange },
-  clotureBtn:    { flex: 1, paddingVertical: 11, borderRadius: 10, alignItems: 'center', backgroundColor: Colors.brandBlue },
-  clotureBtnText:{ color: '#fff', fontWeight: '700', fontSize: 13 },
-  clotureDone:   { flex: 1, paddingVertical: 11, borderRadius: 10, alignItems: 'center', backgroundColor: 'rgba(52,211,153,0.15)', borderWidth: 1.5, borderColor: 'rgba(52,211,153,0.4)' },
+  clotureBtn: {
+    flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center',
+    backgroundColor: Colors.brandBlue,
+    borderTopWidth:    1, borderLeftWidth:    1,
+    borderBottomWidth: 1, borderRightWidth:   1,
+    borderTopColor: '#2bb8ef', borderLeftColor: '#2bb8ef',
+    borderBottomColor: '#046a96', borderRightColor: '#046a96',
+  },
+  clotureBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  clotureDone: {
+    flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center',
+    backgroundColor: 'rgba(52,211,153,0.15)',
+    borderWidth: 1.5, borderColor: '#34d399',
+  },
   clotureDoneText: { color: '#34d399', fontWeight: '700', fontSize: 13 },
 
-  // ── Cartes étapes ─────────────────────────────────────────────────────────
-  list: { padding: 12 },
-  card: { borderRadius: 14, marginBottom: 10, backgroundColor: CARD, shadowColor: '#0f172a', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 3 },
+  /* ── Cartes étapes — raised double ombre + biseau ────────────────────── */
+  list: { padding: 12, paddingTop: 14 },
+
+  cardOuter: {
+    marginBottom:    12,
+    borderRadius:    14,
+    backgroundColor: NEO,
+    shadowColor:     NEO_SHD,
+    shadowOffset:    { width: 6, height: 6 },
+    shadowOpacity:   1,
+    shadowRadius:    7,
+    elevation:       10,
+  },
   cardDisabled: { opacity: 0.45 },
-  cardInner:    { flexDirection: 'row', borderRadius: 14, overflow: 'hidden' },
-  cardAccent:   { width: 4 },
-  cardBody:     { flex: 1 },
-  cardMain:     { flexDirection: 'row', alignItems: 'center', padding: 14, paddingBottom: 10 },
+  cardShadowLight: {
+    borderRadius:    14,
+    backgroundColor: NEO,
+    shadowColor:     '#ffffff',
+    shadowOffset:    { width: -6, height: -6 },
+    shadowOpacity:   1,
+    shadowRadius:    7,
+  },
+  cardContent: {
+    flexDirection:     'row',
+    borderRadius:      14,
+    backgroundColor:   NEO,
+    overflow:          'hidden',
+    borderTopWidth:    1,   borderLeftWidth:    1,
+    borderBottomWidth: 1,   borderRightWidth:   1,
+    borderTopColor:    'rgba(255,255,255,0.85)',
+    borderLeftColor:   'rgba(255,255,255,0.85)',
+    borderBottomColor: 'rgba(74,104,128,0.35)',
+    borderRightColor:  'rgba(74,104,128,0.35)',
+  },
+  cardAccent: { width: 5 },
+  cardBody:   { flex: 1 },
+  cardMain:   { flexDirection: 'row', alignItems: 'center', padding: 14, paddingBottom: 10 },
 
   ordreCircle: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 12, flexShrink: 0 },
   ordreText:   { color: '#fff', fontWeight: '800', fontSize: 15 },
@@ -331,14 +411,45 @@ const styles = StyleSheet.create({
   syncGreen:  { backgroundColor: '#22c55e' },
   syncOrange: { backgroundColor: '#f97316' },
 
-  itineraireRow: { borderTopWidth: 1, borderTopColor: BORDER, backgroundColor: INPUT, paddingVertical: 10, paddingHorizontal: 14, alignItems: 'flex-end' },
+  /* Itinéraire — inset (concave) */
+  itineraireRow: {
+    backgroundColor:   NEO_IN,
+    paddingVertical:   10,
+    paddingHorizontal: 14,
+    alignItems:        'flex-end',
+    borderTopWidth:    1,   borderLeftWidth:    0,
+    borderBottomWidth: 0,   borderRightWidth:   0,
+    borderTopColor:    'rgba(74,104,128,0.25)',
+  },
   itineraireTxt: { fontSize: 12, fontWeight: '700', color: Colors.brandBlue },
 
   emptyWrap: { padding: 40, alignItems: 'center' },
   emptyText: { color: TEXT3, textAlign: 'center', fontSize: 14 },
 
-  // FAB
-  fab:    { position: 'absolute', bottom: 24, right: 20 },
-  fabBtn: { backgroundColor: Colors.brandOrange, paddingHorizontal: 22, paddingVertical: 15, borderRadius: 30, shadowColor: Colors.brandOrange, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 8 },
-  fabText:{ color: '#fff', fontWeight: '700', fontSize: 14 },
+  /* ── FAB Anomalie — raised orange ────────────────────────────────────── */
+  fab:      { position: 'absolute', bottom: 24, right: 20 },
+  fabOuter: {
+    borderRadius:    30,
+    backgroundColor: Colors.brandOrange,
+    shadowColor:     '#5c1a00',
+    shadowOffset:    { width: 6, height: 6 },
+    shadowOpacity:   1,
+    shadowRadius:    7,
+    elevation:       10,
+  },
+  fabInner: {
+    borderRadius:      30,
+    backgroundColor:   Colors.brandOrange,
+    paddingHorizontal: 22,
+    paddingVertical:   15,
+    shadowColor:       '#ffcc88',
+    shadowOffset:      { width: -4, height: -4 },
+    shadowOpacity:     0.5,
+    shadowRadius:       6,
+    borderTopWidth:    1,   borderLeftWidth:    1,
+    borderBottomWidth: 1,   borderRightWidth:   1,
+    borderTopColor:    '#ffb060',  borderLeftColor:    '#ffb060',
+    borderBottomColor: '#b83a00',  borderRightColor:   '#b83a00',
+  },
+  fabText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 });

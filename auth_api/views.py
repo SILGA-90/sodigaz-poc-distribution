@@ -13,15 +13,21 @@ from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.throttling import UserRateThrottle
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .serializers import LivreurTokenObtainPairSerializer, UtilisateurMeSerializer
 
 
+class LoginRateThrottle(AnonRateThrottle):
+    """5 tentatives de login par minute par adresse IP — anti brute-force."""
+    scope = "login"
+
+
 class LivreurTokenObtainPairView(TokenObtainPairView):
     """Login par code_livreur + password."""
     serializer_class = LivreurTokenObtainPairSerializer
+    throttle_classes = [LoginRateThrottle]
 
 
 @api_view(["GET"])
