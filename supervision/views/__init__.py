@@ -2,7 +2,9 @@
 Package de vues de supervision.
 
 Chaque module regroupe les vues par domaine fonctionnel :
-  - dashboard  : tableau de bord, KPI, carte, activité
+  - dashboard  : page principale, KPIs, activité (AJAX)
+  - carte      : carte Leaflet et vue plein écran
+  - livreurs   : tableau de bord par livreur
   - programmes : liste et détail des programmes
   - operations : liste, détail, export CSV
   - anomalies  : liste, détail, changement statut/gravité
@@ -12,14 +14,13 @@ Les re-exports ici préservent la compatibilité avec urls.py (from . import vie
 """
 from .dashboard import (
     dashboard,
-    dashboard_carte_data,
     dashboard_stats_data,
     dashboard_activite_data,
     dashboard_activite_recente,
     dashboard_bilan_articles_data,
-    carte_plein_ecran,
-    tableau_bord_livreurs,
 )
+from .carte import dashboard_carte_data, carte_plein_ecran
+from .livreurs import tableau_bord_livreurs
 from .programmes import programmes_list, programme_detail
 from .operations import operations_list, operation_detail, operations_export_csv
 from .anomalies import (

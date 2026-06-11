@@ -42,15 +42,8 @@ import { acquerirPositionProbante } from '../services/locationService';
 import PhotosSection, { PhotoEnAttente } from '../components/PhotosSection';
 import { RootStackParamList } from '../types/navigation';
 import { Colors } from '../theme';
-
-/* Palette néo claire */
-const NEO     = '#e8edf2';
-const NEO_SHD = '#4a6880';
-const NEO_IN  = '#d4dde6';
-const NAVY    = '#0a1628';
-const TEXT    = '#1a2a3a';
-const TEXT2   = '#3a5060';
-const TEXT3   = '#3a5060';
+import SectionHeader from '../components/saisie/SectionHeader';
+import { NEO, NEO_IN, NAVY, TEXT, TEXT2, TEXT3, neoCard } from '../components/saisie/neoStyles';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Anomalie'>;
 
@@ -161,11 +154,11 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
 
       {/* TYPE D'ANOMALIE */}
       <SectionHeader icon="list-outline" color="red" title="Type d'anomalie" />
-      <View style={styles.cardOuter}>
-        <View style={styles.cardInner}>
+      <View style={neoCard.outer}>
+        <View style={neoCard.inner}>
           <NeoSelect
             value={typeAnomalie}
-            onChange={(v) => setTypeAnomalie(v)}
+            onChange={(v) => setTypeAnomalie(v as string)}
             options={TYPES_ANOMALIE.map((t) => ({ label: t.label, value: t.value }))}
           />
         </View>
@@ -175,11 +168,11 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
       {plvOptions.length > 0 && (
         <>
           <SectionHeader icon="location-outline" color="orange" title="PLV concernée" optional />
-          <View style={styles.cardOuter}>
-            <View style={styles.cardInner}>
+          <View style={neoCard.outer}>
+            <View style={neoCard.inner}>
               <NeoSelect
                 value={selectedPlvId}
-                onChange={(v) => setSelectedPlvId(v)}
+                onChange={(v) => setSelectedPlvId(v as number | null)}
                 placeholder=": Aucune PLV spécifique :"
                 options={[
                   { label: ': Aucune PLV spécifique :', value: null },
@@ -196,8 +189,8 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
         <SectionHeader icon="create-outline" color="navy" title="Description" />
         <Text style={styles.charCount}>{description.length} car.</Text>
       </View>
-      <View style={styles.cardOuter}>
-        <View style={styles.cardInner}>
+      <View style={neoCard.outer}>
+        <View style={neoCard.inner}>
           <TextInput
             style={[styles.descInput, descFocused && styles.descInputFocused]}
             value={description}
@@ -214,8 +207,8 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
 
       {/* PHOTOS */}
       <SectionHeader icon="camera-outline" color="blue" title="Photo" optional />
-      <View style={styles.cardOuterNoPad}>
-        <View style={styles.cardInnerNoPad}>
+      <View style={neoCard.outer}>
+        <View style={neoCard.innerOverflow}>
           <PhotosSection
             photos={photos}
             onChange={setPhotos}
@@ -249,28 +242,6 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
   );
 }
 
-/* Sous-composants */
-type IconColor = 'blue' | 'green' | 'red' | 'orange' | 'navy' | 'gray';
-function SectionHeader({ icon, color, title, optional }: { icon: React.ComponentProps<typeof Ionicons>['name']; color: IconColor; title: string; optional?: boolean }) {
-  const bg: Record<IconColor, string> = { blue: Colors.infoBg, green: Colors.successBg, red: Colors.dangerBg, orange: Colors.warningBg, navy: NEO_IN, gray: NEO_IN };
-  const fg: Record<IconColor, string> = { blue: Colors.brandBlue, green: Colors.success, red: Colors.danger, orange: Colors.brandOrange, navy: TEXT2, gray: TEXT3 };
-  return (
-    <View style={shS.row}>
-      <View style={[shS.iconBox, { backgroundColor: bg[color] }]}>
-        <Ionicons name={icon} size={16} color={fg[color]} />
-      </View>
-      <Text style={shS.title}>{title}</Text>
-      {optional && <Text style={shS.optional}>(optionnel)</Text>}
-    </View>
-  );
-}
-const shS = StyleSheet.create({
-  row:      { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 14, marginTop: 22, marginBottom: 8 },
-  iconBox:  { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  title:    { fontSize: 15, fontWeight: '800', color: TEXT, letterSpacing: -0.2 },
-  optional: { fontSize: 12, color: TEXT3, marginLeft: 2 },
-});
-
 /* Styles */
 const styles = StyleSheet.create({
   root:   { flex: 1, backgroundColor: NEO },
@@ -299,33 +270,6 @@ const styles = StyleSheet.create({
 
   sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: 14 },
   charCount: { fontSize: 12, color: TEXT3 },
-
-  /* Cartes raised */
-  cardOuter: {
-    marginHorizontal: 12, marginBottom: 4,
-    borderRadius: 14, backgroundColor: NEO,
-    shadowColor: NEO_SHD, shadowOffset: { width: 6, height: 6 }, shadowOpacity: 1, shadowRadius: 7, elevation: 10,
-  },
-  cardInner: {
-    borderRadius: 14, backgroundColor: NEO, padding: 14,
-    shadowColor: '#ffffff', shadowOffset: { width: -6, height: -6 }, shadowOpacity: 1, shadowRadius: 7,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#ffffff', borderLeftColor: '#ffffff',
-    borderBottomColor: '#8aa8c0', borderRightColor: '#8aa8c0',
-  },
-  cardOuterNoPad: {
-    marginHorizontal: 12, marginBottom: 4,
-    borderRadius: 14, backgroundColor: NEO,
-    shadowColor: NEO_SHD, shadowOffset: { width: 6, height: 6 }, shadowOpacity: 1, shadowRadius: 7, elevation: 10,
-  },
-  cardInnerNoPad: {
-    borderRadius: 14, backgroundColor: NEO, overflow: 'hidden',
-    shadowColor: '#ffffff', shadowOffset: { width: -6, height: -6 }, shadowOpacity: 1, shadowRadius: 7,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#ffffff', borderLeftColor: '#ffffff',
-    borderBottomColor: '#8aa8c0', borderRightColor: '#8aa8c0',
-  },
-
 
   /* Description inset */
   descInput: {

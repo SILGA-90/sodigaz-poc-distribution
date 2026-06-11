@@ -43,16 +43,9 @@ import {
 import { Programme } from '../types/models';
 import { RootStackParamList } from '../types/navigation';
 import { Colors } from '../theme';
-
-/* Palette néo claire */
-const NEO     = '#e8edf2';
-const NEO_SHD = '#4a6880';
-const NEO_IN  = '#d4dde6';
-const NAVY    = '#0a1628';
-const TEXT    = '#1a2a3a';
-const TEXT2   = '#3a5060';
-const TEXT3   = '#3a5060';
-const SEP     = '#c8d4de';
+import { neoCard, NEO, NEO_SHD, NAVY, TEXT, TEXT2, TEXT3, SEP } from '../components/saisie/neoStyles';
+import SectionHeader from '../components/saisie/SectionHeader';
+import RecapRow from '../components/saisie/RecapRow';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Cloture'>;
 
@@ -137,8 +130,8 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
         <Text style={styles.successSub}>{programme.numero_x3} · {programme.date_programme}</Text>
 
         {/* Bilan */}
-        <View style={[styles.cardOuter, { width: '100%' }]}>
-          <View style={styles.cardInner}>
+        <View style={[neoCard.outer, { width: '100%' }]}>
+          <View style={neoCard.inner}>
             <Text style={styles.cardTitle}>Bilan de la tournée</Text>
             <RecapRow label="Étapes visitées"
               value={`${recap.etapes_visitees} / ${recap.total_etapes} (${pct} %)`} />
@@ -197,8 +190,8 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
 
       {/* RÉCAPITULATIF */}
       <SectionHeader icon="list-outline" color="blue" title="Récapitulatif de la tournée" />
-      <View style={styles.cardOuter}>
-        <View style={styles.cardInner}>
+      <View style={neoCard.outer}>
+        <View style={neoCard.inner}>
           <RecapRow label="Étapes visitées" value={`${recap.etapes_visitees} / ${recap.total_etapes}`} />
           {recap.etapes_echec > 0 && (
             <RecapRow label="Étapes en échec" value={String(recap.etapes_echec)} danger />
@@ -216,8 +209,8 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
       {operations.length > 0 && (
         <>
           <SectionHeader icon="receipt-outline" color="blue" title="Détail des opérations" />
-          <View style={styles.cardOuter}>
-            <View style={styles.cardInner}>
+          <View style={neoCard.outer}>
+            <View style={neoCard.inner}>
               {operations.map((op, i) => (
                 <View key={i} style={[styles.opRow, i > 0 && styles.opRowSep]}>
                   <View style={{ flex: 1 }}>
@@ -267,42 +260,6 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
   );
 }
 
-/* Sous-composants */
-
-type IconColor = 'blue' | 'green' | 'orange' | 'navy' | 'gray';
-function SectionHeader({ icon, color, title }: { icon: React.ComponentProps<typeof Ionicons>['name']; color: IconColor; title: string }) {
-  const bg: Record<IconColor, string> = { blue: Colors.infoBg, green: Colors.successBg, orange: Colors.warningBg, navy: NEO_IN, gray: NEO_IN };
-  const fg: Record<IconColor, string> = { blue: Colors.brandBlue, green: Colors.success, orange: Colors.brandOrange, navy: TEXT2, gray: TEXT3 };
-  return (
-    <View style={shS.row}>
-      <View style={[shS.iconBox, { backgroundColor: bg[color] }]}>
-        <Ionicons name={icon} size={16} color={fg[color]} />
-      </View>
-      <Text style={shS.title}>{title}</Text>
-    </View>
-  );
-}
-const shS = StyleSheet.create({
-  row:     { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 14, marginTop: 22, marginBottom: 8 },
-  iconBox: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  title:   { fontSize: 15, fontWeight: '800', color: TEXT, letterSpacing: -0.2 },
-});
-
-function RecapRow({ label, value, success, danger, warning }: { label: string; value: string; success?: boolean; danger?: boolean; warning?: boolean }) {
-  const vColor = success ? Colors.success : danger ? Colors.danger : warning ? Colors.warning : TEXT;
-  return (
-    <View style={rrS.row}>
-      <Text style={rrS.label}>{label}</Text>
-      <Text style={[rrS.value, { color: vColor }]}>{value}</Text>
-    </View>
-  );
-}
-const rrS = StyleSheet.create({
-  row:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: SEP },
-  label: { fontSize: 14, color: TEXT2, flex: 1, marginRight: 8 },
-  value: { fontSize: 15, fontWeight: '700' },
-});
-
 /* Styles */
 const styles = StyleSheet.create({
   root:      { flex: 1, backgroundColor: NEO },
@@ -322,19 +279,6 @@ const styles = StyleSheet.create({
   numero: { fontSize: 22, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
   meta:   { fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 2 },
 
-  /* Cartes raised */
-  cardOuter: {
-    marginHorizontal: 12, marginBottom: 4,
-    borderRadius: 14, backgroundColor: NEO,
-    shadowColor: NEO_SHD, shadowOffset: { width: 6, height: 6 }, shadowOpacity: 1, shadowRadius: 7, elevation: 10,
-  },
-  cardInner: {
-    borderRadius: 14, backgroundColor: NEO, padding: 14,
-    shadowColor: '#ffffff', shadowOffset: { width: -6, height: -6 }, shadowOpacity: 1, shadowRadius: 7,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#ffffff', borderLeftColor: '#ffffff',
-    borderBottomColor: '#8aa8c0', borderRightColor: '#8aa8c0',
-  },
   cardTitle: { fontSize: 15, fontWeight: '700', color: TEXT2, marginBottom: 8 },
 
   /* Lignes opérations */

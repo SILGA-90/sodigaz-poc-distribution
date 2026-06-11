@@ -31,16 +31,9 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { getDatabase } from '../db/database';
 import { RootStackParamList } from '../types/navigation';
 import { Colors } from '../theme';
-
-/* Palette néo claire */
-const NEO     = '#e8edf2';
-const NEO_SHD = '#4a6880';
-const NEO_IN  = '#d4dde6';
-const NAVY    = '#0a1628';
-const TEXT    = '#1a2a3a';
-const TEXT2   = '#3a5060';
-const TEXT3   = '#3a5060';
-const SEP     = '#c8d4de';
+import SectionHeader from '../components/saisie/SectionHeader';
+import SigChip from '../components/SigChip';
+import { NEO, NEO_SHD, NEO_IN, NAVY, TEXT, TEXT2, TEXT3, SEP, neoCard } from '../components/saisie/neoStyles';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EtapeDetail'>;
 
@@ -145,8 +138,8 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
 
       {/* PRODUITS */}
       <SectionHeader icon={isCollecte ? 'arrow-down-outline' : 'arrow-up-outline'} color={isCollecte ? 'blue' : 'green'} title="Produits" />
-      <View style={styles.cardOuter}>
-        <View style={styles.cardInner}>
+      <View style={neoCard.outer}>
+        <View style={neoCard.inner}>
           {lignes.length === 0 ? (
             <Text style={styles.emptyRowText}>Aucune ligne enregistrée.</Text>
           ) : (
@@ -167,8 +160,8 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
 
       {/* PAIEMENT */}
       <SectionHeader icon="cash-outline" color="green" title="Paiement" />
-      <View style={styles.cardOuter}>
-        <View style={styles.cardInner}>
+      <View style={neoCard.outer}>
+        <View style={neoCard.inner}>
           <View style={styles.montantHeroRow}>
             <Text style={styles.montantHeroValue}>{operation.montant_total.toLocaleString('fr-FR')}</Text>
             <Text style={styles.montantHeroUnit}> FCFA</Text>
@@ -190,8 +183,8 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
 
       {/* SIGNATURES */}
       <SectionHeader icon="create-outline" color="navy" title="Signatures" />
-      <View style={styles.cardOuter}>
-        <View style={styles.cardInner}>
+      <View style={neoCard.outer}>
+        <View style={neoCard.inner}>
           {operation.nom_signataire_client ? (
             <>
               <InfoRow label="Signataire client" value={operation.nom_signataire_client} />
@@ -209,8 +202,8 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
       {operation.commentaire ? (
         <>
           <SectionHeader icon="chatbubble-outline" color="gray" title="Commentaire" />
-          <View style={styles.cardOuter}>
-            <View style={styles.cardInner}>
+          <View style={neoCard.outer}>
+            <View style={neoCard.inner}>
               <View style={styles.commentaireBox}>
                 <Text style={styles.commentaire}>{operation.commentaire}</Text>
               </View>
@@ -225,25 +218,6 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
 
 /* Sous-composants */
 
-type IconColor = 'blue' | 'green' | 'orange' | 'navy' | 'gray';
-function SectionHeader({ icon, color, title }: { icon: React.ComponentProps<typeof Ionicons>['name']; color: IconColor; title: string }) {
-  const bg: Record<IconColor, string> = { blue: Colors.infoBg, green: Colors.successBg, orange: Colors.warningBg, navy: NEO_IN, gray: NEO_IN };
-  const fg: Record<IconColor, string> = { blue: Colors.brandBlue, green: Colors.success, orange: Colors.brandOrange, navy: TEXT2, gray: TEXT3 };
-  return (
-    <View style={shS.row}>
-      <View style={[shS.iconBox, { backgroundColor: bg[color] }]}>
-        <Ionicons name={icon} size={16} color={fg[color]} />
-      </View>
-      <Text style={shS.title}>{title}</Text>
-    </View>
-  );
-}
-const shS = StyleSheet.create({
-  row:     { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 14, marginTop: 22, marginBottom: 8 },
-  iconBox: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  title:   { fontSize: 15, fontWeight: '800', color: TEXT, letterSpacing: -0.2 },
-});
-
 function InfoRow({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
     <View style={irS.row}>
@@ -256,37 +230,6 @@ const irS = StyleSheet.create({
   row:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
   label: { fontSize: 13, color: TEXT3, fontWeight: '500' },
   value: { fontSize: 13, fontWeight: '700', color: TEXT },
-});
-
-function SigChip({ label, signed }: { label: string; signed: boolean }) {
-  return (
-    <View style={[scS.outer, signed ? scS.outerSigned : scS.outerUnsigned]}>
-      <View style={[scS.inner, signed ? scS.innerSigned : scS.innerUnsigned]}>
-        <Ionicons
-          name={signed ? 'checkmark-circle' : 'close-circle-outline'}
-          size={22} color={signed ? Colors.success : Colors.danger}
-          style={{ marginBottom: 4 }}
-        />
-        <Text style={[scS.label, signed ? scS.labelSigned : scS.labelUnsigned]}>{label}</Text>
-        <Text style={[scS.sub,   signed ? scS.subSigned   : scS.subUnsigned]}>{signed ? 'Signé' : 'Non signé'}</Text>
-      </View>
-    </View>
-  );
-}
-const scS = StyleSheet.create({
-  outer:         { flex: 1, borderRadius: 12 },
-  outerSigned:   { shadowColor: '#107a30', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4 },
-  outerUnsigned: { shadowColor: NEO_SHD,  shadowOffset: { width: 4, height: 4 }, shadowOpacity: 1,    shadowRadius: 5, elevation: 4 },
-  inner:         { borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1,
-    shadowColor: '#ffffff', shadowOffset: { width: -3, height: -3 }, shadowOpacity: 1, shadowRadius: 4 },
-  innerSigned:   { backgroundColor: Colors.successBg, borderColor: Colors.successBorder },
-  innerUnsigned: { backgroundColor: NEO,              borderColor: '#b8ccd8' },
-  label:         { fontSize: 13, fontWeight: '700' },
-  labelSigned:   { color: Colors.success },
-  labelUnsigned: { color: Colors.danger },
-  sub:           { fontSize: 10, marginTop: 2 },
-  subSigned:     { color: Colors.success },
-  subUnsigned:   { color: Colors.danger },
 });
 
 function modePaiementLabel(mode: string): string {
@@ -338,19 +281,6 @@ const styles = StyleSheet.create({
   syncDot:         { width: 7, height: 7, borderRadius: 4 },
   syncPillText:    { fontSize: 12, fontWeight: '700' },
 
-  /* Cartes raised */
-  cardOuter: {
-    marginHorizontal: 12, marginBottom: 4,
-    borderRadius: 14, backgroundColor: NEO,
-    shadowColor: NEO_SHD, shadowOffset: { width: 6, height: 6 }, shadowOpacity: 1, shadowRadius: 7, elevation: 10,
-  },
-  cardInner: {
-    borderRadius: 14, backgroundColor: NEO, padding: 14,
-    shadowColor: '#ffffff', shadowOffset: { width: -6, height: -6 }, shadowOpacity: 1, shadowRadius: 7,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#ffffff', borderLeftColor: '#ffffff',
-    borderBottomColor: '#8aa8c0', borderRightColor: '#8aa8c0',
-  },
   fieldSep: { height: 1, backgroundColor: SEP, marginVertical: 8 },
 
   /* Lignes produits */
