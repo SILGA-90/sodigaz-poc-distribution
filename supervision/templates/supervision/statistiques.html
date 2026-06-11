@@ -7,7 +7,7 @@
 
 {% block content %}
 
-<!-- ── En-tête ── -->
+<!-- En-tête -->
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <div class="d-flex align-items-center gap-2">
         <span class="pg-icon"><i class="bi bi-graph-up-arrow"></i></span>
@@ -15,7 +15,7 @@
             <h1 class="page-title mb-0">Statistiques &amp; Tendances</h1>
             <p class="page-sub mb-0">
                 <i class="bi bi-calendar-range me-1"></i>
-                {{ start_date|date:"j F" }} — {{ end_date|date:"j F Y" }}
+                {{ start_date|date:"j F" }} : {{ end_date|date:"j F Y" }}
             </p>
         </div>
     </div>
@@ -28,7 +28,7 @@
     </div>
 </div>
 
-<!-- ── KPI résumé ── -->
+<!-- KPI résumé -->
 <div class="stat-kpi-row mb-4">
 
     <div class="stat-kpi-card">
@@ -77,7 +77,7 @@
 
 </div>
 
-<!-- ── Ligne 1 : Montant journalier ── -->
+<!-- Ligne 1 : Montant journalier -->
 <div class="section-card mb-4">
     <div class="section-header">
         <span class="section-icon"><i class="bi bi-graph-up"></i></span>
@@ -89,7 +89,7 @@
     </div>
 </div>
 
-<!-- ── Ligne 2 : Répartition par article ── -->
+<!-- Ligne 2 : Répartition par article -->
 <div class="section-card mb-4">
     <div class="section-header">
         <span class="section-icon"><i class="bi bi-box-seam"></i></span>
@@ -108,7 +108,7 @@
     {% endif %}
 </div>
 
-<!-- ── Ligne 3 : Performance par livreur ── -->
+<!-- Ligne 3 : Performance par livreur -->
 <div class="section-card mb-4">
     <div class="section-header">
         <span class="section-icon"><i class="bi bi-person-lines-fill"></i></span>
@@ -157,7 +157,7 @@
     {% endif %}
 </div>
 
-<!-- ── Ligne 4 : Couverture + Anomalies gravité ── -->
+<!-- Ligne 4 : Couverture + Anomalies gravité -->
 <div class="stat-row-2 mb-4">
 
     <div class="section-card">
@@ -195,7 +195,7 @@
 
 </div>
 
-<!-- ── Ligne 3 : Anomalies par type ── -->
+<!-- Ligne 3 : Anomalies par type -->
 <div class="section-card mb-4">
     <div class="section-header">
         <span class="section-icon"><i class="bi bi-bar-chart-horizontal"></i></span>
@@ -219,7 +219,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
 (function() {
-    // ── Données injectées depuis Django ──────────────────────────────────────
+    // Données injectées depuis Django
     var labels       = {{ labels_json|safe }};
     var montants     = {{ montants_json|safe }};
     var couverture   = {{ couverture_json|safe }};
@@ -235,12 +235,12 @@
     var perfVisitees = {{ perf_visitees_json|safe }};
     var perfTotaux   = {{ perf_totaux_json|safe }};
 
-    // ── Defaults globaux Chart.js ────────────────────────────────────────────
+    // Defaults globaux Chart.js
     Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
     Chart.defaults.font.size   = 11;
     Chart.defaults.color       = '#6080a0';
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // Helpers
     function gradientFill(ctx, colorTop, colorBot) {
         var g = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
         g.addColorStop(0, colorTop);
@@ -248,7 +248,7 @@
         return g;
     }
 
-    // ── 1. Montant journalier ─────────────────────────────────────────────────
+    // 1. Montant journalier
     (function() {
         var ctx = document.getElementById('chart-montant').getContext('2d');
         new Chart(ctx, {
@@ -288,7 +288,7 @@
         });
     })();
 
-    // ── 2. Répartition par article (barres groupées) ─────────────────────────
+    // 2. Répartition par article (barres groupées)
     (function() {
         var el = document.getElementById('chart-articles');
         if (!el) return;
@@ -336,7 +336,7 @@
         });
     })();
 
-    // ── 3. Performance par livreur (barres horizontales) ─────────────────────
+    // 3. Performance par livreur (barres horizontales)
     (function() {
         var el = document.getElementById('chart-perf');
         if (!el) return;
@@ -380,7 +380,7 @@
                             label: function(c) {
                                 var m = perfMontants[c.dataIndex];
                                 return [
-                                    ' ' + perfVisitees[c.dataIndex] + ' / ' + perfTotaux[c.dataIndex] + ' PLVs — ' + c.raw + ' %',
+                                    ' ' + perfVisitees[c.dataIndex] + ' / ' + perfTotaux[c.dataIndex] + ' PLVs : ' + c.raw + ' %',
                                     ' Encaissé : ' + m.toLocaleString('fr-FR') + ' FCFA'
                                 ];
                             }
@@ -399,7 +399,7 @@
         });
     })();
 
-    // ── 4. Taux de couverture ─────────────────────────────────────────────────
+    // 4. Taux de couverture
     (function() {
         var ctx = document.getElementById('chart-couverture').getContext('2d');
         new Chart(ctx, {
@@ -436,7 +436,7 @@
         });
     })();
 
-    // ── 4. Anomalies par gravité (donut) ──────────────────────────────────────
+    // 4. Anomalies par gravité (donut)
     (function() {
         var el = document.getElementById('chart-gravite');
         if (!el) return;
@@ -467,7 +467,7 @@
         });
     })();
 
-    // ── 5. Anomalies par type (bar horizontal) ───────────────────────────────
+    // 5. Anomalies par type (bar horizontal)
     (function() {
         var el = document.getElementById('chart-anom-type');
         if (!el) return;

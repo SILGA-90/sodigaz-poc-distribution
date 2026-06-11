@@ -1,7 +1,32 @@
 /**
- * Section de gestion des photos (capture camera / galerie + miniatures).
- * Les types de photo sont configurables via la prop `types`
- * (defaut : types d'operation ; pour une anomalie on passe le type ANOMALIE).
+ * Section de gestion des photos terrain (capture + miniatures).
+ *
+ * Ce composant composable gère le sous-formulaire photo dans
+ * SaisieOperationScreen et AnomalieScreen. Il expose :
+ *          - Un sélecteur de type de photo (chips : Bordereau / Livraison / Etat PLV)
+ *          - Un bouton "Prendre une photo" (caméra)
+ *          - Un bouton "Galerie" (optionnel, désactivable via cameraOnly)
+ *          - Une bande de miniatures horizontales avec bouton de suppression
+ *
+ * Les photos sont retournées via onChange comme tableau de PhotoEnAttente
+ * (uri local + taille + type). L'insert en base et l'upload sont gérés
+ * par l'écran parent après validation du formulaire.
+ *
+ * *        Utiliser la galerie pour choisir une photo ancienne comme "preuve"
+ * d'une livraison du jour serait une fraude. Pour les preuves de
+ * livraison critiques (photo du client avec son gaz), on passe
+ * cameraOnly=true pour forcer une prise de vue en temps réel.
+ *
+ * Le type de photo dépend du contexte :
+ * - Opération : BORDEREAU / LIVRAISON / ETAT_PLV
+ * - Anomalie  : ANOMALIE (type unique, pas de sélecteur affiché)
+ * Configurer via la prop `types` évite deux composants distincts.
+ *
+ * Les photos sont tenues en
+ * état local React jusqu'à la validation du formulaire. À ce moment,
+ * l'écran parent appelle ajouterPhotoOperation() ou ajouterPhotoAnomalie()
+ * pour les insérer en base SQLite avec sync_status = PENDING.
+ * Cela évite de polluer la base avec des photos d'une opération annulée.
  */
 import React, { useState } from 'react';
 import {
@@ -33,7 +58,7 @@ interface Props {
   photos: PhotoEnAttente[];
   onChange: (photos: PhotoEnAttente[]) => void;
   types?: TypeOption[];
-  /** Interdit la galerie — obligatoire pour les preuves de livraison (anti-fraude). */
+  /** Interdit la galerie : obligatoire pour les preuves de livraison (anti-fraude). */
   cameraOnly?: boolean;
 }
 
@@ -54,8 +79,8 @@ export default function PhotosSection({ photos, onChange, types = DEFAULT_TYPES,
       if (photo) {
         onChange([...photos, { uri: photo.uri, tailleOctets: photo.tailleOctets, type_photo: typeChoisi }]);
       }
-    } catch (e: any) {
-      Alert.alert('Erreur', e?.message ?? String(e));
+    } catch (e: unknown) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }

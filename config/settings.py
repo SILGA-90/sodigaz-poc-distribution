@@ -1,4 +1,48 @@
-"""Settings Django pour le POC SODIGAZ (developpement)."""
+"""
+Settings Django pour le POC SODIGAZ.
+
+Ce fichier configure l'ensemble du projet Django : apps, base de données,
+authentification JWT, CORS, sécurité HTTP, upload et localisation.
+Toutes les valeurs sensibles sont lues depuis le fichier .env via
+django-environ (SECRET_KEY, DB_*, JWT_SIGNING_KEY, DEV_ACCESS_CODE, CORS).
+
+Le modèle PLV a un champ PointField (localisation
+géographique). django.contrib.gis + postgis sont obligatoires pour ce type
+de champ. Sans eux, les migrations échoueraient.
+
+Le modèle utilisateur custom
+ajoute le champ `code_livreur` (identifiant terrain) et `role`. Il doit
+être déclaré avant la première migration : impossible à changer après.
+
+Les horodatages des opérations terrain
+doivent être en heure locale Ouagadougou (UTC+0, pas d'heure d'été). Les
+livreurs saisissent à heure locale ; le superviseur lit en heure locale.
+USE_TZ = True stocke en UTC en base mais convertit à l'affichage.
+
+Une tournée dure en général 6-8 heures.
+60 min est un bon équilibre entre sécurité (token court-vécu) et praticité
+(le refresh automatique dans client.ts gère la rotation transparente).
+
+À chaque refresh, un
+nouveau refresh token est émis et l'ancien est blacklisté. Cela empêche
+la réutilisation d'un refresh token volé (anti-replay). Nécessite l'app
+rest_framework_simplejwt.token_blacklist.
+
+Les requêtes Axios du mobile (React
+Native) ne sont pas des requêtes navigateur : CORS ne les affecte pas.
+On ne liste que les origines Expo Web (localhost:8081) pour les tests
+navigateur. Ne jamais ouvrir CORS_ALLOW_ALL_ORIGINS en production.
+
+Ce code est le PIN du mode
+développeur. Ne JAMAIS le coder en dur : il serait extractible du bundle
+Django (fichiers compilés, logs). Comparé via hmac.compare_digest()
+(constant-time) dans auth_api/views.py.
+
+Le payload JSON de synchronisation
+peut contenir plusieurs opérations avec signatures SVG et coordonnées GPS.
+La limite par défaut de Django (2.5 Mo) serait atteinte sur une tournée
+dense. 10 Mo est largement suffisant.
+"""
 from pathlib import Path
 import environ
 
@@ -89,7 +133,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # CORS : jamais ouvert en production.
 # En dev, lister explicitement les origines autorisées dans CORS_ALLOWED_ORIGINS.
-# Le mobile React Native n'est pas un navigateur — CORS ne le concerne pas.
+# Le mobile React Native n'est pas un navigateur : CORS ne le concerne pas.
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[
     "http://localhost:8081",

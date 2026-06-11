@@ -1,7 +1,28 @@
 /**
- * NeoSelect — dropdown custom en néomorphisme clair.
- * Remplace @react-native-picker/picker dont le rendu natif est non stylable.
- * Trigger inset + Modal avec carte raised flottante + liste d'options.
+ * NeoSelect : dropdown custom en néomorphisme clair.
+ *
+ * Ce composant remplace @react-native-picker/picker avec un trigger
+ * inset + modal flottant (bottom sheet). Il expose la même interface
+ * qu'un select HTML (value, onChange, options) mais avec un style
+ * cohérent avec le design SODIGAZ (néomorphisme, couleurs de marque).
+ *
+ * Le picker natif Android/iOS
+ * est non stylable : couleurs système, police non configurable, rendu
+ * incohérent entre plateformes. NeoSelect offre un rendu identique
+ * sur iOS et Android avec les couleurs de marque SODIGAZ.
+ *
+ * Le bottom sheet est le pattern UX standard
+ * mobile pour les sélections de liste. Il est plus lisible qu'un
+ * dropdown inline qui décale le contenu de la page, et plus grand
+ * qu'une liste déroulante (meilleures cibles tactiles en plein soleil).
+ *
+ * Pour une liste d'options longue, FlatList
+ * est plus performant qu'un ScrollView avec map() : seules les options
+ * visibles sont rendues (virtualisation). Sur Android milieu de gamme
+ * avec 20+ options, la différence est notable.
+ *
+ * Taper en dehors du bottom
+ * sheet est équivalent à annuler : comportement standard modal mobile.
  */
 import React, { useState } from 'react';
 import {
@@ -30,13 +51,13 @@ export interface NeoSelectOption {
 
 interface Props {
   value: string | number | null;
-  onChange: (v: any) => void;
+  onChange: (v: string | number | null) => void;
   options: NeoSelectOption[];
   placeholder?: string;
   style?: object;
 }
 
-export default function NeoSelect({ value, onChange, options, placeholder = 'Sélectionner…', style }: Props): React.ReactElement {
+export default function NeoSelect({ value, onChange, options, placeholder = 'Sélectionner...', style }: Props): React.ReactElement {
   const [open, setOpen] = useState(false);
 
   const selected = options.find((o) => o.value === value);
@@ -45,7 +66,7 @@ export default function NeoSelect({ value, onChange, options, placeholder = 'Sé
 
   return (
     <>
-      {/* ── Trigger inset ── */}
+      {/* Trigger inset */}
       <TouchableOpacity
         style={[styles.trigger, style]}
         onPress={() => setOpen(true)}
@@ -57,7 +78,7 @@ export default function NeoSelect({ value, onChange, options, placeholder = 'Sé
         <Ionicons name="chevron-down" size={16} color={hasValue ? Colors.brandBlue : TEXT3} />
       </TouchableOpacity>
 
-      {/* ── Modal flottant ── */}
+      {/* Modal flottant */}
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <TouchableWithoutFeedback onPress={() => setOpen(false)}>
           <View style={styles.overlay}>
@@ -102,7 +123,7 @@ export default function NeoSelect({ value, onChange, options, placeholder = 'Sé
 }
 
 const styles = StyleSheet.create({
-  /* Trigger — inset style */
+  /* Trigger : inset style */
   trigger: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginTop: 8,

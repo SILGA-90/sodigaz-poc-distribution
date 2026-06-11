@@ -1,13 +1,32 @@
 """
-Serializers de synchronisation.
+Serializers de synchronisation (lecture/pull).
 
-Conventions cles :
-  - On envoie les UUID en clair, pas les id internes BIGSERIAL.
-  - Les ForeignKey sont serialisees via UUID de la cible, pas via id.
-    (le mobile ne connait que les UUID)
-  - last_modified est inclus pour information cote mobile.
-  - Les Point GeoDjango sont serialises en {lat, lng} pour simplifier
-    cote mobile (pas de GeoJSON ici, on garde la charge utile minimale).
+Ce module définit les serializers utilisés pour formater les données
+envoyées au mobile lors d'un pull (GET /api/sync/pull/). Chaque classe
+correspond à une table du schéma de synchronisation.
+
+       Trois groupes :
+       1. Référentiels (pull only) : Client, Plv, Article, Vehicule
+       2. Semi-synchronisés (pull) : Programme, Etape, LigneProgramme
+       3. Push (données terrain)   : Operation, LigneOperation, Anomalie, Photo
+          -> pour la lecture inverse seulement ; le push entrant passe par
+            push_serializers.py.
+
+Le mobile ne connaît pas les id BIGSERIAL
+de la base PostgreSQL : ils n'ont pas de sens hors du serveur. Toute
+référence entre objets (ex. etape_uuid dans une opération) passe par UUID.
+Cela permet aussi à la base de données de changer ses auto-incréments
+(ex. après un reset seed) sans invalider les données mobiles.
+
+Les référentiels
+(Client, Plv, Article) sont identifiés par id entier côté mobile SQLite
+car ils n'ont pas de UUID : ce sont des données maîtres sans cycle de vie
+synchronisé. Les tables du bloc 2 et 3 utilisent les UUID pour les FK.
+
+Le mobile n'utilise pas de bibliothèque
+cartographique (décision architecturale : voir CLAUDE.md). Un dict
+{latitude, longitude} est plus simple à lire et écrire dans SQLite qu'un
+Feature GeoJSON. La charge utile est aussi plus légère.
 """
 from rest_framework import serializers
 
@@ -28,17 +47,22 @@ from distribution.models import (
 
 
 def serialize_point(point):
-    """GeoDjango Point -> dict pour JSON."""
+    """
+    Convertit un PointField GeoDjango en dict {latitude, longitude}.
+    Voir module docstring : {lat, lng} est plus simple que GeoJSON pour
+    un client SQLite sans bibliothèque cartographique.
+    """
     if point is None:
         return None
     return {"latitude": point.y, "longitude": point.x}
 
 
 # ---------------------------------------------------------------------------
-# Referentiels (pull only)
+# 1. Référentiels (pull only)
 # ---------------------------------------------------------------------------
 
 class ClientSyncSerializer(serializers.ModelSerializer):
+    """WHAT : Sérialise un Client pour le pull. Identifié par id entier (pas d'UUID)."""
     class Meta:
         model = Client
         fields = (
@@ -48,8 +72,13 @@ class ClientSyncSerializer(serializers.ModelSerializer):
 
 
 class PlvSyncSerializer(serializers.ModelSerializer):
+    """
+    Sérialise un PLV pour le pull, avec latitude/longitude à plat.
+    Évite d'imbriquer serialize_point() dans
+         un sous-objet : le mobile peut lire directement les deux champs.
+    """
     client_id = serializers.IntegerField(source="client.id", read_only=True)
-    latitude = serializers.SerializerMethodField()
+    latitude  = serializers.SerializerMethodField()
     longitude = serializers.SerializerMethodField()
 
     class Meta:
@@ -67,6 +96,7 @@ class PlvSyncSerializer(serializers.ModelSerializer):
 
 
 class ArticleSyncSerializer(serializers.ModelSerializer):
+    """WHAT : Sérialise un Article pour le pull. Identifié par id entier + code_x3."""
     class Meta:
         model = Article
         fields = (
@@ -76,19 +106,27 @@ class ArticleSyncSerializer(serializers.ModelSerializer):
 
 
 class VehiculeSyncSerializer(serializers.ModelSerializer):
+    """WHAT : Sérialise un Véhicule pour le pull."""
     class Meta:
         model = Vehicule
         fields = ("id", "immatriculation", "type", "capacite", "actif")
 
 
 # ---------------------------------------------------------------------------
-# Tables semi-synchronisees (pull seulement depuis le mobile)
+# 2. Tables semi-synchronisées (pull seulement depuis le mobile)
 # ---------------------------------------------------------------------------
 
 class ProgrammeSyncSerializer(serializers.ModelSerializer):
-    uuid = serializers.UUIDField()
+    """
+    Sérialise un Programme pour le pull incrémental.
+    Le mobile utilise ce champ pour savoir si
+         l'enregistrement local doit être mis à jour (INSERT OR REPLACE).
+         Sans last_modified, tout pull écraserait les données locales même
+         si rien n'a changé.
+    """
+    uuid           = serializers.UUIDField()
     utilisateur_id = serializers.IntegerField()
-    vehicule_id = serializers.IntegerField(allow_null=True)
+    vehicule_id    = serializers.IntegerField(allow_null=True)
 
     class Meta:
         model = Programme
@@ -102,9 +140,14 @@ class ProgrammeSyncSerializer(serializers.ModelSerializer):
 
 
 class EtapeSyncSerializer(serializers.ModelSerializer):
-    uuid = serializers.UUIDField()
+    """
+    Sérialise une Etape pour le pull incrémental.
+    Le mobile affiche l'ordre optimisé au livreur
+         dans l'écran de liste des étapes.
+    """
+    uuid         = serializers.UUIDField()
     programme_id = serializers.IntegerField()
-    plv_id = serializers.IntegerField()
+    plv_id       = serializers.IntegerField()
 
     class Meta:
         model = Etape
@@ -117,7 +160,12 @@ class EtapeSyncSerializer(serializers.ModelSerializer):
 
 
 class LigneProgrammeSyncSerializer(serializers.ModelSerializer):
-    uuid = serializers.UUIDField()
+    """
+    Sérialise une LigneProgramme (quantité prévue) pour le pull.
+    Le mobile joint LigneProgramme à la table article
+         via l'id entier : cohérent avec ArticleSyncSerializer.
+    """
+    uuid     = serializers.UUIDField()
     etape_id = serializers.IntegerField()
     produit_id = serializers.IntegerField()
 
@@ -132,15 +180,19 @@ class LigneProgrammeSyncSerializer(serializers.ModelSerializer):
 
 
 # ---------------------------------------------------------------------------
-# Tables push (le mobile cree, le serveur recoit)
+# 3. Tables push (données créées sur le mobile, lues en retour si nécessaire)
 # ---------------------------------------------------------------------------
 
 class OperationSyncSerializer(serializers.ModelSerializer):
-    """Pour le PULL (relecture cote serveur). Le PUSH passe par OperationPushSerializer."""
-    uuid = serializers.UUIDField()
+    """
+    Sérialise une Opération pour la lecture (pull ou réponse de push).
+    Le mobile référence les étapes par
+         UUID, jamais par id interne. La méthode get_etape_uuid() traverse la FK.
+    """
+    uuid       = serializers.UUIDField()
     etape_uuid = serializers.SerializerMethodField()
-    latitude = serializers.SerializerMethodField()
-    longitude = serializers.SerializerMethodField()
+    latitude   = serializers.SerializerMethodField()
+    longitude  = serializers.SerializerMethodField()
 
     class Meta:
         model = Operation
@@ -165,8 +217,15 @@ class OperationSyncSerializer(serializers.ModelSerializer):
 
 
 class LigneOperationSyncSerializer(serializers.ModelSerializer):
-    uuid = serializers.UUIDField()
-    operation_uuid = serializers.SerializerMethodField()
+    """
+    Sérialise une LigneOperation (quantité réalisée) pour la lecture.
+    La LigneProgramme utilise
+         l'id entier de l'article ; mais pour LigneOperation (donnée terrain),
+         le mobile pousse avec produit_code_x3 et relit avec le même champ pour
+         cohérence.
+    """
+    uuid            = serializers.UUIDField()
+    operation_uuid  = serializers.SerializerMethodField()
     produit_code_x3 = serializers.SerializerMethodField()
 
     class Meta:
@@ -188,11 +247,12 @@ class LigneOperationSyncSerializer(serializers.ModelSerializer):
 
 
 class AnomalieSyncSerializer(serializers.ModelSerializer):
-    uuid = serializers.UUIDField()
+    """WHAT : Sérialise une Anomalie pour la lecture (pull)."""
+    uuid        = serializers.UUIDField()
     programme_id = serializers.IntegerField()
-    plv_id = serializers.IntegerField(allow_null=True)
-    latitude = serializers.SerializerMethodField()
-    longitude = serializers.SerializerMethodField()
+    plv_id      = serializers.IntegerField(allow_null=True)
+    latitude    = serializers.SerializerMethodField()
+    longitude   = serializers.SerializerMethodField()
 
     class Meta:
         model = Anomalie
@@ -211,9 +271,14 @@ class AnomalieSyncSerializer(serializers.ModelSerializer):
 
 
 class PhotoSyncSerializer(serializers.ModelSerializer):
-    uuid = serializers.UUIDField()
+    """
+    Sérialise une Photo pour la lecture (pull).
+    Le superviseur peut consulter les photos depuis
+         l'interface web ; le champ fichier est l'URL relative du fichier uploadé.
+    """
+    uuid         = serializers.UUIDField()
     operation_id = serializers.IntegerField(allow_null=True)
-    anomalie_id = serializers.IntegerField(allow_null=True)
+    anomalie_id  = serializers.IntegerField(allow_null=True)
 
     class Meta:
         model = Photo

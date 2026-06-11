@@ -1,6 +1,24 @@
 /**
  * Écran de clôture d'un programme : récapitulatif + confirmation.
- * Néomorphisme clair — fond NEO, cartes raised, bouton clôture raised vert.
+ *
+ * Affiche un récapitulatif complet du programme avant clôture :
+ * étapes visitées / total, montant encaissé, opérations, anomalies.
+ * Après confirmation, appelle cloturerProgrammeLocal() qui marque le
+ * programme CLOTURE localement et inscrit l'UUID dans la file d'attente
+ * (sync_meta). La confirmation serveur se fera au prochain syncAll().
+ *
+ * Le livreur peut ne pas avoir
+ * de réseau à la fin de sa tournée. La clôture locale est immédiate et
+ * ne bloque pas le retour au dépôt. La file clotures_pending garantit
+ * que la clôture sera remontée au serveur dès que le réseau revient,
+ * avant le prochain pull (pour éviter que le pull écrase le statut CLOTURE).
+ * Voir syncService.ts : pushClotures -> pull -> push.
+ *
+ * WHY (navigation.navigate('Dashboard') après clôture) : On retourne au tableau
+ * de bord plutôt que goBack(). Si l'utilisateur a navigué profondément
+ * (Dashboard -> Programme -> Cloture), goBack() retournerait à ProgrammeScreen
+ * qui afficherait un programme clôturé : confusant. navigate('Dashboard')
+ * nettoie la pile et retourne à l'accueil directement.
  */
 import React, { useEffect, useState } from 'react';
 import {
@@ -26,7 +44,7 @@ import { Programme } from '../types/models';
 import { RootStackParamList } from '../types/navigation';
 import { Colors } from '../theme';
 
-/* ── Palette néo claire ─────────────────────────────────────────────── */
+/* Palette néo claire */
 const NEO     = '#e8edf2';
 const NEO_SHD = '#4a6880';
 const NEO_IN  = '#d4dde6';
@@ -81,8 +99,8 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
     try {
       await cloturerProgrammeLocal(programme.uuid);
       setClotureReussie(true);
-    } catch (e: any) {
-      Alert.alert('Erreur', e?.message ?? String(e));
+    } catch (e: unknown) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : String(e));
     } finally {
       setClosing(false);
     }
@@ -100,7 +118,7 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
     );
   }
 
-  /* ── État clôture réussie ── */
+  /* État clôture réussie */
   if (clotureReussie) {
     const pct = recap.total_etapes > 0
       ? Math.round((recap.etapes_visitees / recap.total_etapes) * 100) : 0;
@@ -146,7 +164,7 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
           </View>
         </View>
 
-        {/* Bouton retour — raised bleu */}
+        {/* Bouton retour : raised bleu */}
         <View style={styles.backBtnOuter}>
           <TouchableOpacity style={styles.backBtnInner}
             onPress={() => navigation.navigate('Dashboard')} activeOpacity={0.85}>
@@ -157,14 +175,14 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
     );
   }
 
-  /* ── Vue principale ── */
+  /* Vue principale */
   const dejaCloture = programme.statut === 'CLOTURE';
   const isCollecte  = programme.type_programme === 'COLLECTE';
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.scroll}>
 
-      {/* ── Header navy ── */}
+      {/* Header navy */}
       <View style={styles.header}>
         <View style={styles.bubble1} pointerEvents="none" />
         <View style={styles.bubble2} pointerEvents="none" />
@@ -177,7 +195,7 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
         </View>
       </View>
 
-      {/* ── RÉCAPITULATIF ── */}
+      {/* RÉCAPITULATIF */}
       <SectionHeader icon="list-outline" color="blue" title="Récapitulatif de la tournée" />
       <View style={styles.cardOuter}>
         <View style={styles.cardInner}>
@@ -194,7 +212,7 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
         </View>
       </View>
 
-      {/* ── DÉTAIL DES OPÉRATIONS ── */}
+      {/* DÉTAIL DES OPÉRATIONS */}
       {operations.length > 0 && (
         <>
           <SectionHeader icon="receipt-outline" color="blue" title="Détail des opérations" />
@@ -221,9 +239,9 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
         </>
       )}
 
-      {/* ── ACTION ── */}
+      {/* ACTION */}
       {dejaCloture ? (
-        /* Badge déjà clôturé — raised vert */
+        /* Badge déjà clôturé : raised vert */
         <View style={styles.clotureBadgeOuter}>
           <View style={styles.clotureBadgeInner}>
             <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
@@ -231,7 +249,7 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
           </View>
         </View>
       ) : (
-        /* Bouton clôturer — raised vert */
+        /* Bouton clôturer : raised vert */
         <View style={[styles.clotureBtnOuter, closing && { opacity: 0.5 }]}>
           <TouchableOpacity style={styles.clotureBtnInner}
             onPress={confirmerCloture} disabled={closing} activeOpacity={0.85}>
@@ -249,7 +267,7 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
   );
 }
 
-/* ── Sous-composants ─────────────────────────────────────────────────── */
+/* Sous-composants */
 
 type IconColor = 'blue' | 'green' | 'orange' | 'navy' | 'gray';
 function SectionHeader({ icon, color, title }: { icon: React.ComponentProps<typeof Ionicons>['name']; color: IconColor; title: string }) {
@@ -285,7 +303,7 @@ const rrS = StyleSheet.create({
   value: { fontSize: 15, fontWeight: '700' },
 });
 
-/* ── Styles ──────────────────────────────────────────────────────────── */
+/* Styles */
 const styles = StyleSheet.create({
   root:      { flex: 1, backgroundColor: NEO },
   scroll:    { paddingBottom: 40 },
@@ -327,7 +345,7 @@ const styles = StyleSheet.create({
   opMontant: { fontSize: 14, fontWeight: '700', color: TEXT },
   opEncaisse:{ fontSize: 11, marginTop: 2 },
 
-  /* Badge "déjà clôturé" — raised vert */
+  /* Badge "déjà clôturé" : raised vert */
   clotureBadgeOuter: {
     marginHorizontal: 12, marginTop: 20,
     borderRadius: 12, backgroundColor: Colors.successBg,
@@ -343,7 +361,7 @@ const styles = StyleSheet.create({
   },
   clotureBadgeText: { color: Colors.success, fontWeight: '700', fontSize: 14 },
 
-  /* Bouton clôturer — raised vert */
+  /* Bouton clôturer : raised vert */
   clotureBtnOuter: {
     marginHorizontal: 12, marginTop: 22, marginBottom: 8,
     borderRadius: 14, backgroundColor: Colors.success,
@@ -360,7 +378,7 @@ const styles = StyleSheet.create({
   clotureBtnText: { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
   clotureBtnSub:  { color: 'rgba(255,255,255,0.65)', fontSize: 11, marginTop: 4 },
 
-  /* ── État succès ── */
+  /* État succès */
   successRoot: { flex: 1, backgroundColor: NEO, padding: 24, alignItems: 'center', justifyContent: 'center' },
 
   checkOuter: {
@@ -381,7 +399,7 @@ const styles = StyleSheet.create({
   successTitle: { fontSize: 24, fontWeight: '800', color: TEXT, letterSpacing: -0.5, marginBottom: 4 },
   successSub:   { fontSize: 13, color: TEXT3, marginBottom: 28 },
 
-  /* Notice sync — warning raised */
+  /* Notice sync : warning raised */
   syncNoticeOuter: {
     width: '100%', marginBottom: 14,
     borderRadius: 12, backgroundColor: Colors.warningBg,
@@ -397,7 +415,7 @@ const styles = StyleSheet.create({
   },
   syncNoticeText: { flex: 1, fontSize: 13, color: TEXT2, lineHeight: 18 },
 
-  /* Bouton retour — raised bleu */
+  /* Bouton retour : raised bleu */
   backBtnOuter: {
     width: '100%', marginTop: 8,
     borderRadius: 14, backgroundColor: Colors.brandBlue,

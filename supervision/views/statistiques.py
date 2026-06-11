@@ -1,4 +1,39 @@
-"""Vue Statistiques & Tendances — aggrégats multi-jours."""
+"""
+Vue Statistiques & Tendances : agrégats multi-jours.
+
+Ce module génère la page statistiques de la supervision, qui présente
+des indicateurs agrégés sur une période choisie (aujourd'hui / 7 jours /
+ce mois / 90 jours). Les données alimentent des graphiques Chart.js côté
+client (JSON sérialisé dans le contexte Django).
+
+       Séries calculées :
+       - Montant encaissé + nb opérations par jour (courbes)
+       - Taux de couverture des PLVs par jour (courbe)
+       - Anomalies par type (barres) et par gravité (donut)
+       - Répartition par article collecte/restitution (barres groupées)
+       - Performance par livreur (couverture PLVs, montant)
+       - Détail articles par livreur (tableau)
+
+- Aujourd'hui : journée en cours, pour le superviseur en temps réel.
+       - 7 jours     : semaine glissante (end_date - 6j = 7 jours inclus).
+       - Ce mois     : du 1er du mois courant à aujourd'hui : aligne avec le
+                       cycle de facturation mensuel SODIGAZ, plus pertinent
+                       qu'une fenêtre glissante de 30 jours.
+       - 90 jours    : trimestre glissant pour les tendances longues.
+
+Les graphiques Chart.js sont renderés côté client.
+On sérialise les séries en JSON dans le contexte Django et on les injecte
+dans un bloc <script> du template. C'est le moyen le plus simple sans
+endpoint AJAX supplémentaire pour la page statistiques.
+
+On n'affiche dans le graphique que les types
+d'article ayant au moins une quantité sur la période : évite des barres
+à zéro parasites si un article n'est pas utilisé sur la période.
+
+Un jour sans programme ne doit pas compter
+comme "0 %" dans la moyenne : c'est une absence de donnée, pas un échec.
+None est ensuite filtré pour le calcul de taux_moyen.
+"""
 import json
 from datetime import date as date_cls, timedelta
 from decimal import Decimal
@@ -16,6 +51,15 @@ from ..decorators import superviseur_required
 
 @superviseur_required
 def statistiques(request):
+    """
+    Vue unique générant toutes les séries statistiques pour le template.
+
+    Chaque bloc (opérations,
+         étapes, anomalies, articles, livreurs) fait sa propre requête agrégée
+         avec GROUP BY. Fusionner tout en une requête serait illisible et
+         provoquerait des inflations de COUNT dues aux JOIN multiples.
+    """
+    # Calcul de la fenêtre temporelle
     periode = request.GET.get("periode", "7")
     if periode not in ("aujourd_hui", "7", "mois", "90"):
         periode = "7"
@@ -26,15 +70,16 @@ def statistiques(request):
     elif periode == "7":
         start_date = end_date - timedelta(days=6)
     elif periode == "mois":
+        # "Ce mois" = du 1er du mois courant à aujourd'hui (cycle de facturation)
         start_date = end_date.replace(day=1)
     else:  # "90"
         start_date = end_date - timedelta(days=89)
 
     nb_jours = (end_date - start_date).days + 1
-    all_days = [start_date + timedelta(days=i) for i in range(nb_jours)]
-    labels   = [d.strftime("%d/%m") for d in all_days]
+    all_days  = [start_date + timedelta(days=i) for i in range(nb_jours)]
+    labels    = [d.strftime("%d/%m") for d in all_days]
 
-    # ── Montant encaissé + nb opérations par jour ────────────────────────────
+    # Montant encaissé + nb opérations par jour
     ops_rows = (
         Operation.objects
         .filter(
@@ -49,10 +94,10 @@ def statistiques(request):
     )
     ops_by_day = {row["etape__programme__date_programme"]: row for row in ops_rows}
 
-    montants       = [float(ops_by_day.get(d, {}).get("montant", 0)) for d in all_days]
-    nb_ops_par_jour = [ops_by_day.get(d, {}).get("nb_ops", 0) for d in all_days]
+    montants        = [float(ops_by_day.get(d, {}).get("montant", 0)) for d in all_days]
+    nb_ops_par_jour = [ops_by_day.get(d, {}).get("nb_ops", 0)         for d in all_days]
 
-    # ── Taux de couverture des étapes par jour ───────────────────────────────
+    # Taux de couverture des PLVs par jour
     etapes_rows = (
         Etape.objects
         .filter(
@@ -70,7 +115,7 @@ def statistiques(request):
     )
     etapes_by_day = {row["programme__date_programme"]: row for row in etapes_rows}
 
-    # None = pas de programme ce jour-là (à exclure du calcul de la moyenne)
+    # None = pas de programme ce jour-là (exclu de la moyenne : voir module docstring)
     taux_couverture = []
     for d in all_days:
         row   = etapes_by_day.get(d)
@@ -79,7 +124,7 @@ def statistiques(request):
             round(row["visitees"] / total * 100, 1) if (row and total) else None
         )
 
-    # ── Anomalies par type ───────────────────────────────────────────────────
+    # Anomalies par type (barres) et par gravité (donut)
     anom_rows = (
         Anomalie.objects
         .filter(
@@ -92,9 +137,8 @@ def statistiques(request):
         .order_by("-count")
     )
     anom_labels = [row["type_anomalie"] for row in anom_rows]
-    anom_counts = [row["count"]        for row in anom_rows]
+    anom_counts = [row["count"]         for row in anom_rows]
 
-    # ── Anomalies par gravité (pour donut) ───────────────────────────────────
     gravite_rows = (
         Anomalie.objects
         .filter(
@@ -105,14 +149,15 @@ def statistiques(request):
         .values("gravite")
         .annotate(count=Count("id"))
     )
-    gravite_map = {r["gravite"]: r["count"] for r in gravite_rows}
+    gravite_map  = {r["gravite"]: r["count"] for r in gravite_rows}
     gravite_data = [
         gravite_map.get("FAIBLE",  0),
         gravite_map.get("MOYENNE", 0),
         gravite_map.get("ELEVEE",  0),
     ]
 
-    # ── Répartition par article (collecte vs restitution) ───────────────────
+    # Répartition par article (collecte vs restitution)
+    # Seuls les articles ayant au moins une quantité sur la période sont affichés.
     ARTICLE_ORDER  = ["B6", "B12_5", "B38", "VRAC"]
     ARTICLE_LABELS = {"B6": "6 kg", "B12_5": "12,5 kg", "B38": "38 kg", "VRAC": "Vrac"}
 
@@ -137,14 +182,13 @@ def statistiques(request):
         if tops in ("COLLECTE", "RESTITUTION"):
             article_map[te][tops] = qte
 
-    # Seuls les types d'article ayant au moins une quantité sur la période
     active_articles       = [p for p in ARTICLE_ORDER if p in article_map]
-    article_chart_labels  = [ARTICLE_LABELS[p] for p in active_articles]
+    article_chart_labels  = [ARTICLE_LABELS[p]              for p in active_articles]
     article_collecte_data = [article_map[p].get("COLLECTE",    0) for p in active_articles]
     article_restit_data   = [article_map[p].get("RESTITUTION", 0) for p in active_articles]
     total_articles        = sum(article_collecte_data) + sum(article_restit_data)
 
-    # ── Performance par livreur ──────────────────────────────────────────────
+    # Performance par livreur (taux de couverture PLVs + montant)
     livreur_etapes_rows = (
         Etape.objects
         .filter(
@@ -191,13 +235,14 @@ def statistiques(request):
 
     # Tri : meilleur taux de couverture en premier
     perf_sorted   = sorted(perf_map.items(), key=lambda x: x[1]["taux"], reverse=True)
-    perf_labels   = [code              for code, _ in perf_sorted]
-    perf_taux     = [d["taux"]         for _, d   in perf_sorted]
-    perf_montants = [d["montant"]      for _, d   in perf_sorted]
-    perf_visitees = [d["visitees"]     for _, d   in perf_sorted]
-    perf_totaux   = [d["total"]        for _, d   in perf_sorted]
+    perf_labels   = [code         for code, _ in perf_sorted]
+    perf_taux     = [d["taux"]    for _, d   in perf_sorted]
+    perf_montants = [d["montant"] for _, d   in perf_sorted]
+    perf_visitees = [d["visitees"] for _, d  in perf_sorted]
+    perf_totaux   = [d["total"]   for _, d   in perf_sorted]
 
-    # ── Détail articles par livreur (quantités collectées / restituées) ──────
+    # Détail articles par livreur (tableau sous le graphe perf)
+    # Seuls B6, B12_5, B38 : VRAC exclu du tableau de détail (volume différent).
     DETAIL_EMBS = ["B6", "B12_5", "B38"]
 
     livreur_articles_rows = (
@@ -241,33 +286,33 @@ def statistiques(request):
         if r["total_coll"] + r["total_rest"] > 0:
             perf_detail_rows.append(r)
 
-    # ── KPI résumé ───────────────────────────────────────────────────────────
+    # KPI résumé
     total_montant   = sum(montants)
     total_ops       = sum(nb_ops_par_jour)
     total_anom      = sum(anom_counts)
     moy_journaliere = round(total_montant / nb_jours, 0)
 
+    # Exclure les jours sans programme (None) du calcul de taux moyen
     jours_actifs = [t for t in taux_couverture if t is not None]
     taux_moyen   = round(sum(jours_actifs) / len(jours_actifs), 1) if jours_actifs else 0
 
-    # Nombre de programmes sur la période
     nb_programmes = Programme.objects.filter(
         date_programme__range=(start_date, end_date),
         is_deleted=False,
     ).count()
 
     return render(request, "supervision/statistiques.html", {
-        "periode":         periode,
-        "start_date":      start_date,
-        "end_date":        end_date,
-        # Séries Chart.js (JSON, safe pour injection dans <script>)
+        "periode":    periode,
+        "start_date": start_date,
+        "end_date":   end_date,
+        # Séries Chart.js sérialisées en JSON (injectées dans <script> du template)
         "labels_json":     json.dumps(labels),
         "montants_json":   json.dumps(montants),
         "nb_ops_json":     json.dumps(nb_ops_par_jour),
         "couverture_json": json.dumps(taux_couverture),
-        "anom_labels_json": json.dumps(anom_labels),
-        "anom_counts_json": json.dumps(anom_counts),
-        "gravite_json":    json.dumps(gravite_data),
+        "anom_labels_json":      json.dumps(anom_labels),
+        "anom_counts_json":      json.dumps(anom_counts),
+        "gravite_json":          json.dumps(gravite_data),
         "article_labels_json":   json.dumps(article_chart_labels),
         "article_collecte_json": json.dumps(article_collecte_data),
         "article_restit_json":   json.dumps(article_restit_data),

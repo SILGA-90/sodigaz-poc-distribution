@@ -1,8 +1,8 @@
 /* ══════════════════════════════════════════════════════════
-   OPÉRATION DETAIL — Thème NEO SODIGAZ
+   OPÉRATION DETAIL : Thème NEO SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
-/* ─── En-tête ─── */
+/* En-tête */
 .op-header {
     display: flex; justify-content: space-between; align-items: flex-start;
     flex-wrap: wrap; gap: 1rem;
@@ -49,7 +49,7 @@
 .enc-pill-orange { background: rgba(238,114,2,.12);   color: #c45a00; }
 .enc-pill-gray   { background: rgba(74,104,128,.12);  color: #6a8898; }
 
-/* ─── Code X3 ─── */
+/* Code X3 */
 .code-x3 {
     font-family: 'SFMono-Regular', Consolas, monospace;
     font-size: .76rem; color: #5a7080;
@@ -59,7 +59,7 @@
     padding: .12rem .45rem; border-radius: 5px;
 }
 
-/* ─── Signatures ─── */
+/* Signatures */
 .sig-row   { display: flex; flex-wrap: wrap; gap: 1.5rem; }
 .sig-block { display: flex; flex-direction: column; gap: .5rem; }
 .sig-label {
@@ -82,10 +82,10 @@
 /* Les SVG de signature s'affichent sur fond NEO inset */
 .sig-box svg { max-width: 100%; max-height: 100%; }
 
-/* ─── Commentaire ─── */
+/* Commentaire */
 .section-body p { color: #3a5060; font-size: .9rem; line-height: 1.65; }
 
-/* ─── Responsive ─── */
+/* Responsive */
 @media (max-width: 640px) {
     .op-header       { flex-direction: column; }
     .op-amount-block { text-align: left; }

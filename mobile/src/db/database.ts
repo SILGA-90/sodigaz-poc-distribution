@@ -1,32 +1,75 @@
 /**
- * Gestion de la connexion a la base SQLite locale.
+ * Gestion de la connexion à la base SQLite locale (expo-sqlite).
+ *
+ * Ce module centralise l'ouverture, l'initialisation et les migrations
+ * de la base de données SQLite embarquée dans l'application mobile.
+ * Il expose :
+ *          - getDatabase()       : point d'entrée unique pour obtenir l'instance DB
+ *          - resetDatabase()     : réinitialisation complète (debug uniquement)
+ *          - getLastPulledAt / setLastPulledAt : curseur de synchronisation
+ *          - getCloturesPending / addCloturePending / clearCloturesPending :
+ *            file d'attente des programmes clôturés hors-ligne
+ *
+ * expo-sqlite peut être appelé de
+ * plusieurs endroits en parallèle au démarrage (composants qui montent
+ * simultanément). Sans verrou, chaque appelant ouvrirait sa propre
+ * connexion concurrente, ce qui provoque un NullPointerException natif
+ * Android dans prepareAsync. Le verrou sérialise les appels : un seul
+ * _openAndInit() s'exécute, tous les autres awaittent la même promesse.
  */
 import * as SQLite from 'expo-sqlite';
-
 import { CREATE_TABLES_SQL, SCHEMA_VERSION } from './schema';
 
 const DB_NAME = 'sodigaz.db';
 
+/** Instance singleton de la base ouverte. null = pas encore initialisée. */
 let dbInstance: SQLite.SQLiteDatabase | null = null;
-// Verrou d'initialisation : tous les appelants simultanés attendent la même
-// promesse au lieu d'ouvrir chacun une connexion concurrente (race condition
-// → NullPointerException côté natif Android sur prepareAsync).
+
+/**
+ * Verrou d'initialisation : promesse partagée par tous les appelants concurrents.
+ * Voir en-tête du module. Ne jamais supprimer ce mécanisme.
+ */
 let dbInitPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
+/**
+ * Ouvre la base SQLite, applique les pragmas nécessaires et exécute
+ * les migrations de schéma si la version locale est inférieure à
+ * SCHEMA_VERSION.
+ *
+ * Le mode WAL améliore les performances en
+ * écriture et permet des lectures concurrentes pendant une écriture.
+ * Sur Android, le mode par défaut (DELETE journal) peut provoquer des
+ * corruptions lors d'un crash en écriture.
+ *
+ * SQLite désactive les contraintes FK par défaut
+ * pour des raisons de compatibilité ascendante. On les active
+ * explicitement pour garantir l'intégrité référentielle du schéma.
+ *
+ * Chaque bloc `if (currentVersion < N)`
+ * est idempotent et s'applique dans l'ordre croissant. Une base qui saute
+ * plusieurs versions (ex. v1 -> v5 directement) passera par tous les blocs
+ * intermédiaires. On ne peut jamais "sauter" une migration.
+ */
 async function _openAndInit(): Promise<SQLite.SQLiteDatabase> {
   const db = await SQLite.openDatabaseAsync(DB_NAME);
+
+  // Mode WAL : meilleures performances et résistance aux crashs.
   await db.execAsync('PRAGMA journal_mode = WAL;');
+  // Contraintes FK : intégrité référentielle (désactivée par défaut dans SQLite).
   await db.execAsync('PRAGMA foreign_keys = ON;');
 
   const result = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version;');
   const currentVersion = result?.user_version ?? 0;
 
+  // Migration v0 -> v1 : création initiale de toutes les tables du schéma.
   if (currentVersion < 1) {
     await db.execAsync(CREATE_TABLES_SQL);
     await db.execAsync('PRAGMA user_version = 1;');
   }
 
-  // Migration v1 -> v2 : ajout de la table photo
+  // Migration v1 -> v2 : ajout de la table photo.
+  // WHY : La gestion des photos a été ajoutée après la v1 initiale.
+  //       On crée la table et les index associés.
   if (currentVersion < 2) {
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS photo (
@@ -50,16 +93,19 @@ async function _openAndInit(): Promise<SQLite.SQLiteDatabase> {
     await db.execAsync('PRAGMA user_version = 2;');
   }
 
-  // Migration v2 -> v3 : alignement de la version (toutes les tables sont déjà
-  // créées par le bloc < 1 ; ce bloc existe uniquement pour synchroniser
-  // user_version avec SCHEMA_VERSION sur les bases existantes à v2).
+  // Migration v2 -> v3 : alignement de user_version sur SCHEMA_VERSION.
+  // WHY : Les tables étaient déjà créées par le bloc < 1 sur les bases existantes.
+  //       Ce bloc existe uniquement pour synchroniser le numéro de version
+  //       sur les installations qui étaient en v2 sans avoir besoin de DDL.
   if (currentVersion < 3) {
     await db.execAsync('PRAGMA user_version = 3;');
   }
 
-  // Migration v3 -> v4 : contrainte UNIQUE sur produit.code_x3 (table encore nommée produit).
-  // Sans cette contrainte, un reset des données serveur (nouveaux IDs)
-  // créait des doublons via INSERT OR REPLACE (conflit sur id, pas code_x3).
+  // Migration v3 -> v4 : ajout d'une contrainte UNIQUE sur produit.code_x3.
+  // WHY : Sans contrainte UNIQUE sur code_x3, un reset des données serveur
+  //       (nouveaux IDs après seed) créait des doublons via INSERT OR REPLACE
+  //       (le conflit se faisait sur `id`, pas sur `code_x3`, laissant des
+  //       lignes orphelines). On recrée la table avec la contrainte.
   if (currentVersion < 4) {
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS produit_v4 (
@@ -81,7 +127,12 @@ async function _openAndInit(): Promise<SQLite.SQLiteDatabase> {
     `);
   }
 
-  // Migration v4 -> v5 : renommage de la table produit en article.
+  // Migration v4 -> v5 : renommage de la table `produit` en `article`.
+  // WHY : Alignement terminologique avec le métier SODIGAZ (on parle d'articles,
+  //       pas de produits). La colonne FK `produit_id` dans ligne_programme et
+  //       ligne_operation conserve son nom (renommer nécessiterait de recréer
+  //       ces tables ; le gain est cosmétique). Côté Django, db_table="produit"
+  //       est conservé -> pas de migration SQL serveur nécessaire.
   if (currentVersion < 5) {
     await db.execAsync(`
       ALTER TABLE produit RENAME TO article;
@@ -92,13 +143,24 @@ async function _openAndInit(): Promise<SQLite.SQLiteDatabase> {
   return db;
 }
 
+/**
+ * Point d'entrée unique pour obtenir l'instance SQLite initialisée.
+ * Garantit qu'une seule instance est créée, même en cas d'appels
+ * concurrents au démarrage.
+ *
+ * *   - Si dbInstance est déjà défini, on retourne immédiatement (fast path).
+ *   - Sinon, si dbInitPromise est null, on lance _openAndInit() et on stocke
+ *     la promesse. Les appelants suivants awaittent la même promesse.
+ *   - Une fois _openAndInit() terminé, dbInstance est défini et dbInitPromise
+ *     remis à null pour libérer la mémoire.
+ */
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (dbInstance) return dbInstance;
 
   if (!dbInitPromise) {
     dbInitPromise = _openAndInit()
       .then((db) => {
-        dbInstance = db;
+        dbInstance    = db;
         dbInitPromise = null;
         return db;
       })
@@ -111,6 +173,15 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   return dbInitPromise;
 }
 
+/**
+ * Supprime toutes les tables, remet user_version à 0 et recrée le
+ * schéma propre via getDatabase().
+ *
+ * Réservé à l'écran Debug BDD (accessible par 7 taps + PIN serveur).
+ * Permet de tester un premier pull depuis zéro sans désinstaller l'app.
+ * NE JAMAIS appeler en production : toutes les données PENDING non
+ * synchronisées seront perdues définitivement.
+ */
 export async function resetDatabase(): Promise<void> {
   const db = await getDatabase();
   const tables = [
@@ -122,15 +193,22 @@ export async function resetDatabase(): Promise<void> {
     await db.execAsync(`DROP TABLE IF EXISTS ${table};`);
   }
   await db.execAsync('PRAGMA user_version = 0;');
-  dbInstance = null;
+  // On invalide l'instance pour forcer une réinitialisation complète.
+  dbInstance    = null;
   dbInitPromise = null;
   await getDatabase();
 }
 
-// --- Timestamp de derniere synchronisation ---
+// ---------------------------------------------------------------------------
+// Curseur de synchronisation (lastPulledAt)
+// ---------------------------------------------------------------------------
+// WHAT : lastPulledAt est un timestamp en millisecondes stocké dans sync_meta.
+//        Il représente le `timestamp` retourné par le dernier pull réussi.
+// WHY  : Permet les pulls incrémentaux (delta). Le serveur ne renvoie que les
+//        enregistrements dont last_modified > lastPulledAt. Valeur 0 = premier pull.
 
 export async function getLastPulledAt(): Promise<number> {
-  const db = await getDatabase();
+  const db  = await getDatabase();
   const row = await db.getFirstAsync<{ valeur: string }>(
     'SELECT valeur FROM sync_meta WHERE cle = ?;',
     ['last_pulled_at'],
@@ -146,15 +224,22 @@ export async function setLastPulledAt(timestamp: number): Promise<void> {
   );
 }
 
-// --- File d'attente des clotures (stockee dans sync_meta) ---
-// On stocke les UUID des programmes clotures localement mais pas encore
-// remontes au serveur. Cette liste survit aux pulls (contrairement a un
-// champ dans la table programme, qui serait ecrase par INSERT OR REPLACE).
+// ---------------------------------------------------------------------------
+// File d'attente des clôtures (clotures_pending dans sync_meta)
+// ---------------------------------------------------------------------------
+// WHAT : Stocke les UUIDs des programmes que le livreur a clôturés localement
+//        mais qui n'ont pas encore été confirmés côté serveur.
+//
+// WHY (sync_meta plutôt que colonne dans `programme`) : Un INSERT OR REPLACE
+//        sur la table `programme` (lors du pull) écraserait le statut CLOTURE
+//        local avec EN_COURS (version serveur). En stockant la file dans une
+//        table clé/valeur séparée, elle survit aux mises à jour des tables
+//        métier. Elle est vidée uniquement sur confirmation du serveur (200 OK).
 
 const CLE_CLOTURES = 'clotures_pending';
 
 export async function getCloturesPending(): Promise<string[]> {
-  const db = await getDatabase();
+  const db  = await getDatabase();
   const row = await db.getFirstAsync<{ valeur: string }>(
     'SELECT valeur FROM sync_meta WHERE cle = ?;',
     [CLE_CLOTURES],
@@ -167,8 +252,9 @@ export async function getCloturesPending(): Promise<string[]> {
   }
 }
 
+/** WHAT : Ajoute un UUID à la file (idempotent : pas de doublon). */
 export async function addCloturePending(uuid: string): Promise<void> {
-  const db = await getDatabase();
+  const db      = await getDatabase();
   const current = await getCloturesPending();
   if (!current.includes(uuid)) {
     current.push(uuid);
@@ -179,8 +265,9 @@ export async function addCloturePending(uuid: string): Promise<void> {
   );
 }
 
+/** WHAT : Retire les UUIDs confirmés par le serveur de la file d'attente. */
 export async function clearCloturesPending(uuids: string[]): Promise<void> {
-  const db = await getDatabase();
+  const db      = await getDatabase();
   const current = await getCloturesPending();
   const restant = current.filter((u) => !uuids.includes(u));
   await db.runAsync(

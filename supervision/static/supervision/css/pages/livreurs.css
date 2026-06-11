@@ -1,8 +1,8 @@
 /* ══════════════════════════════════════════════════════════
-   TABLEAU DE BORD LIVREURS — Thème NEO SODIGAZ
+   TABLEAU DE BORD LIVREURS : Thème NEO SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
-/* ─── Badge "Aujourd'hui" ─── */
+/* Badge "Aujourd'hui" */
 .badge-live {
     display: inline-flex; align-items: center;
     background: rgba(7,155,217,.12); color: #079BD9;
@@ -11,7 +11,7 @@
     border: 1px solid rgba(7,155,217,.25);
 }
 
-/* ─── Grille responsive ─── */
+/* Grille responsive */
 .liv-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -21,7 +21,7 @@
     .liv-grid { grid-template-columns: 1fr; }
 }
 
-/* ─── Fiche livreur — base NEO raised ─── */
+/* Fiche livreur : base NEO raised */
 .liv-card {
     background: var(--neo-bg, #e8edf2);
     border-radius: 14px;
@@ -54,7 +54,7 @@
     background: rgba(74,104,128,.1);
 }
 
-/* ─── En-tête de fiche ─── */
+/* En-tête de fiche */
 .liv-card-header {
     display: flex; align-items: center; gap: .75rem;
     padding-top: .35rem;
@@ -81,7 +81,7 @@
     letter-spacing: .04em;
 }
 
-/* ─── Badges statut programme ─── */
+/* Badges statut programme */
 .liv-badge {
     display: inline-flex; align-items: center;
     font-size: .68rem; font-weight: 700; letter-spacing: .03em;
@@ -96,7 +96,7 @@
 .liv-badge--cloture   { background: rgba(25,135,84,.12);  color: #146844;
                          border: 1px solid rgba(25,135,84,.25); }
 
-/* ─── Infos programme (type + véhicule + n° X3) ─── */
+/* Infos programme (type + véhicule + n° X3) */
 .liv-prog-info {
     display: flex; flex-wrap: wrap; align-items: center; gap: .5rem;
     font-size: .76rem;
@@ -116,7 +116,7 @@
     font-size: .7rem; font-family: monospace; color: #4a6880;
 }
 
-/* ─── Barre de progression ─── */
+/* Barre de progression */
 .liv-progress-block { }
 .liv-progress-label { font-size: .75rem; color: #6080a0; font-weight: 600; }
 .liv-progress-count { font-size: .75rem; color: #3a5060; }
@@ -149,7 +149,7 @@
 .liv-bar--low  { background: linear-gradient(90deg, #d97706, #fbbf24); }
 .liv-progress-pct { font-size: .68rem; color: #8aa8c0; text-align: right; margin-top: .2rem; }
 
-/* ─── KPI row ─── */
+/* KPI row */
 .liv-kpi-row {
     display: grid; grid-template-columns: 1fr 1fr 1fr;
     gap: .5rem;
@@ -171,18 +171,18 @@
     margin-top: .2rem; line-height: 1.2;
 }
 
-/* ─── Dernière activité ─── */
+/* Dernière activité */
 .liv-last-activity {
     font-size: .74rem; color: #7a9ab0;
 }
 
-/* ─── Aucun programme ─── */
+/* Aucun programme */
 .liv-no-prog {
     font-size: .8rem; color: #94aabf; font-style: italic;
     text-align: center; padding: .75rem 0;
 }
 
-/* ─── Boutons d'action ─── */
+/* Boutons d'action */
 .liv-actions {
     display: flex; gap: .55rem; flex-wrap: wrap;
     margin-top: .15rem;

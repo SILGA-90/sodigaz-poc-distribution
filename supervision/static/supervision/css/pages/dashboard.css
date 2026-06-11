@@ -1,4 +1,4 @@
-/* ─── En-tête dashboard ─── */
+/* En-tête dashboard */
 .dash-header {
     display: flex; align-items: center;
     justify-content: space-between; flex-wrap: wrap; gap: 1rem;
@@ -41,7 +41,7 @@
 }
 .btn-today:hover { border-color: #079BD9; color: #079BD9; background: rgba(7,155,217,.04); }
 
-/* ─── Indicateur temps réel ─── */
+/* Indicateur temps réel */
 .live-indicator {
     display: flex; align-items: center; gap: .45rem;
     background: var(--neo-bg, #e8edf2); border-radius: 20px; padding: .32rem .9rem;
@@ -66,7 +66,7 @@
 .live-sep { color: #d1d9e0; }
 #live-status { font-weight: 600; color: #0a1628; font-size: .8rem; }
 
-/* ─── Alerte anomalies élevées ─── */
+/* Alerte anomalies élevées */
 .alerte-card {
     background: #fff5f5;
     border: 1.5px solid #fca5a5;
@@ -118,7 +118,7 @@
 .alerte-statut-EN_TRAITEMENT { background: rgba(238,114,2,.1); color: #c45a00; }
 .alerte-statut-RESOLUE       { background: #d1f5e0; color: #198754; }
 
-/* ─── KPI Grid ─── */
+/* KPI Grid */
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -196,7 +196,7 @@
     position: absolute; inset: 0; z-index: 1; cursor: pointer;
 }
 
-/* ─── Barre de progression couverture ─── */
+/* Barre de progression couverture */
 .kpi-progress-bar-wrap {
     height: 4px; border-radius: 2px; margin-top: .6rem;
     background: rgba(74,104,128,.12);
@@ -216,7 +216,7 @@
 }
 .stat-updated { animation: pulse-update 1s ease-out; border-radius: 4px; }
 
-/* ─── Layout principal ─── */
+/* Layout principal */
 .dash-main-row {
     display: grid;
     grid-template-columns: 1fr 340px;
@@ -231,7 +231,7 @@
 }
 .section-title { font-size: .92rem; font-weight: 700; color: #0a1628; }
 
-/* ─── Carte ─── */
+/* Carte */
 #map { height: 400px; }
 
 .btn-parcours {
@@ -280,7 +280,7 @@
 .map-dot-green  { background: #198754; }
 .map-dot-orange { background: #EE7202; }
 
-/* ─── Bilan produits ─── */
+/* Bilan produits */
 .bilan-section-head {
     display: flex; align-items: center; gap: .4rem;
     padding: .55rem 1rem .4rem;
@@ -333,7 +333,7 @@
 .bilan-total-collecte td { background: rgba(7,155,217,.05) !important; color: #079BD9 !important; }
 .bilan-total-restit   td { background: rgba(25,135,84,.05)  !important; color: #198754 !important; }
 
-/* ─── Fil d'activité récente ─── */
+/* Fil d'activité récente */
 .activ-feed { padding: .25rem 1.1rem .75rem; }
 .activ-list {
     list-style: none; margin: 0; padding: 0;
@@ -376,9 +376,9 @@
     text-align: center; color: #94a3b8; padding: 1.8rem 1rem; font-size: .85rem;
 }
 
-/* Thème Flatpickr → voir flatpickr-neo.css (chargé dans le template) */
+/* Thème Flatpickr -> voir flatpickr-neo.css (chargé dans le template) */
 
-/* ─── Responsive ─── */
+/* Responsive */
 @media (max-width: 1300px) {
     .kpi-grid { grid-template-columns: repeat(3, 1fr); }
 }

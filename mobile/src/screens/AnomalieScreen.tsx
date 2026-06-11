@@ -1,6 +1,25 @@
 /**
- * Signalement d'une anomalie — néomorphisme clair.
- * Header navy (bulles rouge-danger), chips type raised, inputs inset, bouton raised danger.
+ * Écran de signalement d'anomalie terrain.
+ *
+ * Permet au livreur de signaler une anomalie observée pendant la
+ * tournée : fuite de gaz, dommage matériel, absence de responsable,
+ * problème d'accès, autre. L'anomalie est rattachée à un programme
+ * et éventuellement à un PLV spécifique. Une photo peut être jointe.
+ *
+ * Le livreur n'est pas
+ * formé pour évaluer la gravité technique d'une anomalie. Le superviseur
+ * reclassifie après examen. Voir anomalieRepository.creerAnomalie().
+ *
+ * La position GPS permet de
+ * localiser l'anomalie sur la carte de supervision. Si le GPS est
+ * indisponible, l'anomalie est enregistrée sans coordonnées : non
+ * bloquant (le livreur ne doit pas être bloqué par un GPS lent).
+ *
+ * PhotosSection est configurée avec
+ * un type unique ANOMALIE : pas de sélecteur de type affiché.
+ * La galerie est autorisée (cameraOnly=false) : une anomalie peut
+ * être photographiée avec la galerie si la caméra a déjà capturé
+ * une image pertinente.
  */
 import React, { useEffect, useState } from 'react';
 import {
@@ -24,7 +43,7 @@ import PhotosSection, { PhotoEnAttente } from '../components/PhotosSection';
 import { RootStackParamList } from '../types/navigation';
 import { Colors } from '../theme';
 
-/* ── Palette néo claire ─────────────────────────────────────────────── */
+/* Palette néo claire */
 const NEO     = '#e8edf2';
 const NEO_SHD = '#4a6880';
 const NEO_IN  = '#d4dde6';
@@ -105,8 +124,8 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
         "L'anomalie est enregistrée localement. Elle sera remontée à la prochaine synchronisation.",
         [{ text: 'OK', onPress: () => navigation.goBack() }],
       );
-    } catch (e: any) {
-      Alert.alert('Erreur', e?.message ?? String(e));
+    } catch (e: unknown) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : String(e));
     } finally {
       setSaving(false);
     }
@@ -114,12 +133,12 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
 
   const gpsColor = gpsStatus === 'fiable' ? Colors.success : gpsStatus === 'degradee' ? Colors.warning : gpsStatus === 'indisponible' ? Colors.danger : TEXT3;
   const gpsBg    = gpsStatus === 'fiable' ? Colors.successBg : gpsStatus === 'degradee' ? Colors.warningBg : gpsStatus === 'indisponible' ? Colors.dangerBg : NEO_IN;
-  const gpsLabel = gpsStatus === 'fiable' ? 'GPS fiable' : gpsStatus === 'degradee' ? 'GPS imprécis' : gpsStatus === 'indisponible' ? 'GPS absent' : 'GPS…';
+  const gpsLabel = gpsStatus === 'fiable' ? 'GPS fiable' : gpsStatus === 'degradee' ? 'GPS imprécis' : gpsStatus === 'indisponible' ? 'GPS absent' : 'GPS...';
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.scroll}>
 
-      {/* ── Header navy (bulles danger) ── */}
+      {/* Header navy (bulles danger) */}
       <View style={styles.header}>
         <View style={styles.bubble1} pointerEvents="none" />
         <View style={styles.bubble2} pointerEvents="none" />
@@ -140,7 +159,7 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
         </View>
       </View>
 
-      {/* ── TYPE D'ANOMALIE ── */}
+      {/* TYPE D'ANOMALIE */}
       <SectionHeader icon="list-outline" color="red" title="Type d'anomalie" />
       <View style={styles.cardOuter}>
         <View style={styles.cardInner}>
@@ -152,7 +171,7 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
         </View>
       </View>
 
-      {/* ── PLV CONCERNÉE ── */}
+      {/* PLV CONCERNÉE */}
       {plvOptions.length > 0 && (
         <>
           <SectionHeader icon="location-outline" color="orange" title="PLV concernée" optional />
@@ -161,9 +180,9 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
               <NeoSelect
                 value={selectedPlvId}
                 onChange={(v) => setSelectedPlvId(v)}
-                placeholder="— Aucune PLV spécifique —"
+                placeholder=": Aucune PLV spécifique :"
                 options={[
-                  { label: '— Aucune PLV spécifique —', value: null },
+                  { label: ': Aucune PLV spécifique :', value: null },
                   ...plvOptions.map((p) => ({ label: p.libelle, value: p.id })),
                 ]}
               />
@@ -172,7 +191,7 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
         </>
       )}
 
-      {/* ── DESCRIPTION ── */}
+      {/* DESCRIPTION */}
       <View style={styles.sectionHeaderRow}>
         <SectionHeader icon="create-outline" color="navy" title="Description" />
         <Text style={styles.charCount}>{description.length} car.</Text>
@@ -184,7 +203,7 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
             value={description}
             onChangeText={setDescription}
             multiline
-            placeholder="Décris l'anomalie rencontrée : cause, contexte, actions déjà tentées…"
+            placeholder="Décris l'anomalie rencontrée : cause, contexte, actions déjà tentées..."
             placeholderTextColor="#8fa4b4"
             textAlignVertical="top"
             onFocus={() => setDescFocused(true)}
@@ -193,7 +212,7 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
         </View>
       </View>
 
-      {/* ── PHOTOS ── */}
+      {/* PHOTOS */}
       <SectionHeader icon="camera-outline" color="blue" title="Photo" optional />
       <View style={styles.cardOuterNoPad}>
         <View style={styles.cardInnerNoPad}>
@@ -206,7 +225,7 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
         </View>
       </View>
 
-      {/* ── NOTE INFO ── */}
+      {/* NOTE INFO */}
       <View style={styles.infoOuter}>
         <View style={styles.infoInner}>
           <Ionicons name="information-circle-outline" size={16} color={Colors.brandBlue} />
@@ -214,7 +233,7 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
         </View>
       </View>
 
-      {/* ── ENREGISTRER — raised danger ── */}
+      {/* ENREGISTRER : raised danger */}
       <View style={[styles.saveBtnOuter, saving && { opacity: 0.5 }]}>
         <TouchableOpacity style={styles.saveBtnInner} onPress={handleSave} disabled={saving} activeOpacity={0.85}>
           {saving ? <ActivityIndicator color="#fff" /> : (
@@ -230,7 +249,7 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
   );
 }
 
-/* ── Sous-composants ─────────────────────────────────────────────────── */
+/* Sous-composants */
 type IconColor = 'blue' | 'green' | 'red' | 'orange' | 'navy' | 'gray';
 function SectionHeader({ icon, color, title, optional }: { icon: React.ComponentProps<typeof Ionicons>['name']; color: IconColor; title: string; optional?: boolean }) {
   const bg: Record<IconColor, string> = { blue: Colors.infoBg, green: Colors.successBg, red: Colors.dangerBg, orange: Colors.warningBg, navy: NEO_IN, gray: NEO_IN };
@@ -252,12 +271,12 @@ const shS = StyleSheet.create({
   optional: { fontSize: 12, color: TEXT3, marginLeft: 2 },
 });
 
-/* ── Styles ──────────────────────────────────────────────────────────── */
+/* Styles */
 const styles = StyleSheet.create({
   root:   { flex: 1, backgroundColor: NEO },
   scroll: { paddingBottom: 48 },
 
-  /* Header navy — bulles danger */
+  /* Header navy : bulles danger */
   header:  { backgroundColor: NAVY, overflow: 'hidden' },
   bubble1: { position: 'absolute', width: 220, height: 220, borderRadius: 110, top: -70, right: -55, backgroundColor: 'rgba(220,38,38,0.1)' },
   bubble2: { position: 'absolute', width: 110, height: 110, borderRadius: 55,  top: 40,  right: 105, backgroundColor: 'rgba(220,38,38,0.07)' },

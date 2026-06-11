@@ -1,4 +1,28 @@
-"""Vues des anomalies terrain (liste, détail, changement de statut / gravité)."""
+"""
+Vues des anomalies terrain (liste, détail, changement de statut / gravité).
+
+Ce module expose quatre vues pour la gestion des anomalies :
+  - anomalies_list()           : liste filtrée des anomalies (statut, gravité,
+                                  livreur, programme, date)
+  - anomalie_detail()          : détail d'une anomalie avec ses photos
+  - changer_statut_anomalie()  : action superviseur : mise à jour du statut
+  - changer_gravite_anomalie() : action superviseur : reclassification de la gravité
+
+Une anomalie peut ne pas être liée à
+une opération spécifique (ex. accident de route, bris de matériel en
+dehors d'une étape). Elle est rattachée au programme global. Le superviseur
+doit pouvoir les traiter indépendamment.
+
+On calcule l'ancienneté en
+Python après le requêtage plutôt qu'en SQL (via EXTRACT ou timedelta)
+pour éviter une dépendance sur le timezone serveur dans la requête ORM.
+timezone.now() est le bon moment de référence.
+
+Les actions de changement de statut/gravité
+peuvent être déclenchées depuis la liste ou le détail. Rediriger vers
+la page précédente (Referer) offre une meilleure UX que de rediriger
+toujours vers la liste.
+"""
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -12,6 +36,18 @@ from ._base import _get_date_filter
 
 @superviseur_required
 def anomalies_list(request):
+    """
+    Affiche la liste des anomalies avec filtres cumulatifs.
+    Compteurs par gravité et détection des anomalies urgentes (≥ 1 jour).
+
+    Chaque filtre est appliqué conditionnellement.
+         Un superviseur peut combiner statut=OUVERTE + gravite=ELEVEE pour voir
+         uniquement les alertes critiques non traitées.
+
+    Une anomalie ouverte ou en traitement depuis plus d'un
+         jour mérite une attention particulière. Ce compteur met en évidence
+         les anomalies qui "traînent" sans être prises en charge.
+    """
     statut_filter  = request.GET.get("statut",    "OUVERTE")
     gravite_filter = request.GET.get("gravite",   "").strip()
     livreur_filter = request.GET.get("livreur",   "").strip()
@@ -50,7 +86,8 @@ def anomalies_list(request):
         role=Role.LIVREUR, is_active=True
     ).order_by("code_livreur")
 
-    now = timezone.now()
+    # Calcul de l'ancienneté en Python après le requêtage
+    now       = timezone.now()
     anomalies = list(anomalies_qs)
     for a in anomalies:
         a.anciennete_jours = (now - a.date_heure).days
@@ -82,6 +119,11 @@ def anomalies_list(request):
 
 @superviseur_required
 def anomalie_detail(request, anomalie_id):
+    """
+    Affiche le détail d'une anomalie avec ses photos associées.
+    Une anomalie peut avoir plusieurs photos :
+         le prefetch évite une requête par photo lors de l'affichage.
+    """
     anomalie = get_object_or_404(
         Anomalie.objects
         .select_related("programme__utilisateur", "plv__client")
@@ -94,7 +136,12 @@ def anomalie_detail(request, anomalie_id):
 
 @superviseur_required
 def changer_statut_anomalie(request, anomalie_id):
-    """Met à jour le statut d'une anomalie (action superviseur)."""
+    """
+    Met à jour le statut d'une anomalie (action superviseur uniquement).
+    WHY (.update() sur queryset) : .update() fait un UPDATE SQL direct sans
+         charger l'objet en mémoire : plus efficace qu'un get() + .save().
+         Le trigger PostgreSQL mettra à jour last_modified automatiquement.
+    """
     if request.method == "POST":
         nouveau_statut = request.POST.get("statut", "")
         if nouveau_statut in ("OUVERTE", "EN_TRAITEMENT", "RESOLUE"):
@@ -107,7 +154,12 @@ def changer_statut_anomalie(request, anomalie_id):
 
 @superviseur_required
 def changer_gravite_anomalie(request, anomalie_id):
-    """Reclassifie la gravité d'une anomalie (action superviseur uniquement)."""
+    """
+    Reclassifie la gravité d'une anomalie (action superviseur uniquement).
+    Le livreur saisit la gravité perçue sur le terrain. Le superviseur,
+    avec plus de contexte, peut ajuster cette classification (ex. une
+    anomalie signalée MOYENNE peut être ELEVEE après vérification).
+    """
     if request.method == "POST":
         nouvelle_gravite = request.POST.get("gravite", "")
         if nouvelle_gravite in ("FAIBLE", "MOYENNE", "ELEVEE"):

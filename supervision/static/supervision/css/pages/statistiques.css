@@ -1,8 +1,8 @@
 /* ══════════════════════════════════════════════════════════
-   STATISTIQUES & TENDANCES — Thème NEO SODIGAZ
+   STATISTIQUES & TENDANCES : Thème NEO SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
-/* ─── Toggle période ─── */
+/* Toggle période */
 .stat-period-toggle {
     display: inline-flex; gap: 0;
     background: var(--neo-in-bg, #d4dde6);
@@ -21,7 +21,7 @@
     box-shadow: 3px 3px 8px rgba(74,104,128,.2), -2px -2px 5px rgba(255,255,255,.85);
 }
 
-/* ─── KPI row ─── */
+/* KPI row */
 .stat-kpi-row {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
@@ -51,7 +51,7 @@
 .stat-kpi-label { font-size: .75rem;  font-weight: 700; color: #4a7090; margin-top: .1rem; }
 .stat-kpi-sub   { font-size: .68rem;  color: #8aa8c0; margin-top: .1rem; }
 
-/* ─── Grille 2 colonnes ─── */
+/* Grille 2 colonnes */
 .stat-row-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -62,7 +62,7 @@
     .stat-kpi-row { grid-template-columns: 1fr 1fr; }
 }
 
-/* ─── Conteneur canvas ─── */
+/* Conteneur canvas */
 .stat-chart-wrap {
     padding: .75rem 1.1rem 1rem;
     position: relative; height: 220px;
@@ -73,7 +73,7 @@
 }
 
 /* Wrapper carré : le donut doit avoir width == height pour ne pas s'aplatir.
-   flex:1 rendait le wrapper rectangulaire (largeur > hauteur → ovale). */
+   flex:1 rendait le wrapper rectangulaire (largeur > hauteur -> ovale). */
 .stat-donut-canvas-wrap {
     width: 160px; height: 160px; flex-shrink: 0;
     position: relative;
@@ -83,7 +83,7 @@
     width: 100% !important; height: 100% !important;
 }
 
-/* ─── Légende donut ─── */
+/* Légende donut */
 .stat-donut-legend {
     display: flex; flex-direction: column; gap: .45rem; flex-shrink: 0;
 }
@@ -96,7 +96,7 @@
     box-shadow: 1px 1px 3px rgba(74,104,128,.2);
 }
 
-/* ─── Libellé période ─── */
+/* Libellé période */
 .stat-chart-period {
     font-size: .72rem; font-weight: 600; color: #8aa8c0;
     background: var(--neo-in-bg, #d4dde6);
@@ -105,13 +105,13 @@
                 inset -1px -1px 2px rgba(255,255,255,.75);
 }
 
-/* ─── Graphe articles : hauteur un peu plus généreuse pour les barres groupées ─── */
+/* Graphe articles : hauteur un peu plus généreuse pour les barres groupées */
 .stat-chart-wrap--articles { height: 260px; }
 
-/* ─── Graphe performance livreurs : hauteur ajustée en JS (52px × nb livreurs) ─── */
+/* Graphe performance livreurs : hauteur ajustée en JS (52px × nb livreurs) */
 .stat-chart-wrap--perf { height: 160px; }
 
-/* ─── Table détail articles par livreur ─── */
+/* Table détail articles par livreur */
 .perf-detail-wrap {
     padding: .25rem 1.1rem 1rem;
     overflow-x: auto;
@@ -148,7 +148,7 @@
 .perf-detail-table tbody tr:nth-child(even) { background: rgba(74,104,128,.03); }
 .perf-detail-table tbody tr:nth-child(even) .perf-td-total { background: rgba(7,155,217,.08); }
 
-/* ─── État vide ─── */
+/* État vide */
 .stat-empty {
     padding: 2.5rem 1rem; text-align: center; color: #8aa8c0;
 }

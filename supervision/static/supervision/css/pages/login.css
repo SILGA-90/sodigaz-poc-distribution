@@ -1,9 +1,9 @@
 /* ══════════════════════════════════════════════════════════
-   LOGIN — Supervision SODIGAZ
+   LOGIN : Supervision SODIGAZ
    Fond navy dégradé · carte flottante · accent orange SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
-/* ── Conteneur pleine page ── */
+/* Conteneur pleine page */
 .login-wrapper {
     background: linear-gradient(140deg, #0a1628 0%, #0d2240 55%, #0e4a7a 100%) !important;
     display: flex; flex-direction: column;
@@ -12,7 +12,7 @@
     position: relative; overflow: hidden;
 }
 
-/* ── Bulles décoratives ── */
+/* Bulles décoratives */
 .bg-bubble { position: absolute; border-radius: 50%; pointer-events: none; }
 .b1 { width: 420px; height: 420px; top: -130px; right: -110px;
       background: rgba(7,155,217,.08); }
@@ -21,7 +21,7 @@
 .b3 { width: 150px; height: 150px; top: 200px; left: 50px;
       background: rgba(250,184,72,.05); }
 
-/* ── Brand au-dessus de la carte ── */
+/* Brand au-dessus de la carte */
 .login-brand { text-align: center; margin-bottom: 1.85rem; position: relative; z-index: 1; }
 .login-brand img { height: 52px; object-fit: contain; margin-bottom: .65rem; }
 
@@ -41,7 +41,7 @@
     background: #079BD9; flex-shrink: 0;
 }
 
-/* ── Carte ── */
+/* Carte */
 .login-card {
     width: 100%; max-width: 400px; position: relative; z-index: 1;
     background: #fff; border-radius: 18px;
@@ -72,7 +72,7 @@
     text-align: center; margin-bottom: 1.5rem; letter-spacing: -.02em;
 }
 
-/* ── Champs du formulaire ── */
+/* Champs du formulaire */
 .field-group { margin-bottom: 1.1rem; }
 
 .field-label {
@@ -106,7 +106,7 @@
 .field-input:focus + .field-icon,
 .field-wrap:focus-within .field-icon { color: #079BD9; }
 
-/* ── Bouton Se connecter ── */
+/* Bouton Se connecter */
 .btn-login {
     display: flex; align-items: center; justify-content: center; gap: .3rem;
     width: 100%; margin-top: 1.5rem; padding: .78rem;
@@ -125,21 +125,21 @@
 .btn-login:disabled { opacity: .45; cursor: not-allowed; }
 .btn-login i { font-size: 1.25rem; }
 
-/* ── Indication démo ── */
+/* Indication démo */
 .demo-hint {
     font-size: .75rem; color: #94a3b8;
     text-align: center; margin: 1.1rem 0 0;
 }
 .demo-hint code { color: #079BD9; font-weight: 600; background: none; padding: 0; }
 
-/* ── Footer ── */
+/* Footer */
 .login-footer {
     color: rgba(255,255,255,.18); font-size: .7rem;
     letter-spacing: .09em; margin-top: 1.75rem;
     text-align: center; position: relative; z-index: 1;
 }
 
-/* ── Alerte identifiants invalides ── */
+/* Alerte identifiants invalides */
 .login-error-alert {
     display: flex; align-items: flex-start; gap: .55rem;
     background: #fef2f2; border: 1.5px solid #fca5a5;
@@ -149,7 +149,7 @@
 }
 .login-error-alert i { font-size: 1rem; flex-shrink: 0; margin-top: .1rem; }
 
-/* ── Alerte blocage IP ── */
+/* Alerte blocage IP */
 .login-blocked-alert {
     display: flex; align-items: flex-start; gap: .85rem;
     background: #fff5f5;
@@ -169,7 +169,7 @@
 .login-blocked-sub { font-size: .8rem; color: #ef4444; line-height: 1.45; }
 .login-blocked-sub strong { color: #991b1b; }
 
-/* ── Responsive ── */
+/* Responsive */
 @media (max-width: 480px) {
     .login-brand img { height: 44px; }
     .login-body { padding: 1.6rem 1.5rem 1.8rem; }

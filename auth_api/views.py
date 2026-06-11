@@ -1,11 +1,20 @@
 """
 Vues de l'API d'authentification.
 
-Endpoints :
-  POST /api/auth/login/          : echange code_livreur + password contre 2 tokens
-  POST /api/auth/refresh/        : echange refresh token contre nouveau access token
-  GET  /api/auth/me/             : retourne les infos du livreur connecte
-  POST /api/auth/dev-access/     : verifie le code d'acces au mode developpeur mobile
+Ce module expose quatre endpoints d'authentification :
+  POST /api/auth/login/      : échange code_livreur + password contre 2 tokens JWT
+  POST /api/auth/refresh/    : rafraîchit l'access token à partir du refresh token
+  GET  /api/auth/me/         : retourne les infos de l'utilisateur connecté
+  POST /api/auth/dev-access/ : vérifie le code d'accès au mode développeur mobile
+
+L'application mobile est offline-first : le token JWT
+est stocké localement (SecureStore) et joint à chaque requête API dans le
+header Authorization. Contrairement aux sessions Django (cookies), le JWT
+fonctionne sans état côté serveur et survit aux redémarrages du serveur.
+
+L'API est accessible depuis des appareils mobiles non maîtrisés.
+Les throttles limitent le brute-force sur les credentials et sur le PIN
+dev sans bloquer les utilisateurs légitimes.
 """
 import hmac
 
@@ -20,12 +29,22 @@ from .serializers import LivreurTokenObtainPairSerializer, UtilisateurMeSerializ
 
 
 class LoginRateThrottle(AnonRateThrottle):
-    """5 tentatives de login par minute par adresse IP — anti brute-force."""
+    """
+    Limite les tentatives de login à 5 par minute par adresse IP.
+    Anti brute-force sur les credentials livreur. 5/min est suffisant
+    pour un utilisateur légitime (l'app ne retente jamais automatiquement)
+    et bloquant pour un attaquant par dictionnaire.
+    """
     scope = "login"
 
 
 class LivreurTokenObtainPairView(TokenObtainPairView):
-    """Login par code_livreur + password."""
+    """
+    Login par code_livreur + password : retourne access + refresh tokens.
+    Le serializer custom surcharge le
+    champ username_field pour accepter code_livreur comme identifiant,
+    et enrichit le payload JWT avec les informations livreur (role, etc.).
+    """
     serializer_class = LivreurTokenObtainPairSerializer
     throttle_classes = [LoginRateThrottle]
 
@@ -33,13 +52,23 @@ class LivreurTokenObtainPairView(TokenObtainPairView):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def me(request):
-    """Retourne les infos de l'utilisateur connecte (verifie que le JWT marche)."""
+    """
+    Retourne les informations de l'utilisateur actuellement connecté.
+    Utilisé par le mobile au démarrage pour vérifier que le JWT stocké
+    est encore valide et récupérer les données profil (code_livreur, role).
+    """
     serializer = UtilisateurMeSerializer(request.user)
     return Response(serializer.data)
 
 
 class DevAccessThrottle(UserRateThrottle):
-    """3 tentatives par heure par utilisateur — limite le brute-force."""
+    """
+    Limite les tentatives de vérification du PIN dev à 3 par heure par
+    utilisateur JWT.
+    Le PIN dev protège l'accès à l'écran Debug BDD (reset de la base
+    locale). 3/h rend le brute-force impraticable (espace de ~6 chiffres)
+    tout en autorisant quelques erreurs de frappe légitimes.
+    """
     scope = "dev_access"
 
 
@@ -48,20 +77,27 @@ class DevAccessThrottle(UserRateThrottle):
 @throttle_classes([DevAccessThrottle])
 def verify_dev_access(request):
     """
-    Verifie le code d'acces au mode developpeur mobile.
+    Vérifie le code d'accès au mode développeur mobile.
 
-    Le code de reference est lu depuis la variable d'environnement DEV_ACCESS_CODE
-    (jamais dans le code source). La comparaison est en temps constant (hmac.compare_digest)
-    pour eviter les attaques par timing.
+    Le PIN n'est jamais embarqué dans le
+    bundle JS de l'app (il serait extractible par reverse engineering).
+    Il vit uniquement dans la variable d'environnement DEV_ACCESS_CODE
+    du serveur Django. L'app envoie le code saisi par l'utilisateur et
+    reçoit ok:true / ok:false.
 
-    Reponses :
-      200  {"ok": true}   — code correct
-      403  {"ok": false}  — code incorrect (compte dans le quota de 3/heure)
-      503  {}             — DEV_ACCESS_CODE non configure cote serveur
+    La comparaison de chaînes ordinaire (==) est
+    vulnérable aux attaques par timing (un attaquant peut mesurer le temps
+    de réponse pour deviner le PIN caractère par caractère). compare_digest
+    garantit un temps constant quel que soit le degré de correspondance.
+
+    Réponses :
+      200  {"ok": true}   : code correct
+      403  {"ok": false}  : code incorrect (compte dans le quota de 3/heure)
+      503  {}             : DEV_ACCESS_CODE non configuré côté serveur
     """
     stored = settings.DEV_ACCESS_CODE
     if not stored:
-        return Response({"detail": "Mode developpeur non configure."}, status=503)
+        return Response({"detail": "Mode développeur non configuré."}, status=503)
 
     submitted = str(request.data.get("code", ""))
     valid = hmac.compare_digest(submitted, stored)

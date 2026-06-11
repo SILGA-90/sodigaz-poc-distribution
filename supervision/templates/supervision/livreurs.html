@@ -9,7 +9,7 @@
 
 {% block content %}
 
-<!-- ── En-tête ── -->
+<!-- En-tête -->
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <div class="d-flex align-items-center gap-2">
         <span class="pg-icon"><i class="bi bi-people"></i></span>
@@ -39,14 +39,14 @@
 </div>
 
 {% else %}
-<!-- ── Grille de fiches ── -->
+<!-- Grille de fiches -->
 <div class="liv-grid">
 
 {% for fiche in fiches %}
 {% with liv=fiche.livreur prog=fiche.programme %}
 <div class="liv-card {% if not prog %}liv-card--sans-programme{% elif prog.statut == 'CLOTURE' %}liv-card--cloture{% elif prog.statut == 'EN_COURS' %}liv-card--en-cours{% endif %}">
 
-    <!-- ──── En-tête fiche ──── -->
+    <!-- En-tête fiche -->
     <div class="liv-card-header">
         <div class="liv-avatar" style="--av-color:{{ fiche.av_color }};">
             {{ liv.get_full_name|slice:":1"|upper|default:liv.username|slice:":1"|upper }}
@@ -69,7 +69,7 @@
     </div>
 
     {% if prog %}
-    <!-- ──── Programme ──── -->
+    <!-- Programme -->
     <div class="liv-prog-info">
         <span class="liv-prog-type {% if prog.type_programme == 'COLLECTE' %}type-collecte{% else %}type-restitution{% endif %}">
             {% if prog.type_programme == 'COLLECTE' %}
@@ -88,7 +88,7 @@
         {% endif %}
     </div>
 
-    <!-- ──── Progression étapes ──── -->
+    <!-- Progression étapes -->
     <div class="liv-progress-block">
         <div class="d-flex justify-content-between align-items-baseline mb-1">
             <span class="liv-progress-label">Étapes</span>
@@ -111,7 +111,7 @@
         <div class="liv-progress-pct">{{ fiche.pct }} %</div>
     </div>
 
-    <!-- ──── KPI ──── -->
+    <!-- KPI -->
     <div class="liv-kpi-row">
         <div class="liv-kpi">
             <div class="liv-kpi-val">{{ fiche.ops.nb_ops }}</div>
@@ -127,7 +127,7 @@
         </div>
     </div>
 
-    <!-- ──── Dernière activité ──── -->
+    <!-- Dernière activité -->
     <div class="liv-last-activity">
         <i class="bi bi-clock-history me-1"></i>
         {% if fiche.derniere_activite %}
@@ -137,7 +137,7 @@
         {% endif %}
     </div>
 
-    <!-- ──── Actions ──── -->
+    <!-- Actions -->
     <div class="liv-actions">
         <a href="{% url 'supervision:programme-detail' prog.id %}" class="btn-liv-action btn-liv-blue">
             <i class="bi bi-clipboard2-check"></i> Programme
@@ -153,7 +153,7 @@
     </div>
 
     {% else %}
-    <!-- ──── Aucun programme ──── -->
+    <!-- Aucun programme -->
     <div class="liv-no-prog">
         <i class="bi bi-calendar-x me-2"></i>Aucun programme pour cette journée
     </div>

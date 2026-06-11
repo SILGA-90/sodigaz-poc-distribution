@@ -1,6 +1,27 @@
 /**
- * Stack de navigation racine.
- * Determine au demarrage si l'utilisateur est deja connecte.
+ * Stack de navigation racine de l'application mobile.
+ *
+ * Ce composant gère le routage de premier niveau. Au démarrage, il
+ * vérifie si un access token est présent en SecureStore pour choisir
+ * entre l'écran de connexion (Login) et le tableau de bord (Dashboard).
+ * Toutes les routes de l'application sont déclarées ici.
+ *
+ * isAuthenticated() lit le
+ * SecureStore, qui est une API asynchrone sur iOS/Android. On affiche
+ * un spinner bleu Sodigaz pendant la vérification pour éviter un flash
+ * de l'écran de connexion si l'utilisateur est déjà connecté.
+ *
+ * Au premier lancement après la
+ * mise à jour qui déplace les photos vers documentDirectory, des photos
+ * peuvent encore pointer vers le cache Android (chemin getCacheDir/).
+ * La réparation est lancée en tâche de fond pour ne pas bloquer la
+ * navigation. Une photo non réparée avant l'upload sera marquée
+ * FILE_LOST, pas perdue silencieusement.
+ *
+ * Les écrans gèrent leur propre entête
+ * aux couleurs SODIGAZ. L'entête React Navigation par défaut est blanc
+ * Bootstrap : on le désactive à la racine pour éviter de le surcharger
+ * écran par écran.
  */
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
@@ -30,7 +51,7 @@ export default function RootNavigator(): React.ReactElement {
   useEffect(() => {
     isAuthenticated().then((auth) => {
       setInitialRoute(auth ? 'Dashboard' : 'Login');
-      // Réparation des URIs de cache existantes — fire-and-forget, non bloquant.
+      // Réparation des URIs de cache existantes : fire-and-forget, non bloquant.
       if (auth) repairCachePhotoUris().catch(() => {});
     });
   }, []);

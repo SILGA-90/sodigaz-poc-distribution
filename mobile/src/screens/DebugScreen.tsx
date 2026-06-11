@@ -1,7 +1,30 @@
 /**
- * DebugScreen — Base de données locale (accès protégé 7 taps + PIN serveur).
- * Affiche le nombre de lignes par table + état de synchronisation.
- * Néomorphisme clair — même charte que les autres écrans.
+ * Écran Debug BDD : inspection de la base SQLite locale.
+ *
+ * Cet écran est accessible uniquement après déblocage par 7 taps +
+ * PIN serveur (vérification via /api/auth/dev-access/). Il affiche :
+ *          - Le nombre de lignes de chaque table SQLite locale
+ *          - La date du dernier pull réussi (lastPulledAt)
+ *          - Le nombre d'enregistrements PENDING (non synchronisés)
+ *          - Un bouton "Réinitialiser" pour vider toute la base (debug only)
+ *
+ * Permettre
+ * à un livreur de réinitialiser la base effacerait les données PENDING
+ * non synchronisées : fraude possible ou perte de données de livraison.
+ * Le double verrou (7 taps + PIN serveur) protège contre l'accès
+ * accidentel et contre la curiosité non autorisée. Le PIN n'est jamais
+ * stocké dans l'app (voir CLAUDE.md §5).
+ *
+ * En développement, il faut souvent
+ * tester un premier pull depuis zéro sans désinstaller l'app. Ce bouton
+ * reproduit un état "fresh install" instantanément. Il est explicitement
+ * labellisé "Action irréversible · données PENDING perdues" dans le dialog
+ * NeoDialog pour que le développeur comprenne ce qu'il fait.
+ *
+ * Alert.alert() Android ne bloque
+ * pas le thread de rendu : un double-tap rapide peut déclencher deux
+ * resets. NeoDialog est modal et désactive le bouton Confirmer pendant
+ * l'opération (prop loading).
  */
 import React, { useEffect, useState } from 'react';
 import {
@@ -24,7 +47,7 @@ import { RootStackParamList } from '../types/navigation';
 import { Colors } from '../theme';
 import NeoDialog from '../components/NeoDialog';
 
-/* ── Palette néo claire ──────────────────────────────────────────────── */
+/* Palette néo claire */
 const NEO     = '#e8edf2';
 const NEO_SHD = '#4a6880';
 const NEO_IN  = '#d4dde6';
@@ -55,8 +78,8 @@ export default function DebugScreen({ navigation }: Props): React.ReactElement {
       setCounts(c);
       setLastPull(lp);
       setPending(p);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }
@@ -68,7 +91,7 @@ export default function DebugScreen({ navigation }: Props): React.ReactElement {
     <>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
 
-      {/* ── Header navy ── */}
+      {/* Header navy */}
       <View style={styles.header}>
         <View style={styles.hBubble1} pointerEvents="none" />
         <View style={styles.hBubble2} pointerEvents="none" />
@@ -91,15 +114,15 @@ export default function DebugScreen({ navigation }: Props): React.ReactElement {
 
       <ScrollView style={styles.root} contentContainerStyle={styles.scroll}>
 
-        {/* ── Chargement ── */}
+        {/* Chargement */}
         {loading && (
           <View style={styles.loadingRow}>
             <ActivityIndicator size="small" color={Colors.brandBlue} />
-            <Text style={styles.loadingText}>Lecture en cours…</Text>
+            <Text style={styles.loadingText}>Lecture en cours...</Text>
           </View>
         )}
 
-        {/* ── Erreur ── */}
+        {/* Erreur */}
         {error && (
           <View style={styles.bannerOuter}>
             <View style={[styles.bannerInner, styles.bannerDanger]}>
@@ -111,7 +134,7 @@ export default function DebugScreen({ navigation }: Props): React.ReactElement {
 
         {counts && !loading && (
           <>
-            {/* ── Succès ── */}
+            {/* Succès */}
             <View style={styles.bannerOuter}>
               <View style={[styles.bannerInner, styles.bannerSuccess]}>
                 <Ionicons name="checkmark-circle-outline" size={18} color={Colors.success} style={{ marginTop: 1 }} />
@@ -119,7 +142,7 @@ export default function DebugScreen({ navigation }: Props): React.ReactElement {
               </View>
             </View>
 
-            {/* ── Table des lignes ── */}
+            {/* Table des lignes */}
             <View style={styles.cardOuter}>
               <View style={styles.cardInner}>
                 {/* En-tête inset */}
@@ -144,14 +167,14 @@ export default function DebugScreen({ navigation }: Props): React.ReactElement {
               </View>
             </View>
 
-            {/* ── Dernière sync ── */}
+            {/* Dernière sync */}
             <Text style={styles.meta}>
               Dernière sync : {lastPull === 0 ? 'jamais' : new Date(lastPull).toLocaleString('fr-FR')}
             </Text>
           </>
         )}
 
-        {/* ── Pending ── */}
+        {/* Pending */}
         {!loading && (
           <View style={styles.pendingOuter}>
             <View style={[styles.pendingInner, pending > 0 ? styles.pendingWarn : styles.pendingOk]}>
@@ -169,7 +192,7 @@ export default function DebugScreen({ navigation }: Props): React.ReactElement {
           </View>
         )}
 
-        {/* ── Bouton Rafraîchir — raised bleu ── */}
+        {/* Bouton Rafraîchir : raised bleu */}
         <View style={styles.refreshOuter}>
           <TouchableOpacity style={styles.refreshInner} onPress={refresh} disabled={loading} activeOpacity={0.82}>
             {loading
@@ -182,7 +205,7 @@ export default function DebugScreen({ navigation }: Props): React.ReactElement {
           </TouchableOpacity>
         </View>
 
-        {/* ── Bouton Réinitialiser — raised danger ── */}
+        {/* Bouton Réinitialiser : raised danger */}
         <View style={styles.resetOuter}>
           <TouchableOpacity style={styles.resetInner} onPress={() => setShowResetDialog(true)} activeOpacity={0.85}>
             <Ionicons name="trash-outline" size={16} color={Colors.danger} />
@@ -193,7 +216,7 @@ export default function DebugScreen({ navigation }: Props): React.ReactElement {
           </TouchableOpacity>
         </View>
 
-        {/* ── Dialog confirmation reset ── */}
+        {/* Dialog confirmation reset */}
         <NeoDialog
           visible={showResetDialog}
           icon="warning-outline"
@@ -208,7 +231,7 @@ export default function DebugScreen({ navigation }: Props): React.ReactElement {
             setShowResetDialog(false);
             setLoading(true);
             try { await resetDatabase(); await refresh(); }
-            catch (e: any) { setError(e?.message ?? String(e)); setLoading(false); }
+            catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)); setLoading(false); }
           }}
         />
 
@@ -218,7 +241,7 @@ export default function DebugScreen({ navigation }: Props): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  /* ── Header navy ── */
+  /* Header navy */
   header: {
     backgroundColor: NAVY,
     paddingTop: 48, paddingBottom: 18, paddingHorizontal: 16,
@@ -249,14 +272,14 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 16, fontWeight: '800', color: '#fff', letterSpacing: -0.2 },
   headerSub:   { fontSize: 11, color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', marginTop: 1 },
 
-  /* ── Corps ── */
+  /* Corps */
   root:   { flex: 1, backgroundColor: NEO },
   scroll: { padding: 16, paddingBottom: 48 },
 
   loadingRow:  { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
   loadingText: { fontSize: 13, color: TEXT3 },
 
-  /* ── Bannières ── */
+  /* Bannières */
   bannerOuter: {
     marginBottom: 12, borderRadius: 12,
     backgroundColor: NEO,
@@ -284,7 +307,7 @@ const styles = StyleSheet.create({
   },
   bannerSuccessText: { flex: 1, fontSize: 13, color: Colors.success, lineHeight: 18, fontWeight: '600' },
 
-  /* ── Carte table ── */
+  /* Carte table */
   cardOuter: {
     marginBottom: 8, borderRadius: 16,
     backgroundColor: NEO,
@@ -320,7 +343,7 @@ const styles = StyleSheet.create({
 
   meta: { fontSize: 12, color: TEXT3, marginBottom: 14, marginTop: 4, fontStyle: 'italic', textAlign: 'center' },
 
-  /* ── Pending ── */
+  /* Pending */
   pendingOuter: {
     marginBottom: 18, borderRadius: 12,
     backgroundColor: NEO,
@@ -349,7 +372,7 @@ const styles = StyleSheet.create({
   pendingTextOk:   { color: Colors.success },
   pendingTextWarn: { color: Colors.warning },
 
-  /* ── Bouton Rafraîchir — raised bleu ── */
+  /* Bouton Rafraîchir : raised bleu */
   refreshOuter: {
     marginBottom: 10, borderRadius: 13,
     backgroundColor: Colors.brandBlue,
@@ -368,7 +391,7 @@ const styles = StyleSheet.create({
   },
   refreshText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 
-  /* ── Bouton Réinitialiser — raised danger ── */
+  /* Bouton Réinitialiser : raised danger */
   resetOuter: {
     marginBottom: 12, borderRadius: 12,
     backgroundColor: NEO,

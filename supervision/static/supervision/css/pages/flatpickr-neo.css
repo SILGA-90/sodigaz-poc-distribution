@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════
-   FLATPICKR — Thème NEO SODIGAZ (fichier partagé)
+   FLATPICKR : Thème NEO SODIGAZ (fichier partagé)
    Charger APRÈS flatpickr.min.css sur toute page qui
    utilise Flatpickr.
    ══════════════════════════════════════════════════════ */
@@ -33,13 +33,13 @@
     flex-basis: calc(100% / 7) !important;
 }
 
-/* ── Flèche pointant vers l'input ── */
+/* Flèche pointant vers l'input */
 .flatpickr-calendar.arrowTop::before { border-bottom-color: rgba(255,255,255,.82); }
 .flatpickr-calendar.arrowTop::after  { border-bottom-color: #e8edf2; }
 .flatpickr-calendar.arrowBottom::before { border-top-color: rgba(74,104,128,.18); }
 .flatpickr-calendar.arrowBottom::after  { border-top-color: #e8edf2; }
 
-/* ── Navigation mois / année ── */
+/* Navigation mois / année */
 .flatpickr-months {
     padding: .25rem .5rem;
     height: 46px;
@@ -80,7 +80,7 @@
     border-color: #079BD9;
 }
 
-/* ── Mois / année courant ── */
+/* Mois / année courant */
 .flatpickr-current-month {
     font-size: .9rem; font-weight: 700;
     color: #0a1628; padding-top: 6px;
@@ -94,7 +94,7 @@
 .flatpickr-current-month .numInputWrapper span { border-color: rgba(74,104,128,.2); }
 .flatpickr-current-month .numInputWrapper span:hover { background: rgba(7,155,217,.1); }
 
-/* ── Étiquettes jours de la semaine ── */
+/* Étiquettes jours de la semaine */
 .flatpickr-weekdays {
     background: transparent; margin-top: .2rem;
     width: 308px !important;
@@ -112,7 +112,7 @@ span.flatpickr-weekday {
 }
 .flatpickr-weekwrapper .flatpickr-weeks { display: none; }
 
-/* ── Cellules jour ── */
+/* Cellules jour */
 .flatpickr-day {
     border-radius: 9px;
     color: #1a2a3a !important;

@@ -1,8 +1,8 @@
 /* ══════════════════════════════════════════════════════════
-   ANOMALIE DETAIL — Thème NEO SODIGAZ
+   ANOMALIE DETAIL : Thème NEO SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
-/* ─── En-tête ─── */
+/* En-tête */
 .anom-detail-header {
     display: flex; justify-content: space-between; align-items: flex-start;
     flex-wrap: wrap; gap: 1rem;
@@ -25,7 +25,7 @@
     letter-spacing: -.02em;
 }
 
-/* ─── Bloc action (grand bouton) ─── */
+/* Bloc action (grand bouton) */
 .anom-action-block { display: flex; align-items: center; }
 
 .btn-action-lg {
@@ -73,12 +73,12 @@
     color: #198754;
 }
 
-/* ─── Section classification (accent gauche coloré) ─── */
+/* Section classification (accent gauche coloré) */
 .classif-border-ELEVEE  { border-left: 4px solid #dc3545 !important; }
 .classif-border-MOYENNE { border-left: 4px solid #EE7202 !important; }
 .classif-border-FAIBLE  { border-left: 4px solid #198754 !important; }
 
-/* Select gravité en NEO inset — scoped au form de classification uniquement */
+/* Select gravité en NEO inset : scoped au form de classification uniquement */
 .classif-form .form-select {
     background-color: var(--neo-in-bg, #d4dde6);
     box-shadow: inset 2px 2px 5px rgba(74,104,128,.18),
@@ -94,16 +94,16 @@
     outline: none;
 }
 
-/* ─── Description ─── */
+/* Description */
 .anom-description {
     white-space: pre-wrap; color: #3a5060;
     font-size: .9rem; line-height: 1.65;
 }
 
-/* ─── Minimap ─── */
+/* Minimap */
 #minimap { border-radius: 0 0 10px 10px; }
 
-/* ─── Responsive ─── */
+/* Responsive */
 @media (max-width: 640px) {
     .anom-detail-header { flex-direction: column; }
     .anom-action-block  { width: 100%; }

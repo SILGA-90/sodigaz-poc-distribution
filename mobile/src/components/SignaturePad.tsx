@@ -1,14 +1,33 @@
 /**
- * Modal de capture de signature NATIVE (sans webview).
+ * SignaturePad : capture de signature tactile native.
  *
- * Implementation maison :
- *   - capture tactile via PanResponder (API native React Native)
- *   - accumulation des points en chemins (paths) SVG
- *   - rendu en temps reel avec react-native-svg
- *   - sortie : une chaine SVG complete (vectorielle, legere)
+ * Ce composant modal permet au livreur et au client de signer
+ * numériquement. Il capture les tracés tactiles via PanResponder,
+ * les accumule en chemins SVG, et retourne la signature sous forme
+ * de chaîne SVG complète via le callback onSave().
  *
- * Avantages vs webview : pas de decalage tactile, tres leger (quelques Ko),
- * net a toute echelle, aucune dependance externe lourde.
+ * Les bibliothèques de signature
+ * basées sur WebView (ex. react-native-signature-canvas) injectent un
+ * canvas HTML dans une WebView, ce qui introduit un décalage tactile
+ * perceptible (communication JS -> WebView -> JS), un rendu flou sur
+ * écrans haute densité, et une dépendance lourde incompatible avec
+ * certaines versions d'Expo Go. PanResponder est une API React Native
+ * native : zéro décalage, rendu natif via react-native-svg.
+ *
+ * Le SVG est vectoriel (net à toute
+ * taille, imprimable), léger (quelques centaines d'octets vs dizaines
+ * de Ko pour un PNG), et stockable directement en TEXT dans SQLite
+ * sans encodage intermédiaire. Le serveur Django stocke le SVG tel quel
+ * dans le champ `signature_livreur` / `signature_client`.
+ *
+ * PanResponder crée une closure
+ * au montage du composant. Sans la ref, onPanResponderMove lit toujours
+ * la valeur initiale de currentPath (closure stale). La ref est mise à
+ * jour de façon synchrone et sert de source de vérité dans la closure.
+ * useState est maintenu uniquement pour forcer le re-render du SVG.
+ *
+ * Bibliothèque standard de rendu SVG sur React Native,
+ * compatible Expo Go sans build natif supplémentaire.
  */
 import React, { useRef, useState } from 'react';
 import {
@@ -34,12 +53,12 @@ const CANVAS_WIDTH = 320;
 const CANVAS_HEIGHT = 200;
 
 export default function SignaturePad({ visible, titre, onSave, onCancel }: Props): React.ReactElement {
-  // Liste des traces terminees (chaque trace = une chaine "M x y L x y L ...")
+  // Liste des tracés terminés (chaque tracé = une chaîne "M x y L x y L ...")
   const [paths, setPaths] = useState<string[]>([]);
-  // Trace en cours de dessin
+  // Tracé en cours de dessin
   const [currentPath, setCurrentPath] = useState<string>('');
 
-  // On garde le path courant dans une ref pour le PanResponder (closure stable)
+  // Ref pour la closure stable de PanResponder (valeur toujours fraîche)
   const currentPathRef = useRef<string>('');
 
   const panResponder = useRef(

@@ -1,6 +1,36 @@
 /**
- * DashboardScreen — Néomorphisme clair.
- * Header navy (marque), corps NEO #e8edf2, cartes et boutons raised (double ombre).
+ * Tableau de bord du livreur : vue principale après connexion.
+ *
+ * Cet écran liste les programmes actifs (non clôturés) du livreur,
+ * affiche l'état de synchronisation, et déclenche syncAll() manuellement
+ * ou automatiquement à la reconnexion réseau. Il expose aussi le bouton
+ * de déconnexion et le mécanisme d'accès au mode développeur (7 taps +
+ * PIN serveur).
+ *
+ * Dès que le réseau revient,
+ * si des données sont en attente (pendingCount > 0), on lance syncAll()
+ * automatiquement pour réduire le délai de remontée des opérations terrain.
+ * L'utilisateur est notifié via un Toast "Réseau retrouvé".
+ *
+ * formatRelativeTime() affiche
+ * "il y a 5 min". Sans re-render périodique, cette valeur vieillirait
+ * sans se mettre à jour. On force un re-render toutes les minutes pour
+ * que l'affichage reste cohérent : sans déclencher de requête SQL.
+ *
+ * L'overlay PIN conserve un fond
+ * sombre (#0d1e35) même dans le thème néo clair. C'est intentionnel :
+ * le contraste fort est un signal visuel de "zone sécurisée" et aide
+ * à lire le clavier PIN en plein soleil. Voir CLAUDE.md §5.
+ *
+ * Si le livreur
+ * tente de se déconnecter avec des données PENDING, on l'avertit
+ * explicitement. Il peut choisir de synchroniser d'abord ou de se
+ * déconnecter quand même (données perdues = sa responsabilité).
+ *
+ * La liste des programmes est
+ * rechargée à chaque fois que cet écran devient actif (retour depuis
+ * ProgrammeScreen). Sans ça, une clôture effectuée dans ProgrammeScreen
+ * ne serait pas visible dans la liste jusqu'au prochain pull.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -29,7 +59,7 @@ import NetworkBanner from '../components/NetworkBanner';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { Colors } from '../theme';
 
-/* ── Palette néo ─────────────────────────────────────────────────────── */
+/* Palette néo */
 const NEO     = '#e8edf2';
 const NEO_SHD = '#b8cad8';
 const NEO_IN  = '#d4dde6';
@@ -97,7 +127,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       setPinVisible(false); setPinInput(''); setDevUnlocked(true);
       showToast('Mode développeur activé', 'info');
     } else if (result === 'quota') {
-      setPinInput(''); showToast('Trop de tentatives — réessayez dans 1 heure', 'error');
+      setPinInput(''); showToast('Trop de tentatives : réessayez dans 1 heure', 'error');
     } else if (result === 'error') {
       setPinInput(''); showToast('Connexion requise pour le mode développeur', 'error');
     } else {
@@ -143,7 +173,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       const envoyes = pushRes.pushed.operation + pushRes.pushed.ligne_operation + pushRes.pushed.anomalie;
       const recus   = Object.values(pullRes.counts).reduce((a, b) => a + b, 0);
       showToast(
-        envoyes > 0 || recus > 0 ? `Sync OK — ${recus} reçus, ${envoyes} envoyés` : 'Déjà à jour',
+        envoyes > 0 || recus > 0 ? `Sync OK : ${recus} reçus, ${envoyes} envoyés` : 'Déjà à jour',
         envoyes > 0 || recus > 0 ? 'success' : 'info',
       );
     } finally {
@@ -154,7 +184,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
   useEffect(() => {
     if (!justReconnected) return;
     clearReconnected();
-    if (pendingCount > 0) { showToast('Réseau retrouvé — synchronisation en cours...', 'info'); handleSync(); }
+    if (pendingCount > 0) { showToast('Réseau retrouvé : synchronisation en cours...', 'info'); handleSync(); }
   }, [justReconnected, clearReconnected, pendingCount, showToast, handleSync]);
 
   function handleLogout(): void {
@@ -171,7 +201,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     syncStatus === 'success' ? 'Synchronisé' :
     syncStatus === 'error'   ? 'Erreur de sync' : 'Prêt';
 
-  /* ── Carte programme ─────────────────────────────────────────────────── */
+  /* Carte programme */
   const renderProgramme = useCallback(({ item }: { item: ProgrammeAvecProgression }): React.ReactElement => {
     const pct = item.total_etapes > 0
       ? Math.round((item.etapes_visitees / item.total_etapes) * 100) : 0;
@@ -188,7 +218,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       item.statut === 'EN_COURS' ? 'En cours' : 'Planifié';
 
     return (
-      /* Raised — double ombre */
+      /* Raised : double ombre */
       <View style={styles.progOuter}>
         <View style={styles.progShadowLight}>
           <TouchableOpacity
@@ -216,7 +246,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
               {/* Barre de progression inset */}
               <View style={styles.progBarWrap}>
                 <View style={styles.progBarTrack}>
-                  <View style={[styles.progBarFill, { width: `${pct}%` as any, backgroundColor: accentColor }]} />
+                  <View style={[styles.progBarFill, { width: `${pct}%` as `${number}%`, backgroundColor: accentColor }]} />
                 </View>
                 <Text style={[styles.progPct, { color: accentColor }]}>{item.etapes_visitees}/{item.total_etapes}</Text>
               </View>
@@ -227,11 +257,11 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     );
   }, [navigation]);
 
-  /* ── Rendu ───────────────────────────────────────────────────────────── */
+  /* Rendu */
   return (
     <View style={styles.root}>
 
-      {/* ── Header navy ── */}
+      {/* Header navy */}
       <View style={styles.header}>
         <View style={styles.hBubble1} pointerEvents="none" />
         <View style={styles.hBubble2} pointerEvents="none" />
@@ -253,7 +283,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
           <View style={styles.userInfo}>
             <Text style={styles.userHello}>Bonjour,</Text>
             <Text style={styles.userName} numberOfLines={1}>
-              {user ? `${user.first_name} ${user.last_name}` : '—'}
+              {user ? `${user.first_name} ${user.last_name}` : ':'}
             </Text>
             <Text style={styles.userCode}>{user?.code_livreur ?? ''}</Text>
           </View>
@@ -263,7 +293,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
 
       <NetworkBanner isConnected={isConnected} />
 
-      {/* ── Carte de synchronisation raised ── */}
+      {/* Carte de synchronisation raised */}
       <View style={styles.syncOuter}>
         <View style={styles.syncShadowLight}>
           <View style={styles.syncContent}>
@@ -289,7 +319,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
         </View>
       </View>
 
-      {/* ── Section titre ── */}
+      {/* Section titre */}
       <View style={styles.sectionRow}>
         <Text style={styles.sectionTitle}>Programmes en cours</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Historique')}>
@@ -297,7 +327,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
         </TouchableOpacity>
       </View>
 
-      {/* ── Liste des programmes ── */}
+      {/* Liste des programmes */}
       <FlatList
         data={programmes}
         keyExtractor={(item) => String(item.id)}
@@ -324,7 +354,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
         }
       />
 
-      {/* ── Footer ── */}
+      {/* Footer */}
       <View style={styles.footer}>
         {/* Déconnexion raised danger */}
         <View style={styles.logoutOuter}>
@@ -344,7 +374,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
         </View>
       </View>
 
-      {/* ── Overlay PIN (conservé sombre — sécurité) ── */}
+      {/* Overlay PIN (conservé sombre : sécurité) */}
       {pinVisible && (
         <View style={styles.pinOverlay}>
           <View style={styles.pinCard}>
@@ -380,7 +410,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
         </View>
       )}
 
-      {/* ── Dialog déconnexion ── */}
+      {/* Dialog déconnexion */}
       <NeoDialog
         visible={showLogoutDialog}
         icon={pendingCount > 0 ? 'warning-outline' : 'log-out-outline'}
@@ -415,7 +445,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: NEO },
 
-  /* ── Header navy ─────────────────────────────────────────────────────── */
+  /* Header navy */
   header: { backgroundColor: NAVY, paddingTop: 48, paddingBottom: 20, paddingHorizontal: 16, overflow: 'hidden' },
   hBubble1: { position: 'absolute', borderRadius: 999, width: 280, height: 280, top: -80,  right: -80, backgroundColor: 'rgba(7,155,217,0.1)' },
   hBubble2: { position: 'absolute', borderRadius: 999, width: 140, height: 140, bottom: -30, left: -40, backgroundColor: 'rgba(238,114,2,0.07)' },
@@ -435,7 +465,7 @@ const styles = StyleSheet.create({
   userCode: { color: 'rgba(255,255,255,0.45)', fontSize: 12, marginTop: 2 },
   brandLogo:{ width: 56, height: 34, opacity: 0.5 },
 
-  /* ── Carte synchronisation raised ────────────────────────────────────── */
+  /* Carte synchronisation raised */
   syncOuter: {
     marginHorizontal: 16,
     marginTop:        14,
@@ -508,14 +538,14 @@ const styles = StyleSheet.create({
   },
   sBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
 
-  /* ── Section titre ───────────────────────────────────────────────────── */
+  /* Section titre */
   sectionRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 16, marginBottom: 10 },
   sectionTitle: { fontSize: 14, fontWeight: '700', color: TEXT2 },
   sectionLink:  { fontSize: 13, color: Colors.brandBlue, fontWeight: '600' },
 
   list: { paddingHorizontal: 14, paddingVertical: 6, paddingBottom: 12 },
 
-  /* ── Cartes programme raised ──────────────────────────────────────────── */
+  /* Cartes programme raised */
   progOuter: {
     marginBottom:    14,
     borderRadius:    16,
@@ -574,7 +604,7 @@ const styles = StyleSheet.create({
   progBarFill:  { height: 6, borderRadius: 3 },
   progPct:      { fontSize: 12, fontWeight: '700', minWidth: 38, textAlign: 'right' },
 
-  /* ── État vide ───────────────────────────────────────────────────────── */
+  /* État vide */
   emptyWrap:  { alignItems: 'center', paddingTop: 40, paddingHorizontal: 32 },
   emptyIconOuter: {
     width: 76, height: 76, borderRadius: 38,
@@ -603,7 +633,7 @@ const styles = StyleSheet.create({
   },
   emptyBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 
-  /* ── Footer ──────────────────────────────────────────────────────────── */
+  /* Footer */
   footer: {
     paddingHorizontal: 16,
     paddingBottom:     12,
@@ -641,7 +671,7 @@ const styles = StyleSheet.create({
   debugLink:  { paddingVertical: 4, paddingHorizontal: 12 },
   debugLinkText: { color: Colors.brandBlue, fontSize: 12, fontWeight: '600' },
 
-  /* ── Overlay PIN (conservé sombre — sécurité) ────────────────────────── */
+  /* Overlay PIN (conservé sombre : sécurité) */
   pinOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', alignItems: 'center' },
   pinCard: { width: 300, backgroundColor: '#0d1e35', borderRadius: 24, padding: 28, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
   pinTitle: { fontSize: 17, fontWeight: '700', color: '#fff', textAlign: 'center' },

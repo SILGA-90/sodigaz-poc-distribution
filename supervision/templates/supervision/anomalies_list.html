@@ -8,7 +8,7 @@
 {% block title %}Anomalies{% endblock %}
 {% block content %}
 
-<!-- ── En-tête ── -->
+<!-- En-tête -->
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
     <div>
         <div class="d-flex align-items-center gap-2 mb-1">
@@ -44,7 +44,7 @@
     </div>
 </div>
 
-<!-- ── Filtres ── -->
+<!-- Filtres -->
 <div class="filter-card mb-4">
     <div class="d-flex flex-wrap align-items-end gap-3">
         <i class="bi bi-funnel text-muted" style="margin-bottom:.4rem;"></i>
@@ -61,7 +61,7 @@
                     <option value="">Tous</option>
                     {% for l in livreurs %}
                     <option value="{{ l.code_livreur }}" {% if livreur_filter == l.code_livreur %}selected{% endif %}>
-                        {{ l.code_livreur }} — {{ l.get_full_name }}
+                        {{ l.code_livreur }} : {{ l.get_full_name }}
                     </option>
                     {% endfor %}
                 </select>
@@ -101,7 +101,7 @@
     </div>
 </div>
 
-<!-- ── Cards ── -->
+<!-- Cards -->
 {% if anomalies %}
 <div class="anom-list">
 {% for a in anomalies %}

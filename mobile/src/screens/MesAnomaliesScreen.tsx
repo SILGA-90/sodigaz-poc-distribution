@@ -1,6 +1,22 @@
 /**
- * Liste des anomalies d'un programme — néomorphisme clair.
- * Header navy (bulles danger), cartes raised avec bande accent gravité, inset desc.
+ * Liste des anomalies d'un programme : vue lecture.
+ *
+ * Affiche les anomalies signalées par le livreur pendant une tournée,
+ * avec leur type, gravité, statut (OUVERTE / EN_TRAITEMENT / RESOLUE),
+ * description et état de synchronisation (PENDING / SYNCED). Accessible
+ * depuis ProgrammeScreen via le compteur d'anomalies.
+ *
+ * Le livreur doit savoir si ses anomalies ont
+ * bien été envoyées au superviseur. Un badge orange "En attente de sync"
+ * sur une anomalie PENDING lui rappelle de synchroniser quand il a
+ * du réseau.
+ *
+ * Le tri par date décroissante est recalculé
+ * uniquement quand la liste des anomalies change, pas à chaque render.
+ *
+ * Gravité FAIBLE -> bleu info,
+ * MOYENNE -> warning, ELEVEE -> danger. Code couleur identique côté
+ * supervision web pour la cohérence du système de design SODIGAZ.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -16,7 +32,7 @@ import { getAnomaliesDuProgramme, AnomalieLocale } from '../db/repositories/anom
 import { RootStackParamList } from '../types/navigation';
 import { Colors } from '../theme';
 
-/* ── Palette néo claire ─────────────────────────────────────────────── */
+/* Palette néo claire */
 const NEO     = '#e8edf2';
 const NEO_SHD = '#4a6880';
 const NEO_IN  = '#d4dde6';
@@ -132,7 +148,7 @@ export default function MesAnomaliesScreen({ route }: Props): React.ReactElement
   return (
     <View style={styles.root}>
 
-      {/* ── Header navy (bulles danger) ── */}
+      {/* Header navy (bulles danger) */}
       <View style={styles.header}>
         <View style={styles.bubble1} pointerEvents="none" />
         <View style={styles.bubble2} pointerEvents="none" />
@@ -170,7 +186,7 @@ export default function MesAnomaliesScreen({ route }: Props): React.ReactElement
         </View>
       </View>
 
-      {/* ── Liste ── */}
+      {/* Liste */}
       <FlatList
         data={anomalies}
         keyExtractor={(item) => item.uuid}
@@ -192,7 +208,7 @@ export default function MesAnomaliesScreen({ route }: Props): React.ReactElement
   );
 }
 
-/* ── Styles ──────────────────────────────────────────────────────────── */
+/* Styles */
 const styles = StyleSheet.create({
   root:   { flex: 1, backgroundColor: NEO },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: NEO },
@@ -205,7 +221,7 @@ const styles = StyleSheet.create({
   headerLabel:   { color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: '600', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2 },
   headerNumero:  { color: '#fff', fontSize: 22, fontWeight: '800', marginBottom: 16 },
 
-  /* Stats dans le header — chips glass */
+  /* Stats dans le header : chips glass */
   statsRow: { flexDirection: 'row', gap: 8 },
   statChip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
@@ -258,7 +274,7 @@ const styles = StyleSheet.create({
   cardFooter: { flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: SEP, paddingTop: 8, gap: 8 },
   statutPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
   statutText: { fontSize: 11, fontWeight: '600' },
-  syncChip:   { marginLeft: 'auto' as any, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 6 },
+  syncChip:   { marginLeft: 'auto' as 'auto', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 6 },
   syncChipSynced:  { backgroundColor: Colors.successBg },
   syncChipPending: { backgroundColor: Colors.warningBg },
   syncText:        { fontSize: 11, fontWeight: '600' },

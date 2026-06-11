@@ -1,4 +1,34 @@
-"""Commande Django simulant l'export quotidien de Sage X3."""
+"""
+Commande Django simulant l'export quotidien de Sage X3.
+
+Cette commande génère les programmes du jour pour les livreurs actifs,
+en simulant ce que ferait un export planifié depuis Sage X3 chaque matin.
+Elle crée les programmes, étapes, lignes prévues et calcule le circuit.
+
+Dans le POC, Sage X3 n'est pas connecté. Cette commande
+produit des données réalistes à partir du référentiel (PLVs, clients,
+articles, livreurs) pour permettre les démonstrations end-to-end.
+
+Le soft-delete des anciens programmes propagé
+via is_deleted permet au mobile de recevoir les suppressions dans la liste
+"deleted" du prochain pull : les données locales sont cohérentes avec le
+serveur. Un DELETE physique ferait disparaître les UUIDs sans que le mobile
+le sache.
+
+Un même client ne doit pas apparaître
+dans les programmes de deux livreurs différents le même jour : cela
+créerait des conflits de stock. On partitionne les groupes de PLVs par
+client_id et on les distribue aux livreurs en round-robin.
+
+Les numéros de programme X3 doivent être uniques.
+On inclut HHMMSS dans le numéro et on incrémente d'1 seconde si une
+collision existe (_numero_libre).
+
+Scenários de type programme :
+  - COLLECTE seul   : 37 % des cas
+  - RESTITUTION seul: 37 % des cas
+  - Les deux        : 26 % des cas
+"""
 import random
 import uuid
 from collections import defaultdict
@@ -27,14 +57,13 @@ from distribution.models import (
 
 _TYPES_ANOMALIE = [
     "Client absent",
-    "Probleme acces depot",
-    "Bouteille endommagee",
-    "Quantite insuffisante en stock camion",
-    "Refus de reception client",
+    "Problème accès dépôt",
+    "Bouteille endommagée",
+    "Quantité insuffisante en stock camion",
+    "Refus de réception client",
 ]
 
-# Probabilités pour la simulation : COL seul / RES seul / les deux
-# Reflète que les deux types peuvent coexister dans la journée d'un livreur.
+# Scénarios de type programme et leurs poids
 _SCENARIOS = [
     [TypeProgramme.COLLECTE],
     [TypeProgramme.RESTITUTION],
@@ -44,7 +73,12 @@ _POIDS = [3, 3, 2]  # 37 % COL, 37 % RES, 26 % les deux
 
 
 def _numero_libre(prefix: str, candidat: datetime) -> str:
-    """Trouve le premier HHMMSS libre pour ce préfixe (évite les doublons)."""
+    """
+    Trouve le premier numéro X3 libre pour ce préfixe en incrémentant
+    la partie HHMMSS d'une seconde à la fois.
+    Garantit l'unicité des numéros même si deux programmes sont générés
+    dans la même seconde (cas des programmes multiples en --type LES2).
+    """
     while Programme.objects.filter(
         numero_x3=prefix + candidat.strftime("%H%M%S"),
         is_deleted=False,
@@ -54,17 +88,17 @@ def _numero_libre(prefix: str, candidat: datetime) -> str:
 
 
 class Command(BaseCommand):
-    help = "Genere les programmes du jour (simulation Sage X3)."
+    help = "Génère les programmes du jour (simulation Sage X3)."
 
     def add_arguments(self, parser):
         parser.add_argument("--date", type=str,
-            help="Date du programme (YYYY-MM-DD). Par defaut : aujourd'hui.")
+            help="Date du programme (YYYY-MM-DD). Par défaut : aujourd'hui.")
         parser.add_argument("--livreur", type=str,
-            help="Code livreur specifique. Par defaut : tous.")
+            help="Code livreur spécifique. Par défaut : tous.")
         parser.add_argument("--type", type=str, choices=["COL", "RES", "LES2"],
             help="Forcer le type pour tous les livreurs : COL / RES / LES2.")
         parser.add_argument("--reset", action="store_true",
-            help="Soft-delete les programmes existants pour la date avant regeneration.")
+            help="Soft-delete les programmes existants pour la date avant régénération.")
 
     def handle(self, *args, **options):
         if options["date"]:
@@ -80,22 +114,22 @@ class Command(BaseCommand):
             livreurs_qs = livreurs_qs.filter(code_livreur=options["livreur"])
         livreurs = list(livreurs_qs)
         if not livreurs:
-            raise CommandError("Aucun livreur actif trouve.")
+            raise CommandError("Aucun livreur actif trouvé.")
 
         plvs = list(Plv.objects.filter(statut="ACTIF").select_related("client"))
         if len(plvs) < 3:
             raise CommandError(
                 f"Pas assez de PLV actifs ({len(plvs)}). Lance d'abord 'seed_demo'."
             )
-        vehicules = list(Vehicule.objects.filter(actif=True))
-        articles_gaz = list(Article.objects.filter(actif=True, code_x3__startswith='G'))
+        vehicules     = list(Vehicule.objects.filter(actif=True))
+        articles_gaz  = list(Article.objects.filter(actif=True, code_x3__startswith='G'))
         if not articles_gaz:
             raise CommandError("Articles G* (gaz emballé) manquants. Lance d'abord 'seed_demo'.")
 
         if options["reset"]:
             # Soft-delete en cascade : anomalies d'abord, puis programmes.
-            # Le trigger PostgreSQL met à jour last_modified ; le mobile apprendra
-            # les suppressions via la liste "deleted" du prochain pull.
+            # Le trigger PostgreSQL met à jour last_modified : le mobile recevra
+            # les suppressions dans la liste "deleted" du prochain pull.
             progs_a_supprimer = list(
                 Programme.objects.filter(
                     date_programme=date_prog,
@@ -106,7 +140,7 @@ class Command(BaseCommand):
             Anomalie.objects.filter(programme_id__in=progs_a_supprimer, is_deleted=False).update(is_deleted=True)
             count = Programme.objects.filter(id__in=progs_a_supprimer).update(is_deleted=True)
             self.stdout.write(self.style.WARNING(
-                f"Reset : {count} programme(s) marque(s) supprimes (soft-delete)."
+                f"Reset : {count} programme(s) marqué(s) supprimés (soft-delete)."
             ))
 
         # Scénario forcé ou aléatoire pour chaque livreur
@@ -121,15 +155,11 @@ class Command(BaseCommand):
             scenarios_forcat = None  # aléatoire par livreur
 
         heure_base = datetime.now()
-        compteur = 0
+        compteur   = 0
 
-        # ── Partitionner les PLV par client, puis distribuer les groupes-clients
-        # aux livreurs (round-robin). Un même client ne peut ainsi apparaître que
-        # dans les programmes d'un seul livreur sur la journée.
-        groupes_client: list[list] = list(defaultdict(list, {
-            plv.client_id: [] for plv in plvs
-        }).values())
-        # Reconstruction propre : grouper les PLV par client_id
+        # Partitionner les PLV par client, puis distribuer les groupes-clients aux
+        # livreurs en round-robin. Un même client ne peut apparaître que dans
+        # les programmes d'un seul livreur sur la journée (évite les conflits).
         _tmp: dict = defaultdict(list)
         for plv in plvs:
             _tmp[plv.client_id].append(plv)
@@ -142,8 +172,6 @@ class Command(BaseCommand):
             pool_livreur[livreur_dest.id].extend(groupe)
 
         with transaction.atomic():
-            # Construit la liste (livreur, type) à créer, avec décalage d'1 seconde
-            # entre chaque programme pour garantir des numéros X3 distincts.
             taches = []
             for livreur in livreurs:
                 types = (
@@ -155,9 +183,9 @@ class Command(BaseCommand):
                     taches.append((livreur, type_prog))
 
             for idx, (livreur, type_prog) in enumerate(taches):
-                prefix = f"PRG-{type_prog[:3]}-{date_prog.strftime('%Y%m%d')}-"
+                prefix    = f"PRG-{type_prog[:3]}-{date_prog.strftime('%Y%m%d')}-"
                 numero_x3 = _numero_libre(prefix, heure_base + timedelta(seconds=idx))
-                vehicule = random.choice(vehicules) if vehicules else None
+                vehicule  = random.choice(vehicules) if vehicules else None
 
                 programme = Programme.objects.create(
                     numero_x3=numero_x3,
@@ -168,19 +196,20 @@ class Command(BaseCommand):
                     statut=StatutProgramme.PLANIFIE,
                 )
 
-                # PLV du livreur uniquement (clients dédupliqués entre livreurs).
+                # Pool de PLVs du livreur (clients dédiés par round-robin).
                 # Fallback sur le pool global si le pool individuel est trop petit.
-                mon_pool = pool_livreur[livreur.id] or plvs
+                mon_pool  = pool_livreur[livreur.id] or plvs
                 nb_etapes = random.randint(3, min(5, len(mon_pool)))
                 plvs_choisis = random.sample(mon_pool, nb_etapes)
+
                 for ordre, plv in enumerate(plvs_choisis, start=1):
                     etape = Etape.objects.create(
                         programme=programme,
                         plv=plv,
                         ordre_prevu=ordre,
                     )
-                    # COLLECTE : pas de LigneProgramme — quantités non planifiées.
-                    # RESTITUTION : lignes G* avec quantite_prevue.
+                    # COLLECTE : pas de LigneProgramme : quantités non planifiées à l'avance.
+                    # RESTITUTION : lignes G* avec quantite_prevue (livraison de gaz plein).
                     if type_prog == TypeProgramme.RESTITUTION:
                         nb_articles = random.randint(1, min(3, len(articles_gaz)))
                         for prod in random.sample(articles_gaz, nb_articles):
@@ -190,9 +219,10 @@ class Command(BaseCommand):
                                 quantite_prevue=random.randint(5, 30),
                             )
 
+                # Calculer et persister l'ordre optimisé (plus proche voisin)
                 appliquer_ordre_optimise(programme)
 
-                # Anomalie de démo lors d'un --reset
+                # Anomalie de démo générée lors d'un --reset (données réalistes)
                 if options["reset"]:
                     plv_anomalie = random.choice(plvs_choisis)
                     Anomalie.objects.create(
@@ -201,16 +231,16 @@ class Command(BaseCommand):
                         plv=plv_anomalie,
                         type_anomalie=random.choice(_TYPES_ANOMALIE),
                         gravite=random.choice([GraviteAnomalie.FAIBLE, GraviteAnomalie.MOYENNE, GraviteAnomalie.ELEVEE]),
-                        description="Anomalie generee automatiquement pour la demonstration.",
+                        description="Anomalie générée automatiquement pour la démonstration.",
                         statut=StatutAnomalie.OUVERTE,
                         date_heure=timezone.now(),
                     )
 
                 compteur += 1
                 self.stdout.write(
-                    f"  {livreur.code_livreur} : {numero_x3} ({type_prog}, {nb_etapes} etapes)"
+                    f"  {livreur.code_livreur} : {numero_x3} ({type_prog}, {nb_etapes} étapes)"
                 )
 
         self.stdout.write(
-            self.style.SUCCESS(f"\n{compteur} programme(s) genere(s) pour le {date_prog}.")
+            self.style.SUCCESS(f"\n{compteur} programme(s) généré(s) pour le {date_prog}.")
         )

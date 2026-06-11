@@ -1,3 +1,29 @@
+/**
+ * Composant Toast : notification flottante éphémère.
+ *
+ * Ce composant affiche un message flottant en bas de l'écran avec une
+ * animation d'apparition (fade-in + slide-up) et disparaît automatiquement
+ * après `duration` millisecondes. Trois types : success (vert), error (rouge),
+ * info (bleu Sodigaz).
+ *
+ * Les bibliothèques de toast
+ * React Native (ex. react-native-toast-message) nécessitent souvent un
+ * build natif ou un Provider global. Une implémentation légère avec
+ * Animated.View est suffisante, compatible Expo Go, et ne dépend pas d'un
+ * Provider externe.
+ *
+ * Les boutons d'action sont souvent en bas d'écran. Un toast
+ * positionné à 80 px du bas laisse les boutons accessibles sans être
+ * masqués par la notification.
+ *
+ * Les animations opacity et translateY sont
+ * exécutées sur le thread natif pour ne pas bloquer le thread JS.
+ * Obligatoire pour une animation fluide (60 fps) sur Android milieu de gamme.
+ *
+ * Si `visible` passe à false avant la fin
+ * du timer (ex. l'utilisateur navigue), le timer est annulé pour éviter
+ * d'appeler onHide() après le démontage du composant.
+ */
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text } from 'react-native';
 import { Colors } from '../theme';

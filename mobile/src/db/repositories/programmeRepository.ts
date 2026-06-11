@@ -1,5 +1,34 @@
 /**
- * Repository des programmes : lecture, recap, cloture locale.
+ * Repository des programmes : lecture, récapitulatif, clôture locale, purge.
+ *
+ * Ce module fournit les fonctions d'accès aux programmes, étapes et
+ * opérations pour les écrans DashboardScreen, ProgrammeScreen et
+ * ClotureScreen. Il gère aussi la clôture locale et la purge des données
+ * anciennes.
+ *
+ * Un programme
+ * reste actif sur le dashboard jusqu'à sa clôture explicite : même s'il
+ * date de la veille (livreurs en province, tournées longues). Filtrer par
+ * date_programme = aujourd'hui laisserait le livreur sans programme visible
+ * le lendemain matin d'une tournée non clôturée.
+ *
+ * L'ordre
+ * optimisé par l'heuristique du plus proche voisin remplace l'ordre prévu
+ * si disponible. Si le circuit n'a pas encore été calculé (ordre_optimise
+ * null), on tombe sur l'ordre prévu. Voir CLAUDE.md §5.
+ *
+ * La clôture est d'abord
+ * locale : le statut CLOTURE est écrit dans SQLite, puis l'UUID est mis
+ * dans une file d'attente (sync_meta). Le push de clôture se fait en tête
+ * de cycle dans syncAll() (pushClotures -> pull -> push). Stocker la file
+ * dans sync_meta et non dans la table programme protège la clôture d'un
+ * écrasement par un pull ultérieur (voir database.ts).
+ *
+ * On ne supprime jamais des
+ * opérations non synchronisées, même si le programme est ancien. Un
+ * livreur sans réseau depuis plusieurs jours doit pouvoir retrouver ses
+ * saisies au retour du réseau. La purge ne touche que les données
+ * confirmées (sync_status ≠ PENDING) et clôturées depuis plus de 90 jours.
  */
 import * as FileSystem from 'expo-file-system/legacy';
 
@@ -33,7 +62,7 @@ export interface RecapProgramme {
 /**
  * Programmes actifs du livreur : tous les programmes non clôturés, quelle que
  * soit leur date. Un programme reste visible sur le dashboard jusqu'à sa
- * clôture explicite — y compris les programmes de la veille ou antérieurs
+ * clôture explicite : y compris les programmes de la veille ou antérieurs
  * (livreurs en province, tournées longues).
  */
 export async function getProgrammesRecents(): Promise<ProgrammeAvecProgression[]> {
@@ -146,9 +175,7 @@ export async function getEtapesDuProgramme(programmeId: number): Promise<EtapeAv
   );
 }
 
-/**
- * Recapitulatif d'un programme pour l'ecran de cloture.
- */
+/** Récapitulatif d'un programme pour l'écran de clôture. */
 export async function getRecapProgramme(
   programmeId: number,
   programmeUuid: string,
@@ -191,7 +218,7 @@ export async function getRecapProgramme(
 
 /**
  * Supprime physiquement les programmes CLOTURE plus vieux que daysToKeep jours
- * et toutes leurs données dépendantes (étapes, opérations, photos…).
+ * et toutes leurs données dépendantes (étapes, opérations, photos...).
  * Supprime aussi les fichiers photo du disque.
  * N'efface jamais les données PENDING non synchronisées.
  */
@@ -295,8 +322,8 @@ export async function purgerDonneesAnciennes(daysToKeep = 90): Promise<void> {
 }
 
 /**
- * Cloture un programme localement : statut CLOTURE + heure de fin locale,
- * et inscription dans la file d'attente de remontee (sync_meta).
+ * Clôture un programme localement : statut CLOTURE + heure de fin locale,
+ * et inscription dans la file d'attente de remontée (sync_meta).
  */
 export async function cloturerProgrammeLocal(
   programmeUuid: string,

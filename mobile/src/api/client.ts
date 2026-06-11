@@ -1,12 +1,33 @@
 /**
- * Client HTTP axios pre-configure.
+ * Client HTTP axios pré-configuré.
  *
- * Inclut :
- *   - URL de base (API_BASE_URL)
- *   - Intercepteur request : ajoute le token JWT a chaque requete authentifiee
- *   - Intercepteur response : refresh automatique du token sur 401
- *     (une seule tentative de refresh, les requetes concurrentes sont mises
- *     en file d'attente jusqu'au resultat)
+ * Ce module crée une instance axios partagée par tous les services
+ * (authService, syncService...). Il configure :
+ *          - L'URL de base (EXPO_PUBLIC_API_URL via config/api.ts)
+ *          - Un timeout de 10 secondes
+ *          - L'injection automatique du Bearer token JWT à chaque requête
+ *          - Le refresh automatique du token sur erreur 401
+ *
+ * Chaque service n'a pas besoin de lire
+ * lui-même le token stocké : l'intercepteur request le fait
+ * transparentement pour toutes les requêtes.
+ *
+ * Le token access JWT expire après
+ * 5 minutes (voir settings.py). Sans refresh automatique, le livreur
+ * serait renvoyé vers le login après 5 minutes d'inactivité, même avec
+ * une session active. Le refresh transparent assure une continuité
+ * d'utilisation pendant toute la tournée.
+ *
+ * Si plusieurs requêtes échouent
+ * avec 401 simultanément (ex. pull + push en parallèle), une seule
+ * tentative de refresh est faite. Les autres requêtes attendent le
+ * résultat via failedQueue avant d'être rejouées ou rejetées.
+ * Sans cette mécanique, chaque requête ferait son propre refresh,
+ * provoquant une course condition sur les tokens.
+ *
+ * L'appel de refresh
+ * ne doit pas passer par l'intercepteur de l'instance apiClient :
+ * cela créerait une boucle infinie si le refresh échoue lui-même en 401.
  */
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
@@ -21,7 +42,7 @@ const apiClient: AxiosInstance = axios.create({
   },
 });
 
-// ── Intercepteur requete : injecte le Bearer token ──────────────────────────
+// Intercepteur requête : injection du Bearer token
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const token = await getItem(STORAGE_KEYS.ACCESS_TOKEN);
@@ -33,9 +54,9 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// ── Gestion du refresh concurrent ───────────────────────────────────────────
-// Une seule tentative de refresh a la fois ; les autres requetes en 401
-// attendent le resultat avant d'etre rejouees ou annulees.
+// File d'attente pour les 401 concurrents
+// Une seule tentative de refresh à la fois ; les autres requêtes en 401
+// attendent le résultat avant d'être rejouées ou annulées.
 let isRefreshing = false;
 type QueueEntry = { resolve: (token: string) => void; reject: (err: unknown) => void };
 let failedQueue: QueueEntry[] = [];
@@ -48,7 +69,7 @@ function flushQueue(error: unknown, token: string | null): void {
   failedQueue = [];
 }
 
-// ── Intercepteur reponse : refresh automatique sur 401 ──────────────────────
+// Intercepteur réponse : refresh automatique sur 401
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -56,7 +77,7 @@ apiClient.interceptors.response.use(
     const status: number | undefined = error.response?.status;
     const url: string = original?.url ?? '';
 
-    // Ne pas boucler sur les endpoints d'authentification eux-memes
+    // Ne pas boucler sur les endpoints d'authentification eux-mêmes
     const isAuthEndpoint =
       url.includes('/api/auth/login/') || url.includes('/api/auth/refresh/');
 
@@ -67,7 +88,7 @@ apiClient.interceptors.response.use(
     original._retry = true;
 
     if (isRefreshing) {
-      // File d'attente : la requete sera rejouee apres le refresh en cours
+      // Mettre en file : la requête sera rejouée après le refresh en cours
       return new Promise<string>((resolve, reject) => {
         failedQueue.push({ resolve, reject });
       }).then((newToken) => {
@@ -79,9 +100,9 @@ apiClient.interceptors.response.use(
     isRefreshing = true;
     try {
       const refreshToken = await getItem(STORAGE_KEYS.REFRESH_TOKEN);
-      if (!refreshToken) throw new Error('Session expiree — reconnectez-vous');
+      if (!refreshToken) throw new Error('Session expirée : reconnectez-vous');
 
-      // Appel direct axios (pas l'instance) pour eviter de re-declencher l'intercepteur
+      // Appel direct axios (pas l'instance) pour éviter de re-déclencher l'intercepteur
       const resp = await axios.post<{ access: string }>(
         `${API_BASE_URL}/api/auth/refresh/`,
         { refresh: refreshToken },
@@ -96,10 +117,10 @@ apiClient.interceptors.response.use(
       return apiClient(original);
     } catch (refreshErr) {
       flushQueue(refreshErr, null);
-      // Les deux tokens sont invalides : l'utilisateur doit se reconnecter
+      // Les deux tokens sont invalides : forcer la reconnexion
       await removeItem(STORAGE_KEYS.ACCESS_TOKEN);
       await removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-      return Promise.reject(new Error('Session expiree — reconnectez-vous'));
+      return Promise.reject(new Error('Session expirée : reconnectez-vous'));
     } finally {
       isRefreshing = false;
     }

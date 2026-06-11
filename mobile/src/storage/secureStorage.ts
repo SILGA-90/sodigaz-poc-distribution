@@ -1,14 +1,25 @@
 /**
- * Couche d'abstraction sur le stockage securise.
+ * Couche d'abstraction sur le stockage sécurisé.
  *
- * - Sur mobile (iOS/Android) : utilise expo-secure-store (Keychain sur iOS,
- *   KeyStore sur Android), qui chiffre les valeurs au niveau de l'OS.
- * - Sur web : expo-secure-store n'est pas disponible. On retombe sur
- *   localStorage, qui n'est PAS securise (un script malveillant pourrait
- *   le lire). Acceptable pour le developpement Expo Web, surtout pas
- *   pour la production.
+ * Ce module centralise l'accès au stockage sécurisé de l'application.
+ * Il expose trois fonctions (saveItem, getItem, removeItem) et les
+ * clés STORAGE_KEYS utilisées dans l'app.
  *
- * Pour la version mobile cible, c'est expo-secure-store qui sera utilise.
+ * Les tokens JWT (access + refresh)
+ * doivent être stockés de façon sécurisée, hors de portée des autres
+ * applications. expo-secure-store utilise le Keychain sur iOS et le
+ * KeyStore sur Android : deux mécanismes de stockage chiffrés au niveau
+ * de l'OS, indépendants du stockage applicatif.
+ *
+ * expo-secure-store n'est pas disponible
+ * sur Expo Web. On utilise localStorage comme fallback de développement
+ * uniquement : localStorage n'est PAS sécurisé (scripts XSS peuvent le
+ * lire). Ce fallback est acceptable pour les tests sur navigateur, jamais
+ * pour une production mobile.
+ *
+ * Centraliser les appels au stockage dans ce
+ * module facilite un éventuel changement de bibliothèque (ex. passer de
+ * expo-secure-store à react-native-keychain) sans toucher aux callers.
  */
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
@@ -38,9 +49,9 @@ export async function removeItem(key: string): Promise<void> {
   await SecureStore.deleteItemAsync(key);
 }
 
-// Cles utilisees dans l'app
+/** Clés de stockage sécurisé utilisées dans l'application. */
 export const STORAGE_KEYS = {
-  ACCESS_TOKEN: 'access_token',
+  ACCESS_TOKEN:  'access_token',
   REFRESH_TOKEN: 'refresh_token',
-  USER_ID: 'user_id',
+  USER_ID:       'user_id',
 } as const;

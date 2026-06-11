@@ -6,13 +6,13 @@
 {% block title %}Programme {{ programme.numero_x3 }}{% endblock %}
 {% block content %}
 
-<!-- ── Retour ── -->
+<!-- Retour -->
 <a href="{% url 'supervision:programmes' %}?date={{ programme.date_programme|date:'Y-m-d' }}"
    class="back-link">
     <i class="bi bi-chevron-left"></i> Retour aux programmes
 </a>
 
-<!-- ── En-tête ── -->
+<!-- En-tête -->
 <div class="detail-header">
     <div class="d-flex align-items-center gap-3 flex-wrap">
         <span class="pg-icon"><i class="bi bi-clipboard2-check"></i></span>
@@ -73,7 +73,7 @@
     </div>
 </div>
 
-<!-- ── Onglets ── -->
+<!-- Onglets -->
 <ul class="nav nav-tabs mt-0 mb-0" id="progTabs" role="tablist">
     <li class="nav-item">
         <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-etapes">
@@ -91,7 +91,7 @@
 
 <div class="tab-content tab-body">
 
-<!-- ──── Onglet 1 : étapes ──── -->
+<!-- Onglet 1 : étapes -->
 <div class="tab-pane fade show active" id="tab-etapes">
 
     <!-- Filtre statut -->
@@ -169,7 +169,7 @@
             <p class="etape-note">
                 {% if programme.type_programme == "COLLECTE" %}
                 <i class="bi bi-info-circle me-1"></i>
-                Programme de collecte — les quantités prévues ne sont pas connues à l'avance.
+                Programme de collecte : les quantités prévues ne sont pas connues à l'avance.
                 {% else %}
                 <i class="bi bi-dash-circle me-1"></i>
                 Aucune ligne prévue ni réalisée.
@@ -213,7 +213,7 @@
 
 </div>{# /tab-etapes #}
 
-<!-- ──── Onglet 2 : chronologie ──── -->
+<!-- Onglet 2 : chronologie -->
 <div class="tab-pane fade" id="tab-timeline">
 {% if timeline %}
 <p class="text-muted small mb-4">

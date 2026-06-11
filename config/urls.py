@@ -1,3 +1,21 @@
+"""
+Routage URL racine du projet SODIGAZ.
+
+Ce fichier déclare les quatre groupes de routes du projet :
+         - /admin/          : interface d'administration Django
+         - /api/auth/       : authentification JWT (login, refresh, me, dev-access)
+         - /api/mock-x3/    : simulation Sage X3 (génération programmes)
+         - /api/sync/       : synchronisation offline-first (pull, push, photos, clôture)
+         - /supervision/    : interface web superviseur
+
+La racine / n'a pas de contenu propre.
+On redirige vers /supervision/ pour les navigateurs qui ouvrent l'IP directement.
+Redirection non-permanente (302) pour pouvoir la changer facilement.
+
+En développement, Django sert les médias
+(photos uploadées) directement. En production, c'est Nginx qui servira
+le répertoire MEDIA_ROOT : Django ne doit pas charger ce handler en prod.
+"""
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin

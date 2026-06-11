@@ -1,8 +1,8 @@
 /* ══════════════════════════════════════════════════════════
-   CARTOGRAPHIE PLEIN ÉCRAN — Thème NEO SODIGAZ
+   CARTOGRAPHIE PLEIN ÉCRAN : Thème NEO SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
-/* ─── Layout plein écran ─── */
+/* Layout plein écran */
 .carte-layout {
     display: flex; flex-direction: column;
     /* 2× padding main-inner (1.75rem) */
@@ -13,11 +13,11 @@
     .carte-layout { height: calc(100vh - 2rem - 54px); }
 }
 
-/* ─── Live indicator (inline dans l'en-tête) ─── */
+/* Live indicator (inline dans l'en-tête) */
 .carte-live-label { font-size: .76rem; color: #8aa8c0; }
 .carte-live-sep   { font-size: .76rem; color: #b0c4d4; }
 
-/* ─── Bouton parcours — NEO raised ─── */
+/* Bouton parcours : NEO raised */
 .btn-parcours {
     display: inline-flex; align-items: center; gap: .35rem;
     padding: .42rem 1rem; border-radius: 9px;
@@ -51,7 +51,7 @@
     border-right:  1.5px solid rgba(255,255,255,.85);
 }
 
-/* ─── Carte principale ─── */
+/* Carte principale */
 .carte-map-card {
     flex: 1; min-height: 0;
     position: relative;
@@ -63,7 +63,7 @@
     flex: 1; min-height: 0; width: 100%;
 }
 
-/* ─── Overlay stats (centré en bas) ─── */
+/* Overlay stats (centré en bas) */
 .carte-stats-overlay {
     position: absolute; bottom: 36px; left: 50%;
     transform: translateX(-50%);
@@ -78,7 +78,7 @@
 }
 .carte-stat-sep { color: rgba(255,255,255,.35); }
 
-/* ─── Légende (bas droite) ─── */
+/* Légende (bas droite) */
 .carte-legend {
     position: absolute; bottom: 8px; right: 12px;
     display: flex; align-items: center; gap: .75rem;

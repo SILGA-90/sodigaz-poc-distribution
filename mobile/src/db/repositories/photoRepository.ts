@@ -1,21 +1,45 @@
 /**
- * Repository des photos.
- * Une photo est rattachee soit a une operation, soit a une anomalie.
+ * Repository des photos terrain.
  *
- * Invariant de stockage : local_uri pointe TOUJOURS vers PHOTOS_DIR
- * (documentDirectory/photos/), jamais vers un répertoire cache.
- * Les répertoires cache Android peuvent être vidés par l'OS à tout moment.
+ * Ce module gère le cycle de vie des photos enregistrées par le livreur
+ * (capture -> stockage local -> sync métadonnées -> upload binaire).
+ *
+ * Une photo a deux statuts indépendants :
+ *          - sync_status  : PENDING -> SYNCED  (métadonnées JSON dans le push)
+ *          - upload_status: PENDING -> DONE / FILE_LOST  (binaire via /photos/<uuid>/upload/)
+ *
+ * Les métadonnées (uuid, type, horodatage, GPS)
+ * sont poussées dans le payload JSON standard de sync. Le binaire est
+ * uploadé séparément en multipart. Les deux étapes peuvent échouer
+ * indépendamment : sync_status = SYNCED mais upload_status = PENDING
+ * signifie que le serveur connaît la photo mais n'a pas encore le fichier.
+ *
+ * Les fichiers persistants ne
+ * doivent pas être dans le cache Android (getCacheDir()), qui peut être
+ * vidé par l'OS. documentDirectory survit aux vidanges de cache et aux
+ * redémarrages. Il est supprimé uniquement à la désinstallation de l'app.
+ *
+ * Les photos créées avant la mise en place de
+ * PHOTOS_DIR pointaient vers le cache. Cette fonction de migration one-shot
+ * déplace les fichiers existants et met à jour les local_uri en base.
+ * Appelée au démarrage en fire-and-forget depuis RootNavigator.
+ *
+ * Un fichier perdu (cache vidé) ne doit pas
+ * être marqué DONE : le binaire n'est pas sur le serveur. FILE_LOST
+ * permet au superviseur de savoir qu'une photo a été signalée mais son
+ * fichier est perdu, sans masquer le problème.
+ *
+ * Invariant
+ * du modèle de données Django (CheckConstraint + clean()). Respecté
+ * côté mobile dans insertPhoto : on passe toujours l'un à null.
  */
 import * as Crypto from 'expo-crypto';
 import * as FileSystem from 'expo-file-system/legacy';
 
 import { getDatabase } from '../database';
+import logger from '../../services/logger';
 
-/**
- * Répertoire persistant pour les photos.
- * documentDirectory survit aux vidages de cache et aux redémarrages.
- * Il est supprimé uniquement lors d'une désinstallation de l'app.
- */
+/** Répertoire persistant pour les photos (documentDirectory, jamais le cache). */
 export const PHOTOS_DIR = FileSystem.documentDirectory! + 'photos/';
 
 export interface PhotoLocale {
@@ -87,6 +111,7 @@ export async function getPhotosOperation(operationUuid: string): Promise<PhotoLo
   );
 }
 
+/** Photos dont les métadonnées JSON n'ont pas encore été envoyées au serveur. */
 export async function getPhotosPendingMeta(): Promise<PhotoLocale[]> {
   const db = await getDatabase();
   return db.getAllAsync<PhotoLocale>(
@@ -94,6 +119,7 @@ export async function getPhotosPendingMeta(): Promise<PhotoLocale[]> {
   );
 }
 
+/** Photos dont les métadonnées sont SYNCED mais le binaire n'a pas encore été uploadé. */
 export async function getPhotosPendingUpload(): Promise<PhotoLocale[]> {
   const db = await getDatabase();
   return db.getAllAsync<PhotoLocale>(
@@ -136,11 +162,11 @@ export async function deletePhoto(uuid: string): Promise<void> {
 
 /**
  * Répare les local_uri pointant vers le cache Android (créées avant le correctif).
- * Appelé une seule fois au démarrage, en tâche de fond.
+ * Appelée une seule fois au démarrage (RootNavigator), en tâche de fond.
  *
  * Pour chaque photo PENDING :
- *   - fichier présent dans le cache → déplacé vers PHOTOS_DIR, local_uri mis à jour
- *   - fichier absent             → marqué FILE_LOST (impossible à récupérer)
+ *   - fichier présent dans le cache -> déplacé vers PHOTOS_DIR, local_uri mis à jour
+ *   - fichier absent             -> marqué FILE_LOST (impossible à récupérer)
  */
 export async function repairCachePhotoUris(): Promise<void> {
   const db = await getDatabase();
@@ -165,7 +191,7 @@ export async function repairCachePhotoUris(): Promise<void> {
       await updatePhotoLocalUri(photo.uuid, persistentUri);
     } else {
       await markPhotoFileLost(photo.uuid);
-      console.warn('[repairCachePhotoUris] fichier introuvable, marqué FILE_LOST :', photo.uuid, photo.local_uri);
+      logger.warn('[repairCachePhotoUris] fichier introuvable, marqué FILE_LOST :', photo.uuid, photo.local_uri);
     }
   }
 }

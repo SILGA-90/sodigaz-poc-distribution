@@ -1,7 +1,33 @@
 /**
- * LoginScreen — carte néomorphique claire flottante sur fond navy.
- * Même layout que la version sombre (carte centrée, non plein-écran),
- * surfaces et ombres en mode light pour lisibilité terrain.
+ * Écran de connexion : carte néomorphique claire sur fond navy SODIGAZ.
+ *
+ * Premier écran affiché si aucun access token n'est présent en
+ * SecureStore. L'utilisateur saisit son code livreur (ex. LIV001)
+ * et son mot de passe. Un bouton de remplissage automatique "LIV001 ·
+ * demo1234" est disponible pour les démonstrations.
+ *
+ * Les livreurs connaissent leur
+ * code terrain (LIV001, LIV002...), pas forcément leur username Django.
+ * L'identifiant terrain est plus naturel et moins sujet aux erreurs
+ * de saisie sur un téléphone en extérieur.
+ *
+ * WHY (navigation.replace('Dashboard') et non navigate) : replace() supprime
+ * LoginScreen de la pile de navigation : le bouton retour Android ne
+ * ramène pas à la page de connexion une fois connecté.
+ *
+ * Le throttle côté Django est de 5 tentatives/min par IP.
+ * On affiche un message spécifique sur 429 pour guider le livreur
+ * ("réessaie dans quelques instants") plutôt qu'un générique "erreur".
+ *
+ * Sur iPhone SE (petit écran), la
+ * carte de connexion peut être partiellement masquée par le clavier
+ * virtuel. KeyboardAvoidingView lève le contenu ; ScrollView permet
+ * de défiler jusqu'aux champs si l'écran est très petit.
+ *
+ * Utilise les couleurs officielles
+ * SODIGAZ (#0a1628 navy, #079BD9 bleu, #EE7202 orange, #FAB848 ambre).
+ * Les bulles flottantes rappellent l'identité graphique du logo sans
+ * nécessiter expo-linear-gradient (non installé, voir CLAUDE.md §5).
  */
 import React, { useState } from 'react';
 import {
@@ -24,7 +50,7 @@ import { login } from '../api/authService';
 import { RootStackParamList } from '../types/navigation';
 import { Colors } from '../theme';
 
-/* ── Palette néomorphique claire ───────────────────────────────────────── */
+/* Palette néomorphique claire */
 const NEO     = '#e8edf2';   // fond de la carte et de ses enfants
 const NEO_SHD = '#b8cad8';   // ombre sombre (bas-droite)
 const NEO_IN  = '#d4dde6';   // fond inset (inputs)
@@ -56,7 +82,7 @@ export default function LoginScreen({ navigation }: Props): React.ReactElement {
       navigation.replace('Dashboard');
     } catch (error: any) {
       if (error?.response?.status === 429) {
-        setLoginError('Trop de tentatives — réessaie dans quelques instants.');
+        setLoginError('Trop de tentatives : réessaie dans quelques instants.');
       } else {
         setLoginError(error?.response?.data?.detail ?? 'Identifiants invalides ou serveur inaccessible.');
       }
@@ -78,12 +104,12 @@ export default function LoginScreen({ navigation }: Props): React.ReactElement {
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        {/* ── Décorations navy (bulles derrière la carte) ── */}
+        {/* Décorations navy (bulles derrière la carte) */}
         <View style={[styles.bubble, styles.b1]} />
         <View style={[styles.bubble, styles.b2]} />
         <View style={[styles.bubble, styles.b3]} />
 
-        {/* ── Logo au-dessus de la carte ── */}
+        {/* Logo au-dessus de la carte */}
         <View style={styles.logoWrap}>
           <Image
             source={require('../../assets/logo_name.png')}
@@ -97,7 +123,7 @@ export default function LoginScreen({ navigation }: Props): React.ReactElement {
           </View>
         </View>
 
-        {/* ── Carte néomorphique (raised, claire, flottante) ── */}
+        {/* Carte néomorphique (raised, claire, flottante) */}
         <View style={styles.cardOuter}>
           <View style={styles.cardInner}>
 
@@ -168,7 +194,7 @@ export default function LoginScreen({ navigation }: Props): React.ReactElement {
               </View>
             )}
 
-            {/* Bouton Se connecter — raised orange */}
+            {/* Bouton Se connecter : raised orange */}
             <View style={[styles.btnOuter, loading && { opacity: 0.55 }]}>
               <TouchableOpacity
                 style={styles.btnInner}
@@ -194,7 +220,7 @@ export default function LoginScreen({ navigation }: Props): React.ReactElement {
               <View style={styles.divLine} />
             </View>
 
-            {/* Démo — texte simple tap-to-fill */}
+            {/* Démo : texte simple tap-to-fill */}
             <TouchableOpacity
               onPress={() => { setCodeLivreur('LIV001'); setPassword('demo1234'); }}
               activeOpacity={0.6}
@@ -244,7 +270,7 @@ const styles = StyleSheet.create({
   pillDot:  { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.brandBlue, marginRight: 8 },
   pillText: { color: Colors.brandBlue, fontSize: 11, fontWeight: '700', letterSpacing: 2 },
 
-  /* Carte raised — double ombre */
+  /* Carte raised : double ombre */
   cardOuter: {
     width:           '100%',
     maxWidth:        460,    // plafond tablette
@@ -286,7 +312,7 @@ const styles = StyleSheet.create({
     marginBottom:   8,
   },
 
-  /* Inset (concave) — fond sombre + bordures asymétriques */
+  /* Inset (concave) : fond sombre + bordures asymétriques */
   inset: {
     flexDirection:     'row',
     alignItems:        'center',
@@ -313,12 +339,12 @@ const styles = StyleSheet.create({
   },
   fieldInput: { flex: 1, fontSize: 15, color: '#1a2a3a', paddingVertical: 0 },
 
-  /* Bouton raised orange — effet sortant néomorphique */
+  /* Bouton raised orange : effet sortant néomorphique */
   btnOuter: {
     marginTop:       24,
     borderRadius:    14,
     backgroundColor: Colors.brandOrange,
-    /* Ombre sombre bas-droite — donne le relief */
+    /* Ombre sombre bas-droite : donne le relief */
     shadowColor:     '#5c1a00',
     shadowOffset:    { width: 9, height: 9 },
     shadowOpacity:   0.7,
@@ -358,7 +384,7 @@ const styles = StyleSheet.create({
 
   footer: { color: 'rgba(255,255,255,0.2)', fontSize: 11, marginTop: 28, letterSpacing: 1 },
 
-  /* Bannière erreur — raised danger dans la carte NEO */
+  /* Bannière erreur : raised danger dans la carte NEO */
   errorBanner: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 8,
     marginTop: 18, padding: 12, borderRadius: 10,

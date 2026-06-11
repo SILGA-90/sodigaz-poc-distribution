@@ -3,7 +3,7 @@
 {% block title %}Tableau de bord{% endblock %}
 {% block content %}
 
-<!-- ── En-tête ── -->
+<!-- En-tête -->
 <div class="dash-header mb-4">
     <div class="d-flex align-items-center gap-3">
         <span class="pg-icon"><i class="bi bi-speedometer2"></i></span>
@@ -29,14 +29,14 @@
         </div>
         <div class="live-indicator">
             <span class="live-dot" id="live-dot"></span>
-            <span id="live-status">Connexion…</span>
+            <span id="live-status">Connexion...</span>
             <span class="live-sep">·</span>
             <span id="last-update">à l'instant</span>
         </div>
     </div>
 </div>
 
-<!-- ── Alerte anomalies élevées ── -->
+<!-- Alerte anomalies élevées -->
 {% if anomalies_elevees %}
 <div class="alerte-card mb-4" id="alerte-elevee">
     <div class="alerte-header">
@@ -64,7 +64,7 @@
 </div>
 {% endif %}
 
-<!-- ── KPI cards ── -->
+<!-- KPI cards -->
 <div class="kpi-grid mb-4">
 
     <div class="kpi-card-v2 kpi-card-blue" id="kpi-programmes">
@@ -142,7 +142,7 @@
 
 </div>
 
-<!-- ── Corps principal : carte + bilan articles ── -->
+<!-- Corps principal : carte + bilan articles -->
 <div class="dash-main-row">
 
     <!-- Carte Leaflet -->
@@ -192,7 +192,7 @@
                         <tr><th>Article</th><th class="text-end">Réalisé</th></tr>
                     </thead>
                     <tbody id="bilanCollecteTbody">
-                        <tr><td colspan="2" class="bilan-loading">Chargement…</td></tr>
+                        <tr><td colspan="2" class="bilan-loading">Chargement...</td></tr>
                     </tbody>
                 </table>
 
@@ -210,7 +210,7 @@
                         </tr>
                     </thead>
                     <tbody id="bilanRestitutionTbody">
-                        <tr><td colspan="4" class="bilan-loading">Chargement…</td></tr>
+                        <tr><td colspan="4" class="bilan-loading">Chargement...</td></tr>
                     </tbody>
                 </table>
 
@@ -220,17 +220,17 @@
 
 </div>
 
-<!-- ── Fil d'activité récente ── -->
+<!-- Fil d'activité récente -->
 <div class="section-card mt-4" id="activ-section">
     <div class="section-header d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-2">
             <span class="section-icon"><i class="bi bi-activity"></i></span>
             <span class="section-title">Activité récente</span>
         </div>
-        <span class="activ-refresh-label" id="activ-refresh-label">Chargement…</span>
+        <span class="activ-refresh-label" id="activ-refresh-label">Chargement...</span>
     </div>
     <div class="activ-feed" id="activ-feed">
-        <div class="activ-empty"><i class="bi bi-hourglass-split me-1"></i>Chargement…</div>
+        <div class="activ-empty"><i class="bi bi-hourglass-split me-1"></i>Chargement...</div>
     </div>
 </div>
 

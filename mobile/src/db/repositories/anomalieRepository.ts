@@ -1,6 +1,24 @@
 /**
- * Repository des anomalies : creation locale (PENDING) et comptage.
- * Le push des anomalies est deja gere par le syncService (Sprint 2.3).
+ * Repository des anomalies : création locale et lecture.
+ *
+ * Ce module expose les fonctions de création et de lecture des anomalies
+ * signalées par le livreur sur le terrain. Les anomalies sont créées avec
+ * sync_status = 'PENDING' et remontées au serveur par syncService.ts.
+ *
+ * Le livreur sur le terrain n'est pas
+ * en mesure d'évaluer la gravité technique d'une anomalie (fuite, bris,
+ * problème de sécurité). La gravité par défaut 'MOYENNE' est conservatrice
+ * : le superviseur la reclassifie après examen côté web.
+ *
+ * Une anomalie signalée sur le terrain
+ * est toujours ouverte jusqu'à traitement côté supervision. Le cycle
+ * OUVERTE -> EN_TRAITEMENT -> RESOLUE est géré uniquement côté serveur.
+ *
+ * WHY (uuid généré par Crypto.randomUUID()) : Les anomalies font partie des
+ * données "ascendantes" (créées sur le mobile, poussées au serveur). Leur
+ * UUID est fourni par le mobile au moment du push : c'est l'invariant
+ * de synchronisation (voir CLAUDE.md §4). Le serveur accepte et stocke
+ * cet UUID sans en générer un nouveau.
  */
 import * as Crypto from 'expo-crypto';
 
@@ -19,7 +37,7 @@ export async function creerAnomalie(data: AnomalieSaisie): Promise<string> {
   const db = await getDatabase();
   const uuid = Crypto.randomUUID();
   const ts = Date.now();
-  // gravite = 'MOYENNE' par defaut ; le superviseur la reclassifie cote serveur.
+  // gravite = 'MOYENNE' par défaut ; le superviseur la reclassifie côté serveur.
   await db.runAsync(
     `INSERT INTO anomalie
      (uuid, programme_uuid, plv_id, type_anomalie, gravite, description, statut,

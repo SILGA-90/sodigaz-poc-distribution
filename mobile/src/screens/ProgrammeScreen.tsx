@@ -1,6 +1,32 @@
 /**
- * ProgrammeScreen — Néomorphisme clair.
- * Header navy (infos programme), corps NEO #e8edf2, cartes étapes raised.
+ * Écran programme : liste des étapes d'une tournée avec navigation GPS.
+ *
+ * Cet écran affiche les étapes (Points de Livraison à visiter) d'un
+ * programme, avec leur statut (À visiter / Visitée / Échec) et les
+ * actions disponibles (Saisir une opération, Signaler un échec, Naviguer
+ * dans Google Maps). Trois modes de tri : Circuit (ordre optimisé),
+ * A–Z (alphabétique), À faire (étapes restantes en premier).
+ *
+ * Intégrer
+ * react-native-maps nécessite un build natif incompatible avec Expo Go.
+ * L'ouverture de Google Maps via Linking est plus fiable (GPS natif,
+ * offline maps) et ne nécessite aucune dépendance supplémentaire.
+ * Voir CLAUDE.md §5 : décision architecture ARRÊTÉE.
+ *
+ * WHY (tri "Circuit" = ordre COALESCE(ordre_optimise, ordre_prevu)) : L'heuristique
+ * du plus proche voisin calcule un ordre_optimise qui remplace l'ordre_prevu
+ * quand disponible. Le livreur reste libre de dévier du circuit : il peut
+ * passer en mode A–Z ou À faire selon les conditions de terrain.
+ *
+ * La liste peut avoir 10-20 étapes. Recalculer le
+ * tri à chaque render sans useMemo dégraderait les performances sur
+ * Android milieu de gamme. useMemo ne retrie que quand etapes ou triMode
+ * change.
+ *
+ * La syntaxe
+ * https://www.google.com/maps/dir/?api=1&destination=lat,lon est
+ * le deep-link universel qui ouvre Google Maps avec navigation démarrée
+ * depuis la position actuelle de l'utilisateur, sur iOS et Android.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -24,7 +50,7 @@ import { Programme } from '../types/models';
 import { RootStackParamList } from '../types/navigation';
 import { Colors } from '../theme';
 
-/* ── Palette néo ─────────────────────────────────────────────────────── */
+/* Palette néo */
 const NEO     = '#e8edf2';
 const NEO_SHD = '#4a6880';
 const NEO_IN  = '#d4dde6';
@@ -79,7 +105,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
     (async () => { await chargerDonnees(); setLoading(false); })();
   }, [programmeId]);
 
-  /* ── Carte étape ─────────────────────────────────────────────────────── */
+  /* Carte étape */
   const renderEtape = useCallback(({ item }: { item: EtapeAvecPlv }): React.ReactElement => {
     const visite = item.statut_visite === 'VISITEE';
     const echec  = item.statut_visite === 'ECHEC';
@@ -132,7 +158,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
                   )}
                 </View>
               </View>
-              {/* Itinéraire — inset */}
+              {/* Itinéraire : inset */}
               <TouchableOpacity
                 style={styles.itineraireRow}
                 onPress={(e) => { e.stopPropagation(); ouvrirItineraire(item.plv_latitude, item.plv_longitude); }}
@@ -157,7 +183,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
   return (
     <View style={styles.root}>
 
-      {/* ── Header navy ── */}
+      {/* Header navy */}
       {programme && (
         <View style={styles.header}>
           <View style={styles.bubble1} pointerEvents="none" />
@@ -232,7 +258,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
                   onPress={() => navigation.navigate('Cloture', { programmeId: programme.id })}
                   activeOpacity={0.82}
                 >
-                  <Text style={styles.clotureBtnText}>Clôturer →</Text>
+                  <Text style={styles.clotureBtnText}>Clôturer -></Text>
                 </TouchableOpacity>
               ) : (
                 <View style={styles.clotureDone}>
@@ -244,7 +270,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
         </View>
       )}
 
-      {/* ── Liste des étapes ── */}
+      {/* Liste des étapes */}
       <FlatList
         data={etapesTri}
         keyExtractor={(item) => item.uuid}
@@ -258,7 +284,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
         ListFooterComponent={<View style={{ height: 100 }} />}
       />
 
-      {/* ── FAB Anomalie — raised orange ── */}
+      {/* FAB Anomalie : raised orange */}
       {programme && programme.statut !== 'CLOTURE' && (
         <View style={styles.fab}>
           <View style={styles.fabOuter}>
@@ -280,7 +306,7 @@ const styles = StyleSheet.create({
   root:   { flex: 1, backgroundColor: NEO },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: NEO },
 
-  /* ── Header navy ─────────────────────────────────────────────────────── */
+  /* Header navy */
   header: { backgroundColor: NAVY, paddingTop: 16, overflow: 'hidden' },
   bubble1: { position: 'absolute', borderRadius: 999, width: 220, height: 220, top: -70, right: -50, backgroundColor: 'rgba(7,155,217,0.1)' },
   bubble2: { position: 'absolute', borderRadius: 999, width: 120, height: 120, top: 55,  right: 95,  backgroundColor: 'rgba(7,155,217,0.07)' },
@@ -317,7 +343,7 @@ const styles = StyleSheet.create({
   progPct: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.8)', minWidth: 34, textAlign: 'right' },
 
   triActions: { paddingHorizontal: 12, paddingBottom: 14, gap: 10 },
-  /* Piste tri — inset dark neo (dark top-left, light bottom-right) */
+  /* Piste tri : inset dark neo (dark top-left, light bottom-right) */
   triTrack: {
     flexDirection: 'row', borderRadius: 12, padding: 4, gap: 3,
     backgroundColor: 'rgba(0,0,0,0.28)',
@@ -358,7 +384,7 @@ const styles = StyleSheet.create({
   },
   clotureDoneText: { color: '#34d399', fontWeight: '700', fontSize: 13 },
 
-  /* ── Cartes étapes — raised double ombre + biseau ────────────────────── */
+  /* Cartes étapes : raised double ombre + biseau */
   list: { padding: 12, paddingTop: 14 },
 
   cardOuter: {
@@ -411,7 +437,7 @@ const styles = StyleSheet.create({
   syncGreen:  { backgroundColor: '#22c55e' },
   syncOrange: { backgroundColor: '#f97316' },
 
-  /* Itinéraire — inset (concave) */
+  /* Itinéraire : inset (concave) */
   itineraireRow: {
     backgroundColor:   NEO_IN,
     paddingVertical:   10,
@@ -426,7 +452,7 @@ const styles = StyleSheet.create({
   emptyWrap: { padding: 40, alignItems: 'center' },
   emptyText: { color: TEXT3, textAlign: 'center', fontSize: 14 },
 
-  /* ── FAB Anomalie — raised orange ────────────────────────────────────── */
+  /* FAB Anomalie : raised orange */
   fab:      { position: 'absolute', bottom: 24, right: 20 },
   fabOuter: {
     borderRadius:    30,

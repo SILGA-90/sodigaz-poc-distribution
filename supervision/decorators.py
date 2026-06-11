@@ -1,4 +1,20 @@
-"""Decorateurs d'autorisation pour la supervision."""
+"""
+Décorateurs d'autorisation pour l'interface de supervision web.
+
+Ce module fournit le décorateur @superviseur_required qui protège les
+vues de supervision contre l'accès par des comptes sans rôle SUPERVISEUR
+ou ADMIN.
+
+Les vues de supervision sont
+des fonctions (non des classes), ce qui exclut les mixins CBV. Le
+décorateur compose @login_required avec la vérification de rôle en une
+seule annotation réutilisable.
+
+Un livreur qui accèderait à /supervision/
+par erreur (mauvaise URL, mauvais compte) reçoit un 403 explicite plutôt
+qu'un 404. Le message "réservé aux superviseurs" est plus utile qu'une page
+blanche.
+"""
 from functools import wraps
 
 from django.contrib.auth.decorators import login_required

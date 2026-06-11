@@ -1,6 +1,39 @@
 /**
- * SaisieOperationScreen — Néomorphisme clair.
- * Header navy, corps NEO #e8edf2, cartes raised, inputs inset, boutons raised.
+ * Écran de saisie d'opération terrain : cœur métier de l'application mobile.
+ *
+ * Formulaire de saisie d'une opération de collecte ou restitution de
+ * bouteilles de gaz. Gère : articles (quantités), paiement, signatures
+ * (livreur + client), photos, GPS et soumission locale (PENDING).
+ *
+ * On appelle acquerirPositionProbante()
+ * dès le montage du composant pour que l'OS démarre le fix satellite en
+ * avance. Au moment de la soumission, la position est souvent déjà prête.
+ * positionEstRecente() vérifie si la position capturée à l'ouverture est
+ * encore valide (< 5 min) : évite une double acquisition.
+ *
+ * La collecte ramasse
+ * des emballages vides (E*), opportuniste, sans plan. La restitution
+ * livre du gaz plein (G*) selon le plan mock_x3. Les articles saisissables
+ * sont filtrés par getArticlesSaisissables() selon le type de programme.
+ *
+ * Si le livreur rouvre le
+ * formulaire d'une étape déjà saisie mais non synchronisée, on met à jour
+ * l'opération existante plutôt que d'en créer une nouvelle (doublon interdit).
+ * getOperationPendingPourEtape() détecte ce cas.
+ *
+ * BCR = Bon de Collecte Retour (emballages
+ * vides récupérés). BCT = Bon de Collecte Transfert (cas particulier).
+ * Ces sous-types correspondent aux types de documents Sage X3 qui seront
+ * générés quand le flux retour X3 sera implémenté.
+ *
+ * Les signatures sont critiques pour la valeur
+ * probante de l'opération. Un SVG natif (PanResponder + react-native-svg)
+ * garantit zéro latence tactile et un rendu net sans WebView. Voir
+ * SignaturePad.tsx.
+ *
+ * L'opération principale,
+ * ses lignes et le changement de statut de l'étape (-> VISITEE) sont
+ * atomiques. Un échec partiel laisserait l'étape dans un état incohérent.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -12,6 +45,7 @@ import {
   Switch,
   Text,
   TextInput,
+  TextInputProps,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -35,7 +69,7 @@ import { ModePaiement } from '../types/models';
 import { RootStackParamList } from '../types/navigation';
 import { Colors } from '../theme';
 
-/* ── Palette néo ─────────────────────────────────────────────────────── */
+/* Palette néo */
 const NEO     = '#e8edf2';
 const NEO_SHD = '#4a6880';
 const NEO_IN  = '#d4dde6';
@@ -212,8 +246,8 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
       Alert.alert('Opération enregistrée',
         `Opération${photos.length > 0 ? ` et ${photos.length} photo(s)` : ''} enregistrée(s) localement. Remontée à la prochaine synchronisation.`,
         [{ text: 'OK', onPress: () => navigation.goBack() }]);
-    } catch (e: any) {
-      Alert.alert('Erreur', e?.message ?? String(e));
+    } catch (e: unknown) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : String(e));
     } finally {
       setSaving(false);
     }
@@ -224,12 +258,12 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
   const isCollecte = etapeInfo?.type_programme === 'COLLECTE';
   const gpsColor = gpsStatus === 'fiable' ? Colors.success : gpsStatus === 'degradee' ? Colors.warning : gpsStatus === 'absente' ? Colors.danger : TEXT3;
   const gpsBg    = gpsStatus === 'fiable' ? Colors.successBg : gpsStatus === 'degradee' ? Colors.warningBg : gpsStatus === 'absente' ? Colors.dangerBg : NEO_IN;
-  const gpsLabel = gpsStatus === 'fiable' ? 'GPS fiable' : gpsStatus === 'degradee' ? 'GPS imprécis' : gpsStatus === 'absente' ? 'GPS absent' : 'GPS…';
+  const gpsLabel = gpsStatus === 'fiable' ? 'GPS fiable' : gpsStatus === 'degradee' ? 'GPS imprécis' : gpsStatus === 'absente' ? 'GPS absent' : 'GPS...';
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.scroll}>
 
-      {/* ── Header navy ── */}
+      {/* Header navy */}
       {etapeInfo && (
         <View style={styles.header}>
           <View style={styles.bubble1} pointerEvents="none" />
@@ -260,7 +294,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         </View>
       )}
 
-      {/* ── QUANTITÉS ── */}
+      {/* QUANTITÉS */}
       <SectionHeader icon={isCollecte ? 'arrow-down-outline' : 'arrow-up-outline'} color="blue" title={isCollecte ? 'Bouteilles à collecter' : 'Quantités à livrer'} />
       <View style={styles.cardOuter}>
         <View style={styles.cardInner}>
@@ -276,7 +310,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
                   )}
                 </View>
               </View>
-              {/* Stepper — raised */}
+              {/* Stepper : raised */}
               <View style={styles.stepper}>
                 <View style={styles.stepOuter}>
                   <TouchableOpacity style={styles.stepInner}
@@ -306,7 +340,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         </View>
       </View>
 
-      {/* ── PAIEMENT ── */}
+      {/* PAIEMENT */}
       {isCollecte ? (
         <>
           <SectionHeader icon="cash-outline" color="orange" title="Acompte (optionnel)" />
@@ -368,7 +402,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         </>
       )}
 
-      {/* ── SIGNATURES ── */}
+      {/* SIGNATURES */}
       <SectionHeader icon="create-outline" color="navy" title="Signatures" />
       <View style={styles.cardOuter}>
         <View style={styles.cardInner}>
@@ -408,7 +442,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         </View>
       </View>
 
-      {/* ── PHOTOS ── */}
+      {/* PHOTOS */}
       <SectionHeader icon="camera-outline" color="blue" title="Photos" />
       <View style={styles.cardOuterNoPad}>
         <View style={styles.cardInnerNoPad}>
@@ -416,7 +450,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         </View>
       </View>
 
-      {/* ── COMMENTAIRE ── */}
+      {/* COMMENTAIRE */}
       <SectionHeader icon="chatbubble-outline" color="gray" title="Commentaire" />
       <View style={styles.cardOuter}>
         <View style={styles.cardInner}>
@@ -425,14 +459,14 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
             value={commentaire}
             onChangeText={(v) => { isDirty.current = true; setCommentaire(v); }}
             multiline
-            placeholder="Remarque éventuelle…"
+            placeholder="Remarque éventuelle..."
             placeholderTextColor={TEXT3}
             textAlignVertical="top"
           />
         </View>
       </View>
 
-      {/* ── ENREGISTRER — raised orange ── */}
+      {/* ENREGISTRER : raised orange */}
       <View style={[styles.saveBtnOuter, saving && { opacity: 0.5 }]}>
         <TouchableOpacity style={styles.saveBtnInner} onPress={handleSave} disabled={saving} activeOpacity={0.85}>
           {saving ? <ActivityIndicator color="#fff" /> : (
@@ -444,7 +478,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         </TouchableOpacity>
       </View>
 
-      {/* ── ÉCHEC — raised danger ── */}
+      {/* ÉCHEC : raised danger */}
       {etapeInfo && (
         <View style={styles.echecOuter}>
           <TouchableOpacity
@@ -453,7 +487,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
             onPress={() => setShowEchecDialog(true)}
             activeOpacity={0.82}
           >
-            <Text style={styles.echecBtnText}>Étape non réalisable → Marquer en échec</Text>
+            <Text style={styles.echecBtnText}>Étape non réalisable -> Marquer en échec</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -470,7 +504,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         onCancel={() => setPadVisible(null)}
       />
 
-      {/* ── Dialog marquer en échec ── */}
+      {/* Dialog marquer en échec */}
       <NeoDialog
         visible={showEchecDialog}
         icon="close-circle-outline"
@@ -487,13 +521,13 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
             await marquerEtapeEchec(etapeInfo!.uuid);
             isDirty.current = false;
             navigation.goBack();
-          } catch (e: any) {
-            Alert.alert('Erreur', e?.message ?? String(e));
+          } catch (e: unknown) {
+            Alert.alert('Erreur', e instanceof Error ? e.message : String(e));
           }
         }}
       />
 
-      {/* ── Dialog quitter la saisie ── */}
+      {/* Dialog quitter la saisie */}
       <NeoDialog
         visible={showExitDialog}
         icon="warning-outline"
@@ -514,7 +548,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
   );
 }
 
-/* ── Sous-composants ─────────────────────────────────────────────────── */
+/* Sous-composants */
 
 type IconColor = 'blue' | 'green' | 'orange' | 'navy' | 'gray';
 function SectionHeader({ icon, color, title }: { icon: React.ComponentProps<typeof Ionicons>['name']; color: IconColor; title: string }) {
@@ -536,7 +570,7 @@ const shS = StyleSheet.create({
 });
 
 function FieldInput({ value, onChangeText, placeholder, keyboardType }: {
-  value: string; onChangeText: (v: string) => void; placeholder?: string; keyboardType?: any;
+  value: string; onChangeText: (v: string) => void; placeholder?: string; keyboardType?: TextInputProps['keyboardType'];
 }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -577,13 +611,13 @@ function FieldPicker({ selectedValue, onValueChange }: { selectedValue: string; 
   );
 }
 
-/* ── Styles ──────────────────────────────────────────────────────────── */
+/* Styles */
 const styles = StyleSheet.create({
   root:   { flex: 1, backgroundColor: NEO },
   scroll: { paddingBottom: 48 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: NEO },
 
-  /* ── Header navy ── */
+  /* Header navy */
   header:  { backgroundColor: NAVY, overflow: 'hidden' },
   bubble1: { position: 'absolute', width: 200, height: 200, borderRadius: 100, top: -55, right: -40, backgroundColor: 'rgba(7,155,217,0.1)' },
   bubble2: { position: 'absolute', width: 110, height: 110, borderRadius: 55,  top: 35, right: 100, backgroundColor: 'rgba(7,155,217,0.07)' },
@@ -610,7 +644,7 @@ const styles = StyleSheet.create({
   plvName:    { fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
   clientName: { fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 3 },
 
-  /* ── Cartes de section raised ── */
+  /* Cartes de section raised */
   cardOuter: {
     marginHorizontal: 12,
     marginBottom:     4,
@@ -665,7 +699,7 @@ const styles = StyleSheet.create({
   },
   fieldSep: { height: 1, backgroundColor: SEP, marginVertical: 12 },
 
-  /* ── Lignes produit ── */
+  /* Lignes produit */
   ligneRow:    { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
   ligneRowSep: { borderTopWidth: 1, borderTopColor: SEP },
   produitLibelle: { fontSize: 14, fontWeight: '700', color: TEXT },
@@ -676,7 +710,7 @@ const styles = StyleSheet.create({
   prevueBadge:    { backgroundColor: Colors.infoBg, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 20 },
   prevueBadgeText:{ fontSize: 11, fontWeight: '700', color: Colors.brandBlue },
 
-  /* ── Stepper raised ── */
+  /* Stepper raised */
   stepper:  { flexDirection: 'row', alignItems: 'center', gap: 6 },
   stepOuter: {
     borderRadius:    10,
@@ -702,7 +736,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#8aa8c0', borderRightColor:   '#8aa8c0',
   },
   stepBtnText: { fontSize: 26, fontWeight: '700', color: TEXT, lineHeight: 30 },
-  /* Champ quantité — inset */
+  /* Champ quantité : inset */
   qteInput: {
     width: 56, height: 48, borderRadius: 10,
     backgroundColor: NEO_IN,
@@ -713,7 +747,7 @@ const styles = StyleSheet.create({
     fontSize: 18, fontWeight: '700', color: TEXT, textAlign: 'center',
   },
 
-  /* ── Labels & champs ── */
+  /* Labels & champs */
   label:     { fontSize: 13, fontWeight: '700', color: TEXT2, marginTop: 2 },
   switchSub: { fontSize: 11, color: TEXT3, marginTop: 1 },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -724,7 +758,7 @@ const styles = StyleSheet.create({
   montantAutoUnit:  { fontSize: 14, fontWeight: '700', color: Colors.success },
   montantAutoHint:  { fontSize: 12, color: TEXT3 },
 
-  /* ── Signatures ── */
+  /* Signatures */
   sigRow: { flexDirection: 'row', gap: 10 },
   sigBtn: {
     flex: 1, borderRadius: 12, paddingVertical: 16, alignItems: 'center',
@@ -772,7 +806,7 @@ const styles = StyleSheet.create({
   },
   sigErrorText: { flex: 1, fontSize: 13, color: Colors.danger, lineHeight: 18 },
 
-  /* ── Commentaire — inset ── */
+  /* Commentaire : inset */
   commentaire: {
     minHeight: 80, fontSize: 14, color: TEXT, lineHeight: 20,
     backgroundColor: NEO_IN, borderRadius: 10, padding: 12,
@@ -782,7 +816,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f4f8fb', borderRightColor: '#f4f8fb',
   },
 
-  /* ── Bouton Enregistrer — raised orange ── */
+  /* Bouton Enregistrer : raised orange */
   saveBtnOuter: {
     marginHorizontal: 12, marginTop: 22, marginBottom: 8,
     borderRadius:     14,
@@ -809,7 +843,7 @@ const styles = StyleSheet.create({
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
   saveBtnSub:  { color: 'rgba(255,255,255,0.75)', fontSize: 12, marginTop: 4 },
 
-  /* ── Bouton Échec — raised danger ── */
+  /* Bouton Échec : raised danger */
   echecOuter: {
     marginHorizontal: 12, marginBottom: 8,
     borderRadius:     12,

@@ -1,6 +1,24 @@
 /**
- * Historique de tous les programmes stockés localement.
- * Néomorphisme clair — fond NEO, cartes raised avec bande accent statut.
+ * Historique des programmes clôturés stockés localement.
+ *
+ * Liste tous les programmes avec statut CLOTURE présents dans la base
+ * SQLite locale, du plus récent au plus ancien. Permet au livreur de
+ * retrouver les détails d'une tournée passée (étapes, opérations) sans
+ * accès réseau.
+ *
+ * Les programmes actifs
+ * sont sur le DashboardScreen. L'historique est réservé aux tournées
+ * terminées : séparation visuelle claire pour le livreur.
+ *
+ * Les données sont lues depuis SQLite.
+ * Aucun pull n'est déclenché. Si le livreur veut voir des programmes
+ * plus anciens (purgés après 90 jours), il doit synchroniser et
+ * vérifier côté supervision web.
+ *
+ * On réutilise
+ * ProgrammeScreen en lecture seule : même code de rendu des étapes
+ * et opérations, sans duplication. La navigation passe programmeId
+ * comme param.
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -16,7 +34,7 @@ import { getTousLesProgrammes, ProgrammeAvecProgression } from '../db/repositori
 import { RootStackParamList } from '../types/navigation';
 import { Colors } from '../theme';
 
-/* ── Palette néo claire ─────────────────────────────────────────────── */
+/* Palette néo claire */
 const NEO     = '#e8edf2';
 const NEO_SHD = '#4a6880';
 const NEO_IN  = '#d4dde6';
@@ -79,7 +97,7 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
           {/* Barre de progression inset */}
           <View style={styles.barRow}>
             <View style={styles.barTrack}>
-              <View style={[styles.barFill, { width: `${pct}%` as any, backgroundColor: st.color }]} />
+              <View style={[styles.barFill, { width: `${pct}%` as `${number}%`, backgroundColor: st.color }]} />
             </View>
             <Text style={[styles.barLabel, { color: st.color }]}>{item.etapes_visitees}/{item.total_etapes}</Text>
           </View>
@@ -91,7 +109,7 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
   return (
     <View style={styles.root}>
 
-      {/* ── Header navy ── */}
+      {/* Header navy */}
       <View style={styles.header}>
         <View style={styles.bubble1} pointerEvents="none" />
         <View style={styles.bubble2} pointerEvents="none" />
@@ -106,7 +124,7 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
         </View>
       </View>
 
-      {/* ── Liste ── */}
+      {/* Liste */}
       <FlatList
         data={programmes}
         keyExtractor={(item) => String(item.id)}
@@ -128,7 +146,7 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
   );
 }
 
-/* ── Styles ──────────────────────────────────────────────────────────── */
+/* Styles */
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: NEO },
 

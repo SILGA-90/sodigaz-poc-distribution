@@ -1,6 +1,22 @@
 /**
- * Récapitulatif d'une étape déjà visitée — lecture seule.
- * Néomorphisme clair : fond NEO, cartes raised, insets pour commentaire.
+ * Récapitulatif d'une étape déjà visitée : vue lecture seule.
+ *
+ * Affiche le détail d'une opération associée à une étape visitée :
+ * type, sous-type, articles (quantités réalisées), montants, paiement,
+ * GPS (qualité + coordonnées), commentaire. Accessible depuis
+ * ProgrammeScreen en appuyant sur une étape à statut VISITEE.
+ *
+ * Une fois soumise localement, une opération ne peut
+ * pas être modifiée si elle est déjà SYNCED. Si elle est encore PENDING,
+ * le livreur peut rouvrir SaisieOperationScreen pour la corriger :
+ * l'upsert dans enregistrerOperation() gérera la mise à jour.
+ * Cet écran ne propose pas de bouton "Modifier" pour éviter la confusion.
+ *
+ * WHY (requête directe sur getDatabase()) : Cet écran lit des données de
+ * plusieurs tables (operation, ligne_operation, etape, plv, client)
+ * qui ne sont pas exposées par un repository dédié. La requête SQL
+ * directe est plus appropriée que de créer un repository pour une
+ * seule utilisation.
  */
 import React, { useEffect, useState } from 'react';
 import {
@@ -16,7 +32,7 @@ import { getDatabase } from '../db/database';
 import { RootStackParamList } from '../types/navigation';
 import { Colors } from '../theme';
 
-/* ── Palette néo claire ─────────────────────────────────────────────── */
+/* Palette néo claire */
 const NEO     = '#e8edf2';
 const NEO_SHD = '#4a6880';
 const NEO_IN  = '#d4dde6';
@@ -103,7 +119,7 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.scroll}>
 
-      {/* ── Header navy ── */}
+      {/* Header navy */}
       <View style={styles.header}>
         <View style={styles.bubble1} pointerEvents="none" />
         <View style={styles.bubble2} pointerEvents="none" />
@@ -127,7 +143,7 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
         </View>
       </View>
 
-      {/* ── PRODUITS ── */}
+      {/* PRODUITS */}
       <SectionHeader icon={isCollecte ? 'arrow-down-outline' : 'arrow-up-outline'} color={isCollecte ? 'blue' : 'green'} title="Produits" />
       <View style={styles.cardOuter}>
         <View style={styles.cardInner}>
@@ -141,7 +157,7 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
                 </View>
                 <Text style={styles.ligneQte}>× {l.quantite_realisee}</Text>
                 <Text style={styles.ligneMontant}>
-                  {l.montant_ligne > 0 ? `${l.montant_ligne.toLocaleString('fr-FR')} FCFA` : '—'}
+                  {l.montant_ligne > 0 ? `${l.montant_ligne.toLocaleString('fr-FR')} FCFA` : ':'}
                 </Text>
               </View>
             ))
@@ -149,7 +165,7 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
         </View>
       </View>
 
-      {/* ── PAIEMENT ── */}
+      {/* PAIEMENT */}
       <SectionHeader icon="cash-outline" color="green" title="Paiement" />
       <View style={styles.cardOuter}>
         <View style={styles.cardInner}>
@@ -172,7 +188,7 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
         </View>
       </View>
 
-      {/* ── SIGNATURES ── */}
+      {/* SIGNATURES */}
       <SectionHeader icon="create-outline" color="navy" title="Signatures" />
       <View style={styles.cardOuter}>
         <View style={styles.cardInner}>
@@ -189,7 +205,7 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
         </View>
       </View>
 
-      {/* ── COMMENTAIRE ── */}
+      {/* COMMENTAIRE */}
       {operation.commentaire ? (
         <>
           <SectionHeader icon="chatbubble-outline" color="gray" title="Commentaire" />
@@ -207,7 +223,7 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
   );
 }
 
-/* ── Sous-composants ─────────────────────────────────────────────────── */
+/* Sous-composants */
 
 type IconColor = 'blue' | 'green' | 'orange' | 'navy' | 'gray';
 function SectionHeader({ icon, color, title }: { icon: React.ComponentProps<typeof Ionicons>['name']; color: IconColor; title: string }) {
@@ -281,13 +297,13 @@ function modePaiementLabel(mode: string): string {
   return MAP[mode] ?? mode;
 }
 
-/* ── Styles ──────────────────────────────────────────────────────────── */
+/* Styles */
 const styles = StyleSheet.create({
   root:   { flex: 1, backgroundColor: NEO },
   scroll: { paddingBottom: 40 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: NEO, padding: 32 },
 
-  /* État vide — raised */
+  /* État vide : raised */
   emptyOuter: {
     borderRadius: 16, backgroundColor: NEO,
     shadowColor: NEO_SHD, shadowOffset: { width: 6, height: 6 }, shadowOpacity: 1, shadowRadius: 7, elevation: 8,

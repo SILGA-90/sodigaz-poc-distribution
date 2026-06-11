@@ -1,17 +1,43 @@
 /**
- * Service de synchronisation offline-first.
+ * Service de synchronisation offline-first : cœur technique du mémoire.
  *
- * Protocole : syncAll() = pushClotures() → pull() → push()
- *   - pull  : POST /api/sync/pull/  — recoit les changements serveur, les ecrit en local
- *   - push  : POST /api/sync/push/  — remonte les donnees terrain (PENDING) au serveur
+ * Ce module orchestre les échanges bidirectionnels entre la base SQLite
+ * locale (expo-sqlite) et l'API Django. Il expose trois fonctions
+ * publiques : pull(), push() et syncAll().
  *
- * Invariants a respecter :
- *   - pull AVANT push (evite d'ecraser une cloture locale avec un statut serveur perime)
- *   - idempotence : le push est rejoue sans risque grace a update_or_create par UUID cote serveur
- *   - last_modified jamais ecrit a la main (trigger PostgreSQL cote serveur)
+ * Le livreur travaille en zone à couverture réseau
+ * variable. Toutes les saisies sont d'abord écrites en local avec le
+ * statut PENDING, puis poussées vers le serveur dès que le réseau
+ * est disponible. L'ordre pull -> push garantit que le mobile dispose
+ * toujours des données serveur les plus récentes avant d'envoyer les
+ * siennes.
+ *
+ * Protocole (inspiré de WatermelonDB, mais codé à la main) :
+ *   syncAll() = pushClotures() -> pull() -> push()
+ *
+ *   - pushClotures : envoie les programmes clôturés AVANT le pull pour éviter
+ *                    que le pull n'écrase le statut CLOTURE local avec PLANIFIE.
+ *   - pull         : POST /api/sync/pull/  : récupère les changements serveur
+ *                    depuis lastPulledAt, les applique en transaction SQLite.
+ *   - push         : POST /api/sync/push/  : remonte les données PENDING.
+ *
+ * Invariants critiques (ne pas modifier sans comprendre les implications) :
+ *   1. pull AVANT push (voir ci-dessus).
+ *   2. last_modified jamais écrit à la main côté mobile (trigger PostgreSQL).
+ *   3. Le push est idempotent : update_or_create par UUID côté serveur.
+ *   4. Les opérations INSERT OR IGNORE sur operation/ligne_operation préservent
+ *      les données PENDING locales que le pull ne doit pas écraser.
  */
+import { isAxiosError } from 'axios';
+import { SQLiteDatabase } from 'expo-sqlite';
 import apiClient from '../api/client';
-import { getDatabase, getLastPulledAt, setLastPulledAt, getCloturesPending, clearCloturesPending } from '../db/database';
+import {
+  getDatabase,
+  getLastPulledAt,
+  setLastPulledAt,
+  getCloturesPending,
+  clearCloturesPending,
+} from '../db/database';
 import {
   getPendingOperations,
   getPendingLignesOperation,
@@ -29,6 +55,7 @@ import {
 import * as FileSystem from 'expo-file-system/legacy';
 import { API_BASE_URL } from '../config/api';
 import { getItem, STORAGE_KEYS } from '../storage/secureStorage';
+import logger from '../services/logger';
 
 interface TableChanges {
   created: any[];
@@ -48,27 +75,42 @@ export interface PullResult {
   error?: string;
 }
 
-/** Convertit un booleen JSON (true/false) en entier SQLite (1/0). */
+/**
+ * Convertit un booléen JSON (true/false) en entier SQLite (1/0).
+ * SQLite n'a pas de type BOOLEAN natif. Les colonnes booléennes sont
+ * stockées en INTEGER (0/1) dans notre schéma.
+ */
 function bool(value: any): number {
   return value ? 1 : 0;
 }
 
 // ---------------------------------------------------------------------------
-// Helper generique pour l'application des changements descendant (pull)
+// Helper générique : application des changements descendants (pull)
 // ---------------------------------------------------------------------------
 
 /**
- * Applique un lot de changements (created + updated) sur une table SQLite.
+ * Applique un lot de changements { created, updated, deleted } sur une
+ * table SQLite locale. Délègue l'INSERT à un callback `insertRow`.
  *
- * @param db          Instance de la base SQLite
- * @param changes     Objet {created, updated, deleted} recu du serveur
- * @param insertRow   Callback qui execute l'INSERT OR REPLACE pour une ligne
- * @param deleteTable Nom de la table pour la suppression par uuid (optionnel ;
- *                    les tables referentielles n'ont pas de suppression logique)
- * @returns           Nombre de lignes creees ou mises a jour
+ * Le serveur retourne toujours `created: []`
+ * et met tout dans `updated`. On parcourt les deux listes pour être
+ * robuste si ce comportement change un jour.
+ *
+ * Pour les référentiels (client, plv, article), on
+ * veut écraser l'enregistrement existant si le serveur envoie une version
+ * plus récente. Sûr car ces tables n'ont pas de données locales PENDING.
+ *
+ * Les référentiels n'ont pas de suppression logique
+ * (is_deleted absent). On ne passe donc pas de deleteTable pour ces tables.
+ *
+ * @param db          Instance SQLite ouverte
+ * @param changes     Payload { created, updated, deleted } reçu du serveur
+ * @param insertRow   Callback exécutant l'INSERT OR REPLACE pour une ligne
+ * @param deleteTable Nom de la table pour la suppression par uuid (optionnel)
+ * @returns           Nombre de lignes traitées (created + updated)
  */
 async function applyRows(
-  db: any,
+  db: SQLiteDatabase,
   changes: TableChanges | undefined,
   insertRow: (r: any) => Promise<void>,
   deleteTable?: string,
@@ -79,6 +121,9 @@ async function applyRows(
     await insertRow(r);
   }
   if (deleteTable) {
+    // Suppression physique des enregistrements marqués is_deleted côté serveur.
+    // WHY : côté mobile on supprime vraiment (pas de soft delete local) pour
+    //       ne pas afficher des données obsolètes à l'utilisateur.
     for (const uuid of changes.deleted ?? []) {
       await db.runAsync(`DELETE FROM ${deleteTable} WHERE uuid = ?;`, [uuid]);
     }
@@ -87,10 +132,11 @@ async function applyRows(
 }
 
 // ---------------------------------------------------------------------------
-// Application table par table — pull
+// Application table par table : données descendantes (pull)
 // ---------------------------------------------------------------------------
 
-async function applyClients(db: any, changes?: TableChanges): Promise<number> {
+/** WHAT : Met à jour le référentiel des clients depuis le serveur. */
+async function applyClients(db: SQLiteDatabase, changes?: TableChanges): Promise<number> {
   return applyRows(db, changes, (r) =>
     db.runAsync(
       `INSERT OR REPLACE INTO client
@@ -101,7 +147,8 @@ async function applyClients(db: any, changes?: TableChanges): Promise<number> {
   );
 }
 
-async function applyPlvs(db: any, changes?: TableChanges): Promise<number> {
+/** WHAT : Met à jour le référentiel des PLV (Points de Livraison) depuis le serveur. */
+async function applyPlvs(db: SQLiteDatabase, changes?: TableChanges): Promise<number> {
   return applyRows(db, changes, (r) =>
     db.runAsync(
       `INSERT OR REPLACE INTO plv
@@ -112,7 +159,8 @@ async function applyPlvs(db: any, changes?: TableChanges): Promise<number> {
   );
 }
 
-async function applyArticles(db: any, changes?: TableChanges): Promise<number> {
+/** WHAT : Met à jour le référentiel des articles (bouteilles gaz) depuis le serveur. */
+async function applyArticles(db: SQLiteDatabase, changes?: TableChanges): Promise<number> {
   return applyRows(db, changes, (r) =>
     db.runAsync(
       `INSERT OR REPLACE INTO article
@@ -123,7 +171,8 @@ async function applyArticles(db: any, changes?: TableChanges): Promise<number> {
   );
 }
 
-async function applyProgrammes(db: any, changes?: TableChanges): Promise<number> {
+/** WHAT : Applique les programmes du livreur reçus du serveur. */
+async function applyProgrammes(db: SQLiteDatabase, changes?: TableChanges): Promise<number> {
   return applyRows(
     db, changes,
     (r) => db.runAsync(
@@ -139,7 +188,8 @@ async function applyProgrammes(db: any, changes?: TableChanges): Promise<number>
   );
 }
 
-async function applyEtapes(db: any, changes?: TableChanges): Promise<number> {
+/** WHAT : Applique les étapes (visites PLV prévues) reçues du serveur. */
+async function applyEtapes(db: SQLiteDatabase, changes?: TableChanges): Promise<number> {
   return applyRows(
     db, changes,
     (r) => db.runAsync(
@@ -154,7 +204,8 @@ async function applyEtapes(db: any, changes?: TableChanges): Promise<number> {
   );
 }
 
-async function applyLignesProgramme(db: any, changes?: TableChanges): Promise<number> {
+/** WHAT : Applique les lignes de programme (quantités prévues par article). */
+async function applyLignesProgramme(db: SQLiteDatabase, changes?: TableChanges): Promise<number> {
   return applyRows(
     db, changes,
     (r) => db.runAsync(
@@ -167,15 +218,20 @@ async function applyLignesProgramme(db: any, changes?: TableChanges): Promise<nu
   );
 }
 
-async function applyOperations(db: any, changes?: TableChanges): Promise<number> {
+/**
+ * Applique les opérations reçues du serveur (re-pull des opérations
+ * déjà poussées, potentiellement corrigées par le superviseur).
+ *
+ * On n'écrase JAMAIS une opération PENDING locale.
+ * Une opération PENDING n'a pas encore été envoyée au serveur, donc
+ * elle n'apparaît pas dans le pull (le serveur ne la connaît pas encore).
+ * Si par construction elle apparaissait, OR IGNORE la protège.
+ * La prochaine sync complète (PENDING -> SYNCED -> pull) réconciliera.
+ */
+async function applyOperations(db: SQLiteDatabase, changes?: TableChanges): Promise<number> {
   return applyRows(
     db, changes,
     (r) => db.runAsync(
-      // INSERT OR IGNORE : on ne remplace jamais une opération PENDING locale.
-      // Les opérations PENDING ne sont pas encore sur le serveur (pull avant push),
-      // donc elles n'apparaissent pas dans le pull — pas de conflit en pratique.
-      // La règle s'applique aussi si le superviseur modifie une opération côté serveur :
-      // la version serveur sera prise à la prochaine sync complète (PENDING → SYNCED → pull).
       `INSERT OR IGNORE INTO operation
        (uuid, etape_uuid, type_operation, sous_type, date_heure,
         latitude, longitude, gps_precision, gps_horodatage,
@@ -198,7 +254,12 @@ async function applyOperations(db: any, changes?: TableChanges): Promise<number>
   );
 }
 
-async function applyLignesOperation(db: any, changes?: TableChanges): Promise<number> {
+/**
+ * Applique les lignes d'opération reçues du serveur.
+ * Même raison que pour les opérations : ne jamais
+ * écraser une ligne PENDING locale non encore synchronisée.
+ */
+async function applyLignesOperation(db: SQLiteDatabase, changes?: TableChanges): Promise<number> {
   return applyRows(
     db, changes,
     (r) => db.runAsync(
@@ -219,54 +280,71 @@ async function applyLignesOperation(db: any, changes?: TableChanges): Promise<nu
 }
 
 // ===========================================================================
-// PULL
+// PULL : récupération des changements serveur
 // ===========================================================================
 
+/**
+ * Interroge le serveur pour obtenir tous les enregistrements modifiés
+ * depuis `lastPulledAt` et les applique dans la base SQLite locale.
+ * Sauvegarde le nouveau timestamp serveur pour le prochain pull.
+ *
+ * Toutes les tables sont écrites dans une seule
+ * transaction atomique. Si une table échoue, aucune donnée partielle
+ * n'est persistée et le prochain pull recommencera depuis le même
+ * lastPulledAt (pas de trou ni de doublon).
+ *
+ * Signale au serveur que c'est un
+ * premier pull : il renverra l'intégralité des données accessibles.
+ */
 export async function pull(): Promise<PullResult> {
   const lastPulledAt = await getLastPulledAt();
 
   let response;
   try {
     response = await apiClient.post<PullResponse>('/api/sync/pull/', { lastPulledAt });
-  } catch (e: any) {
+  } catch (e: unknown) {
     return {
       success: false,
       timestamp: lastPulledAt,
       counts: {},
-      error: e?.response?.data?.detail ?? e?.message ?? 'Erreur reseau',
+      error: isAxiosError(e) ? (e.response?.data?.detail ?? e.message ?? 'Erreur reseau') : (e instanceof Error ? e.message : 'Erreur reseau'),
     };
   }
 
   const { changes, timestamp } = response.data;
-  const db = await getDatabase();
+  const db     = await getDatabase();
   const counts: Record<string, number> = {};
 
   try {
+    // Transaction atomique : on applique toutes les tables ou aucune.
     await db.withTransactionAsync(async () => {
-      counts.client           = await applyClients(db, changes.client);
-      counts.plv              = await applyPlvs(db, changes.plv);
-      counts.article          = await applyArticles(db, changes.article);
-      counts.programme        = await applyProgrammes(db, changes.programme);
-      counts.etape            = await applyEtapes(db, changes.etape);
-      counts.ligne_programme  = await applyLignesProgramme(db, changes.ligne_programme);
-      counts.operation        = await applyOperations(db, changes.operation);
-      counts.ligne_operation  = await applyLignesOperation(db, changes.ligne_operation);
+      counts.client          = await applyClients(db, changes.client);
+      counts.plv             = await applyPlvs(db, changes.plv);
+      counts.article         = await applyArticles(db, changes.article);
+      counts.programme       = await applyProgrammes(db, changes.programme);
+      counts.etape           = await applyEtapes(db, changes.etape);
+      counts.ligne_programme = await applyLignesProgramme(db, changes.ligne_programme);
+      counts.operation       = await applyOperations(db, changes.operation);
+      counts.ligne_operation = await applyLignesOperation(db, changes.ligne_operation);
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
     return {
       success: false,
       timestamp: lastPulledAt,
       counts: {},
-      error: 'Erreur lors de l\'application des donnees : ' + (e?.message ?? String(e)),
+      error: 'Erreur lors de l\'application des donnees : ' + (e instanceof Error ? e.message : String(e)),
     };
   }
 
+  // On sauvegarde le timestamp seulement si la transaction a réussi.
+  // WHY : si on le sauvegardait avant, un échec de transaction laisserait le
+  //       mobile avec un lastPulledAt avancé sans que les données aient été écrites.
   await setLastPulledAt(timestamp);
   return { success: true, timestamp, counts };
 }
 
 // ===========================================================================
-// PUSH
+// PUSH : envoi des données terrain vers le serveur
 // ===========================================================================
 
 export interface PushResult {
@@ -275,6 +353,12 @@ export interface PushResult {
   error?: string;
 }
 
+/**
+ * Récupère les UUIDs des étapes marquées ECHEC localement.
+ * Ces étapes sont transmises séparément dans le payload push (champ
+ * `echec_etapes`) plutôt que dans les `changes` habituels, car un
+ * échec de visite n'est pas une "création de donnée" à proprement parler.
+ */
 async function getEchecEtapeUuids(): Promise<string[]> {
   const db = await getDatabase();
   const rows = await db.getAllAsync<{ uuid: string }>(
@@ -283,15 +367,34 @@ async function getEchecEtapeUuids(): Promise<string[]> {
   return rows.map((r) => r.uuid);
 }
 
+/**
+ * Envoie toutes les données PENDING (opérations, lignes, anomalies,
+ * photos) au serveur, puis marque les enregistrements synchronisés.
+ *
+ * Permet au serveur de détecter un push
+ * basé sur des données potentiellement périmées (si le pull a échoué).
+ * Non exploité dans ce POC mais prévu pour une gestion de conflit future.
+ *
+ * On ne marque SYNCED qu'après
+ * confirmation du serveur. Si le réseau coupe, les données restent
+ * PENDING et seront renvoyées au prochain cycle (idempotence garantie
+ * par update_or_create côté serveur).
+ *
+ * Les métadonnées JSON sont poussées ici.
+ * Les fichiers binaires sont envoyés ensuite via uploaderPhotosBinaires()
+ * pour permettre des re-tentatives indépendantes.
+ */
 export async function push(): Promise<PushResult> {
-  const operations  = await getPendingOperations();
-  const lignes      = await getPendingLignesOperation();
-  const anomalies   = await getPendingAnomalies();
-  const photosMeta  = await getPhotosPendingMeta();
+  const operations      = await getPendingOperations();
+  const lignes          = await getPendingLignesOperation();
+  const anomalies       = await getPendingAnomalies();
+  const photosMeta      = await getPhotosPendingMeta();
   const echecEtapeUuids = await getEchecEtapeUuids();
 
   const empty = { operation: 0, ligne_operation: 0, anomalie: 0 };
 
+  // Optimisation : si rien à envoyer, on tente quand même les uploads binaires
+  // en attente (photos dont la métadonnée est SYNCED mais le fichier pas encore).
   if (
     operations.length === 0 && lignes.length === 0 &&
     anomalies.length === 0 && photosMeta.length === 0 &&
@@ -303,73 +406,76 @@ export async function push(): Promise<PushResult> {
 
   const lastPulledAt = await getLastPulledAt();
 
+  // Construction du payload. Toutes les données PENDING passent dans `created`.
+  // WHY : Le mobile ne distingue pas created/updated dans le push : le serveur
+  //       utilise update_or_create par UUID dans les deux cas.
   const payload = {
     lastPulledAt,
     echec_etapes: echecEtapeUuids,
     changes: {
       operation: {
         created: operations.map((o) => ({
-          uuid: o.uuid,
-          etape_uuid: o.etape_uuid,
-          type_operation: o.type_operation,
-          sous_type: o.sous_type ?? null,
-          date_heure: o.date_heure,
-          latitude: o.latitude,
-          longitude: o.longitude,
-          gps_precision: o.gps_precision ?? null,
-          gps_horodatage: o.gps_horodatage ?? null,
-          mode_paiement: o.mode_paiement ?? null,
-          montant_total: o.montant_total,
-          montant_encaisse: o.montant_encaisse,
-          est_encaissee: o.est_encaissee === 1,
-          signature_livreur: o.signature_livreur ?? '',
-          signature_client: o.signature_client ?? '',
+          uuid:                  o.uuid,
+          etape_uuid:            o.etape_uuid,
+          type_operation:        o.type_operation,
+          sous_type:             o.sous_type ?? null,
+          date_heure:            o.date_heure,
+          latitude:              o.latitude,
+          longitude:             o.longitude,
+          gps_precision:         o.gps_precision ?? null,
+          gps_horodatage:        o.gps_horodatage ?? null,
+          mode_paiement:         o.mode_paiement ?? null,
+          montant_total:         o.montant_total,
+          montant_encaisse:      o.montant_encaisse,
+          est_encaissee:         o.est_encaissee === 1,
+          signature_livreur:     o.signature_livreur ?? '',
+          signature_client:      o.signature_client ?? '',
           nom_signataire_client: o.nom_signataire_client ?? '',
-          commentaire: o.commentaire ?? '',
+          commentaire:           o.commentaire ?? '',
         })),
         updated: [],
         deleted: [],
       },
       ligne_operation: {
         created: lignes.map((l) => ({
-          uuid: l.uuid,
-          operation_uuid: l.operation_uuid,
-          produit_code_x3: l.produit_code_x3,
-          quantite_realisee: l.quantite_realisee,
+          uuid:                    l.uuid,
+          operation_uuid:          l.operation_uuid,
+          produit_code_x3:         l.produit_code_x3,
+          quantite_realisee:       l.quantite_realisee,
           quantite_collectee_vide: l.quantite_collectee_vide,
-          quantite_consignee: l.quantite_consignee,
-          quantite_deconsignee: l.quantite_deconsignee,
-          montant_ligne: l.montant_ligne,
+          quantite_consignee:      l.quantite_consignee,
+          quantite_deconsignee:    l.quantite_deconsignee,
+          montant_ligne:           l.montant_ligne,
         })),
         updated: [],
         deleted: [],
       },
       anomalie: {
         created: anomalies.map((a) => ({
-          uuid: a.uuid,
+          uuid:           a.uuid,
           programme_uuid: a.programme_uuid,
-          plv_id: a.plv_id,
-          type_anomalie: a.type_anomalie,
-          gravite: a.gravite,
-          description: a.description,
-          statut: a.statut,
-          date_heure: a.date_heure,
-          latitude: a.latitude,
-          longitude: a.longitude,
+          plv_id:         a.plv_id,
+          type_anomalie:  a.type_anomalie,
+          gravite:        a.gravite,
+          description:    a.description,
+          statut:         a.statut,
+          date_heure:     a.date_heure,
+          latitude:       a.latitude,
+          longitude:      a.longitude,
         })),
         updated: [],
         deleted: [],
       },
       photo: {
         created: photosMeta.map((p) => ({
-          uuid: p.uuid,
+          uuid:           p.uuid,
           operation_uuid: p.operation_uuid,
-          anomalie_uuid: p.anomalie_uuid,
-          type_photo: p.type_photo,
-          date_heure: p.date_heure,
-          latitude: p.latitude,
-          longitude: p.longitude,
-          taille_octets: p.taille_octets,
+          anomalie_uuid:  p.anomalie_uuid,
+          type_photo:     p.type_photo,
+          date_heure:     p.date_heure,
+          latitude:       p.latitude,
+          longitude:      p.longitude,
+          taille_octets:  p.taille_octets,
         })),
         updated: [],
         deleted: [],
@@ -379,47 +485,56 @@ export async function push(): Promise<PushResult> {
 
   try {
     await apiClient.post('/api/sync/push/', payload);
-  } catch (e: any) {
+  } catch (e: unknown) {
     return {
       success: false,
       pushed: empty,
-      error: e?.response?.data?.detail ?? e?.message ?? 'Erreur reseau',
+      error: isAxiosError(e) ? (e.response?.data?.detail ?? e.message ?? 'Erreur reseau') : (e instanceof Error ? e.message : 'Erreur reseau'),
     };
   }
 
+  // Marquage SYNCED uniquement après confirmation du serveur (200 OK).
   await markTableSynced('operation',       operations.map((o) => o.uuid));
   await markTableSynced('ligne_operation', lignes.map((l) => l.uuid));
   await markTableSynced('anomalie',        anomalies.map((a) => a.uuid));
   await markPhotoMetaSynced(photosMeta.map((p) => p.uuid));
 
+  // Upload des binaires photos dont la métadonnée vient d'être synchronisée.
   await uploaderPhotosBinaires();
 
   return {
     success: true,
     pushed: {
-      operation: operations.length,
+      operation:       operations.length,
       ligne_operation: lignes.length,
-      anomalie: anomalies.length,
+      anomalie:        anomalies.length,
     },
   };
 }
 
 // ===========================================================================
-// ORCHESTRATION
+// ORCHESTRATION : cycle de synchronisation complet
 // ===========================================================================
 
 /**
- * Synchronisation complete : push clotures → pull → push terrain.
+ * Exécute un cycle de synchronisation complet dans l'ordre correct :
+ * pushClotures -> pull -> push.
+ *
+ * Si le livreur clôture son programme puis
+ * déclenche une sync, le pull qui suivrait retournerait un statut
+ * PLANIFIE/EN_COURS (côté serveur la clôture n'est pas encore connue)
+ * et écraserait le statut CLOTURE local. En poussant les clôtures avant
+ * le pull, le serveur est à jour et le pull renverra CLOTURE.
+ *
+ * On supprime les données locales de plus de 90 jours
+ * après une sync réussie pour limiter la taille de la base SQLite.
+ * On ne purge QUE si pull ET push ont réussi pour ne pas supprimer des
+ * données PENDING qui n'auraient pas encore été envoyées.
  */
 export async function syncAll(): Promise<{ pull: PullResult; push: PushResult }> {
-  // Les clotures sont poussees AVANT le pull pour que le pull qui suit
-  // ramene un statut CLOTURE coherent et n'ecrase pas la cloture locale.
   await pushClotures();
   const pullResult = await pull();
   const pushResult = await push();
-  // Purge des données locales anciennes après une sync réussie.
-  // On purge uniquement si pull ET push ont réussi pour ne pas supprimer
-  // de données qui n'auraient pas encore été envoyées.
   if (pullResult.success && pushResult.success) {
     purgerDonneesAnciennes(90).catch(() => {});
   }
@@ -427,9 +542,16 @@ export async function syncAll(): Promise<{ pull: PullResult; push: PushResult }>
 }
 
 /**
- * Remonte au serveur les programmes clotures localement.
- * Best-effort : en cas d'echec reseau, la cloture reste en attente et
- * sera retentee au prochain cycle.
+ * Envoie les UUIDs des programmes clôturés localement mais pas encore
+ * confirmés côté serveur.
+ *
+ * On ne peut pas stocker la clôture pending
+ * dans la colonne `statut` de la table `programme`, car le pull suivant
+ * ferait un INSERT OR REPLACE qui remettrait le statut à EN_COURS.
+ * La table `sync_meta` (clé/valeur) survive aux INSERT OR REPLACE.
+ *
+ * En cas d'échec réseau, la clôture reste dans la file
+ * et sera retentée au prochain syncAll(). Pas de blocage du push principal.
  */
 async function pushClotures(): Promise<void> {
   const uuids = await getCloturesPending();
@@ -438,14 +560,23 @@ async function pushClotures(): Promise<void> {
     await apiClient.post('/api/sync/programmes/cloturer/', { uuids });
     await clearCloturesPending(uuids);
   } catch (e) {
-    console.warn('Push cloture echoue :', e);
+    logger.warn('Push cloture echoue :', e);
   }
 }
 
 /**
- * Upload des fichiers binaires des photos dont la metadonnee est deja
- * remontee (sync_status SYNCED) mais le fichier pas encore (upload_status PENDING).
- * Best-effort : les echecs sont silencieux et reessayes au prochain cycle.
+ * Envoie les fichiers binaires (images) des photos dont la métadonnée
+ * a déjà été synchronisée (sync_status = SYNCED) mais dont le fichier
+ * n'a pas encore été uploadé (upload_status = PENDING).
+ *
+ * L'upload d'un fichier est plus lourd et plus
+ * fragile que l'envoi de JSON. Le séparer permet de re-tenter uniquement
+ * l'upload sans repousser toutes les métadonnées. Les deux étapes sont
+ * indépendantes et rejouables.
+ *
+ * Le cache Android peut être vidé entre la prise de photo
+ * et l'upload. Si le fichier local n'existe plus, on marque la photo
+ * FILE_LOST (distinct de DONE) pour ne pas boucler indéfiniment.
  */
 async function uploaderPhotosBinaires(): Promise<void> {
   const photos = await getPhotosPendingUpload();
@@ -457,26 +588,23 @@ async function uploaderPhotosBinaires(): Promise<void> {
     try {
       const info = await FileSystem.getInfoAsync(photo.local_uri);
       if (!info.exists) {
-        // Le fichier local est introuvable (cache Android vidé avant correctif).
-        // FILE_LOST ≠ DONE : le binaire n'est PAS sur le serveur.
-        // La métadonnée est conservée ; la photo ne sera plus retentée.
         await markPhotoFileLost(photo.uuid);
-        console.warn('[sync] photo FILE_LOST :', photo.uuid, photo.local_uri);
+        logger.warn('[sync] photo FILE_LOST :', photo.uuid, photo.local_uri);
         continue;
       }
 
       const uploadUrl = `${API_BASE_URL}/api/sync/photos/${photo.uuid}/upload/`;
-      const result = await FileSystem.uploadAsync(uploadUrl, photo.local_uri, {
-        httpMethod: 'POST',
-        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-        fieldName: 'fichier',
-        headers: { Authorization: `Bearer ${token}` },
+      const result    = await FileSystem.uploadAsync(uploadUrl, photo.local_uri, {
+        httpMethod:  'POST',
+        uploadType:  FileSystem.FileSystemUploadType.MULTIPART,
+        fieldName:   'fichier',
+        headers:     { Authorization: `Bearer ${token}` },
       });
       if (result.status === 200) {
         await markPhotoUploaded(photo.uuid);
       }
     } catch (e) {
-      console.warn('Upload photo echoue :', photo.uuid, e);
+      logger.warn('Upload photo echoue :', photo.uuid, e);
     }
   }
 }

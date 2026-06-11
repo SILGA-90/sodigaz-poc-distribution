@@ -1,8 +1,16 @@
 """
-Recalcule l'ordre de visite suggere (plus proche voisin) pour les programmes
-existants. Utile pour appliquer le circuit a des programmes deja generes
-(avant l'ajout de cette fonctionnalite), ou pour rejouer le calcul apres
-avoir corrige les coordonnees du depot.
+Commande Django de recalcul des circuits (ordre de visite optimisé).
+
+Cette commande recalcule et persiste l'ordre de visite optimal
+(heuristique du plus proche voisin) sur les étapes des programmes
+existants, via distribution.circuit.appliquer_ordre_optimise().
+
+Le recalcul est utile dans deux cas :
+  1. Des programmes ont été créés avant l'ajout de la fonctionnalité de circuit.
+  2. Les coordonnées du dépôt SODIGAZ (settings.DEPOT_SODIGAZ) ont été corrigées
+     et on veut rejouer le calcul sans supprimer les programmes.
+  Dans le flux normal, generer_programmes_du_jour appelle appliquer_ordre_optimise
+  automatiquement à la création de chaque programme.
 
 Usage :
     python manage.py calculer_circuits
@@ -20,15 +28,15 @@ from distribution.models import Programme
 
 
 class Command(BaseCommand):
-    help = "Recalcule l'ordre de visite suggere (plus proche voisin)."
+    help = "Recalcule l'ordre de visite suggéré (plus proche voisin)."
 
     def add_arguments(self, parser):
         parser.add_argument("--date", type=str,
-            help="Date des programmes (YYYY-MM-DD). Par defaut : aujourd'hui.")
+            help="Date des programmes (YYYY-MM-DD). Par défaut : aujourd'hui.")
         parser.add_argument("--livreur", type=str,
-            help="Code livreur specifique. Par defaut : tous.")
+            help="Code livreur spécifique. Par défaut : tous.")
         parser.add_argument("--verbose", action="store_true",
-            help="Affiche le detail du circuit calcule (ordre + distances).")
+            help="Affiche le détail du circuit calculé (ordre + distances en mètres).")
 
     def handle(self, *args, **options):
         if options["date"]:
@@ -53,16 +61,16 @@ class Command(BaseCommand):
         for prog in programmes:
             classement = appliquer_ordre_optimise(prog)
             self.stdout.write(
-                f"  {prog.numero_x3} : {len(classement)} etape(s) ordonnee(s)"
+                f"  {prog.numero_x3} : {len(classement)} étape(s) ordonnée(s)"
             )
             if options["verbose"]:
                 for etape, ordre, distance in classement:
                     d = f"{distance:.0f} m" if distance is not None else "n/a"
                     self.stdout.write(
                         f"      {ordre}. {etape.plv.libelle} "
-                        f"(depuis precedent : {d})"
+                        f"(depuis précédent : {d})"
                     )
 
         self.stdout.write(self.style.SUCCESS(
-            f"\nCircuits calcules pour {len(programmes)} programme(s) du {date_prog}."
+            f"\nCircuits calculés pour {len(programmes)} programme(s) du {date_prog}."
         ))

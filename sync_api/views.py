@@ -1,16 +1,28 @@
 """
-Endpoints de synchronisation offline-first (protocole WatermelonDB).
+Endpoints de synchronisation offline-first.
 
-POST /api/sync/pull
-    Corps :    { "lastPulledAt": <timestamp_ms> }
-    Reponse :  { "changes": { ... }, "timestamp": <timestamp_ms> }
+Ce module expose trois endpoints HTTP utilisés par l'application mobile
+pour se synchroniser avec le serveur Django :
+  - sync_pull  : le mobile récupère les données serveur (descendant)
+  - sync_push  : le mobile remonte ses données terrain (ascendant)
+  - upload_photo : envoi du binaire d'une photo (séparé du push JSON)
 
-POST /api/sync/push
-    Corps :    { "changes": { ... }, "lastPulledAt": <timestamp_ms> }
-    Reponse :  { "status": "ok", "applied": { ... } }
+Le protocole s'inspire de WatermelonDB (pull -> push, lastPulledAt,
+created/updated/deleted) mais est entièrement écrit à la main.
+Cela permet de maîtriser chaque invariant critique du mémoire :
+idempotence, ordre des opérations, filtrage par livreur, sécurité JWT.
 
-Authentification : JWT. Le livreur connecte est identifie par request.user.
-Filtre de securite : un livreur ne voit / ne pousse QUE ses propres donnees.
+Flux nominal d'un cycle de synchronisation (côté mobile) :
+  1. pushClotures()  -> clôturer les programmes finis avant de tirer les données
+  2. pull()          -> récupérer les nouveautés serveur depuis lastPulledAt
+  3. push()          -> envoyer les opérations/anomalies créées hors ligne
+
+Authentification : JWT (djangorestframework-simplejwt).
+Isolation livreur : un livreur ne voit et ne modifie QUE ses propres données.
+
+Organisation du module :
+  - SyncEngine : classe métier qui encapsule toute la logique pull/push
+  - Fonctions de vue : wrappers HTTP minces qui délèguent à SyncEngine
 """
 import logging
 import time
@@ -63,508 +75,587 @@ from .serializers import (
 
 
 def now_ms() -> int:
-    """Timestamp courant en millisecondes (format WatermelonDB)."""
+    """
+    Retourne le timestamp courant en millisecondes entières.
+    WatermelonDB et notre protocole utilisent des timestamps en ms
+    (BigInt côté SQLite mobile). Python time.time() retourne des secondes
+    flottantes ; on multiplie par 1000 et on tronque à l'entier.
+    """
     return int(time.time() * 1000)
 
 
 # ===========================================================================
-# PULL
+# MOTEUR DE SYNCHRONISATION
 # ===========================================================================
 
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def sync_pull(request):
+class SyncEngine:
     """
-    Renvoie tous les changements survenus cote serveur depuis lastPulledAt
-    pour le livreur connecte.
+    Encapsule toute la logique de synchronisation offline-first pour un livreur.
 
-    Hierarchie du filtrage par livreur :
-      - Programmes : ceux dont utilisateur == request.user
-      - Etapes : celles des programmes ci-dessus
-      - LigneProgramme : celles des etapes ci-dessus
-      - Operations, LigneOperation, Photo : idem en remontant la chaine
-      - Anomalies : celles des programmes ci-dessus
+    Instancier une fois par requête HTTP avec l'utilisateur authentifié.
+    Les entités autorisées (étapes, programmes) sont chargées une seule fois
+    via _preload_autorises() et réutilisées dans les boucles de traitement,
+    évitant ainsi les requêtes N+1 sur de gros payloads.
 
-      - Referentiels (Client, PLV, Article) : tous (pas de filtre
-        livreur sur les referentiels, ils sont partages).
+    Responsabilités :
+      - build_pull_response()  : construit le delta descendant (serveur -> mobile)
+      - apply_push()           : applique le delta ascendant (mobile -> serveur)
     """
-    last_pulled_at = request.data.get("lastPulledAt", 0) or 0
-    user = request.user
 
-    # Timestamp courant cote serveur, retourne en fin de reponse.
-    server_timestamp = now_ms()
+    def __init__(self, user):
+        self.user = user
+        # Chargés paresseusement par _preload_autorises(), avant le push.
+        self._programmes_user_uuids   = None
+        self._etapes_user_ids_by_uuid = None
+        self._etapes_autres_users     = None
 
-    # Programmes du livreur — limités aux 90 derniers jours.
-    # Cela borne la taille de la SQLite mobile et accélère le premier pull.
-    # L'historique complet reste consultable côté supervision web.
-    date_min = date.today() - timedelta(days=90)
-    programmes_qs = Programme.objects.filter(
-        utilisateur=user,
-        date_programme__gte=date_min,
-    )
-    programmes_ids = list(programmes_qs.values_list("id", flat=True))
+    # ------------------------------------------------------------------
+    # PULL
+    # ------------------------------------------------------------------
 
-    # --------------------------------------------------------------------
-    # Referentiels (pas de filtre par livreur)
-    # --------------------------------------------------------------------
-    clients_changes = _build_changes(
-        Client.objects.all(), last_pulled_at, ClientSyncSerializer,
-        has_soft_delete=False, has_last_modified=False,
-    )
-    plvs_changes = _build_changes(
-        Plv.objects.all(), last_pulled_at, PlvSyncSerializer,
-        has_soft_delete=False, has_last_modified=False,
-    )
-    articles_changes = _build_changes(
-        Article.objects.all(), last_pulled_at, ArticleSyncSerializer,
-        has_soft_delete=False, has_last_modified=False,
-    )
+    def build_pull_response(self, last_pulled_at: int) -> Response:
+        """
+        Construit la réponse pull : renvoie tous les enregistrements modifiés
+        depuis last_pulled_at pour le livreur connecté.
 
-    # --------------------------------------------------------------------
-    # Programmes du livreur
-    # --------------------------------------------------------------------
-    programmes_changes = _build_changes(
-        programmes_qs, last_pulled_at, ProgrammeSyncSerializer,
-    )
+        Le timestamp serveur est capturé AVANT les requêtes DB : tout
+        enregistrement modifié pendant l'exécution du pull aura un last_modified
+        supérieur au timestamp capturé, donc il sera renvoyé au prochain pull.
+        Aucun trou possible dans le delta.
 
-    # --------------------------------------------------------------------
-    # Etapes des programmes du livreur
-    # --------------------------------------------------------------------
-    etapes_qs = Etape.objects.filter(programme_id__in=programmes_ids)
-    etapes_changes = _build_changes(etapes_qs, last_pulled_at, EtapeSyncSerializer)
+        La fenêtre de 90 jours borne la taille de la base locale. Un livreur
+        n'a pas besoin de l'historique complet sur son téléphone ;
+        l'historique complet reste disponible côté supervision web.
+        """
+        server_timestamp = now_ms()
+        date_min = date.today() - timedelta(days=90)
 
-    # --------------------------------------------------------------------
-    # Lignes prevues des etapes du livreur
-    # --------------------------------------------------------------------
-    etapes_ids = list(etapes_qs.values_list("id", flat=True))
-    lignes_prog_qs = LigneProgramme.objects.filter(etape_id__in=etapes_ids)
-    lignes_prog_changes = _build_changes(
-        lignes_prog_qs, last_pulled_at, LigneProgrammeSyncSerializer,
-    )
+        programmes_qs = Programme.objects.filter(
+            utilisateur=self.user,
+            date_programme__gte=date_min,
+        )
+        programmes_ids = list(programmes_qs.values_list("id", flat=True))
 
-    # --------------------------------------------------------------------
-    # Operations / lignes_operation / anomalies du livreur
-    # (re-pull au cas ou serveur les aurait modifies, ex : superviseur)
-    # --------------------------------------------------------------------
-    operations_qs = Operation.objects.filter(
-        etape_id__in=etapes_ids
-    ).select_related("etape")
-    operations_changes = _build_changes(
-        operations_qs, last_pulled_at, OperationSyncSerializer,
-    )
-    operations_ids = list(operations_qs.values_list("id", flat=True))
+        # Référentiels : données maîtres partagées entre tous les livreurs.
+        clients_changes  = self._build_changes(
+            Client.objects.all(), last_pulled_at, ClientSyncSerializer,
+            has_soft_delete=False, has_last_modified=False,
+        )
+        plvs_changes     = self._build_changes(
+            Plv.objects.all(), last_pulled_at, PlvSyncSerializer,
+            has_soft_delete=False, has_last_modified=False,
+        )
+        articles_changes = self._build_changes(
+            Article.objects.all(), last_pulled_at, ArticleSyncSerializer,
+            has_soft_delete=False, has_last_modified=False,
+        )
 
-    lignes_op_qs = LigneOperation.objects.filter(
-        operation_id__in=operations_ids
-    ).select_related("operation", "produit")
-    lignes_op_changes = _build_changes(
-        lignes_op_qs, last_pulled_at, LigneOperationSyncSerializer,
-    )
+        # Données de planification : filtrées par livreur.
+        programmes_changes = self._build_changes(
+            programmes_qs, last_pulled_at, ProgrammeSyncSerializer,
+        )
 
-    anomalies_qs = Anomalie.objects.filter(programme_id__in=programmes_ids)
-    anomalies_changes = _build_changes(
-        anomalies_qs, last_pulled_at, AnomalieSyncSerializer,
-    )
+        etapes_qs    = Etape.objects.filter(programme_id__in=programmes_ids)
+        etapes_changes = self._build_changes(etapes_qs, last_pulled_at, EtapeSyncSerializer)
 
-    return Response({
-        "changes": {
-            "client": clients_changes,
-            "plv": plvs_changes,
-            "article": articles_changes,
-            "programme": programmes_changes,
-            "etape": etapes_changes,
-            "ligne_programme": lignes_prog_changes,
-            "operation": operations_changes,
-            "ligne_operation": lignes_op_changes,
-            "anomalie": anomalies_changes,
-        },
-        "timestamp": server_timestamp,
-    })
+        etapes_ids   = list(etapes_qs.values_list("id", flat=True))
+        lignes_prog_qs = LigneProgramme.objects.filter(etape_id__in=etapes_ids)
+        lignes_prog_changes = self._build_changes(
+            lignes_prog_qs, last_pulled_at, LigneProgrammeSyncSerializer,
+        )
 
+        # Données terrain : re-pull pour récupérer d'éventuelles corrections
+        # superviseur (un superviseur peut corriger une opération côté web).
+        operations_qs = Operation.objects.filter(
+            etape_id__in=etapes_ids,
+        ).select_related("etape")
+        operations_changes = self._build_changes(
+            operations_qs, last_pulled_at, OperationSyncSerializer,
+        )
+        operations_ids = list(operations_qs.values_list("id", flat=True))
 
-def _build_changes(queryset, last_pulled_at, serializer_class,
-                   has_soft_delete=True, has_last_modified=True):
-    """
-    Construit le dict { created, updated, deleted } pour une table.
+        lignes_op_qs = LigneOperation.objects.filter(
+            operation_id__in=operations_ids,
+        ).select_related("operation", "produit")
+        lignes_op_changes = self._build_changes(
+            lignes_op_qs, last_pulled_at, LigneOperationSyncSerializer,
+        )
 
-    Note : la distinction created/updated n'est pas requise par WatermelonDB
-    cote client (les deux sont traites identiquement). On met tout dans
-    'updated' pour simplifier.
-    """
-    if has_last_modified:
-        qs = queryset.filter(last_modified__gt=last_pulled_at)
-    else:
-        # Pour les tables sans last_modified (referentiels), on renvoie tout
-        # lors du tout premier pull (last_pulled_at == 0), et rien ensuite.
-        # En production, on ajouterait un timestamp manuel ; pour le POC c'est
-        # acceptable.
-        if last_pulled_at == 0:
-            qs = queryset
+        anomalies_qs = Anomalie.objects.filter(programme_id__in=programmes_ids)
+        anomalies_changes = self._build_changes(
+            anomalies_qs, last_pulled_at, AnomalieSyncSerializer,
+        )
+
+        return Response({
+            "changes": {
+                "client":          clients_changes,
+                "plv":             plvs_changes,
+                "article":         articles_changes,
+                "programme":       programmes_changes,
+                "etape":           etapes_changes,
+                "ligne_programme": lignes_prog_changes,
+                "operation":       operations_changes,
+                "ligne_operation": lignes_op_changes,
+                "anomalie":        anomalies_changes,
+            },
+            "timestamp": server_timestamp,
+        })
+
+    @staticmethod
+    def _build_changes(queryset, last_pulled_at, serializer_class,
+                       has_soft_delete=True, has_last_modified=True):
+        """
+        Construit le dictionnaire { created, updated, deleted } attendu par
+        le client mobile pour une table donnée.
+
+        WatermelonDB traite created et updated de façon identique
+        (INSERT OR REPLACE). On met tout dans updated pour simplifier :
+        le client ne fait pas de distinction.
+
+        Client, PLV et Article n'ont pas de colonne last_modified (données
+        maîtres X3, rarement modifiées). On envoie tout au premier pull
+        (last_pulled_at == 0) et rien ensuite.
+
+        On ne supprime jamais physiquement de données. Les enregistrements
+        avec is_deleted=True sont transmis dans deleted pour que le mobile
+        puisse les retirer de son affichage.
+        """
+        if has_last_modified:
+            qs = queryset.filter(last_modified__gt=last_pulled_at)
         else:
-            qs = queryset.none()
+            qs = queryset if last_pulled_at == 0 else queryset.none()
 
-    if has_soft_delete:
-        active_qs = qs.filter(is_deleted=False)
-        deleted_qs = qs.filter(is_deleted=True)
-        deleted_uuids = list(deleted_qs.values_list("uuid", flat=True))
-    else:
-        active_qs = qs
-        deleted_uuids = []
+        if has_soft_delete:
+            active_qs     = qs.filter(is_deleted=False)
+            deleted_uuids = list(qs.filter(is_deleted=True).values_list("uuid", flat=True))
+        else:
+            active_qs     = qs
+            deleted_uuids = []
 
-    serialized = serializer_class(active_qs, many=True).data
+        return {
+            "created": [],
+            "updated": serializer_class(active_qs, many=True).data,
+            "deleted": [str(u) for u in deleted_uuids],
+        }
 
-    return {
-        "created": [],
-        "updated": serialized,
-        "deleted": [str(u) for u in deleted_uuids],
-    }
+    # ------------------------------------------------------------------
+    # PUSH
+    # ------------------------------------------------------------------
 
+    def apply_push(self, changes: dict, echec_etapes: list) -> Response:
+        """
+        Applique le payload ascendant : persiste les données créées hors ligne
+        par le livreur. Traite les entités dans l'ordre parent -> enfant :
+        Operations -> LignesOperation -> Anomalies -> Photos.
 
-# ===========================================================================
-# PUSH
-# ===========================================================================
+        Si une ligne du payload échoue à la validation DRF (is_valid), une
+        ValidationError est levée, ce qui provoque le rollback de la transaction.
+        Un refus de sécurité (403) retourne une réponse sans rollback : les
+        données déjà traitées dans le même payload sont conservées.
 
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def sync_push(request):
-    """
-    Recoit les changements effectues hors ligne par le livreur et les applique.
+        Le push est idempotent : update_or_create garantit l'absence de
+        doublons si le mobile rejoue le même payload (l'UUID mobile fait foi).
+        """
+        self._preload_autorises()
 
-    Le payload regroupe par table. On traite dans l'ordre :
-      1. Operations (parent des lignes_operation et photos)
-      2. Lignes_operation
-      3. Anomalies
-      4. Photos
-    Cet ordre garantit que les parents existent avant les enfants.
+        applied = {
+            "operation":       {"created": 0, "updated": 0, "deleted": 0},
+            "ligne_operation": {"created": 0, "updated": 0, "deleted": 0},
+            "anomalie":        {"created": 0, "updated": 0, "deleted": 0},
+            "photo":           {"created": 0, "updated": 0, "deleted": 0},
+        }
+        pushed_op_uuids: list[str]  = []
+        touched_etape_ids: set[int] = set()
 
-    Toute l'operation est dans une transaction atomique : en cas d'erreur,
-    aucun changement n'est applique, le client retentera.
-    """
-    serializer = PushPayloadSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    changes = serializer.validated_data["changes"]
-    echec_etapes = serializer.validated_data.get("echec_etapes", [])
-    user = request.user
+        with transaction.atomic():
+            if err := self._apply_operations(changes, applied, pushed_op_uuids, touched_etape_ids):
+                return err
+            if err := self._apply_lignes_operation(changes, applied):
+                return err
+            if err := self._apply_anomalies(changes, applied):
+                return err
+            if err := self._apply_photos(changes, applied):
+                return err
+            self._update_statuts(touched_etape_ids)
+            self._mark_echec_etapes(echec_etapes)
 
-    # Securite : verifier que le livreur connecte n'agit que sur SES propres
-    # programmes. On precharge les UUID de programmes / etapes / operations
-    # autorises.
-    programmes_user_uuids = set(
-        str(u) for u in Programme.objects.filter(utilisateur=user).values_list("uuid", flat=True)
-    )
-    etapes_user_ids_by_uuid = {
-        str(e.uuid): e.id for e in
-        Etape.objects.filter(programme__utilisateur=user).only("id", "uuid")
-    }
-    # UUIDs d'etapes appartenant a d'AUTRES utilisateurs (detection de tentative
-    # d'usurpation, distincte d'une etape simplement inconnue).
-    etapes_autres_users = set(
-        str(u) for u in
-        Etape.objects.exclude(programme__utilisateur=user).values_list("uuid", flat=True)
-    )
+        self._sync_x3(pushed_op_uuids)
+        return Response({"status": "ok", "applied": applied}, status=status.HTTP_200_OK)
 
-    applied = {
-        "operation": {"created": 0, "updated": 0, "deleted": 0},
-        "ligne_operation": {"created": 0, "updated": 0, "deleted": 0},
-        "anomalie": {"created": 0, "updated": 0, "deleted": 0},
-        "photo": {"created": 0, "updated": 0, "deleted": 0},
-    }
-    pushed_op_uuids: list[str] = []
-    touched_etape_ids: set[int] = set()
+    def _preload_autorises(self):
+        """
+        Charge en mémoire les UUIDs/IDs autorisés pour ce livreur.
+        Appelé une seule fois avant la boucle de push, évitant N requêtes DB.
+        """
+        if self._programmes_user_uuids is not None:
+            return
 
-    with transaction.atomic():
-            # ----- OPERATIONS -----
-            for op_data in (
-                changes.get("operation", {}).get("created", [])
-                + changes.get("operation", {}).get("updated", [])
-            ):
-                op_serializer = OperationPushSerializer(data=op_data)
-                op_serializer.is_valid(raise_exception=True)
-                d = op_serializer.validated_data
+        self._programmes_user_uuids = set(
+            str(u) for u in
+            Programme.objects.filter(utilisateur=self.user).values_list("uuid", flat=True)
+        )
+        self._etapes_user_ids_by_uuid = {
+            str(e.uuid): e.id for e in
+            Etape.objects.filter(programme__utilisateur=self.user).only("id", "uuid")
+        }
+        # UUIDs d'étapes d'autres livreurs : permet de distinguer usurpation
+        # d'une étape inconnue (bug client ou données de test).
+        self._etapes_autres_users = set(
+            str(u) for u in
+            Etape.objects.exclude(programme__utilisateur=self.user)
+            .values_list("uuid", flat=True)
+        )
 
-                etape_uuid_str = str(d["etape_uuid"])
-                etape_id = etapes_user_ids_by_uuid.get(etape_uuid_str)
-                if etape_id is None:
-                    if etape_uuid_str in etapes_autres_users:
-                        # Etape connue mais appartenant a un autre livreur : refus strict.
-                        return Response(
-                            {"status": "error", "detail": f"Etape {etape_uuid_str} non autorisee."},
-                            status=status.HTTP_403_FORBIDDEN,
-                        )
-                    # Etape inconnue du serveur (donnee de test, bug client) : on ignore.
-                    logger.warning(
-                        "push: operation %s ignoree — etape %s inconnue pour %s",
-                        d["uuid"], etape_uuid_str, user.code_livreur,
-                    )
-                    continue
+    def _apply_operations(self, changes, applied, pushed_op_uuids, touched_etape_ids):
+        """
+        Crée ou met à jour chaque opération terrain du livreur.
+        Fusionne created + updated car le mobile ne distingue pas toujours
+        les deux (une opération éditée offline peut apparaître dans updated
+        alors que le serveur ne la connaît pas encore).
+        Retourne None si tout est OK, une Response d'erreur sinon.
+        """
+        for op_data in (
+            changes.get("operation", {}).get("created", [])
+            + changes.get("operation", {}).get("updated", [])
+        ):
+            op_serializer = OperationPushSerializer(data=op_data)
+            op_serializer.is_valid(raise_exception=True)
+            d = op_serializer.validated_data
 
-                localisation = None
-                if d.get("latitude") is not None and d.get("longitude") is not None:
-                    localisation = Point(d["longitude"], d["latitude"], srid=4326)
-
-                pushed_op_uuids.append(str(d["uuid"]))
-                touched_etape_ids.add(etape_id)
-                op, created = Operation.objects.update_or_create(
-                    uuid=d["uuid"],
-                    defaults={
-                        "etape_id": etape_id,
-                        "type_operation": d["type_operation"],
-                        "sous_type": d.get("sous_type") or None,
-                        "date_heure": d["date_heure"],
-                        "localisation_saisie": localisation,
-                        "mode_paiement": d.get("mode_paiement") or None,
-                        "montant_total": d["montant_total"],
-                        "montant_encaisse": d["montant_encaisse"],
-                        "est_encaissee": d["est_encaissee"],
-                        "signature_livreur": d.get("signature_livreur", ""),
-                        "signature_client": d.get("signature_client", ""),
-                        "nom_signataire_client": d.get("nom_signataire_client", ""),
-                        "commentaire": d.get("commentaire", ""),
-                        "gps_precision": d.get("gps_precision"),
-                        "gps_horodatage": d.get("gps_horodatage"),
-                        "is_deleted": False,
-                    },
-                )
-                key = "created" if created else "updated"
-                applied["operation"][key] += 1
-
-            # Suppressions logiques d'operations
-            for uuid_to_delete in changes.get("operation", {}).get("deleted", []):
-                updated = Operation.objects.filter(
-                    uuid=uuid_to_delete,
-                    etape__programme__utilisateur=user,  # securite
-                ).update(is_deleted=True)
-                applied["operation"]["deleted"] += updated
-
-            # ----- LIGNES D'OPERATION -----
-            for ligne_data in (
-                changes.get("ligne_operation", {}).get("created", [])
-                + changes.get("ligne_operation", {}).get("updated", [])
-            ):
-                lo_serializer = LigneOperationPushSerializer(data=ligne_data)
-                lo_serializer.is_valid(raise_exception=True)
-                d = lo_serializer.validated_data
-
-                operation = Operation.objects.filter(uuid=d["operation_uuid"]).first()
-                if operation is None:
-                    logger.warning(
-                        "push: ligne %s ignoree — operation %s inconnue pour %s",
-                        d["uuid"], d["operation_uuid"], user.code_livreur,
-                    )
-                    continue
-                if operation.etape.programme.utilisateur_id != user.id:
+            etape_uuid_str = str(d["etape_uuid"])
+            etape_id = self._etapes_user_ids_by_uuid.get(etape_uuid_str)
+            if etape_id is None:
+                if etape_uuid_str in self._etapes_autres_users:
+                    # Refus explicite plutôt qu'ignoré silencieusement,
+                    # pour détecter une tentative d'usurpation côté logs.
                     return Response(
-                        {"status": "error", "detail": f"Operation {d['operation_uuid']} non autorisee."},
+                        {"status": "error", "detail": f"Etape {etape_uuid_str} non autorisee."},
                         status=status.HTTP_403_FORBIDDEN,
                     )
-
-                article = get_object_or_404(Article, code_x3=d["produit_code_x3"])
-
-                _, created = LigneOperation.objects.update_or_create(
-                    uuid=d["uuid"],
-                    defaults={
-                        "operation_id": operation.id,
-                        "produit_id": article.id,
-                        "quantite_realisee": d["quantite_realisee"],
-                        "quantite_collectee_vide": d["quantite_collectee_vide"],
-                        "quantite_consignee": d["quantite_consignee"],
-                        "quantite_deconsignee": d["quantite_deconsignee"],
-                        "montant_ligne": d["montant_ligne"],
-                        "is_deleted": False,
-                    },
+                logger.warning(
+                    "push: operation %s ignoree : etape %s inconnue pour %s",
+                    d["uuid"], etape_uuid_str, self.user.code_livreur,
                 )
-                key = "created" if created else "updated"
-                applied["ligne_operation"][key] += 1
+                continue
 
-            for uuid_to_delete in changes.get("ligne_operation", {}).get("deleted", []):
-                updated = LigneOperation.objects.filter(
-                    uuid=uuid_to_delete,
-                    operation__etape__programme__utilisateur=user,
-                ).update(is_deleted=True)
-                applied["ligne_operation"]["deleted"] += updated
+            pushed_op_uuids.append(str(d["uuid"]))
+            touched_etape_ids.add(etape_id)
+            _, created = Operation.objects.update_or_create(
+                uuid=d["uuid"],
+                defaults={
+                    "etape_id":              etape_id,
+                    "type_operation":        d["type_operation"],
+                    "sous_type":             d.get("sous_type") or None,
+                    "date_heure":            d["date_heure"],
+                    "localisation_saisie":   self._to_point(d),
+                    "mode_paiement":         d.get("mode_paiement") or None,
+                    "montant_total":         d["montant_total"],
+                    "montant_encaisse":      d["montant_encaisse"],
+                    "est_encaissee":         d["est_encaissee"],
+                    "signature_livreur":     d.get("signature_livreur", ""),
+                    "signature_client":      d.get("signature_client", ""),
+                    "nom_signataire_client": d.get("nom_signataire_client", ""),
+                    "commentaire":           d.get("commentaire", ""),
+                    "gps_precision":         d.get("gps_precision"),
+                    "gps_horodatage":        d.get("gps_horodatage"),
+                    "is_deleted":            False,
+                },
+            )
+            applied["operation"]["created" if created else "updated"] += 1
 
-            # ----- ANOMALIES -----
-            for ano_data in (
-                changes.get("anomalie", {}).get("created", [])
-                + changes.get("anomalie", {}).get("updated", [])
-            ):
-                an_serializer = AnomaliePushSerializer(data=ano_data)
-                an_serializer.is_valid(raise_exception=True)
-                d = an_serializer.validated_data
+        # Suppressions logiques : is_deleted=True, pas de DELETE SQL.
+        # La suppression physique casserait l'audit trail et le re-pull.
+        for uuid_to_delete in changes.get("operation", {}).get("deleted", []):
+            n = Operation.objects.filter(
+                uuid=uuid_to_delete,
+                etape__programme__utilisateur=self.user,
+            ).update(is_deleted=True)
+            applied["operation"]["deleted"] += n
 
-                programme = Programme.objects.filter(
-                    uuid=d["programme_uuid"],
-                    utilisateur=user,
-                ).first()
-                if programme is None:
-                    autre = Programme.objects.filter(uuid=d["programme_uuid"]).exists()
-                    if autre:
-                        return Response(
-                            {"status": "error", "detail": f"Programme {d['programme_uuid']} non autorise."},
-                            status=status.HTTP_403_FORBIDDEN,
-                        )
-                    logger.warning(
-                        "push: anomalie %s ignoree — programme %s inconnu pour %s",
-                        d["uuid"], d["programme_uuid"], user.code_livreur,
+        return None
+
+    def _apply_lignes_operation(self, changes, applied):
+        """
+        Crée ou met à jour les lignes de détail article par article.
+        La ligne référence l'article par code_x3 (clé métier X3, plus stable
+        face aux resets de base que l'id Django).
+        Retourne None si tout est OK, une Response d'erreur sinon.
+        """
+        for ligne_data in (
+            changes.get("ligne_operation", {}).get("created", [])
+            + changes.get("ligne_operation", {}).get("updated", [])
+        ):
+            lo_serializer = LigneOperationPushSerializer(data=ligne_data)
+            lo_serializer.is_valid(raise_exception=True)
+            d = lo_serializer.validated_data
+
+            operation = Operation.objects.filter(uuid=d["operation_uuid"]).first()
+            if operation is None:
+                logger.warning(
+                    "push: ligne %s ignoree : operation %s inconnue pour %s",
+                    d["uuid"], d["operation_uuid"], self.user.code_livreur,
+                )
+                continue
+            if operation.etape.programme.utilisateur_id != self.user.id:
+                return Response(
+                    {"status": "error", "detail": f"Operation {d['operation_uuid']} non autorisee."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            article = get_object_or_404(Article, code_x3=d["produit_code_x3"])
+            _, created = LigneOperation.objects.update_or_create(
+                uuid=d["uuid"],
+                defaults={
+                    "operation_id":            operation.id,
+                    "produit_id":              article.id,
+                    "quantite_realisee":       d["quantite_realisee"],
+                    "quantite_collectee_vide": d["quantite_collectee_vide"],
+                    "quantite_consignee":       d["quantite_consignee"],
+                    "quantite_deconsignee":     d["quantite_deconsignee"],
+                    "montant_ligne":            d["montant_ligne"],
+                    "is_deleted":               False,
+                },
+            )
+            applied["ligne_operation"]["created" if created else "updated"] += 1
+
+        for uuid_to_delete in changes.get("ligne_operation", {}).get("deleted", []):
+            n = LigneOperation.objects.filter(
+                uuid=uuid_to_delete,
+                operation__etape__programme__utilisateur=self.user,
+            ).update(is_deleted=True)
+            applied["ligne_operation"]["deleted"] += n
+
+        return None
+
+    def _apply_anomalies(self, changes, applied):
+        """
+        Crée ou met à jour les anomalies terrain.
+        Rattachées au programme (pas à une étape), car une anomalie peut
+        survenir hors visite de PLV (accident de route, matériel, etc.).
+        Retourne None si tout est OK, une Response d'erreur sinon.
+        """
+        for ano_data in (
+            changes.get("anomalie", {}).get("created", [])
+            + changes.get("anomalie", {}).get("updated", [])
+        ):
+            an_serializer = AnomaliePushSerializer(data=ano_data)
+            an_serializer.is_valid(raise_exception=True)
+            d = an_serializer.validated_data
+
+            programme = Programme.objects.filter(
+                uuid=d["programme_uuid"],
+                utilisateur=self.user,
+            ).first()
+            if programme is None:
+                if Programme.objects.filter(uuid=d["programme_uuid"]).exists():
+                    return Response(
+                        {"status": "error", "detail": f"Programme {d['programme_uuid']} non autorise."},
+                        status=status.HTTP_403_FORBIDDEN,
                     )
+                logger.warning(
+                    "push: anomalie %s ignoree : programme %s inconnu pour %s",
+                    d["uuid"], d["programme_uuid"], self.user.code_livreur,
+                )
+                continue
+
+            _, created = Anomalie.objects.update_or_create(
+                uuid=d["uuid"],
+                defaults={
+                    "programme_id":  programme.id,
+                    "plv_id":        d.get("plv_id"),
+                    "type_anomalie": d["type_anomalie"],
+                    "gravite":       d["gravite"],
+                    "description":   d["description"],
+                    "statut":        d["statut"],
+                    "date_heure":    d["date_heure"],
+                    "localisation":  self._to_point(d),
+                    "is_deleted":    False,
+                },
+            )
+            applied["anomalie"]["created" if created else "updated"] += 1
+
+        for uuid_to_delete in changes.get("anomalie", {}).get("deleted", []):
+            n = Anomalie.objects.filter(
+                uuid=uuid_to_delete,
+                programme__utilisateur=self.user,
+            ).update(is_deleted=True)
+            applied["anomalie"]["deleted"] += n
+
+        return None
+
+    def _apply_photos(self, changes, applied):
+        """
+        Enregistre les métadonnées des photos (JSON uniquement).
+        Le fichier binaire arrive séparément via l'endpoint /upload/.
+        Séparer JSON et binaire simplifie la gestion des erreurs et permet
+        de re-tenter l'upload sans repousser toutes les données JSON.
+        Retourne None si tout est OK, une Response d'erreur sinon.
+        """
+        for photo_data in (
+            changes.get("photo", {}).get("created", [])
+            + changes.get("photo", {}).get("updated", [])
+        ):
+            ph_serializer = PhotoPushSerializer(data=photo_data)
+            ph_serializer.is_valid(raise_exception=True)
+            d = ph_serializer.validated_data
+
+            operation_id = None
+            anomalie_id  = None
+
+            if d.get("operation_uuid"):
+                err, operation_id = self._resolve_operation_photo(d)
+                if err:
+                    return err
+                if operation_id is None:
+                    continue
+            else:
+                err, anomalie_id = self._resolve_anomalie_photo(d)
+                if err:
+                    return err
+                if anomalie_id is None:
                     continue
 
-                localisation = None
-                if d.get("latitude") is not None and d.get("longitude") is not None:
-                    localisation = Point(d["longitude"], d["latitude"], srid=4326)
+            defaults = {
+                "operation_id": operation_id,
+                "anomalie_id":  anomalie_id,
+                "type_photo":   d["type_photo"],
+                "date_heure":   d["date_heure"],
+                "taille_octets": d.get("taille_octets"),
+                "is_deleted":   False,
+            }
+            if d.get("latitude") is not None and d.get("longitude") is not None:
+                defaults["localisation"] = Point(d["longitude"], d["latitude"], srid=4326)
 
-                _, created = Anomalie.objects.update_or_create(
-                    uuid=d["uuid"],
-                    defaults={
-                        "programme_id": programme.id,
-                        "plv_id": d.get("plv_id"),
-                        "type_anomalie": d["type_anomalie"],
-                        "gravite": d["gravite"],
-                        "description": d["description"],
-                        "statut": d["statut"],
-                        "date_heure": d["date_heure"],
-                        "localisation": localisation,
-                        "is_deleted": False,
-                    },
-                )
-                key = "created" if created else "updated"
-                applied["anomalie"][key] += 1
+            existing = Photo.objects.filter(uuid=d["uuid"]).first()
+            if existing:
+                for k, v in defaults.items():
+                    setattr(existing, k, v)
+                existing.save()
+                applied["photo"]["updated"] += 1
+            else:
+                # Placeholder binaire : le vrai fichier arrive via /upload/.
+                # ImageField Django exige une valeur non-nulle à la création.
+                Photo.objects.create(uuid=d["uuid"], fichier="placeholder.bin", **defaults)
+                applied["photo"]["created"] += 1
 
-            for uuid_to_delete in changes.get("anomalie", {}).get("deleted", []):
-                updated = Anomalie.objects.filter(
-                    uuid=uuid_to_delete,
-                    programme__utilisateur=user,
-                ).update(is_deleted=True)
-                applied["anomalie"]["deleted"] += updated
+        for uuid_to_delete in changes.get("photo", {}).get("deleted", []):
+            photos = Photo.objects.filter(uuid=uuid_to_delete).filter(
+                models.Q(operation__etape__programme__utilisateur=self.user)
+                | models.Q(anomalie__programme__utilisateur=self.user)
+            )
+            applied["photo"]["deleted"] += photos.update(is_deleted=True)
 
+        return None
 
-            # ----- PHOTOS (metadonnees uniquement, fichier binaire upload separement) -----
-            for photo_data in (
-                changes.get("photo", {}).get("created", [])
-                + changes.get("photo", {}).get("updated", [])
-            ):
-                ph_serializer = PhotoPushSerializer(data=photo_data)
-                ph_serializer.is_valid(raise_exception=True)
-                d = ph_serializer.validated_data
+    def _resolve_operation_photo(self, d):
+        """
+        Vérifie que l'opération rattachée à une photo appartient au livreur,
+        et valide la cohérence temporelle (tolérance 2h).
+        Retourne (error_response, operation_id) — l'un des deux est None.
+        """
+        op = Operation.objects.filter(
+            uuid=d["operation_uuid"],
+            etape__programme__utilisateur=self.user,
+        ).first()
+        if op is None:
+            logger.warning(
+                "push: photo %s ignoree : operation %s inconnue pour %s",
+                d["uuid"], d["operation_uuid"], self.user.code_livreur,
+            )
+            return None, None
+        if op.etape.programme.utilisateur_id != self.user.id:
+            return (
+                Response(
+                    {"status": "error", "detail": f"Operation {d['operation_uuid']} non autorisee."},
+                    status=status.HTTP_403_FORBIDDEN,
+                ),
+                None,
+            )
 
-                operation_id = None
-                anomalie_id = None
-                if d.get("operation_uuid"):
-                    op = Operation.objects.filter(
-                        uuid=d["operation_uuid"],
-                        etape__programme__utilisateur=user,
-                    ).first()
-                    if op is None:
-                        logger.warning(
-                            "push: photo %s ignoree — operation %s inconnue pour %s",
-                            d["uuid"], d["operation_uuid"], user.code_livreur,
-                        )
-                        continue
-                    if op.etape.programme.utilisateur_id != user.id:
-                        return Response(
-                            {"status": "error", "detail": f"Operation {d['operation_uuid']} non autorisee."},
-                            status=status.HTTP_403_FORBIDDEN,
-                        )
-                    # Validation anti-fraude : l'écart entre la date de la photo
-                    # et la date de l'opération ne doit pas dépasser 2 heures.
-                    # Tolérance généreuse pour couvrir les saisies légèrement
-                    # décalées (photo prise avant de remplir le formulaire).
-                    MAX_PHOTO_DELTA_SECONDS = 2 * 3600
-                    photo_dt = d["date_heure"]
-                    op_dt = op.date_heure
-                    # Rendre les deux aware si nécessaire pour la comparaison
-                    if photo_dt.tzinfo is None:
-                        from django.utils.timezone import make_aware
-                        photo_dt = make_aware(photo_dt)
-                    if op_dt.tzinfo is None:
-                        from django.utils.timezone import make_aware
-                        op_dt = make_aware(op_dt)
-                    delta_seconds = abs((photo_dt - op_dt).total_seconds())
-                    if delta_seconds > MAX_PHOTO_DELTA_SECONDS:
-                        logger.warning(
-                            "push: photo %s rejetee — ecart temporel %.0f s "
-                            "(max %d s) par rapport a l'operation %s pour %s",
-                            d["uuid"], delta_seconds, MAX_PHOTO_DELTA_SECONDS,
-                            d["operation_uuid"], user.code_livreur,
-                        )
-                        continue
-                    operation_id = op.id
-                else:
-                    an = Anomalie.objects.filter(uuid=d["anomalie_uuid"]).first()
-                    if an is None:
-                        logger.warning(
-                            "push: photo %s ignoree — anomalie %s inconnue pour %s",
-                            d["uuid"], d["anomalie_uuid"], user.code_livreur,
-                        )
-                        continue
-                    if an.programme.utilisateur_id != user.id:
-                        return Response(
-                            {"status": "error", "detail": f"Anomalie {d['anomalie_uuid']} non autorisee."},
-                            status=status.HTTP_403_FORBIDDEN,
-                        )
-                    anomalie_id = an.id
+        # Validation anti-fraude : tolérance 2h entre la photo et l'opération.
+        # Tolérance généreuse pour couvrir les photos prises légèrement
+        # avant/après le formulaire en terrain.
+        MAX_DELTA = 2 * 3600
+        photo_dt = d["date_heure"]
+        op_dt    = op.date_heure
+        if photo_dt.tzinfo is None:
+            from django.utils.timezone import make_aware
+            photo_dt = make_aware(photo_dt)
+        if op_dt.tzinfo is None:
+            from django.utils.timezone import make_aware
+            op_dt = make_aware(op_dt)
+        if abs((photo_dt - op_dt).total_seconds()) > MAX_DELTA:
+            logger.warning(
+                "push: photo %s rejetee : ecart temporel %.0f s (max %d s) "
+                "par rapport a l'operation %s pour %s",
+                d["uuid"], abs((photo_dt - op_dt).total_seconds()), MAX_DELTA,
+                d["operation_uuid"], self.user.code_livreur,
+            )
+            return None, None
 
-                # update_or_create : le fichier reste vide pour l'instant,
-                # il sera renseigne par l'endpoint d'upload binaire dedie.
-                # On preserve un eventuel fichier deja upload (par un cycle precedent).
-                existing = Photo.objects.filter(uuid=d["uuid"]).first()
-                defaults = {
-                    "operation_id": operation_id,
-                    "anomalie_id": anomalie_id,
-                    "type_photo": d["type_photo"],
-                    "date_heure": d["date_heure"],
-                    "taille_octets": d.get("taille_octets"),
-                    "is_deleted": False,
-                }
-                if d.get("latitude") is not None and d.get("longitude") is not None:
-                    defaults["localisation"] = Point(d["longitude"], d["latitude"], srid=4326)
+        return None, op.id
 
-                if existing:
-                    for k, v in defaults.items():
-                        setattr(existing, k, v)
-                    existing.save()
-                    applied["photo"]["updated"] += 1
-                else:
-                    # fichier est requis par le modele (ImageField sans null=True),
-                    # on cree un nom de placeholder le temps que l'upload arrive.
-                    Photo.objects.create(uuid=d["uuid"], fichier="placeholder.bin", **defaults)
-                    applied["photo"]["created"] += 1
+    def _resolve_anomalie_photo(self, d):
+        """
+        Vérifie que l'anomalie rattachée à une photo appartient au livreur.
+        Retourne (error_response, anomalie_id) — l'un des deux est None.
+        """
+        an = Anomalie.objects.filter(uuid=d["anomalie_uuid"]).first()
+        if an is None:
+            logger.warning(
+                "push: photo %s ignoree : anomalie %s inconnue pour %s",
+                d["uuid"], d["anomalie_uuid"], self.user.code_livreur,
+            )
+            return None, None
+        if an.programme.utilisateur_id != self.user.id:
+            return (
+                Response(
+                    {"status": "error", "detail": f"Anomalie {d['anomalie_uuid']} non autorisee."},
+                    status=status.HTTP_403_FORBIDDEN,
+                ),
+                None,
+            )
+        return None, an.id
 
-            for uuid_to_delete in changes.get("photo", {}).get("deleted", []):
-                # On filtre sur le user via la chaine soit operation, soit anomalie
-                photos = Photo.objects.filter(uuid=uuid_to_delete).filter(
-                    models.Q(operation__etape__programme__utilisateur=user)
-                    | models.Q(anomalie__programme__utilisateur=user)
-                )
-                updated = photos.update(is_deleted=True)
-                applied["photo"]["deleted"] += updated
+    def _update_statuts(self, touched_etape_ids):
+        """
+        Passe les étapes touchées en VISITEE et les programmes en EN_COURS.
+        Ces transitions sont calculées côté serveur plutôt que transmises
+        par le mobile pour éviter qu'un bug client envoie un mauvais statut.
+        """
+        if not touched_etape_ids:
+            return
+        Etape.objects.filter(id__in=touched_etape_ids).update(statut_visite="VISITEE")
+        prog_ids = list(
+            Etape.objects.filter(id__in=touched_etape_ids)
+            .values_list("programme_id", flat=True)
+            .distinct()
+        )
+        Programme.objects.filter(
+            id__in=prog_ids, statut="PLANIFIE",
+        ).update(statut="EN_COURS", heure_debut=timezone.now())
 
-            # ----- MISE A JOUR STATUTS (apres traitement de toutes les entites) -----
-            if touched_etape_ids:
-                Etape.objects.filter(
-                    id__in=touched_etape_ids,
-                ).update(statut_visite="VISITEE")
-                # Passer le programme EN_COURS si encore PLANIFIE
-                prog_ids = list(
-                    Etape.objects.filter(id__in=touched_etape_ids)
-                    .values_list("programme_id", flat=True)
-                    .distinct()
-                )
-                Programme.objects.filter(
-                    id__in=prog_ids, statut="PLANIFIE",
-                ).update(statut="EN_COURS", heure_debut=timezone.now())
+    def _mark_echec_etapes(self, echec_etapes):
+        """
+        Marque les étapes non visitées (PLV fermé, accès impossible...).
+        Transmises hors du payload changes car elles ne correspondent pas
+        à une création de donnée terrain.
+        """
+        if not echec_etapes:
+            return
+        Etape.objects.filter(
+            uuid__in=[str(u) for u in echec_etapes],
+            programme__utilisateur=self.user,
+            is_deleted=False,
+        ).update(statut_visite="ECHEC")
 
-            # ----- ETAPES EN ECHEC -----
-            if echec_etapes:
-                echec_uuids = [str(u) for u in echec_etapes]
-                Etape.objects.filter(
-                    uuid__in=echec_uuids,
-                    programme__utilisateur=user,
-                    is_deleted=False,
-                ).update(statut_visite="ECHEC")
-
-    # Simulation remontée Sage X3 (best-effort : n'impacte pas la réponse push)
-    if pushed_op_uuids:
+    def _sync_x3(self, pushed_op_uuids):
+        """
+        Simulation best-effort de la remontée vers Sage X3.
+        Hors transaction, jamais bloquant : un échec ici n'annule pas le push.
+        """
+        if not pushed_op_uuids:
+            return
         try:
             from mock_x3.x3_sync import creer_documents_x3
             ops = list(
@@ -573,27 +664,54 @@ def sync_push(request):
             )
             creer_documents_x3(ops)
         except Exception as exc:
-            import logging
-            logging.getLogger(__name__).warning("x3_sync echoue : %s", exc)
+            logger.warning("x3_sync echoue : %s", exc)
 
-    return Response({"status": "ok", "applied": applied}, status=status.HTTP_200_OK)
+    @staticmethod
+    def _to_point(d):
+        """Convertit latitude/longitude en Point PostGIS (WGS84), ou None."""
+        if d.get("latitude") is not None and d.get("longitude") is not None:
+            return Point(d["longitude"], d["latitude"], srid=4326)
+        return None
 
 
 # ===========================================================================
-# UPLOAD DU FICHIER BINAIRE D'UNE PHOTO
+# VUES HTTP — wrappers minces qui délèguent à SyncEngine
 # ===========================================================================
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def sync_pull(request):
+    """
+    Endpoint pull : renvoie le delta serveur depuis lastPulledAt.
+    """
+    last_pulled_at = request.data.get("lastPulledAt", 0) or 0
+    return SyncEngine(request.user).build_pull_response(last_pulled_at)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def sync_push(request):
+    """
+    Endpoint push : persiste les données créées hors ligne par le livreur.
+    """
+    serializer = PushPayloadSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    return SyncEngine(request.user).apply_push(
+        changes      = serializer.validated_data["changes"],
+        echec_etapes = serializer.validated_data.get("echec_etapes", []),
+    )
+
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def upload_photo(request, uuid):
     """
-    Upload du fichier binaire d'une photo dont l'enregistrement existe deja
-    cote serveur (cree au prealable via sync_push).
+    Reçoit le fichier image d'une photo dont la métadonnée a déjà été
+    persistée via sync_push. Remplace le placeholder binaire créé lors du push.
 
-    URL : POST /api/sync/photos/<uuid>/upload/
-    Body : multipart/form-data, champ 'fichier'
-
-    Le livreur ne peut uploader que sur ses propres photos.
+    Le push JSON et l'upload multipart sont deux requêtes distinctes, ce qui
+    permet de re-tenter l'upload seul si le réseau coupe en cours de transfert
+    sans avoir à repousser toutes les données JSON.
     """
     if "fichier" not in request.FILES:
         return Response(
@@ -601,7 +719,6 @@ def upload_photo(request, uuid):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # Recherche de la photo, en filtrant par autorisation utilisateur
     photo = Photo.objects.filter(uuid=uuid).filter(
         models.Q(operation__etape__programme__utilisateur=request.user)
         | models.Q(anomalie__programme__utilisateur=request.user)
@@ -613,35 +730,34 @@ def upload_photo(request, uuid):
             status=status.HTTP_404_NOT_FOUND,
         )
 
-    fichier = request.FILES["fichier"]
-    photo.fichier = fichier
+    fichier          = request.FILES["fichier"]
+    photo.fichier    = fichier
     photo.taille_octets = fichier.size
     photo.save()
 
     return Response({
-        "status": "ok",
-        "uuid": str(photo.uuid),
-        "url": request.build_absolute_uri(photo.fichier.url),
+        "status":        "ok",
+        "uuid":          str(photo.uuid),
+        "url":           request.build_absolute_uri(photo.fichier.url),
         "taille_octets": photo.taille_octets,
     }, status=status.HTTP_200_OK)
 
-
-# ===========================================================================
-# CLOTURE DE PROGRAMMES
-# ===========================================================================
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def cloturer_programmes(request):
     """
-    Cloture un ou plusieurs programmes du livreur connecte.
+    Passe le statut d'un ou plusieurs programmes du livreur à CLOTURE
+    et horodate l'heure de fin côté serveur.
 
-    URL  : POST /api/sync/programmes/cloturer/
-    Body : { "uuids": ["<uuid1>", "<uuid2>", ...] }
+    L'heure de clôture est générée ici plutôt que transmise par le mobile
+    pour éviter les problèmes de format de date et de timezone. Elle fait
+    foi pour le reporting supervision et le rapprochement X3.
 
-    Le statut passe a CLOTURE et l'heure de fin est horodatee cote serveur
-    (evite tout probleme de format de date entre mobile et serveur).
-    Filtre de securite : un livreur ne peut cloturer que SES programmes.
+    La clôture est envoyée en tête du cycle de synchronisation
+    (syncAll = pushClotures -> pull -> push). Si elle était dans le push
+    normal, le pull précédent pourrait écraser le statut CLOTURE local
+    avec PLANIFIE/EN_COURS (version serveur encore non clôturée).
     """
     uuids = request.data.get("uuids", [])
     if not isinstance(uuids, list):

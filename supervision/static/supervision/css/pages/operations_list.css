@@ -1,8 +1,8 @@
 /* ══════════════════════════════════════════════════════════
-   OPÉRATIONS LIST — Thème NEO SODIGAZ
+   OPÉRATIONS LIST : Thème NEO SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
-/* ─── Bouton export ─── */
+/* Bouton export */
 .btn-export {
     display: inline-flex; align-items: center; gap: .35rem;
     padding: .5rem 1.05rem; border-radius: 10px;
@@ -22,7 +22,7 @@
     border-color: #198754;
 }
 
-/* ─── Wrapper table (.table-card déjà NEO via supervision.css) ─── */
+/* Wrapper table (.table-card déjà NEO via supervision.css) */
 .ops-table-wrap { overflow: hidden; }
 .ops-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
 
@@ -36,7 +36,7 @@
 }
 .ops-table thead th:first-child { padding-left: 1.5rem; }
 
-/* ─── Ligne opération ─── */
+/* Ligne opération */
 .ops-row {
     border-bottom: 1px solid rgba(74,104,128,.08);
     cursor: pointer; transition: background .12s;
@@ -50,7 +50,7 @@
 .ops-table tbody td { padding: .72rem 1rem; vertical-align: middle; }
 .ops-table tbody td:first-child { padding-left: 1.5rem; }
 
-/* ─── Contenu cellules ─── */
+/* Contenu cellules */
 .ops-time {
     font-family: 'SFMono-Regular', Consolas, monospace;
     font-size: .8rem; font-weight: 700; color: #1a2332;
@@ -77,7 +77,7 @@
 .ops-muted     { font-size: .82rem; color: #6a8898; }
 .ops-arrow     { color: #a0b8c8; font-size: .75rem; text-align: center; padding-right: 1rem; }
 
-/* ─── Ligne total ─── */
+/* Ligne total */
 .ops-total-row {
     border-top: 1.5px solid rgba(74,104,128,.18);
     background: rgba(255,255,255,.22);
@@ -89,7 +89,7 @@
     font-size: 1rem; font-weight: 800; color: #0a1628; white-space: nowrap;
 }
 
-/* ─── État vide ─── */
+/* État vide */
 .ops-empty {
     background: var(--neo-bg, #e8edf2);
     border-radius: 14px; padding: 3.5rem 2rem;
@@ -104,7 +104,7 @@
 .ops-empty-title { font-weight: 700; color: #3a5060; margin: 1rem 0 .25rem; }
 .ops-empty-sub   { font-size: .85rem; color: #6a8898; }
 
-/* ─── Responsive ─── */
+/* Responsive */
 @media (max-width: 640px) {
     .ops-muted { display: none; }
     .ops-arrow { display: none; }

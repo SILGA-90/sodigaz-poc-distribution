@@ -3,16 +3,16 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'supervision/css/pages/anomalie_detail.css' %}">
 {% endblock %}
-{% block title %}Anomalie — {{ anomalie.type_anomalie }}{% endblock %}
+{% block title %}Anomalie : {{ anomalie.type_anomalie }}{% endblock %}
 
 {% block content %}
 
-<!-- ── Retour ── -->
+<!-- Retour -->
 <a href="{% url 'supervision:anomalies' %}" class="back-link">
     <i class="bi bi-chevron-left"></i> Retour aux anomalies
 </a>
 
-<!-- ── En-tête ── -->
+<!-- En-tête -->
 <div class="anom-detail-header anom-border-{{ anomalie.gravite }} mb-4">
     <div class="anom-header-left">
         <span class="pg-icon pg-icon-{{ anomalie.gravite }}">
@@ -76,7 +76,7 @@
     </div>
 </div>
 
-<!-- ── Info row ── -->
+<!-- Info row -->
 <div class="info-row mb-4">
 
     <div class="info-card">
@@ -155,7 +155,7 @@
 
 </div>
 
-<!-- ── Description ── -->
+<!-- Description -->
 <div class="section-card mb-4">
     <div class="section-header"><i class="bi bi-chat-left-text me-2"></i>Description</div>
     <div class="section-body">
@@ -163,7 +163,7 @@
     </div>
 </div>
 
-<!-- ── Classification gravité ── -->
+<!-- Classification gravité -->
 <div class="section-card classif-border-{{ anomalie.gravite }} mb-4">
     <div class="section-header">
         <i class="bi bi-sliders me-2"></i>Classification superviseur
@@ -185,29 +185,29 @@
               class="d-flex gap-2 align-items-center classif-form">
             {% csrf_token %}
             <select name="gravite" class="form-select form-select-sm" style="width:auto;">
-                <option value="FAIBLE"  {% if anomalie.gravite == "FAIBLE"  %}selected{% endif %}>Faible — impact limité</option>
-                <option value="MOYENNE" {% if anomalie.gravite == "MOYENNE" %}selected{% endif %}>Moyenne — à surveiller</option>
-                <option value="ELEVEE"  {% if anomalie.gravite == "ELEVEE"  %}selected{% endif %}>Élevée — action requise</option>
+                <option value="FAIBLE"  {% if anomalie.gravite == "FAIBLE"  %}selected{% endif %}>Faible : impact limité</option>
+                <option value="MOYENNE" {% if anomalie.gravite == "MOYENNE" %}selected{% endif %}>Moyenne : à surveiller</option>
+                <option value="ELEVEE"  {% if anomalie.gravite == "ELEVEE"  %}selected{% endif %}>Élevée : action requise</option>
             </select>
             <button type="submit" class="btn btn-sm btn-primary px-3">Appliquer</button>
         </form>
     </div>
 </div>
 
-<!-- ── Carte minimap ── -->
+<!-- Carte minimap -->
 {% if anomalie.localisation or anomalie.plv and anomalie.plv.localisation %}
 <div class="section-card map-card mb-4">
     <div class="section-header">
         <i class="bi bi-map me-2"></i>Localisation
         {% if not anomalie.localisation %}
-        <span class="minimap-approx-badge ms-2">Position du PLV — GPS non capturé</span>
+        <span class="minimap-approx-badge ms-2">Position du PLV : GPS non capturé</span>
         {% endif %}
     </div>
     <div id="minimap" style="height:220px;"></div>
 </div>
 {% endif %}
 
-<!-- ── Photos ── -->
+<!-- Photos -->
 {% with photos=anomalie.photos.all %}
 {% if photos %}
 <div class="section-card mb-4">

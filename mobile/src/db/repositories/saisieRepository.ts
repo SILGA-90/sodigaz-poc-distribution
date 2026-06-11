@@ -1,6 +1,31 @@
 /**
- * Repository pour la saisie d'operation.
- * Fournit les donnees du formulaire et enregistre l'operation en local.
+ * Repository pour la saisie d'opération terrain.
+ *
+ * Ce module fournit les données nécessaires au formulaire de saisie
+ * (SaisieOperationScreen) et persiste l'opération en local avec
+ * sync_status = 'PENDING'. Il gère aussi le marquage ECHEC d'une étape.
+ *
+ * *        - COLLECTE : le livreur ramasse des emballages vides (bouteilles
+ *          consignées). Les articles E* (Emballage) sont tous les types
+ *          d'emballages vides actifs. La collecte est opportuniste : aucun
+ *          plan : le livreur saisit ce qu'il a réellement ramassé.
+ * - RESTITUTION : le livreur livre du gaz plein (articles G*) selon un
+ *          plan établi par mock_x3. Les quantités prévues sont lues depuis
+ *          ligne_programme et affichées comme référence dans le formulaire.
+ *
+ * Un livreur peut rouvrir un
+ * formulaire déjà enregistré pour corriger une erreur de saisie avant
+ * synchronisation. Si une opération PENDING existe déjà pour cette étape,
+ * on la met à jour au lieu d'en créer une nouvelle : évite les doublons.
+ *
+ * L'opération principale, ses lignes et le
+ * changement de statut de l'étape doivent être atomiques. Si l'insert
+ * d'une ligne échoue, l'opération entière est annulée : pas d'étape
+ * marquée VISITEE sans opération enregistrée.
+ *
+ * *        On ne peut pas écraser un statut VISITEE par ECHEC. Si le livreur
+ * a déjà enregistré une opération et revient marquer ECHEC par erreur,
+ * la condition protège l'opération enregistrée.
  */
 import * as Crypto from 'expo-crypto';
 
@@ -21,9 +46,7 @@ export interface EtapeInfo {
   plv_longitude: number;
 }
 
-/**
- * Infos de l'etape (type de programme parent, PLV et ses coordonnees).
- */
+/** Infos de l'étape (type de programme parent, PLV et ses coordonnées). */
 export async function getEtapeInfo(etapeId: number): Promise<EtapeInfo | null> {
   const db = await getDatabase();
   return db.getFirstAsync<EtapeInfo>(
@@ -102,9 +125,7 @@ export interface OperationSaisie {
   lignes: LigneSaisie[];
 }
 
-/**
- * Operation PENDING existante pour cette etape (pour edition) ?
- */
+/** Opération PENDING existante pour cette étape (pour édition) ? */
 export async function getOperationPendingPourEtape(
   etapeUuid: string,
 ): Promise<string | null> {
@@ -119,9 +140,9 @@ export async function getOperationPendingPourEtape(
 }
 
 /**
- * Enregistre une operation en local (PENDING).
- * Si une operation PENDING existe deja pour l'etape, on la met a jour
- * (pas de duplication). Marque l'etape comme VISITEE.
+ * Enregistre une opération en local (PENDING).
+ * Si une opération PENDING existe déjà pour l'étape, on la met à jour
+ * (pas de duplication). Marque l'étape comme VISITEE.
  */
 export async function enregistrerOperation(data: OperationSaisie): Promise<string> {
   const db = await getDatabase();
@@ -197,8 +218,8 @@ export async function enregistrerOperation(data: OperationSaisie): Promise<strin
 }
 
 /**
- * Marque une etape comme ECHEC (visite impossible).
- * N'ecrase pas un statut VISITEE deja enregistre.
+ * Marque une étape comme ECHEC (visite impossible).
+ * N'écrase pas un statut VISITEE déjà enregistré.
  */
 export async function marquerEtapeEchec(etapeUuid: string): Promise<void> {
   const db = await getDatabase();

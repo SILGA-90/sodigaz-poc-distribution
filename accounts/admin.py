@@ -1,4 +1,15 @@
-"""Admin pour le modele Utilisateur personnalise."""
+"""
+Admin Django pour le modèle Utilisateur personnalisé.
+
+Enregistre UtilisateurAdmin qui étend UserAdmin pour exposer les champs
+métier SODIGAZ (code_livreur, téléphone, rôle) dans l'interface d'admin.
+
+UserAdmin gère déjà les champs Django Auth
+(password hashing, permissions, groupes). En l'étendant, on conserve ces
+fonctionnalités tout en ajoutant les champs métier dans une section séparée.
+Si on utilisait ModelAdmin, on perdrait le formulaire de changement de mot
+de passe et la gestion des permissions.
+"""
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 

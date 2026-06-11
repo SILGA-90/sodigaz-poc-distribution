@@ -1,8 +1,8 @@
 /* ══════════════════════════════════════════════════════════
-   PROGRAMME DETAIL — Thème NEO SODIGAZ
+   PROGRAMME DETAIL : Thème NEO SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
-/* ─── En-tête ─── */
+/* En-tête */
 .detail-header {
     background: var(--neo-bg, #e8edf2);
     border-radius: 14px;
@@ -16,7 +16,7 @@
     margin-bottom: 1.5rem;
 }
 
-/* ─── Onglets NEO pills ─── */
+/* Onglets NEO pills */
 .nav-tabs {
     display: flex; gap: .5rem; flex-wrap: wrap;
     border-bottom: none;
@@ -56,7 +56,7 @@
 }
 .tab-body { padding-top: 1.5rem; }
 
-/* ─── Filtre pills NEO ─── */
+/* Filtre pills NEO */
 .filter-pill-bar {
     display: flex; flex-wrap: wrap; align-items: center; gap: .5rem;
     margin-bottom: 1.25rem;
@@ -92,7 +92,7 @@
 .filter-pill-green.active { color: #198754; }
 .filter-pill-red.active   { color: #b91c1c; }
 
-/* ─── Carte étape ─── */
+/* Carte étape */
 .etape-card {
     background: var(--neo-bg, #e8edf2);
     border-radius: 14px;
@@ -161,7 +161,7 @@
     border-radius: 8px; padding: .65rem 1rem; margin: 0;
 }
 
-/* ─── Tableau réconciliation — inset NEO ─── */
+/* Tableau réconciliation : inset NEO */
 .recon-table-wrap {
     border-radius: 10px; overflow: hidden; border: none;
     background: var(--neo-in-bg, #d4dde6);
@@ -185,7 +185,7 @@
 .ecart-neg { background: rgba(220,53,69,.14);   color: #b91c1c; }
 .ecart-nul { background: rgba(74,104,128,.12);  color: #6a8898; }
 
-/* ─── Document X3 ─── */
+/* Document X3 */
 .doc-x3-badge {
     display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
     background: rgba(25,135,84,.06);
@@ -200,7 +200,7 @@
 .doc-bcr    { color: #198754; font-weight: 600; }
 .doc-date   { color: #8aa8c0; font-size: .72rem; margin-left: auto; }
 
-/* ─── Bouton opération ─── */
+/* Bouton opération */
 .op-link-row { display: flex; flex-direction: column; gap: .4rem; }
 .btn-op-detail {
     display: inline-flex; align-items: center; gap: .4rem;
@@ -221,7 +221,7 @@
     border-color: #079BD9;
 }
 
-/* ─── Timeline ─── */
+/* Timeline */
 .timeline {
     display: flex; flex-direction: column;
     position: relative; padding-left: 2rem;
@@ -287,7 +287,7 @@
 .tl-conform    { font-size: .72rem; font-weight: 700; color: #198754; display: flex; align-items: center; gap: .25rem; }
 .tl-nonconform { font-size: .72rem; font-weight: 700; color: #c45a00; display: flex; align-items: center; gap: .25rem; }
 
-/* ─── Responsive ─── */
+/* Responsive */
 @media (max-width: 640px) {
     .info-row      { flex-direction: column; }
     .tl-row        { gap: .45rem; }

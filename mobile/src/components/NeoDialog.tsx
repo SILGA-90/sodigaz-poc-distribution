@@ -1,6 +1,30 @@
 /**
- * NeoDialog — modal de confirmation néomorphisme clair.
- * Remplace Alert.alert pour les confirmations destructives ou importantes.
+ * NeoDialog : modal de confirmation en néomorphisme clair.
+ *
+ * Ce composant remplace Alert.alert() pour les confirmations importantes
+ * ou destructives. Il affiche une carte néomorphique centrée avec icône
+ * optionnelle, titre, message et deux boutons (Annuler / Confirmer).
+ * Le bouton Confirmer peut être en rouge (prop `danger`) ou bleu (défaut).
+ *
+ * Alert.alert() est non stylable : boutons grisés
+ * système, aucun contrôle de la mise en page, icône impossible.
+ * NeoDialog garde le même comportement (confirmation bloquante) avec un
+ * rendu cohérent avec le design SODIGAZ (néomorphisme, couleurs de marque).
+ *
+ * Le design néomorphique (surfaces gonflées avec ombres
+ * doubles claires/sombres) donne un aspect tactile et premium sans
+ * bibliothèque de composants externe. Compatible Expo Go avec StyleSheet
+ * standard.
+ *
+ * Certaines confirmations déclenchent une action réseau
+ * (ex. clôture de programme). On affiche un spinner à la place du texte
+ * du bouton Confirmer pendant l'appel réseau pour indiquer que l'action
+ * est en cours et éviter les doubles appuis.
+ *
+ * Taper en dehors de la carte
+ * est équivalent à annuler : comportement standard iOS/Android pour les
+ * modals non-destructives. Pour les actions destructives, onCancel est
+ * une fonction no-op qui ne ferme pas le dialog (à la charge de l'appelant).
  */
 import React from 'react';
 import {
@@ -73,14 +97,14 @@ export default function NeoDialog({
                 {/* Boutons */}
                 <View style={styles.btnRow}>
 
-                  {/* Annuler — raised NEO */}
+                  {/* Annuler : raised NEO */}
                   <View style={styles.cancelOuter}>
                     <TouchableOpacity style={styles.cancelInner} onPress={onCancel} activeOpacity={0.8}>
                       <Text style={styles.cancelText}>{cancelLabel}</Text>
                     </TouchableOpacity>
                   </View>
 
-                  {/* Confirmer — raised coloré */}
+                  {/* Confirmer : raised coloré */}
                   <View style={[styles.confirmOuter, { backgroundColor: confirmBg, shadowColor: confirmShdD }]}>
                     <TouchableOpacity
                       style={[styles.confirmInner, { backgroundColor: confirmBg, shadowColor: confirmShdL, borderTopColor: confirmBorderT, borderLeftColor: confirmBorderT, borderBottomColor: confirmBorderB, borderRightColor: confirmBorderB }]}
@@ -152,7 +176,7 @@ const styles = StyleSheet.create({
 
   btnRow: { flexDirection: 'row', gap: 10, width: '100%' },
 
-  /* Annuler — raised NEO */
+  /* Annuler : raised NEO */
   cancelOuter: {
     flex: 1, borderRadius: 12, backgroundColor: NEO,
     shadowColor: NEO_SHD,
@@ -170,7 +194,7 @@ const styles = StyleSheet.create({
   },
   cancelText: { fontSize: 14, fontWeight: '700', color: TEXT2 },
 
-  /* Confirmer — raised coloré */
+  /* Confirmer : raised coloré */
   confirmOuter: {
     flex: 1, borderRadius: 12,
     shadowOffset: { width: 5, height: 5 }, shadowOpacity: 0.65, shadowRadius: 8, elevation: 8,
