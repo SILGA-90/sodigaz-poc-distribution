@@ -28,14 +28,26 @@
     "react-native-webview": "13.15.0"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.1.10",
+    "jest-expo": "~54.0.0",
     "typescript": "~5.9.2"
   },
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "jest"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "transformIgnorePatterns": [
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|react-navigation|@react-navigation/.*)"
+    ],
+    "moduleNameMapper": {
+      "^expo-sqlite$": "<rootDir>/__mocks__/expo-sqlite.js"
+    }
   },
   "private": true
 }

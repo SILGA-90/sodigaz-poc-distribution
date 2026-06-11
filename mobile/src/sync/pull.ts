@@ -13,7 +13,7 @@ import { TableChanges, PullResponse, PullResult } from './types';
  * SQLite n'a pas de type BOOLEAN natif. Les colonnes booléennes sont
  * stockées en INTEGER (0/1) dans notre schéma.
  */
-function bool(value: any): number {
+export function bool(value: any): number {
   return value ? 1 : 0;
 }
 
