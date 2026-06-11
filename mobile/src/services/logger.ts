@@ -7,8 +7,11 @@
  */
 
 const logger = {
-  log:  (...args: unknown[]): void => { if (__DEV__) console.log(...args); },
-  warn: (...args: unknown[]): void => { if (__DEV__) console.warn(...args); },
+  log:   (...args: unknown[]): void => { if (__DEV__) console.log(...args); },
+  warn:  (...args: unknown[]): void => { if (__DEV__) console.warn(...args); },
+  // error est toujours actif : les erreurs critiques doivent apparaître même en production
+  // (adb logcat, React Native LogBox, ou futur outil de crash reporting).
+  error: (...args: unknown[]): void => { console.error(...args); },
 };
 
 export default logger;

@@ -237,3 +237,61 @@ DEPOT_SODIGAZ = {
     "longitude": -1.4900,
     "latitude": 12.4100,
 }
+
+
+# =============================================================================
+# Logging : écriture dans logs/django.log avec rotation automatique.
+# - django.request (ERROR) : toutes les erreurs 500 avec stack trace complète.
+# - django (WARNING)       : avertissements Django internes.
+# - root (ERROR)           : toute exception non gérée dans le code projet.
+# En dev (DEBUG=True) les logs partent aussi dans la console du terminal.
+# Rotation : 3 fichiers × 5 Mo = 15 Mo max de logs conservés.
+# =============================================================================
+LOGS_DIR = BASE_DIR / "logs"
+LOGS_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} [{levelname}] {name}: {message}",
+            "style": "{",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+        "simple": {
+            "format": "[{levelname}] {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "fichier": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGS_DIR / "django.log",
+            "maxBytes": 5 * 1024 * 1024,
+            "backupCount": 3,
+            "formatter": "verbose",
+            "encoding": "utf-8",
+        },
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["fichier", "console"] if DEBUG else ["fichier"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "django": {
+            "handlers": ["fichier", "console"] if DEBUG else ["fichier"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "": {
+            "handlers": ["fichier"],
+            "level": "ERROR",
+        },
+    },
+}
