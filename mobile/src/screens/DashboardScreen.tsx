@@ -47,6 +47,7 @@ import Toast from '../components/Toast';
 import NeoDialog from '../components/NeoDialog';
 import NetworkBanner from '../components/NetworkBanner';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { useLayout } from '../hooks/useLayout';
 import { Colors } from '../theme';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import SyncCard from '../components/dashboard/SyncCard';
@@ -70,6 +71,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     visible: false, message: '', type: 'success',
   });
   const { isConnected, justReconnected, clearReconnected } = useNetworkStatus();
+  const { numColumns } = useLayout();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [devUnlocked, setDevUnlocked] = useState(false);
   const [pinVisible, setPinVisible]   = useState(false);
@@ -198,9 +200,12 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       </View>
 
       <FlatList
+        key={numColumns}
         data={programmes}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderProgramme}
+        numColumns={numColumns}
+        columnWrapperStyle={numColumns > 1 ? { gap: 12, paddingHorizontal: 14 } : undefined}
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={syncing} onRefresh={handleSync} tintColor={Colors.brandBlue} />}
         ListEmptyComponent={<EmptyProgrammes syncing={syncing} onSync={handleSync} />}

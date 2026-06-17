@@ -69,9 +69,9 @@ async function applyPlvs(db: SQLiteDatabase, changes?: TableChanges): Promise<nu
   return applyRows(db, changes, (r) =>
     db.runAsync(
       `INSERT OR REPLACE INTO plv
-       (id, client_id, libelle, adresse, latitude, longitude, statut)
-       VALUES (?, ?, ?, ?, ?, ?, ?);`,
-      [r.id, r.client_id, r.libelle, r.adresse ?? '', r.latitude, r.longitude, r.statut ?? 'ACTIF'],
+       (id, client_id, code_plv, libelle, adresse, latitude, longitude, statut)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+      [r.id, r.client_id, r.code_plv ?? null, r.libelle, r.adresse ?? null, r.latitude, r.longitude, r.statut ?? 'ACTIF'],
     ),
   );
 }

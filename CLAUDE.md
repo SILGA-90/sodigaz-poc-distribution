@@ -36,6 +36,10 @@ utilisateurs.
 - Persistance locale : **expo-sqlite** avec couche de synchronisation **écrite
   à la main** (PAS WatermelonDB — voir décisions)
 - Test via Expo Go (QR code)
+- **Cibles matérielles : téléphones Android ET tablettes Android** — la majorité
+  des livreurs sortent en tournée avec une tablette. L'orientation est `"default"`
+  (portrait + paysage). Tous les écrans doivent être utilisables dans les deux
+  orientations. Utiliser `flex` partout, éviter les largeurs fixes en px.
 
 **Supervision web** : Django Templates + Bootstrap 5 + Leaflet/OpenStreetMap
 (carte, KPI, réconciliation prévu/réalisé, rafraîchissement par polling 15s).
@@ -162,10 +166,12 @@ est fourni par le mobile au moment du push.
 ## 7. Données de démo (seed_demo)
 
 - Mot de passe commun : `demo1234`
-- Livreurs : LIV001 (adama.l), LIV002 (salif.l)
+- Livreurs : LIV001 (adama.l), LIV002 (salif.l), LIV003 (moussa.l), LIV004 (awa.l), LIV005 (issouf.l)
 - Superviseur : aminata.s
-- 5 PLV à Ouagadougou, 3 clients, 3 produits (B6, B12, B38)
+- 15 clients, 25 PLVs (codes PLVO101–PLVO125) à Ouagadougou
+- 6 articles : 3 emballages vides E\* (E06BI, E1250, E3800) + 3 gaz plein G\* (G06BI, G1250, G3800)
 - Centre de carte : [12.3650, -1.5236]
+- Seed idempotent (get_or_create + update_or_create) ; `--reset` pour repartir de zéro
 
 ## 8. État d'avancement (juin 2026)
 

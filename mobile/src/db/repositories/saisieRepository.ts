@@ -40,6 +40,7 @@ export interface EtapeInfo {
   uuid: string;
   programme_uuid: string;
   type_programme: 'COLLECTE' | 'RESTITUTION';
+  plv_code: string | null;
   plv_libelle: string;
   client_raison_sociale: string;
   plv_latitude: number;
@@ -54,7 +55,8 @@ export async function getEtapeInfo(etapeId: number): Promise<EtapeInfo | null> {
         e.uuid AS uuid,
         pr.uuid AS programme_uuid,
         pr.type_programme AS type_programme,
-        p.libelle AS plv_libelle,
+        p.code_plv AS plv_code,
+        p.libelle  AS plv_libelle,
         c.raison_sociale AS client_raison_sociale,
         p.latitude AS plv_latitude,
         p.longitude AS plv_longitude

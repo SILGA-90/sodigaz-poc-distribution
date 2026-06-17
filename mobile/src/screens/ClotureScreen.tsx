@@ -23,12 +23,12 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -36,9 +36,11 @@ import {
   getProgrammeById,
   getRecapProgramme,
   getOperationsRecapProgramme,
+  getLignesOperationsRecap,
   cloturerProgrammeLocal,
   RecapProgramme,
   OperationRecap,
+  LigneOperationRecap,
 } from '../db/repositories/programmeRepository';
 import { Programme } from '../types/models';
 import { RootStackParamList } from '../types/navigation';
@@ -46,29 +48,43 @@ import { Colors } from '../theme';
 import { neoCard, NEO, NEO_SHD, NAVY, TEXT, TEXT2, TEXT3, SEP } from '../components/saisie/neoStyles';
 import SectionHeader from '../components/saisie/SectionHeader';
 import RecapRow from '../components/saisie/RecapRow';
+import NeoDialog from '../components/NeoDialog';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Cloture'>;
 
 export default function ClotureScreen({ route, navigation }: Props): React.ReactElement {
   const { programmeId } = route.params;
+  const { width } = useWindowDimensions();
   const [programme,   setProgramme]   = useState<Programme | null>(null);
   const [recap,       setRecap]       = useState<RecapProgramme | null>(null);
   const [operations,  setOperations]  = useState<OperationRecap[]>([]);
+  const [lignesMap,   setLignesMap]   = useState<Record<string, LigneOperationRecap[]>>({});
   const [loading,     setLoading]     = useState(true);
   const [closing,     setClosing]     = useState(false);
   const [clotureReussie, setClotureReussie] = useState(false);
+  const [showClotureDialog, setShowClotureDialog] = useState(false);
+  const [clotureDialogMsg, setClotureDialogMsg]   = useState('');
+  const [showErrorDialog, setShowErrorDialog]     = useState(false);
+  const [errorMsg, setErrorMsg]                   = useState('');
 
   useEffect(() => {
     (async () => {
       const p = await getProgrammeById(programmeId);
       if (p) {
-        const [r, ops] = await Promise.all([
+        const [r, ops, lignes] = await Promise.all([
           getRecapProgramme(programmeId, p.uuid),
           getOperationsRecapProgramme(programmeId),
+          getLignesOperationsRecap(programmeId),
         ]);
         setProgramme(p);
         setRecap(r);
         setOperations(ops);
+        const map: Record<string, LigneOperationRecap[]> = {};
+        for (const l of lignes) {
+          if (!map[l.operation_uuid]) map[l.operation_uuid] = [];
+          map[l.operation_uuid].push(l);
+        }
+        setLignesMap(map);
       }
       setLoading(false);
     })();
@@ -80,10 +96,8 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
     const message = reste > 0
       ? `Attention : ${reste} étape(s) non visitée(s). Clôturer quand même ?`
       : 'Toutes les étapes sont visitées. Confirmer la clôture ?';
-    Alert.alert('Clôturer le programme', message, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Clôturer', style: 'destructive', onPress: faireCloture },
-    ]);
+    setClotureDialogMsg(message);
+    setShowClotureDialog(true);
   }
 
   async function faireCloture(): Promise<void> {
@@ -93,7 +107,8 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
       await cloturerProgrammeLocal(programme.uuid);
       setClotureReussie(true);
     } catch (e: unknown) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : String(e));
+      setErrorMsg(e instanceof Error ? e.message : String(e));
+      setShowErrorDialog(true);
     } finally {
       setClosing(false);
     }
@@ -139,8 +154,17 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
               <RecapRow label="Étapes en échec" value={String(recap.etapes_echec)} danger />
             )}
             <RecapRow label="Opérations réalisées" value={String(recap.nb_operations)} />
+            {recap.montant_total > 0 && (
+              <RecapRow label="Montant total"
+                value={`${recap.montant_total.toLocaleString('fr-FR')} FCFA`} />
+            )}
             <RecapRow label="Montant encaissé"
               value={`${recap.montant_encaisse.toLocaleString('fr-FR')} FCFA`} success />
+            {recap.montant_total > recap.montant_encaisse && (
+              <RecapRow label="Non encaissé"
+                value={`${(recap.montant_total - recap.montant_encaisse).toLocaleString('fr-FR')} FCFA`}
+                warning />
+            )}
             {recap.nb_anomalies > 0 && (
               <RecapRow label="Anomalies signalées" value={String(recap.nb_anomalies)} warning />
             )}
@@ -173,7 +197,7 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
   const isCollecte  = programme.type_programme === 'COLLECTE';
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.scroll}>
+    <ScrollView style={styles.root} contentContainerStyle={[styles.scroll, width >= 700 && styles.wideContent]}>
 
       {/* Header navy */}
       <View style={styles.header}>
@@ -192,13 +216,62 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
       <SectionHeader icon="list-outline" color="blue" title="Récapitulatif de la tournée" />
       <View style={neoCard.outer}>
         <View style={neoCard.inner}>
-          <RecapRow label="Étapes visitées" value={`${recap.etapes_visitees} / ${recap.total_etapes}`} />
-          {recap.etapes_echec > 0 && (
-            <RecapRow label="Étapes en échec" value={String(recap.etapes_echec)} danger />
-          )}
+
+          {/* Barre de progression */}
+          {(() => {
+            const pct = recap.total_etapes > 0
+              ? Math.round((recap.etapes_visitees / recap.total_etapes) * 100) : 0;
+            const restantes = recap.total_etapes - recap.etapes_visitees - recap.etapes_echec;
+            return (
+              <>
+                <View style={styles.progressHeader}>
+                  <Text style={styles.progressLabel}>Progression</Text>
+                  <Text style={styles.progressPct}>{pct} %</Text>
+                </View>
+                <View style={styles.progressTrack}>
+                  <View style={[styles.progressFill, { width: `${pct}%` as any,
+                    backgroundColor: pct === 100 ? Colors.success : Colors.brandBlue }]} />
+                </View>
+                <View style={styles.etapesRow}>
+                  <View style={styles.etapeStat}>
+                    <Text style={[styles.etapeStatN, { color: Colors.success }]}>{recap.etapes_visitees}</Text>
+                    <Text style={styles.etapeStatL}>Visitées</Text>
+                  </View>
+                  {recap.etapes_echec > 0 && (
+                    <View style={styles.etapeStat}>
+                      <Text style={[styles.etapeStatN, { color: Colors.danger }]}>{recap.etapes_echec}</Text>
+                      <Text style={styles.etapeStatL}>Échec</Text>
+                    </View>
+                  )}
+                  {restantes > 0 && (
+                    <View style={styles.etapeStat}>
+                      <Text style={[styles.etapeStatN, { color: Colors.warning }]}>{restantes}</Text>
+                      <Text style={styles.etapeStatL}>Restantes</Text>
+                    </View>
+                  )}
+                  <View style={styles.etapeStat}>
+                    <Text style={[styles.etapeStatN, { color: TEXT2 }]}>{recap.total_etapes}</Text>
+                    <Text style={styles.etapeStatL}>Total</Text>
+                  </View>
+                </View>
+              </>
+            );
+          })()}
+
+          <View style={styles.recapDivider} />
+
           <RecapRow label="Opérations réalisées" value={String(recap.nb_operations)} />
+          {recap.montant_total > 0 && (
+            <RecapRow label="Montant total"
+              value={`${recap.montant_total.toLocaleString('fr-FR')} FCFA`} />
+          )}
           <RecapRow label="Montant encaissé"
             value={`${recap.montant_encaisse.toLocaleString('fr-FR')} FCFA`} success />
+          {recap.montant_total > recap.montant_encaisse && (
+            <RecapRow label="Non encaissé"
+              value={`${(recap.montant_total - recap.montant_encaisse).toLocaleString('fr-FR')} FCFA`}
+              warning />
+          )}
           {recap.nb_anomalies > 0 && (
             <RecapRow label="Anomalies signalées" value={String(recap.nb_anomalies)} warning />
           )}
@@ -209,26 +282,86 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
       {operations.length > 0 && (
         <>
           <SectionHeader icon="receipt-outline" color="blue" title="Détail des opérations" />
-          <View style={neoCard.outer}>
-            <View style={neoCard.inner}>
-              {operations.map((op, i) => (
-                <View key={i} style={[styles.opRow, i > 0 && styles.opRowSep]}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.opPlv}>{op.plv_libelle}</Text>
-                    <Text style={styles.opType}>
-                      {op.type_operation === 'COLLECTE' ? 'Collecte' : 'Restitution'}
-                    </Text>
+          {operations.map((op, i) => {
+            const heure = op.date_heure ? op.date_heure.slice(11, 16) : '';
+            const encaissee = Boolean(op.est_encaissee);
+            const isCollecteOp = op.type_operation === 'COLLECTE';
+            const typeColor = isCollecteOp ? Colors.brandBlue : Colors.success;
+            const typeBg    = isCollecteOp ? '#e3f3fb' : Colors.successBg;
+            const paiementLabel = op.mode_paiement === 'MOBILE_MONEY' ? 'Mobile Money'
+              : op.mode_paiement === 'CHEQUE' ? 'Chèque'
+              : op.mode_paiement === 'VIREMENT' ? 'Virement'
+              : op.mode_paiement === 'ESPECES' ? 'Espèces'
+              : op.mode_paiement ?? '—';
+            return (
+              <View key={i} style={[neoCard.outer, { marginBottom: 10 }]}>
+                <View style={neoCard.inner}>
+                  {/* Ligne 1 : heure + type */}
+                  <View style={styles.opCardTop}>
+                    <View style={[styles.opTypeChip, { backgroundColor: typeBg, borderColor: typeColor + '40' }]}>
+                      <View style={[styles.opTypeDot, { backgroundColor: typeColor }]} />
+                      <Text style={[styles.opTypeLabel, { color: typeColor }]}>
+                        {isCollecteOp ? 'Collecte' : 'Restitution'}
+                      </Text>
+                    </View>
+                    {heure ? <Text style={styles.opHeure}>{heure}</Text> : null}
                   </View>
-                  <View style={{ alignItems: 'flex-end' }}>
+                  {/* Client */}
+                  <Text style={styles.opClientName} numberOfLines={1}>{op.client_raison_sociale}</Text>
+                  {/* PLV */}
+                  {op.plv_code ? (
+                    <View style={styles.opPlvRow}>
+                      <Ionicons name="storefront-outline" size={12} color={TEXT3} />
+                      <View style={styles.opPlvCodeChip}>
+                        <Text style={styles.opPlvCode}>{op.plv_code}</Text>
+                      </View>
+                    </View>
+                  ) : null}
+                  {op.plv_adresse ? (
+                    <View style={styles.opAdresseRow}>
+                      <Ionicons name="location-outline" size={11} color={TEXT3} />
+                      <Text style={styles.opAdresse} numberOfLines={1}>{op.plv_adresse}</Text>
+                    </View>
+                  ) : null}
+                  {/* Articles saisis */}
+                  {(lignesMap[op.operation_uuid] ?? []).map((l, j) => (
+                    <View key={j} style={styles.ligneRow}>
+                      <Text style={styles.ligneLibelle} numberOfLines={1}>{l.libelle}</Text>
+                      <View style={styles.ligneRight}>
+                        <Text style={styles.ligneQte}>× {l.quantite_realisee}</Text>
+                        {l.montant_ligne > 0 && (
+                          <Text style={styles.ligneMontant}>{l.montant_ligne.toLocaleString('fr-FR')} FCFA</Text>
+                        )}
+                      </View>
+                    </View>
+                  ))}
+
+                  {/* Ligne 3 : paiement */}
+                  {op.mode_paiement && (
+                    <View style={styles.opCardMid}>
+                      <Text style={styles.opMeta}>{paiementLabel}</Text>
+                    </View>
+                  )}
+                  {/* Séparateur */}
+                  <View style={styles.opDivider} />
+                  {/* Ligne 4 : montant + encaissement */}
+                  <View style={styles.opCardBottom}>
                     <Text style={styles.opMontant}>{op.montant_total.toLocaleString('fr-FR')} FCFA</Text>
-                    <Text style={[styles.opEncaisse, { color: op.est_encaissee ? Colors.success : Colors.danger }]}>
-                      {op.est_encaissee ? 'Encaissé' : 'Non encaissé'}
-                    </Text>
+                    <View style={[styles.opEncaissePill, { backgroundColor: encaissee ? Colors.successBg : Colors.dangerBg }]}>
+                      <Ionicons
+                        name={encaissee ? 'checkmark-circle' : 'close-circle'}
+                        size={12}
+                        color={encaissee ? Colors.success : Colors.danger}
+                      />
+                      <Text style={[styles.opEncaisseText, { color: encaissee ? Colors.success : Colors.danger }]}>
+                        {encaissee ? 'Encaissé' : 'Non encaissé'}
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              ))}
-            </View>
-          </View>
+              </View>
+            );
+          })}
         </>
       )}
 
@@ -256,14 +389,35 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
         </View>
       )}
 
+      <NeoDialog
+        visible={showClotureDialog}
+        icon="warning-outline" iconColor={Colors.danger}
+        title="Clôturer le programme"
+        message={clotureDialogMsg}
+        confirmLabel="Clôturer" cancelLabel="Annuler"
+        danger
+        loading={closing}
+        onCancel={() => setShowClotureDialog(false)}
+        onConfirm={() => { setShowClotureDialog(false); faireCloture(); }}
+      />
+      <NeoDialog
+        visible={showErrorDialog}
+        icon="alert-circle-outline" iconColor={Colors.danger}
+        title="Erreur"
+        message={errorMsg}
+        singleButton confirmLabel="OK"
+        onConfirm={() => setShowErrorDialog(false)}
+        onCancel={() => setShowErrorDialog(false)}
+      />
     </ScrollView>
   );
 }
 
 /* Styles */
 const styles = StyleSheet.create({
-  root:      { flex: 1, backgroundColor: NEO },
-  scroll:    { paddingBottom: 40 },
+  root:        { flex: 1, backgroundColor: NEO },
+  scroll:      { paddingBottom: 40 },
+  wideContent: { maxWidth: 700, alignSelf: 'center', width: '100%' },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: NEO, padding: 32 },
   errorText: { color: TEXT3, fontSize: 15 },
 
@@ -281,13 +435,47 @@ const styles = StyleSheet.create({
 
   cardTitle: { fontSize: 15, fontWeight: '700', color: TEXT2, marginBottom: 8 },
 
-  /* Lignes opérations */
-  opRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 11 },
-  opRowSep:  { borderTopWidth: 1, borderTopColor: SEP },
-  opPlv:     { fontSize: 13, fontWeight: '700', color: TEXT },
-  opType:    { fontSize: 11, color: TEXT3, marginTop: 2 },
-  opMontant: { fontSize: 14, fontWeight: '700', color: TEXT },
-  opEncaisse:{ fontSize: 11, marginTop: 2 },
+  /* Barre de progression */
+  progressHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  progressLabel:  { fontSize: 13, fontWeight: '600', color: TEXT2 },
+  progressPct:    { fontSize: 14, fontWeight: '800', color: Colors.brandBlue },
+  progressTrack:  { height: 8, borderRadius: 4, backgroundColor: '#d4dde6', marginBottom: 14, overflow: 'hidden' },
+  progressFill:   { height: 8, borderRadius: 4 },
+
+  /* Mini stats étapes */
+  etapesRow:   { flexDirection: 'row', gap: 12, marginBottom: 4 },
+  etapeStat:   { alignItems: 'center', flex: 1 },
+  etapeStatN:  { fontSize: 20, fontWeight: '800', letterSpacing: -0.5 },
+  etapeStatL:  { fontSize: 10, color: TEXT3, marginTop: 1, fontWeight: '600' },
+
+  recapDivider: { height: 1, backgroundColor: SEP, marginVertical: 14 },
+
+  /* Cartes opérations */
+  opCardTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  opTypeChip:   { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
+  opTypeDot:    { width: 6, height: 6, borderRadius: 3 },
+  opTypeLabel:  { fontSize: 11, fontWeight: '700' },
+  opHeure:      { fontSize: 12, fontWeight: '600', color: TEXT3 },
+  opClientName: { fontSize: 14, fontWeight: '700', color: TEXT, marginBottom: 4 },
+  opPlvRow:       { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 4 },
+  opPlvCodeChip:  { backgroundColor: '#e3f3fb', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: 'rgba(7,155,217,0.3)' },
+  opPlvCode:      { fontSize: 10, fontWeight: '800', color: Colors.brandBlue },
+  opAdresseRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 10 },
+  opAdresse:    { fontSize: 11, color: TEXT3, flex: 1 },
+  /* Lignes d'articles */
+  ligneRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: SEP },
+  ligneLibelle: { flex: 1, fontSize: 13, color: TEXT, fontWeight: '600', marginRight: 8 },
+  ligneRight:   { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  ligneQte:     { fontSize: 13, fontWeight: '800', color: Colors.brandBlue },
+  ligneMontant: { fontSize: 12, color: TEXT3 },
+
+  opCardMid:    { flexDirection: 'row', gap: 10, marginTop: 8, marginBottom: 10 },
+  opMeta:       { fontSize: 12, color: TEXT2, fontWeight: '600' },
+  opDivider:    { height: 1, backgroundColor: SEP, marginBottom: 10 },
+  opCardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  opMontant:    { fontSize: 16, fontWeight: '800', color: TEXT },
+  opEncaissePill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 },
+  opEncaisseText: { fontSize: 11, fontWeight: '700' },
 
   /* Badge "déjà clôturé" : raised vert */
   clotureBadgeOuter: {

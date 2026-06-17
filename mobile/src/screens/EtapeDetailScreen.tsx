@@ -25,6 +25,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -59,19 +60,36 @@ interface LigneLocale {
   montant_ligne: number;
 }
 
+interface PlvLocale {
+  plv_code: string | null;
+  client_raison_sociale: string;
+}
+
 export default function EtapeDetailScreen({ route }: Props): React.ReactElement {
   const { etapeUuid } = route.params;
+  const { width } = useWindowDimensions();
   const [operation, setOperation] = useState<OperationLocale | null>(null);
   const [lignes, setLignes]       = useState<LigneLocale[]>([]);
+  const [plvInfo, setPlvInfo]     = useState<PlvLocale | null>(null);
   const [loading, setLoading]     = useState(true);
 
   useEffect(() => {
     (async () => {
       const db = await getDatabase();
-      const op = await db.getFirstAsync<OperationLocale>(
-        `SELECT * FROM operation WHERE etape_uuid = ? AND is_deleted = 0 ORDER BY last_modified DESC LIMIT 1;`,
-        [etapeUuid],
-      );
+      const [op, plv] = await Promise.all([
+        db.getFirstAsync<OperationLocale>(
+          `SELECT * FROM operation WHERE etape_uuid = ? AND is_deleted = 0 ORDER BY last_modified DESC LIMIT 1;`,
+          [etapeUuid],
+        ),
+        db.getFirstAsync<PlvLocale>(
+          `SELECT p.code_plv AS plv_code, c.raison_sociale AS client_raison_sociale
+           FROM etape e
+           JOIN plv p    ON p.id  = e.plv_id
+           JOIN client c ON c.id  = p.client_id
+           WHERE e.uuid = ?;`,
+          [etapeUuid],
+        ),
+      ]);
       if (op) {
         setOperation(op);
         const ls = await db.getAllAsync<LigneLocale>(
@@ -81,6 +99,7 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
         );
         setLignes(ls);
       }
+      setPlvInfo(plv ?? null);
       setLoading(false);
     })();
   }, [etapeUuid]);
@@ -110,7 +129,7 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
   });
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.scroll}>
+    <ScrollView style={styles.root} contentContainerStyle={[styles.scroll, width >= 700 && styles.wideContent]}>
 
       {/* Header navy */}
       <View style={styles.header}>
@@ -129,6 +148,16 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
               </Text>
             </View>
           </View>
+          {plvInfo && (
+            <>
+              {plvInfo.plv_code ? (
+                <View style={styles.plvCodeChip}>
+                  <Text style={styles.plvCodeText}>{plvInfo.plv_code}</Text>
+                </View>
+              ) : null}
+              <Text style={styles.clientName} numberOfLines={1}>{plvInfo.client_raison_sociale}</Text>
+            </>
+          )}
           {operation.sous_type && (
             <Text style={styles.sousType}>{operation.sous_type}</Text>
           )}
@@ -242,8 +271,9 @@ function modePaiementLabel(mode: string): string {
 
 /* Styles */
 const styles = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: NEO },
-  scroll: { paddingBottom: 40 },
+  root:        { flex: 1, backgroundColor: NEO },
+  scroll:      { paddingBottom: 40 },
+  wideContent: { maxWidth: 700, alignSelf: 'center', width: '100%' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: NEO, padding: 32 },
 
   /* État vide : raised */
@@ -272,8 +302,11 @@ const styles = StyleSheet.create({
   typeChipC: { backgroundColor: 'rgba(7,155,217,0.2)',  borderColor: 'rgba(7,155,217,0.4)' },
   typeChipR: { backgroundColor: 'rgba(52,211,153,0.2)', borderColor: 'rgba(52,211,153,0.4)' },
   typeChipText: { fontSize: 12, fontWeight: '700', color: '#e2e8f0' },
-  sousType: { fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 4 },
-  dateText: { fontSize: 13, color: 'rgba(255,255,255,0.5)' },
+  plvCodeChip: { alignSelf: 'flex-start', backgroundColor: 'rgba(7,155,217,0.25)', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2, borderWidth: 1, borderColor: 'rgba(7,155,217,0.5)', marginTop: 12, marginBottom: 5 },
+  plvCodeText: { fontSize: 11, fontWeight: '800', color: '#7dd3fa' },
+  clientName:  { fontSize: 18, fontWeight: '800', color: '#fff', letterSpacing: -0.3, marginBottom: 8 },
+  sousType:    { fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 4 },
+  dateText:    { fontSize: 13, color: 'rgba(255,255,255,0.5)' },
 
   syncPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
   syncPillSynced:  { backgroundColor: Colors.successBg, borderColor: Colors.successBorder },

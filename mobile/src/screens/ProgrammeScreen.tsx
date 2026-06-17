@@ -37,6 +37,7 @@ import {
 import { Programme } from '../types/models';
 import { RootStackParamList } from '../types/navigation';
 import { Colors } from '../theme';
+import { useLayout } from '../hooks/useLayout';
 import ProgrammeHeader from '../components/programme/ProgrammeHeader';
 import EtapeCard from '../components/programme/EtapeCard';
 import FABAnomalies from '../components/programme/FABAnomalies';
@@ -52,6 +53,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
   const [etapes, setEtapes]   = useState<EtapeAvecPlv[]>([]);
   const [loading, setLoading] = useState(true);
   const [triMode, setTriMode] = useState<TriMode>('optimise');
+  const { numColumns } = useLayout();
 
   const etapesTri = useMemo((): EtapeAvecPlv[] => {
     if (triMode === 'alpha') return [...etapes].sort((a, b) => a.plv_libelle.localeCompare(b.plv_libelle, 'fr'));
@@ -91,24 +93,27 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
     return <View style={styles.center}><ActivityIndicator size="large" color={Colors.brandBlue} /></View>;
   }
 
+  const listHeader = programme ? (
+    <ProgrammeHeader
+      programme={programme}
+      progression={progression}
+      triMode={triMode}
+      onTriModeChange={setTriMode}
+      onNavigateAnomalies={() => navigation.navigate('MesAnomalies', { programmeUuid: programme.uuid, programmeNumero: programme.numero_x3 })}
+      onNavigateCloture={() => navigation.navigate('Cloture', { programmeId: programme.id })}
+    />
+  ) : null;
+
   return (
     <View style={styles.root}>
-
-      {programme && (
-        <ProgrammeHeader
-          programme={programme}
-          progression={progression}
-          triMode={triMode}
-          onTriModeChange={setTriMode}
-          onNavigateAnomalies={() => navigation.navigate('MesAnomalies', { programmeUuid: programme.uuid, programmeNumero: programme.numero_x3 })}
-          onNavigateCloture={() => navigation.navigate('Cloture', { programmeId: programme.id })}
-        />
-      )}
-
       <FlatList
+        key={numColumns}
         data={etapesTri}
         keyExtractor={(item) => item.uuid}
         renderItem={renderEtape}
+        numColumns={numColumns}
+        columnWrapperStyle={numColumns > 1 ? { gap: 12 } : undefined}
+        ListHeaderComponent={listHeader}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <View style={styles.emptyWrap}>
@@ -129,7 +134,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
 const styles = StyleSheet.create({
   root:      { flex: 1, backgroundColor: NEO },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: NEO },
-  list:      { padding: 12, paddingTop: 14 },
+  list:      { paddingHorizontal: 12, paddingBottom: 12 },
   emptyWrap: { padding: 40, alignItems: 'center' },
   emptyText: { color: TEXT3, textAlign: 'center', fontSize: 14 },
 });

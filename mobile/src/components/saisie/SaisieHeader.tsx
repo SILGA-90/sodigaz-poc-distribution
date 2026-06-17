@@ -2,11 +2,12 @@
  * En-tête navy de l'écran de saisie : statut GPS, bouton itinéraire,
  * type d'opération, nom du PLV et raison sociale du client.
  */
-import React from 'react';
-import { Alert, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors } from '../../theme';
 import { EtapeInfo } from '../../db/repositories/saisieRepository';
 import { NAVY, TEXT2 } from './neoStyles';
+import NeoDialog from '../NeoDialog';
 
 export type GpsStatus = 'acquisition' | 'fiable' | 'degradee' | 'absente';
 
@@ -27,10 +28,11 @@ function gpsStyle(status: GpsStatus): { color: string; bg: string; label: string
 export default function SaisieHeader({ etapeInfo, gpsStatus }: Props): React.ReactElement {
   const gps        = gpsStyle(gpsStatus);
   const isCollecte = etapeInfo.type_programme === 'COLLECTE';
+  const [showNavError, setShowNavError] = useState(false);
 
   function ouvrirItineraire(): void {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${etapeInfo.plv_latitude},${etapeInfo.plv_longitude}`;
-    Linking.openURL(url).catch(() => Alert.alert('Erreur', "Impossible d'ouvrir la navigation."));
+    Linking.openURL(url).catch(() => setShowNavError(true));
   }
 
   return (
@@ -50,9 +52,22 @@ export default function SaisieHeader({ etapeInfo, gpsStatus }: Props): React.Rea
         <View style={[styles.typeChip, isCollecte ? styles.typeChipC : styles.typeChipR]}>
           <Text style={styles.typeChipText}>{isCollecte ? 'Collecte' : 'Restitution'}</Text>
         </View>
-        <Text style={styles.plvName}>{etapeInfo.plv_libelle}</Text>
+        {etapeInfo.plv_code ? (
+          <View style={styles.plvCodeChip}>
+            <Text style={styles.plvCodeText}>{etapeInfo.plv_code}</Text>
+          </View>
+        ) : null}
         <Text style={styles.clientName}>{etapeInfo.client_raison_sociale}</Text>
       </View>
+      <NeoDialog
+        visible={showNavError}
+        icon="navigate-outline" iconColor={Colors.danger}
+        title="Navigation impossible"
+        message="Impossible d'ouvrir l'application de navigation. Vérifie que Google Maps est installé."
+        singleButton confirmLabel="OK"
+        onConfirm={() => setShowNavError(false)}
+        onCancel={() => setShowNavError(false)}
+      />
     </View>
   );
 }
@@ -81,6 +96,7 @@ const styles = StyleSheet.create({
   typeChipC:    { backgroundColor: 'rgba(7,155,217,0.2)',  borderColor: 'rgba(7,155,217,0.4)' },
   typeChipR:    { backgroundColor: 'rgba(52,211,153,0.2)', borderColor: 'rgba(52,211,153,0.4)' },
   typeChipText: { fontSize: 11, fontWeight: '700', color: '#e2e8f0' },
-  plvName:      { fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
-  clientName:   { fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 3 },
+  plvCodeChip:  { alignSelf: 'flex-start', backgroundColor: 'rgba(7,155,217,0.25)', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2, borderWidth: 1, borderColor: 'rgba(7,155,217,0.5)', marginBottom: 5 },
+  plvCodeText:  { fontSize: 11, fontWeight: '800', color: '#7dd3fa' },
+  clientName:   { fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
 });

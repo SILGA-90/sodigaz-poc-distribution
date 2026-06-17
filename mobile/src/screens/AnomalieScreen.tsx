@@ -24,16 +24,17 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import NeoSelect from '../components/NeoSelect';
+import NeoDialog from '../components/NeoDialog';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { creerAnomalie } from '../db/repositories/anomalieRepository';
 import { getEtapesDuProgramme } from '../db/repositories/programmeRepository';
@@ -58,6 +59,7 @@ const TYPES_ANOMALIE: { value: string; label: string; icon: React.ComponentProps
 
 export default function AnomalieScreen({ route, navigation }: Props): React.ReactElement {
   const { programmeUuid, programmeId } = route.params;
+  const { width } = useWindowDimensions();
 
   const [typeAnomalie, setTypeAnomalie]   = useState<string>(TYPES_ANOMALIE[0].value);
   const [description, setDescription]     = useState('');
@@ -69,6 +71,10 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
   const [plvOptions, setPlvOptions]       = useState<{ id: number; libelle: string }[]>([]);
   const [selectedPlvId, setSelectedPlvId] = useState<number | null>(null);
   const [descFocused, setDescFocused]     = useState(false);
+  const [showDescAlert, setShowDescAlert] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showErrorDialog, setShowErrorDialog]     = useState(false);
+  const [saveErrorMsg, setSaveErrorMsg]           = useState('');
 
   useEffect(() => {
     (async () => {
@@ -88,7 +94,11 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
       const seen = new Set<number>();
       const opts: { id: number; libelle: string }[] = [];
       for (const e of etapes) {
-        if (!seen.has(e.plv_id)) { seen.add(e.plv_id); opts.push({ id: e.plv_id, libelle: e.plv_libelle }); }
+        if (!seen.has(e.plv_id)) {
+          seen.add(e.plv_id);
+          const label = e.plv_code ? `${e.plv_code} · ${e.client_raison_sociale}` : e.client_raison_sociale;
+          opts.push({ id: e.plv_id, libelle: label });
+        }
       }
       setPlvOptions(opts);
     });
@@ -96,7 +106,7 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
 
   async function handleSave(): Promise<void> {
     if (!description.trim()) {
-      Alert.alert('Description manquante', "Décris brièvement l'anomalie rencontrée.");
+      setShowDescAlert(true);
       return;
     }
     setSaving(true);
@@ -112,13 +122,10 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
       for (const ph of photos) {
         await ajouterPhotoAnomalie(anomalieUuid, ph.uri, ph.tailleOctets, gpsLat, gpsLon);
       }
-      Alert.alert(
-        'Anomalie signalée',
-        "L'anomalie est enregistrée localement. Elle sera remontée à la prochaine synchronisation.",
-        [{ text: 'OK', onPress: () => navigation.goBack() }],
-      );
+      setShowSuccessDialog(true);
     } catch (e: unknown) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : String(e));
+      setSaveErrorMsg(e instanceof Error ? e.message : String(e));
+      setShowErrorDialog(true);
     } finally {
       setSaving(false);
     }
@@ -129,7 +136,7 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
   const gpsLabel = gpsStatus === 'fiable' ? 'GPS fiable' : gpsStatus === 'degradee' ? 'GPS imprécis' : gpsStatus === 'indisponible' ? 'GPS absent' : 'GPS...';
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.scroll}>
+    <ScrollView style={styles.root} contentContainerStyle={[styles.scroll, width >= 700 && styles.wideContent]}>
 
       {/* Header navy (bulles danger) */}
       <View style={styles.header}>
@@ -238,14 +245,42 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
         </TouchableOpacity>
       </View>
 
+      <NeoDialog
+        visible={showDescAlert}
+        icon="create-outline" iconColor={Colors.brandBlue}
+        title="Description manquante"
+        message="Décris brièvement l'anomalie rencontrée avant d'enregistrer."
+        singleButton confirmLabel="OK"
+        onConfirm={() => setShowDescAlert(false)}
+        onCancel={() => setShowDescAlert(false)}
+      />
+      <NeoDialog
+        visible={showSuccessDialog}
+        icon="checkmark-circle-outline" iconColor={Colors.success}
+        title="Anomalie signalée"
+        message="L'anomalie est enregistrée localement. Elle sera remontée à la prochaine synchronisation."
+        singleButton confirmLabel="OK"
+        onConfirm={() => { setShowSuccessDialog(false); navigation.goBack(); }}
+        onCancel={() => {}}
+      />
+      <NeoDialog
+        visible={showErrorDialog}
+        icon="alert-circle-outline" iconColor={Colors.danger}
+        title="Erreur"
+        message={saveErrorMsg}
+        singleButton confirmLabel="OK"
+        onConfirm={() => setShowErrorDialog(false)}
+        onCancel={() => setShowErrorDialog(false)}
+      />
     </ScrollView>
   );
 }
 
 /* Styles */
 const styles = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: NEO },
-  scroll: { paddingBottom: 48 },
+  root:        { flex: 1, backgroundColor: NEO },
+  scroll:      { paddingBottom: 48 },
+  wideContent: { maxWidth: 700, alignSelf: 'center', width: '100%' },
 
   /* Header navy : bulles danger */
   header:  { backgroundColor: NAVY, overflow: 'hidden' },

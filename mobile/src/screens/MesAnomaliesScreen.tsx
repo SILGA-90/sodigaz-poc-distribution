@@ -25,6 +25,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -68,6 +69,7 @@ const STATUT_CFG: Record<string, { label: string; color: string; bg: string; bor
 
 export default function MesAnomaliesScreen({ route }: Props): React.ReactElement {
   const { programmeUuid, programmeNumero } = route.params;
+  const { width } = useWindowDimensions();
   const [anomalies, setAnomalies] = useState<AnomalieLocale[]>([]);
   const [loading, setLoading]     = useState(true);
 
@@ -191,7 +193,7 @@ export default function MesAnomaliesScreen({ route }: Props): React.ReactElement
         data={anomalies}
         keyExtractor={(item) => item.uuid}
         renderItem={renderItem}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, width >= 700 && styles.wideContent]}
         ListEmptyComponent={
           <View style={styles.empty}>
             <View style={styles.emptyOuter}>
@@ -233,7 +235,8 @@ const styles = StyleSheet.create({
   statLbl: { fontSize: 10, fontWeight: '500' },
   headerZero: { color: 'rgba(255,255,255,0.35)', fontSize: 13, fontStyle: 'italic' },
 
-  list: { padding: 14, paddingTop: 16, paddingBottom: 32 },
+  list:        { padding: 14, paddingTop: 16, paddingBottom: 32 },
+  wideContent: { maxWidth: 700, alignSelf: 'center', width: '100%' },
 
   /* Carte anomalie raised + bande accent gravité */
   cardOuter: {

@@ -38,6 +38,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
@@ -48,11 +49,10 @@ interface Props {
   onCancel: () => void;
 }
 
-// Dimensions du canvas de signature
-const CANVAS_WIDTH = 320;
-const CANVAS_HEIGHT = 200;
-
 export default function SignaturePad({ visible, titre, onSave, onCancel }: Props): React.ReactElement {
+  const { width: screenWidth } = useWindowDimensions();
+  const CANVAS_WIDTH  = Math.min(screenWidth - 64, 560);
+  const CANVAS_HEIGHT = Math.round(CANVAS_WIDTH * 0.5);
   // Liste des tracés terminés (chaque tracé = une chaîne "M x y L x y L ...")
   const [paths, setPaths] = useState<string[]>([]);
   // Tracé en cours de dessin
@@ -131,7 +131,7 @@ export default function SignaturePad({ visible, titre, onSave, onCancel }: Props
         <Text style={styles.hint}>Signez dans le cadre ci-dessous</Text>
 
         <View style={styles.canvasContainer}>
-          <View style={styles.canvas} {...panResponder.panHandlers}>
+          <View style={[styles.canvas, { width: CANVAS_WIDTH, height: CANVAS_HEIGHT }]} {...panResponder.panHandlers}>
             <Svg width={CANVAS_WIDTH} height={CANVAS_HEIGHT}>
               {allPathsToRender.map((d, i) => (
                 <Path
@@ -170,8 +170,6 @@ const styles = StyleSheet.create({
   hint: { fontSize: 13, color: '#888', textAlign: 'center', marginVertical: 8 },
   canvasContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   canvas: {
-    width: CANVAS_WIDTH,
-    height: CANVAS_HEIGHT,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,

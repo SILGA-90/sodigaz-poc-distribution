@@ -31,7 +31,6 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -42,6 +41,7 @@ import {
 
 import { prendrePhoto, choisirPhoto, PhotoCapturee } from '../services/photoService';
 import { Colors } from '../theme';
+import NeoDialog from './NeoDialog';
 
 export interface PhotoEnAttente {
   uri: string;
@@ -69,8 +69,10 @@ const DEFAULT_TYPES: TypeOption[] = [
 ];
 
 export default function PhotosSection({ photos, onChange, types = DEFAULT_TYPES, cameraOnly = false }: Props): React.ReactElement {
-  const [busy, setBusy] = useState<boolean>(false);
+  const [busy, setBusy]             = useState<boolean>(false);
   const [typeChoisi, setTypeChoisi] = useState<string>(types[0].value);
+  const [showError, setShowError]   = useState(false);
+  const [errorMsg, setErrorMsg]     = useState('');
 
   async function ajouter(capture: () => Promise<PhotoCapturee | null>): Promise<void> {
     setBusy(true);
@@ -80,7 +82,8 @@ export default function PhotosSection({ photos, onChange, types = DEFAULT_TYPES,
         onChange([...photos, { uri: photo.uri, tailleOctets: photo.tailleOctets, type_photo: typeChoisi }]);
       }
     } catch (e: unknown) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : String(e));
+      setErrorMsg(e instanceof Error ? e.message : String(e));
+      setShowError(true);
     } finally {
       setBusy(false);
     }
@@ -134,6 +137,16 @@ export default function PhotosSection({ photos, onChange, types = DEFAULT_TYPES,
           ))}
         </ScrollView>
       )}
+
+      <NeoDialog
+        visible={showError}
+        icon="warning-outline" iconColor={Colors.danger}
+        title="Erreur photo"
+        message={errorMsg}
+        singleButton confirmLabel="OK"
+        onConfirm={() => setShowError(false)}
+        onCancel={() => setShowError(false)}
+      />
     </View>
   );
 }

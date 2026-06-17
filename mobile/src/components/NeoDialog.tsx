@@ -56,6 +56,8 @@ interface Props {
   danger?:       boolean;
   /** Affiche un spinner à la place du texte du bouton confirm */
   loading?:      boolean;
+  /** N'affiche que le bouton de confirmation (pleine largeur) — pour les alertes info/erreur sans choix */
+  singleButton?: boolean;
   onConfirm:     () => void;
   onCancel:      () => void;
 }
@@ -63,7 +65,7 @@ interface Props {
 export default function NeoDialog({
   visible, icon, iconColor, title, message,
   confirmLabel = 'Confirmer', cancelLabel = 'Annuler',
-  danger = false, loading = false,
+  danger = false, loading = false, singleButton = false,
   onConfirm, onCancel,
 }: Props): React.ReactElement {
   const confirmBg     = danger ? Colors.danger       : Colors.brandBlue;
@@ -97,15 +99,17 @@ export default function NeoDialog({
                 {/* Boutons */}
                 <View style={styles.btnRow}>
 
-                  {/* Annuler : raised NEO */}
-                  <View style={styles.cancelOuter}>
-                    <TouchableOpacity style={styles.cancelInner} onPress={onCancel} activeOpacity={0.8}>
-                      <Text style={styles.cancelText}>{cancelLabel}</Text>
-                    </TouchableOpacity>
-                  </View>
+                  {/* Annuler : raised NEO (masqué en mode singleButton) */}
+                  {!singleButton && (
+                    <View style={styles.cancelOuter}>
+                      <TouchableOpacity style={styles.cancelInner} onPress={onCancel} activeOpacity={0.8}>
+                        <Text style={styles.cancelText}>{cancelLabel}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
 
                   {/* Confirmer : raised coloré */}
-                  <View style={[styles.confirmOuter, { backgroundColor: confirmBg, shadowColor: confirmShdD }]}>
+                  <View style={[styles.confirmOuter, singleButton && styles.confirmFull, { backgroundColor: confirmBg, shadowColor: confirmShdD }]}>
                     <TouchableOpacity
                       style={[styles.confirmInner, { backgroundColor: confirmBg, shadowColor: confirmShdL, borderTopColor: confirmBorderT, borderLeftColor: confirmBorderT, borderBottomColor: confirmBorderB, borderRightColor: confirmBorderB }]}
                       onPress={onConfirm}
@@ -199,6 +203,7 @@ const styles = StyleSheet.create({
     flex: 1, borderRadius: 12,
     shadowOffset: { width: 5, height: 5 }, shadowOpacity: 0.65, shadowRadius: 8, elevation: 8,
   },
+  confirmFull: { flex: 1 },
   confirmInner: {
     borderRadius: 12, paddingVertical: 14, alignItems: 'center',
     shadowOffset: { width: -3, height: -3 }, shadowOpacity: 0.45, shadowRadius: 6,

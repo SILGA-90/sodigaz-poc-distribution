@@ -31,7 +31,7 @@
  * des colonnes techniques dans les tables métier.
  */
 
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 export const CREATE_TABLES_SQL = `
 -- Table de métadonnées de synchronisation (curseur pull, file de clôtures)
@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS client (
 CREATE TABLE IF NOT EXISTS plv (
   id INTEGER PRIMARY KEY,
   client_id INTEGER NOT NULL,
+  code_plv TEXT,
   libelle TEXT NOT NULL,
   adresse TEXT,
   latitude REAL,

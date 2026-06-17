@@ -140,6 +140,21 @@ async function _openAndInit(): Promise<SQLite.SQLiteDatabase> {
     `);
   }
 
+  // Migration v5 -> v6 : ajout de la colonne code_plv dans la table plv.
+  // WHY : La colonne code_plv existe côté serveur (Django) et est envoyée par
+  //       le pull, mais elle était absente du schéma mobile. ALTER TABLE ajoute
+  //       la colonne sur les bases existantes (valeur NULL par défaut).
+  //       On remet last_pulled_at à 0 pour forcer un pull complet au prochain
+  //       sync et peupler code_plv sur tous les PLV déjà en base.
+  if (currentVersion < 6) {
+    await db.execAsync(`ALTER TABLE plv ADD COLUMN code_plv TEXT;`);
+    await db.runAsync(
+      'INSERT OR REPLACE INTO sync_meta (cle, valeur) VALUES (?, ?);',
+      ['last_pulled_at', '0'],
+    );
+    await db.execAsync('PRAGMA user_version = 6;');
+  }
+
   return db;
 }
 

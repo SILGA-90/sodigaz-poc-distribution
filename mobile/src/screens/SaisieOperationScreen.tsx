@@ -23,13 +23,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { NavigationAction } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -80,34 +80,13 @@ function computePaymentFields(
   return { montantTotal: montantFinal, montantEncaisse: estEncaissee ? montantFinal : 0, encaissee: estEncaissee, modePaiementFinal: modePaiement };
 }
 
-async function validateQuantiteEcart(lignes: LigneState[]): Promise<boolean> {
-  const horsNorme = lignes.filter((l) => {
-    if (l.produit.quantite_prevue == null) return false;
-    const saisi = parseInt(l.quantite, 10) || 0;
-    return saisi > l.produit.quantite_prevue * 2 && saisi - l.produit.quantite_prevue > 5;
-  });
-  if (horsNorme.length === 0) return true;
-  const detail = horsNorme
-    .map((l) => `${l.produit.libelle} : prévu ${l.produit.quantite_prevue}, saisi ${l.quantite}`)
-    .join('\n');
-  return new Promise<boolean>((resolve) => {
-    Alert.alert(
-      'Écart important détecté',
-      `Les quantités suivantes s'écartent fortement du prévu :\n\n${detail}\n\nConfirmes-tu ces valeurs ?`,
-      [
-        { text: 'Corriger',          style: 'cancel', onPress: () => resolve(false) },
-        { text: 'Confirmer quand même',               onPress: () => resolve(true) },
-      ],
-    );
-  });
-}
-
 // ---------------------------------------------------------------------------
 // Composant principal
 // ---------------------------------------------------------------------------
 
 export default function SaisieOperationScreen({ route, navigation }: Props): React.ReactElement {
   const { etapeId } = route.params;
+  const { width } = useWindowDimensions();
 
   const [etapeInfo, setEtapeInfo]           = useState<EtapeInfo | null>(null);
   const [lignes, setLignes]                 = useState<LigneState[]>([]);
@@ -132,11 +111,24 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
   const [pendingExitAction, setPendingExitAction]     = useState<NavigationAction | null>(null);
   const [showEchecDialog, setShowEchecDialog]         = useState(false);
   const [showSigError, setShowSigError]               = useState(false);
+  const [showEtapeError, setShowEtapeError]           = useState(false);
+  const [showNoQtyAlert, setShowNoQtyAlert]           = useState(false);
+  const [showAcompteAlert, setShowAcompteAlert]       = useState(false);
+  const [showSaveOk, setShowSaveOk]                   = useState(false);
+  const [saveOkMsg, setSaveOkMsg]                     = useState('');
+  const [showSaveError, setShowSaveError]             = useState(false);
+  const [saveErrorMsg, setSaveErrorMsg]               = useState('');
+  const [showGpsDialog, setShowGpsDialog]             = useState(false);
+  const [gpsDialogMsg, setGpsDialogMsg]               = useState('');
+  const gpsResolveRef                                 = useRef<((v: boolean) => void) | null>(null);
+  const [showEcartDialog, setShowEcartDialog]         = useState(false);
+  const [ecartDialogMsg, setEcartDialogMsg]           = useState('');
+  const ecartResolveRef                               = useRef<((v: boolean) => void) | null>(null);
 
   useEffect(() => {
     (async () => {
       const info = await getEtapeInfo(etapeId);
-      if (!info) { Alert.alert('Erreur', 'Étape introuvable.'); navigation.goBack(); return; }
+      if (!info) { setShowEtapeError(true); return; }
       const produits = await getArticlesSaisissables(etapeId, info.type_programme);
       setEtapeInfo(info);
       setLignes(produits.map((p) => ({ produit: p, quantite: p.quantite_prevue != null ? String(p.quantite_prevue) : '0' })));
@@ -188,15 +180,29 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
       }))
       .filter((l) => l.quantite_realisee > 0);
 
-    if (lignesSaisies.length === 0) {
-      Alert.alert('Aucune quantité', 'Saisis au moins une quantité supérieure à 0.');
-      return;
-    }
+    if (lignesSaisies.length === 0) { setShowNoQtyAlert(true); return; }
     const paiement = computePaymentFields(isCollecte, avecAcompte, montantAcompte, montantFinal, estEncaissee, modePaiement);
-    if (paiement === null) { Alert.alert('Acompte invalide', "Saisis un montant d'acompte supérieur à 0."); return; }
+    if (paiement === null) { setShowAcompteAlert(true); return; }
     if (!signatureLivreur || !signatureClient) { setShowSigError(true); return; }
     setShowSigError(false);
-    if (!await validateQuantiteEcart(lignes)) return;
+
+    /* Vérification des écarts de quantité */
+    const horsNorme = lignes.filter((l) => {
+      if (l.produit.quantite_prevue == null) return false;
+      const saisi = parseInt(l.quantite, 10) || 0;
+      return saisi > l.produit.quantite_prevue * 2 && saisi - l.produit.quantite_prevue > 5;
+    });
+    if (horsNorme.length > 0) {
+      const detail = horsNorme
+        .map((l) => `${l.produit.libelle} : prévu ${l.produit.quantite_prevue}, saisi ${l.quantite}`)
+        .join('\n');
+      const confirmedEcart = await new Promise<boolean>((resolve) => {
+        ecartResolveRef.current = resolve;
+        setEcartDialogMsg(`Les quantités suivantes s'écartent fortement du prévu :\n\n${detail}\n\nConfirmes-tu ces valeurs ?`);
+        setShowEcartDialog(true);
+      });
+      if (!confirmedEcart) return;
+    }
 
     setSaving(true);
     try {
@@ -209,10 +215,9 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
           ? "Aucune position GPS fiable n'a pu être obtenue. L'opération sera enregistrée SANS position. Continuer ?"
           : `Position GPS peu précise (${pos.precision ? Math.round(pos.precision) + ' m' : 'inconnue'}). Enregistrer quand même ?`;
         const confirme = await new Promise<boolean>((resolve) => {
-          Alert.alert('Position GPS', msg, [
-            { text: 'Annuler',       style: 'cancel', onPress: () => resolve(false) },
-            { text: 'Enregistrer',                    onPress: () => resolve(true) },
-          ]);
+          gpsResolveRef.current = resolve;
+          setGpsDialogMsg(msg);
+          setShowGpsDialog(true);
         });
         if (!confirme) { setSaving(false); return; }
       }
@@ -232,13 +237,11 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         await ajouterPhotoOperation(opUuid, ph.uri, ph.type_photo, ph.tailleOctets, pos.latitude, pos.longitude);
       }
       isDirty.current = false;
-      Alert.alert(
-        'Opération enregistrée',
-        `Opération${photos.length > 0 ? ` et ${photos.length} photo(s)` : ''} enregistrée(s) localement. Remontée à la prochaine synchronisation.`,
-        [{ text: 'OK', onPress: () => navigation.goBack() }],
-      );
+      setSaveOkMsg(`Opération${photos.length > 0 ? ` et ${photos.length} photo(s)` : ''} enregistrée(s) localement. Remontée à la prochaine synchronisation.`);
+      setShowSaveOk(true);
     } catch (e: unknown) {
-      Alert.alert('Erreur', e instanceof Error ? e.message : String(e));
+      setSaveErrorMsg(e instanceof Error ? e.message : String(e));
+      setShowSaveError(true);
     } finally {
       setSaving(false);
     }
@@ -249,7 +252,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
   const isCollecte = etapeInfo?.type_programme === 'COLLECTE';
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.scroll}>
+    <ScrollView style={styles.root} contentContainerStyle={[styles.scroll, width >= 700 && styles.wideContent]}>
 
       {etapeInfo && <SaisieHeader etapeInfo={etapeInfo} gpsStatus={gpsStatus} />}
 
@@ -344,9 +347,74 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
             isDirty.current = false;
             navigation.goBack();
           } catch (e: unknown) {
-            Alert.alert('Erreur', e instanceof Error ? e.message : String(e));
+            setSaveErrorMsg(e instanceof Error ? e.message : String(e));
+            setShowSaveError(true);
           }
         }}
+      />
+
+      <NeoDialog
+        visible={showEtapeError}
+        icon="alert-circle-outline" iconColor={Colors.danger}
+        title="Erreur"
+        message="Étape introuvable. Revenez en arrière et réessayez."
+        singleButton confirmLabel="Retour"
+        onConfirm={() => { setShowEtapeError(false); navigation.goBack(); }}
+        onCancel={() => {}}
+      />
+      <NeoDialog
+        visible={showNoQtyAlert}
+        icon="cube-outline" iconColor={Colors.brandOrange}
+        title="Aucune quantité"
+        message="Saisis au moins une quantité supérieure à 0 pour enregistrer l'opération."
+        singleButton confirmLabel="OK"
+        onConfirm={() => setShowNoQtyAlert(false)}
+        onCancel={() => setShowNoQtyAlert(false)}
+      />
+      <NeoDialog
+        visible={showAcompteAlert}
+        icon="cash-outline" iconColor={Colors.warning}
+        title="Acompte invalide"
+        message="Saisis un montant d'acompte supérieur à 0."
+        singleButton confirmLabel="OK"
+        onConfirm={() => setShowAcompteAlert(false)}
+        onCancel={() => setShowAcompteAlert(false)}
+      />
+      <NeoDialog
+        visible={showEcartDialog}
+        icon="warning-outline" iconColor={Colors.warning}
+        title="Écart important détecté"
+        message={ecartDialogMsg}
+        confirmLabel="Confirmer quand même" cancelLabel="Corriger"
+        onConfirm={() => { setShowEcartDialog(false); ecartResolveRef.current?.(true); }}
+        onCancel={() => { setShowEcartDialog(false); ecartResolveRef.current?.(false); }}
+      />
+      <NeoDialog
+        visible={showGpsDialog}
+        icon="location-outline" iconColor={Colors.warning}
+        title="Position GPS"
+        message={gpsDialogMsg}
+        confirmLabel="Enregistrer" cancelLabel="Annuler"
+        onConfirm={() => { setShowGpsDialog(false); gpsResolveRef.current?.(true); }}
+        onCancel={() => { setShowGpsDialog(false); gpsResolveRef.current?.(false); }}
+      />
+      <NeoDialog
+        visible={showSaveOk}
+        icon="checkmark-circle-outline" iconColor={Colors.success}
+        title="Opération enregistrée"
+        message={saveOkMsg}
+        singleButton confirmLabel="OK"
+        onConfirm={() => { setShowSaveOk(false); navigation.goBack(); }}
+        onCancel={() => {}}
+      />
+      <NeoDialog
+        visible={showSaveError}
+        icon="alert-circle-outline" iconColor={Colors.danger}
+        title="Erreur"
+        message={saveErrorMsg}
+        singleButton confirmLabel="OK"
+        onConfirm={() => setShowSaveError(false)}
+        onCancel={() => setShowSaveError(false)}
       />
 
       <NeoDialog
@@ -368,8 +436,9 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
 }
 
 const styles = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: NEO },
-  scroll: { paddingBottom: 48 },
+  root:        { flex: 1, backgroundColor: NEO },
+  scroll:      { paddingBottom: 48 },
+  wideContent: { maxWidth: 700, alignSelf: 'center', width: '100%' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: NEO },
 
   commentaire: {

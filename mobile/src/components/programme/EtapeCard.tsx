@@ -4,11 +4,12 @@
  * vers le détail ou la saisie. L'itinéraire Google Maps est ouvert via
  * Linking (deep-link universel, voir CLAUDE.md §5 : carte embarquée non implémentée).
  */
-import React from 'react';
-import { Alert, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { EtapeAvecPlv } from '../../db/repositories/programmeRepository';
 import { Colors } from '../../theme';
 import { NEO, NEO_SHD, NEO_IN, TEXT, TEXT3 } from './progStyles';
+import NeoDialog from '../NeoDialog';
 
 interface Props {
   etape:              EtapeAvecPlv;
@@ -17,25 +18,28 @@ interface Props {
   onNavigateSaisie:   (etapeId: number) => void;
 }
 
-function ouvrirItineraire(lat: number, lon: number): void {
-  const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
-  Linking.openURL(url).catch(() => Alert.alert('Erreur', "Impossible d'ouvrir la navigation."));
-}
-
 export default function EtapeCard({ etape, programmeCloture, onNavigateDetail, onNavigateSaisie }: Props): React.ReactElement {
   const visite   = etape.statut_visite === 'VISITEE';
   const echec    = etape.statut_visite === 'ECHEC';
   const disabled = echec || (programmeCloture && !visite);
+
+  const [showNavError, setShowNavError]       = useState(false);
+  const [showDetailAlert, setShowDetailAlert] = useState(false);
 
   const accentColor = visite ? Colors.success : echec ? Colors.danger : Colors.brandOrange;
   const badgeBg     = visite ? Colors.successBg : echec ? Colors.dangerBg : Colors.warningBg;
   const badgeText   = visite ? Colors.success   : echec ? Colors.danger   : Colors.warning;
   const badgeLabel  = visite ? 'Visitée' : echec ? 'Échec' : 'À visiter';
 
+  function ouvrirItineraire(lat: number, lon: number): void {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
+    Linking.openURL(url).catch(() => setShowNavError(true));
+  }
+
   function handlePress(): void {
     if (visite) {
       if (etape.op_sync_status === null) {
-        Alert.alert('Détail non disponible', "L'opération a été enregistrée sur un autre appareil et n'est pas accessible hors ligne.");
+        setShowDetailAlert(true);
         return;
       }
       onNavigateDetail(etape.id, etape.uuid);
@@ -55,7 +59,11 @@ export default function EtapeCard({ etape, programmeCloture, onNavigateDetail, o
                 <Text style={styles.ordreText}>{etape.ordre_prevu}</Text>
               </View>
               <View style={styles.info}>
-                <Text style={styles.plvLibelle} numberOfLines={1}>{etape.plv_libelle}</Text>
+                {etape.plv_code ? (
+                  <View style={styles.plvCodeChip}>
+                    <Text style={styles.plvCodeText}>{etape.plv_code}</Text>
+                  </View>
+                ) : null}
                 <Text style={styles.clientName} numberOfLines={1}>{etape.client_raison_sociale}</Text>
               </View>
               <View style={styles.right}>
@@ -80,6 +88,25 @@ export default function EtapeCard({ etape, programmeCloture, onNavigateDetail, o
           </View>
         </TouchableOpacity>
       </View>
+
+      <NeoDialog
+        visible={showNavError}
+        icon="navigate-outline" iconColor={Colors.danger}
+        title="Navigation impossible"
+        message="Impossible d'ouvrir l'application de navigation. Vérifie que Google Maps est installé."
+        singleButton confirmLabel="OK"
+        onConfirm={() => setShowNavError(false)}
+        onCancel={() => setShowNavError(false)}
+      />
+      <NeoDialog
+        visible={showDetailAlert}
+        icon="cloud-offline-outline" iconColor={Colors.brandBlue}
+        title="Détail non disponible"
+        message="Cette opération a été enregistrée sur un autre appareil et n'est pas accessible hors ligne."
+        singleButton confirmLabel="OK"
+        onConfirm={() => setShowDetailAlert(false)}
+        onCancel={() => setShowDetailAlert(false)}
+      />
     </View>
   );
 }
@@ -107,9 +134,10 @@ const styles = StyleSheet.create({
   ordreCircle: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 12, flexShrink: 0 },
   ordreText:   { color: '#fff', fontWeight: '800', fontSize: 15 },
 
-  info:       { flex: 1, marginRight: 8 },
-  plvLibelle: { fontSize: 14, fontWeight: '700', color: TEXT },
-  clientName: { fontSize: 12, color: TEXT3, marginTop: 2 },
+  info:        { flex: 1, marginRight: 8 },
+  plvCodeChip: { alignSelf: 'flex-start', backgroundColor: '#e3f3fb', borderRadius: 5, paddingHorizontal: 5, paddingVertical: 1, borderWidth: 1, borderColor: 'rgba(7,155,217,0.3)', marginBottom: 3 },
+  plvCodeText: { fontSize: 10, fontWeight: '800', color: Colors.brandBlue },
+  clientName:  { fontSize: 14, fontWeight: '700', color: TEXT },
 
   right:        { alignItems: 'flex-end', gap: 6 },
   statutBadge:  { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },

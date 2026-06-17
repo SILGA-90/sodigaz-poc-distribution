@@ -33,6 +33,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { getTousLesProgrammes, ProgrammeAvecProgression } from '../db/repositories/programmeRepository';
 import { RootStackParamList } from '../types/navigation';
 import { Colors } from '../theme';
+import { useLayout } from '../hooks/useLayout';
 
 /* Palette néo claire */
 const NEO     = '#e8edf2';
@@ -58,6 +59,7 @@ function statutInfo(statut: string): { color: string; bg: string; border: string
 }
 
 export default function HistoriqueScreen({ navigation }: Props): React.ReactElement {
+  const { numColumns } = useLayout();
   const [programmes, setProgrammes] = useState<ProgrammeAvecProgression[]>([]);
 
   useEffect(() => {
@@ -126,9 +128,12 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
 
       {/* Liste */}
       <FlatList
+        key={numColumns}
         data={programmes}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
+        numColumns={numColumns}
+        columnWrapperStyle={numColumns > 1 ? { gap: 12 } : undefined}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <View style={styles.empty}>

@@ -37,6 +37,7 @@ import { getItem, STORAGE_KEYS } from '../../storage/secureStorage';
 import { Programme, Etape } from '../../types/models';
 
 export interface EtapeAvecPlv extends Etape {
+  plv_code: string | null;
   plv_libelle: string;
   client_raison_sociale: string;
   plv_latitude: number;
@@ -55,6 +56,7 @@ export interface RecapProgramme {
   etapes_visitees: number;
   etapes_echec: number;
   nb_operations: number;
+  montant_total: number;
   montant_encaisse: number;
   nb_anomalies: number;
 }
@@ -115,12 +117,17 @@ export async function getTousLesProgrammes(): Promise<ProgrammeAvecProgression[]
 }
 
 export interface OperationRecap {
+  operation_uuid: string;
+  plv_code: string | null;
   plv_libelle: string;
+  plv_adresse: string | null;
+  client_raison_sociale: string;
   type_operation: string;
+  date_heure: string;
+  mode_paiement: string | null;
   montant_total: number;
   montant_encaisse: number;
   est_encaissee: number; // 0 ou 1 en SQLite
-  nb_lignes: number;
 }
 
 export async function getOperationsRecapProgramme(
@@ -129,18 +136,54 @@ export async function getOperationsRecapProgramme(
   const db = await getDatabase();
   return db.getAllAsync<OperationRecap>(
     `SELECT
-        p.libelle        AS plv_libelle,
+        op.uuid                AS operation_uuid,
+        p.code_plv             AS plv_code,
+        p.libelle              AS plv_libelle,
+        p.adresse              AS plv_adresse,
+        c.raison_sociale       AS client_raison_sociale,
         op.type_operation,
+        op.date_heure,
+        op.mode_paiement,
         op.montant_total,
         op.montant_encaisse,
-        op.est_encaissee,
-        (SELECT COUNT(*) FROM ligne_operation lo
-         WHERE lo.operation_uuid = op.uuid AND lo.is_deleted = 0) AS nb_lignes
+        op.est_encaissee
      FROM operation op
-     JOIN etape e ON e.uuid = op.etape_uuid
-     JOIN plv p   ON p.id   = e.plv_id
+     JOIN etape e  ON e.uuid  = op.etape_uuid
+     JOIN plv p    ON p.id    = e.plv_id
+     JOIN client c ON c.id    = p.client_id
      WHERE e.programme_id = ? AND op.is_deleted = 0
      ORDER BY op.date_heure ASC;`,
+    [programmeId],
+  );
+}
+
+export interface LigneOperationRecap {
+  operation_uuid: string;
+  libelle: string;
+  type_emballage: string;
+  quantite_realisee: number;
+  montant_ligne: number;
+}
+
+export async function getLignesOperationsRecap(
+  programmeId: number,
+): Promise<LigneOperationRecap[]> {
+  const db = await getDatabase();
+  return db.getAllAsync<LigneOperationRecap>(
+    `SELECT
+        lo.operation_uuid,
+        ar.libelle,
+        ar.type_emballage,
+        lo.quantite_realisee,
+        lo.montant_ligne
+     FROM ligne_operation lo
+     JOIN operation op ON op.uuid    = lo.operation_uuid
+     JOIN etape e      ON e.uuid     = op.etape_uuid
+     JOIN article ar   ON ar.code_x3 = lo.produit_code_x3
+     WHERE e.programme_id = ?
+       AND lo.is_deleted = 0
+       AND lo.quantite_realisee > 0
+     ORDER BY op.date_heure ASC, ar.libelle ASC;`,
     [programmeId],
   );
 }
@@ -159,7 +202,8 @@ export async function getEtapesDuProgramme(programmeId: number): Promise<EtapeAv
   return db.getAllAsync<EtapeAvecPlv>(
     `SELECT
         e.*,
-        p.libelle AS plv_libelle,
+        p.code_plv AS plv_code,
+        p.libelle  AS plv_libelle,
         p.latitude AS plv_latitude,
         p.longitude AS plv_longitude,
         c.raison_sociale AS client_raison_sociale,
@@ -191,10 +235,11 @@ export async function getRecapProgramme(
     [programmeId],
   );
 
-  const ops = await db.getFirstAsync<{ nb: number; montant: number }>(
+  const ops = await db.getFirstAsync<{ nb: number; montant: number; montant_total: number }>(
     `SELECT
-        COUNT(DISTINCT o.uuid) AS nb,
-        COALESCE(SUM(o.montant_encaisse), 0) AS montant
+        COUNT(DISTINCT o.uuid)           AS nb,
+        COALESCE(SUM(o.montant_encaisse), 0) AS montant,
+        COALESCE(SUM(o.montant_total),    0) AS montant_total
      FROM operation o
      JOIN etape e ON e.uuid = o.etape_uuid
      WHERE e.programme_id = ? AND o.is_deleted = 0;`,
@@ -211,6 +256,7 @@ export async function getRecapProgramme(
     etapes_visitees: etapes?.visitees ?? 0,
     etapes_echec: etapes?.echec ?? 0,
     nb_operations: ops?.nb ?? 0,
+    montant_total: ops?.montant_total ?? 0,
     montant_encaisse: ops?.montant ?? 0,
     nb_anomalies: anomalies?.n ?? 0,
   };
