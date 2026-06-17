@@ -346,23 +346,87 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
     50%       { opacity: .4; }
 }
 
-/* Inputs et selects NEO inset dans les barres de filtre */
-.filter-card .form-control,
-.filter-card .form-select {
+/* Inputs texte dans les barres de filtre — style neumorphique inset */
+.filter-card .form-control {
     background-color: var(--neo-in-bg, #d4dde6);
     border: none;
     box-shadow: inset 2px 2px 5px rgba(74,104,128,.18),
                 inset -2px -2px 4px rgba(255,255,255,.8);
     border-radius: 8px;
-    color: #0a1628; font-size: .82rem;
+    color: #0a1628; font-size: .88rem;
+    padding: .35rem .7rem;
+    min-width: 130px;
 }
-.filter-card .form-control:focus,
-.filter-card .form-select:focus {
+.filter-card .form-control:focus {
     background-color: var(--neo-in-bg, #d4dde6);
     box-shadow: inset 2px 2px 5px rgba(74,104,128,.22),
                 inset -2px -2px 4px rgba(255,255,255,.8),
                 0 0 0 3px rgba(7,155,217,.15);
     outline: none;
+}
+
+/* ══════════════════════════════════════════════════════════
+   DROPDOWN FILTRE CUSTOM  (.filter-dropdown)
+   Remplace les <select> natifs. Rendu identique sur tous les
+   navigateurs. Même thème neumorphique inset que les dates.
+   ══════════════════════════════════════════════════════════ */
+.filter-dropdown-btn {
+    display: inline-flex; align-items: center;
+    gap: .55rem; justify-content: space-between;
+    background-color: var(--neo-in-bg, #d4dde6);
+    border: none;
+    box-shadow: inset 2px 2px 5px rgba(74,104,128,.18),
+                inset -2px -2px 4px rgba(255,255,255,.8);
+    border-radius: 8px;
+    color: #0a1628; font-size: .88rem;
+    padding: .35rem .75rem;
+    min-width: 155px;
+    text-align: left; white-space: nowrap;
+    cursor: pointer; transition: box-shadow .15s;
+}
+/* Supprimer la flèche Bootstrap par défaut */
+.filter-dropdown-btn.dropdown-toggle::after { display: none; }
+.filter-dropdown-caret {
+    font-size: .72rem; color: #6080a0; flex-shrink: 0;
+    transition: transform .2s;
+}
+.filter-dropdown-btn.show .filter-dropdown-caret { transform: rotate(180deg); }
+.filter-dropdown-btn:focus,
+.filter-dropdown-btn.show {
+    box-shadow: inset 2px 2px 5px rgba(74,104,128,.22),
+                inset -2px -2px 4px rgba(255,255,255,.8),
+                0 0 0 3px rgba(7,155,217,.15);
+    outline: none;
+}
+/* Menu déroulant — même surface neumorphique raised que les cartes */
+.filter-dropdown-menu {
+    background: var(--neo-bg, #e8edf2);
+    border-top:    1.5px solid var(--neo-bevel-lt, rgba(255,255,255,.95));
+    border-left:   1.5px solid var(--neo-bevel-lt, rgba(255,255,255,.95));
+    border-bottom: 1.5px solid var(--neo-bevel-rb, rgba(74,104,128,.38));
+    border-right:  1.5px solid var(--neo-bevel-rb, rgba(74,104,128,.38));
+    border-radius: 10px;
+    box-shadow: var(--neo-raised, 6px 6px 14px rgba(74,104,128,.22), -5px -5px 12px rgba(255,255,255,.88));
+    padding: .3rem 0;
+    min-width: 100%;
+}
+.filter-dropdown-menu .dropdown-item {
+    font-size: .86rem; color: #1a2332;
+    padding: .42rem .9rem;
+    display: flex; align-items: center; gap: .5rem;
+    border-radius: 0; transition: background .1s;
+}
+.filter-dropdown-menu .dropdown-item:hover {
+    background: rgba(7,155,217,.09); color: #079BD9;
+}
+.filter-dropdown-menu .dropdown-item.active,
+.filter-dropdown-menu .dropdown-item:active {
+    background: rgba(7,155,217,.14); color: #0670A0;
+    font-weight: 600;
+}
+.filter-dropdown-check {
+    font-size: .72rem; color: #079BD9;
+    width: .85rem; flex-shrink: 0;
 }
 
 /* ══════════════════════════════════════════════════════════

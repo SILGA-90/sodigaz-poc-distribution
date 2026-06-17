@@ -208,5 +208,33 @@ est fourni par le mobile au moment du push.
 
 ## 10. Bugs à traiter
 
-Aucun bug connu en suspens au 7 juin 2026.
+Aucun bug connu en suspens au 17 juin 2026.
 (Consigner ici au fil de l'eau les nouveaux bugs inter-sessions.)
+
+## 11. Perspectives et limites connues (pour le mémoire)
+
+- **Gestion des acomptes non couverte** : le modèle suppose un paiement unique au
+  moment de la livraison (`montant_total` / `montant_encaisse` / `est_encaissee`).
+  Si un client a déjà versé un acompte et règle le reliquat à la livraison,
+  le rapport journalier afficherait un écart apparent (impayé partiel) alors que
+  le client est soldé. Résoudre ce cas nécessiterait :
+  1. Un champ `montant_acompte` sur l'opération (ou une table dédiée aux
+     échéances de paiement).
+  2. Une synchronisation descendante de l'historique de paiement depuis Sage X3
+     vers le mobile (aujourd'hui seuls les programmes descendent, pas les
+     encours clients).
+  Ce périmètre dépasse le POC ; à mentionner comme perspective d'évolution.
+
+- **Flux remontant vers X3 non implémenté** : les opérations remontent vers
+  Django et sont visibles en supervision, mais aucun document X3 (BCR, BL) n'est
+  créé en retour. À simuler dans mock_x3 ou à traiter comme perspective.
+
+- **SQL brut répété dans les repositories mobiles** : les repositories
+  (`pull.ts`, `programmeRepository.ts`, `photoRepository.ts`…) contiennent des
+  `INSERT OR REPLACE INTO` explicites par table, sans couche d'abstraction
+  commune. Acceptable dans un POC (schéma figé, lisibilité des colonnes
+  garantie), mais fragile si le schéma évolue. En version production, à
+  remplacer par une couche ORM-like maison ou une bibliothèque dédiée
+  (WatermelonDB avec build natif, ou abstraction `upsert(table, data)` légère).
+  Ne pas abstraire maintenant : le schéma est stabilisé et le gain serait
+  cosmétique avant la fin du mémoire.

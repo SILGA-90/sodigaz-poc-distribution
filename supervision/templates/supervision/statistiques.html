@@ -124,26 +124,37 @@
             <thead>
                 <tr>
                     <th rowspan="2" class="perf-th-livreur">Livreur</th>
-                    <th colspan="4" class="perf-th-group perf-th-coll"><i class="bi bi-arrow-down-circle-fill me-1"></i>Collecte</th>
-                    <th colspan="4" class="perf-th-group perf-th-rest"><i class="bi bi-arrow-up-circle-fill me-1"></i>Restitution</th>
+                    <th colspan="3" class="perf-th-group perf-th-coverage">
+                        <i class="bi bi-speedometer2 me-1"></i>Couverture
+                    </th>
+                    <th colspan="3" class="perf-th-group perf-th-coll">
+                        <i class="bi bi-arrow-down-circle-fill me-1"></i>Collecte (unités)
+                    </th>
+                    <th colspan="3" class="perf-th-group perf-th-rest">
+                        <i class="bi bi-arrow-up-circle-fill me-1"></i>Restitution (unités)
+                    </th>
                 </tr>
                 <tr>
-                    <th>6 kg</th><th>12,5 kg</th><th>38 kg</th><th class="perf-th-total">Total</th>
-                    <th>6 kg</th><th>12,5 kg</th><th>38 kg</th><th class="perf-th-total">Total</th>
+                    <th>PLVs</th><th>Taux</th><th>Encaissé (FCFA)</th>
+                    <th>6 kg</th><th>12,5 kg</th><th>38 kg</th>
+                    <th>6 kg</th><th>12,5 kg</th><th>38 kg</th>
                 </tr>
             </thead>
             <tbody>
             {% for r in perf_detail_rows %}
             <tr>
                 <td class="perf-td-livreur">{{ r.code }}</td>
-                <td>{{ r.coll_B6 }}</td>
-                <td>{{ r.coll_B12_5 }}</td>
-                <td>{{ r.coll_B38 }}</td>
-                <td class="perf-td-total">{{ r.total_coll }}</td>
-                <td>{{ r.rest_B6 }}</td>
-                <td>{{ r.rest_B12_5 }}</td>
-                <td>{{ r.rest_B38 }}</td>
-                <td class="perf-td-total">{{ r.total_rest }}</td>
+                <td class="text-center">{{ r.visitees }}&thinsp;/&thinsp;{{ r.total }}</td>
+                <td class="text-center fw-semibold {% if r.taux >= 80 %}text-success{% elif r.taux >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                    {{ r.taux }}&thinsp;%
+                </td>
+                <td class="text-end">{{ r.montant|floatformat:0 }}</td>
+                <td class="text-center">{% if r.coll_B6 %}{{ r.coll_B6 }}{% else %}&mdash;{% endif %}</td>
+                <td class="text-center">{% if r.coll_B12_5 %}{{ r.coll_B12_5 }}{% else %}&mdash;{% endif %}</td>
+                <td class="text-center">{% if r.coll_B38 %}{{ r.coll_B38 }}{% else %}&mdash;{% endif %}</td>
+                <td class="text-center">{% if r.rest_B6 %}{{ r.rest_B6 }}{% else %}&mdash;{% endif %}</td>
+                <td class="text-center">{% if r.rest_B12_5 %}{{ r.rest_B12_5 }}{% else %}&mdash;{% endif %}</td>
+                <td class="text-center">{% if r.rest_B38 %}{{ r.rest_B38 }}{% else %}&mdash;{% endif %}</td>
             </tr>
             {% endfor %}
             </tbody>

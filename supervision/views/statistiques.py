@@ -273,18 +273,19 @@ def statistiques(request):
         perf_detail_map[code][tops][emb] = qte
 
     perf_detail_rows = []
-    for code, _ in perf_sorted:
-        if code not in perf_detail_map:
-            continue  # livreur sans ligne_operation sur la période
-        detail = perf_detail_map[code]
-        r = {"code": code}
+    for code, perf in perf_sorted:
+        detail = perf_detail_map.get(code, {})
+        r = {
+            "code":     code,
+            "visitees": perf["visitees"],
+            "total":    perf["total"],
+            "taux":     perf["taux"],
+            "montant":  int(perf["montant"]),
+        }
         for emb in DETAIL_EMBS:
             r[f"coll_{emb}"] = detail.get("COLLECTE",    {}).get(emb, 0)
             r[f"rest_{emb}"] = detail.get("RESTITUTION", {}).get(emb, 0)
-        r["total_coll"] = sum(r[f"coll_{e}"] for e in DETAIL_EMBS)
-        r["total_rest"] = sum(r[f"rest_{e}"] for e in DETAIL_EMBS)
-        if r["total_coll"] + r["total_rest"] > 0:
-            perf_detail_rows.append(r)
+        perf_detail_rows.append(r)
 
     # KPI résumé
     total_montant   = sum(montants)

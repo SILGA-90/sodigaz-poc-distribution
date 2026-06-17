@@ -137,16 +137,11 @@
     text-align: center; font-size: .7rem; font-weight: 700;
     letter-spacing: .04em; text-transform: uppercase; padding-bottom: .35rem;
 }
-.perf-th-coll { color: #079BD9; border-bottom: 2px solid rgba(7,155,217,.4); }
-.perf-th-rest { color: #EE7202; border-bottom: 2px solid rgba(238,114,2,.4); }
-.perf-th-total { font-weight: 700; }
-.perf-td-total {
-    font-weight: 700; color: #1a2332;
-    background: rgba(7,155,217,.06);
-}
+.perf-th-coverage { color: #198754; border-bottom: 2px solid rgba(25,135,84,.4); }
+.perf-th-coll     { color: #079BD9; border-bottom: 2px solid rgba(7,155,217,.4); }
+.perf-th-rest     { color: #EE7202; border-bottom: 2px solid rgba(238,114,2,.4); }
 .perf-detail-table tbody tr:hover { background: rgba(7,155,217,.04); }
 .perf-detail-table tbody tr:nth-child(even) { background: rgba(74,104,128,.03); }
-.perf-detail-table tbody tr:nth-child(even) .perf-td-total { background: rgba(7,155,217,.08); }
 
 /* État vide */
 .stat-empty {

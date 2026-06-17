@@ -57,37 +57,89 @@
             </div>
             <div>
                 <label class="filter-label">Livreur</label>
-                <select name="livreur" class="form-select form-select-sm" style="width:auto;">
-                    <option value="">Tous</option>
-                    {% for l in livreurs %}
-                    <option value="{{ l.code_livreur }}" {% if livreur_filter == l.code_livreur %}selected{% endif %}>
-                        {{ l.code_livreur }} : {{ l.get_full_name }}
-                    </option>
-                    {% endfor %}
-                </select>
+                <div class="dropdown filter-dropdown">
+                    <button class="btn filter-dropdown-btn dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="filter-dropdown-label">{% if livreur_filter %}{% for l in livreurs %}{% if l.code_livreur == livreur_filter %}{{ l.code_livreur }} : {{ l.get_full_name }}{% endif %}{% endfor %}{% else %}Tous{% endif %}</span>
+                        <i class="bi bi-chevron-down filter-dropdown-caret"></i>
+                    </button>
+                    <ul class="dropdown-menu filter-dropdown-menu">
+                        <li><a class="dropdown-item {% if not livreur_filter %}active{% endif %}" data-value="" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if not livreur_filter %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">Tous</span>
+                        </a></li>
+                        {% for l in livreurs %}
+                        <li><a class="dropdown-item {% if l.code_livreur == livreur_filter %}active{% endif %}" data-value="{{ l.code_livreur }}" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if l.code_livreur == livreur_filter %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">{{ l.code_livreur }} : {{ l.get_full_name }}</span>
+                        </a></li>
+                        {% endfor %}
+                    </ul>
+                    <input type="hidden" name="livreur" value="{{ livreur_filter }}">
+                </div>
             </div>
             <div>
                 <label class="filter-label">N° programme</label>
                 <input type="text" name="programme" value="{{ prog_filter }}"
-                       class="form-control form-control-sm" style="width:auto;" placeholder="ex. PGM-001">
+                       class="form-control form-control-sm" style="width:auto;" placeholder="ex. PRG-COL-20260610-…">
             </div>
             <div>
                 <label class="filter-label">Statut</label>
-                <select name="statut" class="form-select form-select-sm" style="width:auto;">
-                    <option value="OUVERTE"       {% if statut_filter == "OUVERTE"       %}selected{% endif %}>Ouvertes</option>
-                    <option value="EN_TRAITEMENT" {% if statut_filter == "EN_TRAITEMENT" %}selected{% endif %}>En traitement</option>
-                    <option value="RESOLUE"       {% if statut_filter == "RESOLUE"       %}selected{% endif %}>Résolues</option>
-                    <option value="TOUS"          {% if statut_filter == "TOUS"          %}selected{% endif %}>Toutes</option>
-                </select>
+                <div class="dropdown filter-dropdown">
+                    <button class="btn filter-dropdown-btn dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="filter-dropdown-label">{% if statut_filter == "OUVERTE" %}Ouvertes{% elif statut_filter == "EN_TRAITEMENT" %}En traitement{% elif statut_filter == "RESOLUE" %}Résolues{% else %}Toutes{% endif %}</span>
+                        <i class="bi bi-chevron-down filter-dropdown-caret"></i>
+                    </button>
+                    <ul class="dropdown-menu filter-dropdown-menu">
+                        <li><a class="dropdown-item {% if statut_filter == 'TOUS' %}active{% endif %}" data-value="TOUS" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if statut_filter == 'TOUS' %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">Toutes</span>
+                        </a></li>
+                        <li><a class="dropdown-item {% if statut_filter == 'OUVERTE' %}active{% endif %}" data-value="OUVERTE" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if statut_filter == 'OUVERTE' %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">Ouvertes</span>
+                        </a></li>
+                        <li><a class="dropdown-item {% if statut_filter == 'EN_TRAITEMENT' %}active{% endif %}" data-value="EN_TRAITEMENT" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if statut_filter == 'EN_TRAITEMENT' %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">En traitement</span>
+                        </a></li>
+                        <li><a class="dropdown-item {% if statut_filter == 'RESOLUE' %}active{% endif %}" data-value="RESOLUE" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if statut_filter == 'RESOLUE' %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">Résolues</span>
+                        </a></li>
+                    </ul>
+                    <input type="hidden" name="statut" value="{{ statut_filter }}">
+                </div>
             </div>
             <div>
                 <label class="filter-label">Gravité</label>
-                <select name="gravite" class="form-select form-select-sm" style="width:auto;">
-                    <option value="" {% if not gravite_filter %}selected{% endif %}>Toutes</option>
-                    <option value="ELEVEE"  {% if gravite_filter == "ELEVEE"  %}selected{% endif %}>Élevée</option>
-                    <option value="MOYENNE" {% if gravite_filter == "MOYENNE" %}selected{% endif %}>Moyenne</option>
-                    <option value="FAIBLE"  {% if gravite_filter == "FAIBLE"  %}selected{% endif %}>Faible</option>
-                </select>
+                <div class="dropdown filter-dropdown">
+                    <button class="btn filter-dropdown-btn dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="filter-dropdown-label">{% if gravite_filter == "ELEVEE" %}Élevée{% elif gravite_filter == "MOYENNE" %}Moyenne{% elif gravite_filter == "FAIBLE" %}Faible{% else %}Toutes{% endif %}</span>
+                        <i class="bi bi-chevron-down filter-dropdown-caret"></i>
+                    </button>
+                    <ul class="dropdown-menu filter-dropdown-menu">
+                        <li><a class="dropdown-item {% if not gravite_filter %}active{% endif %}" data-value="" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if not gravite_filter %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">Toutes</span>
+                        </a></li>
+                        <li><a class="dropdown-item {% if gravite_filter == 'ELEVEE' %}active{% endif %}" data-value="ELEVEE" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if gravite_filter == 'ELEVEE' %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">Élevée</span>
+                        </a></li>
+                        <li><a class="dropdown-item {% if gravite_filter == 'MOYENNE' %}active{% endif %}" data-value="MOYENNE" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if gravite_filter == 'MOYENNE' %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">Moyenne</span>
+                        </a></li>
+                        <li><a class="dropdown-item {% if gravite_filter == 'FAIBLE' %}active{% endif %}" data-value="FAIBLE" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if gravite_filter == 'FAIBLE' %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">Faible</span>
+                        </a></li>
+                    </ul>
+                    <input type="hidden" name="gravite" value="{{ gravite_filter }}">
+                </div>
             </div>
             <div class="d-flex gap-2 align-items-end">
                 <button type="submit" class="btn btn-sm btn-primary">

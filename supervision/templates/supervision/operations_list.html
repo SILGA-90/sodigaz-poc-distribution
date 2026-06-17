@@ -56,22 +56,51 @@
             </div>
             <div>
                 <label class="filter-label">Livreur</label>
-                <select name="livreur" class="form-select form-select-sm" style="width:auto;">
-                    <option value="">Tous</option>
-                    {% for liv in livreurs %}
-                    <option value="{{ liv.code_livreur }}" {% if liv.code_livreur == livreur_code %}selected{% endif %}>
-                        {{ liv.code_livreur }} : {{ liv.get_full_name }}
-                    </option>
-                    {% endfor %}
-                </select>
+                <div class="dropdown filter-dropdown">
+                    <button class="btn filter-dropdown-btn dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="filter-dropdown-label">{% if livreur_code %}{% for liv in livreurs %}{% if liv.code_livreur == livreur_code %}{{ liv.code_livreur }} : {{ liv.get_full_name }}{% endif %}{% endfor %}{% else %}Tous{% endif %}</span>
+                        <i class="bi bi-chevron-down filter-dropdown-caret"></i>
+                    </button>
+                    <ul class="dropdown-menu filter-dropdown-menu">
+                        <li><a class="dropdown-item {% if not livreur_code %}active{% endif %}" data-value="" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if not livreur_code %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">Tous</span>
+                        </a></li>
+                        {% for liv in livreurs %}
+                        <li><a class="dropdown-item {% if liv.code_livreur == livreur_code %}active{% endif %}" data-value="{{ liv.code_livreur }}" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if liv.code_livreur == livreur_code %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">{{ liv.code_livreur }} : {{ liv.get_full_name }}</span>
+                        </a></li>
+                        {% endfor %}
+                    </ul>
+                    <input type="hidden" name="livreur" value="{{ livreur_code }}">
+                </div>
             </div>
             <div>
                 <label class="filter-label">Type</label>
-                <select name="type" class="form-select form-select-sm" style="width:auto;">
-                    <option value="" {% if not type_filter %}selected{% endif %}>Tous</option>
-                    <option value="COLLECTE"    {% if type_filter == "COLLECTE"    %}selected{% endif %}>Collecte</option>
-                    <option value="RESTITUTION" {% if type_filter == "RESTITUTION" %}selected{% endif %}>Restitution</option>
-                </select>
+                <div class="dropdown filter-dropdown">
+                    <button class="btn filter-dropdown-btn dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="filter-dropdown-label">{% if type_filter == "COLLECTE" %}Collecte{% elif type_filter == "RESTITUTION" %}Restitution{% else %}Tous{% endif %}</span>
+                        <i class="bi bi-chevron-down filter-dropdown-caret"></i>
+                    </button>
+                    <ul class="dropdown-menu filter-dropdown-menu">
+                        <li><a class="dropdown-item {% if not type_filter %}active{% endif %}" data-value="" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if not type_filter %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">Tous</span>
+                        </a></li>
+                        <li><a class="dropdown-item {% if type_filter == 'COLLECTE' %}active{% endif %}" data-value="COLLECTE" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if type_filter == 'COLLECTE' %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">Collecte</span>
+                        </a></li>
+                        <li><a class="dropdown-item {% if type_filter == 'RESTITUTION' %}active{% endif %}" data-value="RESTITUTION" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if type_filter == 'RESTITUTION' %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">Restitution</span>
+                        </a></li>
+                    </ul>
+                    <input type="hidden" name="type" value="{{ type_filter }}">
+                </div>
             </div>
             <button type="submit" class="btn btn-sm btn-primary">
                 <i class="bi bi-search me-1"></i>Filtrer

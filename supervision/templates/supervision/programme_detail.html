@@ -144,22 +144,30 @@
                     <thead>
                         <tr>
                             <th>Article</th>
+                            {% if programme.type_programme == "RESTITUTION" %}
                             <th class="text-end">Prévu</th>
+                            {% endif %}
                             <th class="text-end">Réalisé</th>
+                            {% if programme.type_programme == "RESTITUTION" %}
                             <th class="text-end">Écart</th>
+                            {% endif %}
                         </tr>
                     </thead>
                     <tbody>
                     {% for l in r.lignes %}
                         <tr>
                             <td><span class="produit-dot"></span>{{ l.produit.libelle }}</td>
+                            {% if programme.type_programme == "RESTITUTION" %}
                             <td class="text-end fw-semibold">{{ l.prevu }}</td>
+                            {% endif %}
                             <td class="text-end fw-semibold">{{ l.realise }}</td>
+                            {% if programme.type_programme == "RESTITUTION" %}
                             <td class="text-end">
                                 <span class="ecart-badge {% if l.ecart > 0 %}ecart-pos{% elif l.ecart < 0 %}ecart-neg{% else %}ecart-nul{% endif %}">
                                     {% if l.ecart > 0 %}+{% endif %}{{ l.ecart }}
                                 </span>
                             </td>
+                            {% endif %}
                         </tr>
                     {% endfor %}
                     </tbody>
