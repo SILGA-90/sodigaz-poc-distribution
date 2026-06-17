@@ -72,7 +72,7 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
     const st         = statutInfo(item.statut);
 
     return (
-      <View style={styles.cardOuter}>
+      <View style={[styles.cardOuter, numColumns > 1 && { flex: 1 }]}>
         <TouchableOpacity
           style={[styles.cardInner, { borderLeftColor: st.color }]}
           onPress={() => navigation.navigate('Programme', { programmeId: item.id })}
@@ -106,7 +106,7 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
         </TouchableOpacity>
       </View>
     );
-  }, [navigation]);
+  }, [navigation, numColumns]);
 
   return (
     <View style={styles.root}>
@@ -134,6 +134,7 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
         renderItem={renderItem}
         numColumns={numColumns}
         columnWrapperStyle={numColumns > 1 ? { gap: 12 } : undefined}
+        style={styles.flatList}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <View style={styles.empty}>
@@ -153,7 +154,8 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
 
 /* Styles */
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: NEO },
+  root:     { flex: 1, backgroundColor: NEO },
+  flatList: { flex: 1 },
 
   /* Header navy */
   header:  { backgroundColor: NAVY, overflow: 'hidden' },

@@ -14,13 +14,33 @@ Isolation livreur : un livreur ne voit et ne modifie QUE ses propres données.
 from django.db import models
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 
 from distribution.models import Photo, Programme
 from .engine import SyncEngine
 from .push_serializers import PushPayloadSerializer
+
+
+class SyncRateThrottle(UserRateThrottle):
+    """
+    Limite les cycles de synchronisation à 60/heure par livreur.
+    En usage normal, un livreur synchronise 5 à 10 fois par heure.
+    Ce seuil protège contre une boucle de sync défaillante côté mobile
+    ou une tentative d'abus avec un token JWT volé.
+    """
+    scope = "sync"
+
+
+class PhotoUploadThrottle(UserRateThrottle):
+    """
+    Limite les uploads de photos à 300/heure par livreur.
+    Dimensionné pour une tournée chargée : 20 livraisons × 3 photos × marge rejeu.
+    L'upload photo est une opération coûteuse (I/O disque + réseau).
+    """
+    scope = "photo_upload"
 
 
 # ===========================================================================
@@ -29,6 +49,7 @@ from .push_serializers import PushPayloadSerializer
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([SyncRateThrottle])
 def sync_pull(request):
     """
     Endpoint pull : renvoie le delta serveur depuis lastPulledAt.
@@ -39,6 +60,7 @@ def sync_pull(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([SyncRateThrottle])
 def sync_push(request):
     """
     Endpoint push : persiste les données créées hors ligne par le livreur.
@@ -53,6 +75,7 @@ def sync_push(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([PhotoUploadThrottle])
 def upload_photo(request, uuid):
     """
     Reçoit le fichier image d'une photo dont la métadonnée a déjà été
@@ -94,6 +117,7 @@ def upload_photo(request, uuid):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([SyncRateThrottle])
 def cloturer_programmes(request):
     """
     Passe le statut d'un ou plusieurs programmes du livreur à CLOTURE

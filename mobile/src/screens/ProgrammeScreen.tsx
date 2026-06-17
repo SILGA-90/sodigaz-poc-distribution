@@ -81,13 +81,15 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
   }, [programmeId]);
 
   const renderEtape = useCallback(({ item }: { item: EtapeAvecPlv }): React.ReactElement => (
-    <EtapeCard
-      etape={item}
-      programmeCloture={programme?.statut === 'CLOTURE'}
-      onNavigateDetail={(etapeId, etapeUuid) => navigation.navigate('EtapeDetail', { etapeId, etapeUuid })}
-      onNavigateSaisie={(etapeId) => navigation.navigate('SaisieOperation', { etapeId })}
-    />
-  ), [navigation, programme]);
+    <View style={numColumns > 1 ? { flex: 1 } : undefined}>
+      <EtapeCard
+        etape={item}
+        programmeCloture={programme?.statut === 'CLOTURE'}
+        onNavigateDetail={(etapeId, etapeUuid) => navigation.navigate('EtapeDetail', { etapeId, etapeUuid })}
+        onNavigateSaisie={(etapeId) => navigation.navigate('SaisieOperation', { etapeId })}
+      />
+    </View>
+  ), [navigation, programme, numColumns]);
 
   if (loading) {
     return <View style={styles.center}><ActivityIndicator size="large" color={Colors.brandBlue} /></View>;

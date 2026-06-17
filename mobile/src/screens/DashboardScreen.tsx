@@ -179,11 +179,13 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     syncStatus === 'error'   ? 'Erreur de sync'     : 'Prêt';
 
   const renderProgramme = useCallback(({ item }: { item: ProgrammeAvecProgression }): React.ReactElement => (
-    <ProgrammeCard
-      item={item}
-      onPress={() => navigation.navigate('Programme', { programmeId: item.id })}
-    />
-  ), [navigation]);
+    <View style={numColumns > 1 ? { flex: 1 } : undefined}>
+      <ProgrammeCard
+        item={item}
+        onPress={() => navigation.navigate('Programme', { programmeId: item.id })}
+      />
+    </View>
+  ), [navigation, numColumns]);
 
   return (
     <View style={styles.root}>
@@ -205,7 +207,8 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
         keyExtractor={(item) => String(item.id)}
         renderItem={renderProgramme}
         numColumns={numColumns}
-        columnWrapperStyle={numColumns > 1 ? { gap: 12, paddingHorizontal: 14 } : undefined}
+        columnWrapperStyle={numColumns > 1 ? { gap: 12 } : undefined}
+        style={styles.flatList}
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={syncing} onRefresh={handleSync} tintColor={Colors.brandBlue} />}
         ListEmptyComponent={<EmptyProgrammes syncing={syncing} onSync={handleSync} />}
@@ -260,6 +263,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
 
 const styles = StyleSheet.create({
   root:         { flex: 1, backgroundColor: NEO },
+  flatList:     { flex: 1 },
   list:         { paddingHorizontal: 14, paddingVertical: 6, paddingBottom: 12 },
   sectionRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 16, marginBottom: 10 },
   sectionTitle: { fontSize: 14, fontWeight: '700', color: TEXT2 },

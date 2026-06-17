@@ -150,11 +150,16 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "EXCEPTION_HANDLER": "config.exceptions.custom_exception_handler",
     "DEFAULT_THROTTLE_RATES": {
         # 3 tentatives par heure par utilisateur sur l'endpoint dev-access
         "dev_access": "3/hour",
         # 5 tentatives par minute par IP sur l'endpoint login (anti brute-force)
         "login": "5/minute",
+        # 60 cycles de sync par heure par livreur (1/min, très au-dessus de l'usage réel)
+        "sync": "60/hour",
+        # 300 uploads photo par heure (20 livraisons × 3 photos × marge de rejeu)
+        "photo_upload": "300/hour",
     },
 }
 

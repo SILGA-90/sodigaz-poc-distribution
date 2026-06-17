@@ -193,6 +193,7 @@ export default function MesAnomaliesScreen({ route }: Props): React.ReactElement
         data={anomalies}
         keyExtractor={(item) => item.uuid}
         renderItem={renderItem}
+        style={styles.flatList}
         contentContainerStyle={[styles.list, width >= 700 && styles.wideContent]}
         ListEmptyComponent={
           <View style={styles.empty}>
@@ -235,6 +236,7 @@ const styles = StyleSheet.create({
   statLbl: { fontSize: 10, fontWeight: '500' },
   headerZero: { color: 'rgba(255,255,255,0.35)', fontSize: 13, fontStyle: 'italic' },
 
+  flatList:    { flex: 1 },
   list:        { padding: 14, paddingTop: 16, paddingBottom: 32 },
   wideContent: { maxWidth: 700, alignSelf: 'center', width: '100%' },
 
