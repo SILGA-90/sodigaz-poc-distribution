@@ -18,6 +18,7 @@ import csv
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.utils import timezone as tz
 
 from accounts.models import Role, Utilisateur
 from distribution.models import Operation
@@ -142,21 +143,26 @@ def operations_export_csv(request):
 
     writer = csv.writer(response, delimiter=";")
     writer.writerow([
-        "Heure", "Livreur", "Type", "Sous-type",
+        "Date", "Heure", "Programme", "Livreur", "Type", "Sous-type",
         "Client", "PLV",
         "Montant total (FCFA)", "Montant encaissé (FCFA)",
         "Mode paiement", "Signataire",
     ])
     for op in operations:
+        # Convertir en heure locale (Africa/Ouagadougou) comme le font les templates,
+        # pour que CSV et interface web affichent la même heure.
+        dt_local = tz.localtime(op.date_heure)
         writer.writerow([
-            op.date_heure.strftime("%H:%M"),
+            dt_local.strftime("%d/%m/%Y"),
+            dt_local.strftime("%H:%M"),
+            op.etape.programme.numero_x3 or "",
             op.etape.programme.utilisateur.code_livreur,
-            op.type_operation,
+            op.get_type_operation_display(),
             op.sous_type or "",
             op.etape.plv.client.raison_sociale,
-            op.etape.plv.libelle,
-            op.montant_total,
-            op.montant_encaisse if op.est_encaissee else "",
+            op.etape.plv.code_plv or op.etape.plv.libelle,
+            int(op.montant_total or 0),
+            int(op.montant_encaisse or 0) if op.est_encaissee else "",
             op.get_mode_paiement_display() if op.mode_paiement else "",
             op.nom_signataire_client or "",
         ])

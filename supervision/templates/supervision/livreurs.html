@@ -83,9 +83,9 @@
             <i class="bi bi-truck me-1"></i>{{ prog.vehicule.immatriculation }}
         </span>
         {% endif %}
-        {% if prog.numero_x3 %}
-        <span class="liv-prog-num">{{ prog.numero_x3 }}</span>
-        {% endif %}
+        {% for p in fiche.programmes %}
+        <span class="liv-prog-num">{{ p.numero_x3 }}</span>
+        {% endfor %}
     </div>
 
     <!-- Progression étapes -->
@@ -139,9 +139,12 @@
 
     <!-- Actions -->
     <div class="liv-actions">
-        <a href="{% url 'supervision:programme-detail' prog.id %}" class="btn-liv-action btn-liv-blue">
-            <i class="bi bi-clipboard2-check"></i> Programme
+        {% for p in fiche.programmes %}
+        <a href="{% url 'supervision:programme-detail' p.id %}" class="btn-liv-action btn-liv-blue">
+            <i class="bi bi-clipboard2-check"></i>
+            {% if fiche.programmes|length > 1 %}{{ p.get_type_programme_display }}{% else %}Programme{% endif %}
         </a>
+        {% endfor %}
         <a href="{% url 'supervision:operations' %}?livreur={{ liv.code_livreur }}&date={{ date_filter|date:'Y-m-d' }}"
            class="btn-liv-action btn-liv-outline">
             <i class="bi bi-lightning-charge"></i> Opérations

@@ -111,11 +111,9 @@
         <div class="info-icon-box"><i class="bi bi-building"></i></div>
         <div>
             <div class="info-label">Point de livraison</div>
-            <div class="info-value">
-                {% if anomalie.plv.code_plv %}<span class="plv-code-chip">{{ anomalie.plv.code_plv }}</span> {% endif %}{{ anomalie.plv.libelle }}
-            </div>
-            {% if anomalie.plv.client %}
-            <div class="info-sub">{{ anomalie.plv.client.raison_sociale }}</div>
+            <div class="info-value">{{ anomalie.plv.client.raison_sociale }}</div>
+            {% if anomalie.plv.code_plv %}
+            <div class="info-sub"><span class="plv-code-chip">{{ anomalie.plv.code_plv }}</span></div>
             {% endif %}
         </div>
     </div>

@@ -9,6 +9,7 @@ agrégées (étapes, opérations, anomalies, dernière activité) avec des GROUP
 sur programme_id. C'est 5 requêtes au total (1 programmes + 4 agrégats),
 quel que soit le nombre de livreurs : pas N+4 comme avec des accès ORM naïfs.
 """
+from collections import defaultdict
 from datetime import date as date_cls
 from decimal import Decimal
 
@@ -44,21 +45,22 @@ def tableau_bord_livreurs(request):
     """
     date_filter = _get_date_filter(request, write_session=True)
 
-    # Seuls les livreurs ayant un programme ce jour sont affichés
-    programmes = {
-        p.utilisateur_id: p
-        for p in Programme.objects.filter(
-            date_programme=date_filter,
-            is_deleted=False,
-        ).select_related("utilisateur", "vehicule")
-    }
+    # Seuls les livreurs ayant un programme ce jour sont affichés.
+    # Un livreur peut avoir plusieurs programmes le même jour (collecte + restitution) :
+    # on regroupe donc en liste, pas en dict à valeur unique (qui écraserait le second).
+    programmes_par_livreur: dict[int, list] = defaultdict(list)
+    for p in Programme.objects.filter(
+        date_programme=date_filter,
+        is_deleted=False,
+    ).select_related("utilisateur", "vehicule").order_by("id"):
+        programmes_par_livreur[p.utilisateur_id].append(p)
 
-    livreurs    = list(
+    livreurs      = list(
         Utilisateur.objects.filter(
-            id__in=programmes.keys(),
+            id__in=programmes_par_livreur.keys(),
         ).order_by("code_livreur")
     )
-    programme_ids = [p.id for p in programmes.values()]
+    programme_ids = [p.id for progs in programmes_par_livreur.values() for p in progs]
 
     # Étapes (total / visitées / échecs) par programme : une seule requête SQL
     etapes_qs = (
@@ -101,28 +103,43 @@ def tableau_bord_livreurs(request):
         .annotate(derniere=Max("date_heure"))
     }
 
-    # Construction des fiches livreur
+    # Construction des fiches livreur.
+    # On somme les stats de TOUS les programmes du livreur pour la journée.
     fiches = []
     for idx, liv in enumerate(livreurs):
-        prog     = programmes.get(liv.id)
+        progs    = programmes_par_livreur.get(liv.id, [])
         av_color = _AVATAR_PALETTE[idx % len(_AVATAR_PALETTE)]
 
-        if prog:
-            etapes            = etapes_map.get(prog.id, {"total": 0, "visitees": 0, "echecs": 0})
-            ops               = ops_map.get(prog.id, {"nb_ops": 0, "montant": 0})
-            anom              = anom_map.get(prog.id, {"ouvertes": 0, "total_anom": 0})
-            derniere_activite = last_op_map.get(prog.id)
-            pct               = round(etapes["visitees"] / etapes["total"] * 100) if etapes["total"] else 0
-        else:
-            etapes            = {"total": 0, "visitees": 0, "echecs": 0}
-            ops               = {"nb_ops": 0, "montant": 0}
-            anom              = {"ouvertes": 0, "total_anom": 0}
-            derniere_activite = None
-            pct               = 0
+        etapes            = {"total": 0, "visitees": 0, "echecs": 0}
+        ops               = {"nb_ops": 0, "montant": Decimal("0")}
+        anom              = {"ouvertes": 0, "total_anom": 0}
+        derniere_activite = None
+
+        for p in progs:
+            e = etapes_map.get(p.id, {"total": 0, "visitees": 0, "echecs": 0})
+            etapes["total"]    += e["total"]
+            etapes["visitees"] += e["visitees"]
+            etapes["echecs"]   += e["echecs"]
+
+            o = ops_map.get(p.id, {"nb_ops": 0, "montant": Decimal("0")})
+            ops["nb_ops"]  += o["nb_ops"]
+            ops["montant"] += o["montant"]
+
+            a = anom_map.get(p.id, {"ouvertes": 0, "total_anom": 0})
+            anom["ouvertes"]    += a["ouvertes"]
+            anom["total_anom"]  += a["total_anom"]
+
+            d = last_op_map.get(p.id)
+            if d and (derniere_activite is None or d > derniere_activite):
+                derniere_activite = d
+
+        pct  = round(etapes["visitees"] / etapes["total"] * 100) if etapes["total"] else 0
+        prog = progs[0] if progs else None  # programme représentatif pour l'affichage
 
         fiches.append({
             "livreur":           liv,
             "programme":         prog,
+            "programmes":        progs,
             "av_color":          av_color,
             "etapes":            etapes,
             "ops":               ops,

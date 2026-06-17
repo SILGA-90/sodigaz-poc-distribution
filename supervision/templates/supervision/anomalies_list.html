@@ -170,8 +170,7 @@
     <div class="anom-card-footer">
         <div class="anom-plv-info">
             {% if a.plv %}
-            <i class="bi bi-building me-1"></i>{% if a.plv.code_plv %}<span class="plv-code-chip">{{ a.plv.code_plv }}</span> {% endif %}{{ a.plv.libelle }}
-            {% if a.plv.client %}&nbsp;·&nbsp;{{ a.plv.client.raison_sociale }}{% endif %}
+            <i class="bi bi-building me-1"></i>{% if a.plv.code_plv %}<span class="plv-code-chip">{{ a.plv.code_plv }}</span> {% endif %}{{ a.plv.client.raison_sociale }}
             {% else %}
             <span class="text-muted">—</span>
             {% endif %}

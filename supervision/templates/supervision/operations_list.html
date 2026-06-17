@@ -119,7 +119,7 @@
         </td>
         <td>
             <div class="ops-client">{{ op.etape.plv.client.raison_sociale }}</div>
-            <div class="ops-plv">{% if op.etape.plv.code_plv %}<span class="plv-code-chip">{{ op.etape.plv.code_plv }}</span> {% endif %}{{ op.etape.plv.libelle }}</div>
+            <div class="ops-plv">{% if op.etape.plv.code_plv %}<span class="plv-code-chip">{{ op.etape.plv.code_plv }}</span>{% else %}{{ op.etape.plv.libelle }}{% endif %}</div>
         </td>
         <td class="text-end">
             <span class="ops-montant">{{ op.montant_total|floatformat:0 }}</span>
