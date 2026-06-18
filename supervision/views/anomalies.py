@@ -23,12 +23,14 @@ peuvent être déclenchées depuis la liste ou le détail. Rediriger vers
 la page précédente (Referer) offre une meilleure UX que de rediriger
 toujours vers la liste.
 """
+from datetime import datetime
+
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from accounts.models import Role, Utilisateur
-from distribution.models import Anomalie
+from distribution.models import Anomalie, GraviteAnomalie, StatutAnomalie
 
 from ..decorators import superviseur_required
 
@@ -63,7 +65,7 @@ def anomalies_list(request):
 
     if statut_filter and statut_filter != "TOUS":
         anomalies_qs = anomalies_qs.filter(statut=statut_filter)
-    if gravite_filter in ("ELEVEE", "MOYENNE", "FAIBLE"):
+    if gravite_filter in GraviteAnomalie.values:
         anomalies_qs = anomalies_qs.filter(gravite=gravite_filter)
     if livreur_filter:
         anomalies_qs = anomalies_qs.filter(
@@ -75,7 +77,6 @@ def anomalies_list(request):
         )
     if date_str:
         try:
-            from datetime import datetime
             d = datetime.strptime(date_str, "%Y-%m-%d").date()
             anomalies_qs = anomalies_qs.filter(programme__date_programme=d)
         except ValueError:
@@ -92,12 +93,13 @@ def anomalies_list(request):
         a.anciennete_jours = (now - a.date_heure).days
 
     nb_total    = len(anomalies)
-    nb_elevee   = sum(1 for a in anomalies if a.gravite == "ELEVEE")
-    nb_moyenne  = sum(1 for a in anomalies if a.gravite == "MOYENNE")
-    nb_faible   = sum(1 for a in anomalies if a.gravite == "FAIBLE")
+    nb_elevee   = sum(1 for a in anomalies if a.gravite == GraviteAnomalie.ELEVEE)
+    nb_moyenne  = sum(1 for a in anomalies if a.gravite == GraviteAnomalie.MOYENNE)
+    nb_faible   = sum(1 for a in anomalies if a.gravite == GraviteAnomalie.FAIBLE)
     nb_urgentes = sum(
         1 for a in anomalies
-        if a.statut in ("OUVERTE", "EN_TRAITEMENT") and a.anciennete_jours >= 1
+        if a.statut in (StatutAnomalie.OUVERTE, StatutAnomalie.EN_TRAITEMENT)
+        and a.anciennete_jours >= 1
     )
 
     return render(request, "supervision/anomalies_list.html", {
@@ -143,7 +145,7 @@ def changer_statut_anomalie(request, anomalie_id):
     """
     if request.method == "POST":
         nouveau_statut = request.POST.get("statut", "")
-        if nouveau_statut in ("OUVERTE", "EN_TRAITEMENT", "RESOLUE"):
+        if nouveau_statut in StatutAnomalie.values:
             Anomalie.objects.filter(id=anomalie_id, is_deleted=False).update(
                 statut=nouveau_statut
             )
@@ -161,7 +163,7 @@ def changer_gravite_anomalie(request, anomalie_id):
     """
     if request.method == "POST":
         nouvelle_gravite = request.POST.get("gravite", "")
-        if nouvelle_gravite in ("FAIBLE", "MOYENNE", "ELEVEE"):
+        if nouvelle_gravite in GraviteAnomalie.values:
             Anomalie.objects.filter(id=anomalie_id, is_deleted=False).update(
                 gravite=nouvelle_gravite
             )

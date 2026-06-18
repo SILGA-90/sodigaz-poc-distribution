@@ -7,6 +7,9 @@ Utilisation :
     python manage.py nettoyer_photos_orphelines
     python manage.py nettoyer_photos_orphelines --heures 48
     python manage.py nettoyer_photos_orphelines --dry-run
+
+En production, planifier en cron journalier (ex. 3h du matin) :
+    0 3 * * * /chemin/venv/bin/python /chemin/manage.py nettoyer_photos_orphelines
 """
 
 from datetime import timedelta
@@ -14,7 +17,7 @@ from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from distribution.models import Photo
+from distribution.models import Photo, PHOTO_PLACEHOLDER
 
 
 class Command(BaseCommand):
@@ -40,7 +43,7 @@ class Command(BaseCommand):
         seuil = timezone.now() - timedelta(hours=heures)
 
         orphelines = Photo.objects.filter(
-            fichier="placeholder.bin",
+            fichier=PHOTO_PLACEHOLDER,
             date_heure__lt=seuil,
             is_deleted=False,
         )
@@ -68,12 +71,14 @@ class Command(BaseCommand):
                 self.stdout.write(f"  - {ph.uuid}  type={ph.type_photo}  programme={ref}  date={ph.date_heure:%Y-%m-%d %H:%M}")
             return
 
-        # Suppression definitive : aucun fichier sur disque a supprimer
-        # car le placeholder n'existe pas en tant que fichier reel.
-        supprimees, _ = orphelines.delete()
+        # Suppression logique (soft delete) : is_deleted=True comme partout
+        # dans la codebase. Le trigger PostgreSQL met a jour last_modified
+        # automatiquement, ce qui permet au pull mobile de recevoir l'enregistrement
+        # dans la liste "deleted" et de le retirer de son cache local.
+        supprimees = orphelines.update(is_deleted=True)
         self.stdout.write(
             self.style.SUCCESS(
-                f"{supprimees} photo(s) orpheline(s) supprimee(s) "
+                f"{supprimees} photo(s) orpheline(s) marquee(s) supprimee(s) "
                 f"(seuil : {heures}h, date : {timezone.now():%Y-%m-%d %H:%M})."
             )
         )

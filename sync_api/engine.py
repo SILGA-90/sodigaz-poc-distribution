@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 from django.contrib.gis.geos import Point
 from django.db import models, transaction
-from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.response import Response
@@ -33,6 +32,7 @@ from distribution.models import (
     Plv,
     Article,
     Programme,
+    PHOTO_PLACEHOLDER,
 )
 
 from .push_serializers import (
@@ -382,7 +382,13 @@ class SyncEngine:
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
-            article = get_object_or_404(Article, code_x3=d["produit_code_x3"])
+            try:
+                article = Article.objects.get(code_x3=d["produit_code_x3"])
+            except Article.DoesNotExist:
+                return Response(
+                    {"status": "error", "detail": f"Article inconnu : {d['produit_code_x3']}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             _, created = LigneOperation.objects.update_or_create(
                 uuid=d["uuid"],
                 defaults={
@@ -515,7 +521,7 @@ class SyncEngine:
             else:
                 # Placeholder binaire : le vrai fichier arrive via /upload/.
                 # ImageField Django exige une valeur non-nulle à la création.
-                Photo.objects.create(uuid=d["uuid"], fichier="placeholder.bin", **defaults)
+                Photo.objects.create(uuid=d["uuid"], fichier=PHOTO_PLACEHOLDER, **defaults)
                 applied["photo"]["created"] += 1
 
         for uuid_to_delete in changes.get("photo", {}).get("deleted", []):

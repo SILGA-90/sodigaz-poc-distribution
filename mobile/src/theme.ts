@@ -65,6 +65,13 @@ export const Colors = {
   border:      '#e2e8f0',   // bordures par défaut
   borderLight: '#f1f5f9',   // séparateurs
 
+  // Indicateurs de synchronisation (pastilles sur EtapeCard)
+  syncGreen:   '#22c55e',  // opération synchronisée
+  syncPending: '#f97316',  // opération en attente de sync
+
+  // Fond très clair du bleu de marque (chip code PLV, surbrillances)
+  primaryLight: '#e3f3fb',
+
   // Rétrocompatibilité (aliases)
   successLight: '#dcfce7',
   dangerLight:  '#fef2f2',

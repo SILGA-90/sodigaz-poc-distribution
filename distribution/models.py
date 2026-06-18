@@ -129,6 +129,11 @@ class TypePhoto(models.TextChoices):
     ANOMALIE  = "ANOMALIE",  "Anomalie"
 
 
+# Valeur sentinelle : fichier photo non encore uploadé (push métadonnées
+# avant upload binaire). Partagée entre engine.py et nettoyer_photos_orphelines.
+PHOTO_PLACEHOLDER = "placeholder.bin"
+
+
 # =============================================================================
 # Mixins
 # =============================================================================

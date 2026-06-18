@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   ordreText:   { color: '#fff', fontWeight: '800', fontSize: 15 },
 
   info:        { flex: 1, marginRight: 8 },
-  plvCodeChip: { alignSelf: 'flex-start', backgroundColor: '#e3f3fb', borderRadius: 5, paddingHorizontal: 5, paddingVertical: 1, borderWidth: 1, borderColor: 'rgba(7,155,217,0.3)', marginBottom: 3 },
+  plvCodeChip: { alignSelf: 'flex-start', backgroundColor: Colors.primaryLight, borderRadius: 5, paddingHorizontal: 5, paddingVertical: 1, borderWidth: 1, borderColor: 'rgba(7,155,217,0.3)', marginBottom: 3 },
   plvCodeText: { fontSize: 10, fontWeight: '800', color: Colors.brandBlue },
   clientName:  { fontSize: 14, fontWeight: '700', color: TEXT },
 
@@ -144,8 +144,8 @@ const styles = StyleSheet.create({
   statutDot:    { width: 6, height: 6, borderRadius: 3 },
   statutText:   { fontSize: 11, fontWeight: '700' },
   syncIndicator:{ width: 8, height: 8, borderRadius: 4 },
-  syncGreen:    { backgroundColor: '#22c55e' },
-  syncOrange:   { backgroundColor: '#f97316' },
+  syncGreen:    { backgroundColor: Colors.syncGreen },
+  syncOrange:   { backgroundColor: Colors.syncPending },
 
   itineraireRow: {
     backgroundColor: NEO_IN, paddingVertical: 10, paddingHorizontal: 14, alignItems: 'flex-end',
