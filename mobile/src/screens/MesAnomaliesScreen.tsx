@@ -24,6 +24,7 @@ import {
   FlatList,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
   useWindowDimensions,
 } from 'react-native';
@@ -67,7 +68,7 @@ const STATUT_CFG: Record<string, { label: string; color: string; bg: string; bor
   CLASSEE:  { label: 'Classée',  color: Colors.textMuted,    bg: NEO_IN,           border: SEP                  },
 };
 
-export default function MesAnomaliesScreen({ route }: Props): React.ReactElement {
+export default function MesAnomaliesScreen({ route, navigation }: Props): React.ReactElement {
   const { programmeUuid, programmeNumero } = route.params;
   const { width } = useWindowDimensions();
   const [anomalies, setAnomalies] = useState<AnomalieLocale[]>([]);
@@ -155,6 +156,10 @@ export default function MesAnomaliesScreen({ route }: Props): React.ReactElement
         <View style={styles.bubble1} pointerEvents="none" />
         <View style={styles.bubble2} pointerEvents="none" />
         <View style={styles.headerContent}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.75}>
+            <Ionicons name="chevron-back" size={22} color="#fff" />
+          </TouchableOpacity>
+          <View style={styles.headerText}>
           <Text style={styles.headerLabel}>Anomalies</Text>
           <Text style={styles.headerNumero}>{programmeNumero}</Text>
 
@@ -185,6 +190,7 @@ export default function MesAnomaliesScreen({ route }: Props): React.ReactElement
           ) : (
             <Text style={styles.headerZero}>Aucun signalement</Text>
           )}
+          </View>
         </View>
       </View>
 
@@ -220,7 +226,15 @@ const styles = StyleSheet.create({
   header:  { backgroundColor: NAVY, overflow: 'hidden' },
   bubble1: { position: 'absolute', width: 200, height: 200, borderRadius: 100, top: -60, right: -50, backgroundColor: 'rgba(220,38,38,0.1)' },
   bubble2: { position: 'absolute', width: 130, height: 130, borderRadius: 65, bottom: -40, left: -25, backgroundColor: 'rgba(220,38,38,0.07)' },
-  headerContent: { paddingHorizontal: 20, paddingTop: 52, paddingBottom: 24 },
+  headerContent: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, paddingHorizontal: 16, paddingTop: 52, paddingBottom: 24 },
+  backBtn: {
+    width: 40, height: 40, borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center', justifyContent: 'center',
+    marginTop: 2, flexShrink: 0,
+  },
+  headerText:    { flex: 1 },
   headerLabel:   { color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: '600', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2 },
   headerNumero:  { color: '#fff', fontSize: 22, fontWeight: '800', marginBottom: 16 },
 
