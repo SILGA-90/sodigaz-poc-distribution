@@ -48,7 +48,7 @@ import NeoDialog from '../components/NeoDialog';
 import NetworkBanner from '../components/NetworkBanner';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useLayout } from '../hooks/useLayout';
-import { Colors } from '../theme';
+import { Colors, scale } from '../theme';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import SyncCard from '../components/dashboard/SyncCard';
 import ProgrammeCard from '../components/dashboard/ProgrammeCard';
@@ -266,6 +266,6 @@ const styles = StyleSheet.create({
   flatList:     { flex: 1 },
   list:         { paddingHorizontal: 14, paddingVertical: 6, paddingBottom: 12 },
   sectionRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 16, marginBottom: 10 },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: TEXT2 },
-  sectionLink:  { fontSize: 13, color: Colors.brandBlue, fontWeight: '600' },
+  sectionTitle: { fontSize: scale(14), fontWeight: '700', color: TEXT2 },
+  sectionLink:  { fontSize: scale(13), color: Colors.brandBlue, fontWeight: '600' },
 });

@@ -5,7 +5,7 @@
  */
 import React from 'react';
 import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 import NeoSelect from '../NeoSelect';
 import SectionHeader from './SectionHeader';
 import FieldInput from './FieldInput';
@@ -135,13 +135,13 @@ export default function PaiementSection({
 }
 
 const styles = StyleSheet.create({
-  label:          { fontSize: 13, fontWeight: '700', color: TEXT2, marginTop: 2 },
-  switchSub:      { fontSize: 11, color: TEXT3, marginTop: 1 },
+  label:          { fontSize: scale(13), fontWeight: '700', color: TEXT2, marginTop: 2 },
+  switchSub:      { fontSize: scale(11), color: TEXT3, marginTop: 1 },
   switchRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   montantRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
-  toggleLink:     { color: Colors.brandBlue, fontSize: 13, fontWeight: '600' },
+  toggleLink:     { color: Colors.brandBlue, fontSize: scale(13), fontWeight: '600' },
   montantAutoRow:   { flexDirection: 'row', alignItems: 'baseline', marginTop: 8, marginBottom: 4 },
-  montantAutoValue: { fontSize: 26, fontWeight: '800', color: Colors.success, letterSpacing: -0.5 },
-  montantAutoUnit:  { fontSize: 14, fontWeight: '700', color: Colors.success },
-  montantAutoHint:  { fontSize: 12, color: TEXT3 },
+  montantAutoValue: { fontSize: scale(26), fontWeight: '800', color: Colors.success, letterSpacing: -0.5 },
+  montantAutoUnit:  { fontSize: scale(14), fontWeight: '700', color: Colors.success },
+  montantAutoHint:  { fontSize: scale(12), color: TEXT3 },
 });

@@ -57,7 +57,7 @@ import {
 } from '../db/repositories/saisieRepository';
 import { ModePaiement } from '../types/models';
 import { RootStackParamList } from '../types/navigation';
-import { Colors } from '../theme';
+import { Colors, scale } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SaisieOperation'>;
 
@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: NEO },
 
   commentaire: {
-    minHeight: 80, fontSize: 14, color: '#1a2a3a', lineHeight: 20,
+    minHeight: 80, fontSize: scale(14), color: '#1a2a3a', lineHeight: 20,
     backgroundColor: NEO_IN, borderRadius: 10, padding: 12,
     borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
     borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8',
@@ -462,8 +462,8 @@ const styles = StyleSheet.create({
     borderTopColor: '#ffb060', borderLeftColor: '#ffb060',
     borderBottomColor: '#b83a00', borderRightColor: '#b83a00',
   },
-  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
-  saveBtnSub:  { color: 'rgba(255,255,255,0.75)', fontSize: 12, marginTop: 4 },
+  saveBtnText: { color: '#fff', fontSize: scale(16), fontWeight: '800', letterSpacing: -0.2 },
+  saveBtnSub:  { color: 'rgba(255,255,255,0.75)', fontSize: scale(12), marginTop: 4 },
 
   echecOuter: {
     marginHorizontal: 12, marginBottom: 8, borderRadius: 12,
@@ -477,5 +477,5 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderLeftWidth: 1, borderBottomWidth: 1, borderRightWidth: 1,
     borderTopColor: '#fdd', borderLeftColor: '#fdd', borderBottomColor: '#e88', borderRightColor: '#e88',
   },
-  echecBtnText: { color: Colors.danger, fontWeight: '600', fontSize: 13 },
+  echecBtnText: { color: Colors.danger, fontWeight: '600', fontSize: scale(13) },
 });

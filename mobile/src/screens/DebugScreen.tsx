@@ -43,7 +43,7 @@ import { getDatabase, resetDatabase, getLastPulledAt } from '../db/database';
 import { getTableCounts, TableCounts } from '../db/repositories/debugRepository';
 import { countPending } from '../db/repositories/operationRepository';
 import { RootStackParamList } from '../types/navigation';
-import { Colors } from '../theme';
+import { Colors, scale } from '../theme';
 import NeoDialog from '../components/NeoDialog';
 
 /* Palette néo claire */
@@ -268,15 +268,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(7,155,217,0.15)',
     borderWidth: 1, borderColor: 'rgba(7,155,217,0.3)',
   },
-  headerTitle: { fontSize: 16, fontWeight: '800', color: '#fff', letterSpacing: -0.2 },
-  headerSub:   { fontSize: 11, color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', marginTop: 1 },
+  headerTitle: { fontSize: scale(16), fontWeight: '800', color: '#fff', letterSpacing: -0.2 },
+  headerSub:   { fontSize: scale(11), color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', marginTop: 1 },
 
   /* Corps */
   root:   { flex: 1, backgroundColor: NEO },
   scroll: { padding: 16, paddingBottom: 48 },
 
   loadingRow:  { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
-  loadingText: { fontSize: 13, color: TEXT3 },
+  loadingText: { fontSize: scale(13), color: TEXT3 },
 
   /* Bannières */
   bannerOuter: {
@@ -298,13 +298,13 @@ const styles = StyleSheet.create({
     borderTopColor: '#fdd', borderLeftColor: '#fdd',
     borderBottomColor: Colors.dangerBorder, borderRightColor: Colors.dangerBorder,
   },
-  bannerDangerText: { flex: 1, fontSize: 13, color: Colors.danger, lineHeight: 18 },
+  bannerDangerText: { flex: 1, fontSize: scale(13), color: Colors.danger, lineHeight: 18 },
   bannerSuccess: {
     backgroundColor: Colors.successBg,
     borderTopColor: '#a7f3d0', borderLeftColor: '#a7f3d0',
     borderBottomColor: '#065f46', borderRightColor: '#065f46',
   },
-  bannerSuccessText: { flex: 1, fontSize: 13, color: Colors.success, lineHeight: 18, fontWeight: '600' },
+  bannerSuccessText: { flex: 1, fontSize: scale(13), color: Colors.success, lineHeight: 18, fontWeight: '600' },
 
   /* Carte table */
   cardOuter: {
@@ -331,16 +331,16 @@ const styles = StyleSheet.create({
     borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8', borderRightColor: '#a8bac8',
     borderBottomWidth: 1, borderBottomColor: SEP,
   },
-  tableHeadText: { fontSize: 11, fontWeight: '700', color: TEXT3, letterSpacing: 1.2 },
+  tableHeadText: { fontSize: scale(11), fontWeight: '700', color: TEXT3, letterSpacing: 1.2 },
   tableRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 13 },
   tableRowSep:   { borderBottomWidth: 1, borderBottomColor: SEP },
-  tableName:     { fontSize: 13, color: TEXT2, fontFamily: 'monospace', flex: 1, marginRight: 8 },
+  tableName:     { fontSize: scale(13), color: TEXT2, fontFamily: 'monospace', flex: 1, marginRight: 8 },
   countBadge:    { backgroundColor: NEO_IN, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6, minWidth: 36, alignItems: 'center' },
   countBadgeActive: { backgroundColor: Colors.infoBg },
-  countText:     { fontSize: 13, fontWeight: '700', color: TEXT3, fontFamily: 'monospace' },
+  countText:     { fontSize: scale(13), fontWeight: '700', color: TEXT3, fontFamily: 'monospace' },
   countTextActive:  { color: Colors.brandBlue },
 
-  meta: { fontSize: 12, color: TEXT3, marginBottom: 14, marginTop: 4, fontStyle: 'italic', textAlign: 'center' },
+  meta: { fontSize: scale(12), color: TEXT3, marginBottom: 14, marginTop: 4, fontStyle: 'italic', textAlign: 'center' },
 
   /* Pending */
   pendingOuter: {
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#fde68a', borderLeftColor: '#fde68a',
     borderBottomColor: '#92400e', borderRightColor: '#92400e',
   },
-  pendingText:     { flex: 1, fontSize: 13, fontWeight: '600', lineHeight: 18 },
+  pendingText:     { flex: 1, fontSize: scale(13), fontWeight: '600', lineHeight: 18 },
   pendingTextOk:   { color: Colors.success },
   pendingTextWarn: { color: Colors.warning },
 
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#2bb8ef', borderLeftColor: '#2bb8ef',
     borderBottomColor: '#046a96', borderRightColor: '#046a96',
   },
-  refreshText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  refreshText: { color: '#fff', fontSize: scale(14), fontWeight: '700' },
 
   /* Bouton Réinitialiser : raised danger */
   resetOuter: {
@@ -408,6 +408,6 @@ const styles = StyleSheet.create({
     borderTopColor: '#fdd', borderLeftColor: '#fdd',
     borderBottomColor: Colors.dangerBorder, borderRightColor: Colors.dangerBorder,
   },
-  resetText: { color: Colors.danger, fontSize: 14, fontWeight: '700' },
-  resetSub:  { color: Colors.danger, fontSize: 11, opacity: 0.6, marginTop: 2 },
+  resetText: { color: Colors.danger, fontSize: scale(14), fontWeight: '700' },
+  resetSub:  { color: Colors.danger, fontSize: scale(11), opacity: 0.6, marginTop: 2 },
 });

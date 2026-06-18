@@ -7,7 +7,7 @@
 import React, { useState } from 'react';
 import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { EtapeAvecPlv } from '../../db/repositories/programmeRepository';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 import { NEO, NEO_SHD, NEO_IN, TEXT } from './progStyles';
 import NeoDialog from '../NeoDialog';
 
@@ -132,17 +132,17 @@ const styles = StyleSheet.create({
   main:   { flexDirection: 'row', alignItems: 'center', padding: 14, paddingBottom: 10 },
 
   ordreCircle: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 12, flexShrink: 0 },
-  ordreText:   { color: '#fff', fontWeight: '800', fontSize: 15 },
+  ordreText:   { color: '#fff', fontWeight: '800', fontSize: scale(15) },
 
   info:        { flex: 1, marginRight: 8 },
   plvCodeChip: { alignSelf: 'flex-start', backgroundColor: Colors.primaryLight, borderRadius: 5, paddingHorizontal: 5, paddingVertical: 1, borderWidth: 1, borderColor: 'rgba(7,155,217,0.3)', marginBottom: 3 },
-  plvCodeText: { fontSize: 10, fontWeight: '800', color: Colors.brandBlue },
-  clientName:  { fontSize: 14, fontWeight: '700', color: TEXT },
+  plvCodeText: { fontSize: scale(10), fontWeight: '800', color: Colors.brandBlue },
+  clientName:  { fontSize: scale(14), fontWeight: '700', color: TEXT },
 
   right:        { alignItems: 'flex-end', gap: 6 },
   statutBadge:  { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   statutDot:    { width: 6, height: 6, borderRadius: 3 },
-  statutText:   { fontSize: 11, fontWeight: '700' },
+  statutText:   { fontSize: scale(11), fontWeight: '700' },
   syncIndicator:{ width: 8, height: 8, borderRadius: 4 },
   syncGreen:    { backgroundColor: Colors.syncGreen },
   syncOrange:   { backgroundColor: Colors.syncPending },
@@ -151,5 +151,5 @@ const styles = StyleSheet.create({
     backgroundColor: NEO_IN, paddingVertical: 10, paddingHorizontal: 14, alignItems: 'flex-end',
     borderTopWidth: 1, borderTopColor: 'rgba(74,104,128,0.25)',
   },
-  itineraireTxt: { fontSize: 12, fontWeight: '700', color: Colors.brandBlue },
+  itineraireTxt: { fontSize: scale(12), fontWeight: '700', color: Colors.brandBlue },
 });

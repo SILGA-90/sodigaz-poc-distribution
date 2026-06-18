@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 import SectionHeader from './SectionHeader';
 import { LigneState } from './types';
 import { neoCard, NEO, NEO_IN, NEO_SHD, SEP, TEXT, TEXT3 } from './neoStyles';
@@ -82,13 +82,13 @@ export default function QuantitesSection({ isCollecte, lignes, onUpdateQuantite 
 const styles = StyleSheet.create({
   ligneRow:    { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
   ligneRowSep: { borderTopWidth: 1, borderTopColor: SEP },
-  libelle:     { fontSize: 14, fontWeight: '700', color: TEXT },
+  libelle:     { fontSize: scale(14), fontWeight: '700', color: TEXT },
   meta:        { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' },
   codeBadge:     { backgroundColor: NEO_IN, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5 },
-  codeBadgeText: { fontSize: 11, fontWeight: '600', color: TEXT3 },
-  prix:          { fontSize: 11, color: TEXT3 },
+  codeBadgeText: { fontSize: scale(11), fontWeight: '600', color: TEXT3 },
+  prix:          { fontSize: scale(11), color: TEXT3 },
   prevueBadge:     { backgroundColor: Colors.infoBg, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 20 },
-  prevueBadgeText: { fontSize: 11, fontWeight: '700', color: Colors.brandBlue },
+  prevueBadgeText: { fontSize: scale(11), fontWeight: '700', color: Colors.brandBlue },
   stepper:  { flexDirection: 'row', alignItems: 'center', gap: 6 },
   stepOuter: {
     borderRadius: 10, backgroundColor: NEO,
@@ -104,12 +104,12 @@ const styles = StyleSheet.create({
     borderTopColor: '#ffffff', borderLeftColor: '#ffffff',
     borderBottomColor: '#8aa8c0', borderRightColor: '#8aa8c0',
   },
-  stepBtnText: { fontSize: 26, fontWeight: '700', color: TEXT, lineHeight: 30 },
+  stepBtnText: { fontSize: scale(26), fontWeight: '700', color: TEXT, lineHeight: 30 },
   qteInput: {
     width: 56, height: 48, borderRadius: 10, backgroundColor: NEO_IN,
     borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
     borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8',
     borderBottomColor: '#f4f8fb', borderRightColor: '#f4f8fb',
-    fontSize: 18, fontWeight: '700', color: TEXT, textAlign: 'center',
+    fontSize: scale(18), fontWeight: '700', color: TEXT, textAlign: 'center',
   },
 });

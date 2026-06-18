@@ -23,6 +23,27 @@
  * shadow* sur iOS et elevation sur Android. Les deux valeurs sont
  * regroupées ici pour éviter de les répéter dans chaque StyleSheet.
  */
+import { Dimensions } from 'react-native';
+
+/**
+ * Adapte une taille en points à la largeur d'écran réelle.
+ *
+ * Équivalent mobile du `rem` web : toutes les fontSize et certains
+ * espacements passent par scale() au lieu d'être des px fixes.
+ * Résultat plafonné à +40% pour éviter des textes disproportionnés
+ * sur les très grandes tablettes.
+ *
+ * Base de référence : 375 pt (iPhone 14 mini), la taille de design
+ * sur laquelle les maquettes sont calibrées. En dessous, les tailles
+ * sont réduites proportionnellement (ex. petits écrans 360 px).
+ */
+const BASE_WIDTH = 375;
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const _ratio = Math.min(SCREEN_WIDTH / BASE_WIDTH, 1.4);
+
+export function scale(size: number): number {
+  return Math.round(size * _ratio);
+}
 
 export const Colors = {
   // Marque SODIGAZ (couleurs officielles du logo)

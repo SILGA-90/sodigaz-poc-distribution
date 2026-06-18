@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 import { NEO, TEXT, TEXT3 } from './dashStyles';
 
 /** Formate un timestamp ms en durée relative en français. */
@@ -67,11 +67,11 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(74,104,128,0.35)', borderRightColor: 'rgba(74,104,128,0.35)',
   },
   left:  { flex: 1 },
-  label: { fontSize: 11, color: TEXT3, fontWeight: '500' },
-  value: { fontSize: 15, color: TEXT,  fontWeight: '700', marginTop: 2 },
+  label: { fontSize: scale(11), color: TEXT3, fontWeight: '500' },
+  value: { fontSize: scale(15), color: TEXT,  fontWeight: '700', marginTop: 2 },
 
   pendingBadge: { backgroundColor: Colors.warningBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, borderWidth: 1, borderColor: Colors.warningBorder },
-  pendingText:  { fontSize: 11, color: Colors.warning, fontWeight: '700' },
+  pendingText:  { fontSize: scale(11), color: Colors.warning, fontWeight: '700' },
 
   btnOuter: {
     borderRadius: 20, backgroundColor: Colors.brandBlue,
@@ -85,5 +85,5 @@ const styles = StyleSheet.create({
     borderTopColor: '#2bb8ef', borderLeftColor: '#2bb8ef',
     borderBottomColor: '#046a96', borderRightColor: '#046a96',
   },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  btnText: { color: '#fff', fontWeight: '700', fontSize: scale(13) },
 });

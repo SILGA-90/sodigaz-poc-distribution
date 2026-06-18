@@ -36,7 +36,7 @@ import {
 } from '../db/repositories/programmeRepository';
 import { Programme } from '../types/models';
 import { RootStackParamList } from '../types/navigation';
-import { Colors } from '../theme';
+import { Colors, scale } from '../theme';
 import { useLayout } from '../hooks/useLayout';
 import ProgrammeHeader from '../components/programme/ProgrammeHeader';
 import EtapeCard from '../components/programme/EtapeCard';
@@ -138,5 +138,5 @@ const styles = StyleSheet.create({
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: NEO },
   list:      { paddingHorizontal: 12, paddingBottom: 12 },
   emptyWrap: { padding: 40, alignItems: 'center' },
-  emptyText: { color: TEXT3, textAlign: 'center', fontSize: 14 },
+  emptyText: { color: TEXT3, textAlign: 'center', fontSize: scale(14) },
 });

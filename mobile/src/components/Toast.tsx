@@ -26,7 +26,7 @@
  */
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text } from 'react-native';
-import { Colors } from '../theme';
+import { Colors, scale } from '../theme';
 
 interface Props {
   visible: boolean;
@@ -98,5 +98,5 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     zIndex: 999,
   },
-  text: { color: '#fff', fontWeight: '600', fontSize: 14, textAlign: 'center' },
+  text: { color: '#fff', fontWeight: '600', fontSize: scale(14), textAlign: 'center' },
 });

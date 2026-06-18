@@ -1,7 +1,7 @@
 import React from 'react';
 import { Image, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { UtilisateurInfo } from '../../types/auth';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 import { NAVY } from './dashStyles';
 
 interface Props {
@@ -79,11 +79,11 @@ const styles = StyleSheet.create({
 
   userCard:   { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
   avatar:     { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.brandOrange, justifyContent: 'center', alignItems: 'center' },
-  avatarText: { color: '#fff', fontSize: 17, fontWeight: '800' },
+  avatarText: { color: '#fff', fontSize: scale(17), fontWeight: '800' },
   userInfo:   { flex: 1 },
-  userHello:  { color: 'rgba(255,255,255,0.5)', fontSize: 12 },
-  userName:   { color: '#fff', fontSize: 17, fontWeight: '700', marginTop: 1 },
-  userCode:   { color: 'rgba(255,255,255,0.45)', fontSize: 12, marginTop: 2 },
+  userHello:  { color: 'rgba(255,255,255,0.5)', fontSize: scale(12) },
+  userName:   { color: '#fff', fontSize: scale(17), fontWeight: '700', marginTop: 1 },
+  userCode:   { color: 'rgba(255,255,255,0.45)', fontSize: scale(12), marginTop: 2 },
   brandLogo:  { width: 56, height: 34, opacity: 0.5 },
 
   /* Paysage — barre compacte */
@@ -91,11 +91,11 @@ const styles = StyleSheet.create({
   landRow:    { flexDirection: 'row', alignItems: 'center', gap: 12 },
   logoLand:   { width: 28, height: 28 },
   avatarLand: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.brandOrange, justifyContent: 'center', alignItems: 'center' },
-  avatarLandText: { color: '#fff', fontSize: 13, fontWeight: '800' },
-  nameLand:   { flex: 1, color: '#fff', fontSize: 14, fontWeight: '700' },
+  avatarLandText: { color: '#fff', fontSize: scale(13), fontWeight: '800' },
+  nameLand:   { flex: 1, color: '#fff', fontSize: scale(14), fontWeight: '700' },
 
   /* Communs portrait + paysage */
   syncPill:     { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
   syncDot:      { width: 8, height: 8, borderRadius: 4 },
-  syncPillText: { color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: '600' },
+  syncPillText: { color: 'rgba(255,255,255,0.8)', fontSize: scale(12), fontWeight: '600' },
 });

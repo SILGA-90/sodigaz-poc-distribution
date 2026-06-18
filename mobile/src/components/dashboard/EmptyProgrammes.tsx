@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 import { NEO, NEO_SHD, TEXT, TEXT3 } from './dashStyles';
 
 interface Props {
@@ -40,8 +40,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     shadowColor: '#ffffff', shadowOffset: { width: -4, height: -4 }, shadowOpacity: 0.85, shadowRadius: 8,
   },
-  iconText: { fontSize: 28 },
-  title:    { fontSize: 16, fontWeight: '700', color: TEXT, marginBottom: 8 },
+  iconText: { fontSize: scale(28) },
+  title:    { fontSize: scale(16), fontWeight: '700', color: TEXT, marginBottom: 8 },
   sub:      { color: TEXT3, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
   btnOuter: {
     borderRadius: 14, backgroundColor: Colors.brandBlue,
@@ -55,5 +55,5 @@ const styles = StyleSheet.create({
     borderTopColor: '#2bb8ef', borderLeftColor: '#2bb8ef',
     borderBottomColor: '#046a96', borderRightColor: '#046a96',
   },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  btnText: { color: '#fff', fontWeight: '700', fontSize: scale(14) },
 });

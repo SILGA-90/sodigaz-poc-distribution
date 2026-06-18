@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 import { NEO_IN, TEXT3 } from './dashStyles';
 
 interface Props {
@@ -49,9 +49,9 @@ const styles = StyleSheet.create({
     borderTopColor: '#fdd', borderLeftColor: '#fdd',
     borderBottomColor: '#e88', borderRightColor: '#e88',
   },
-  logoutText:    { color: Colors.danger, fontWeight: '700', fontSize: 14 },
+  logoutText:    { color: Colors.danger, fontWeight: '700', fontSize: scale(14) },
   devZone:       { alignItems: 'center', gap: 4, paddingVertical: 8, flexDirection: 'row', justifyContent: 'center' },
-  versionText:   { color: TEXT3, fontSize: 11 },
+  versionText:   { color: TEXT3, fontSize: scale(11) },
   debugLink:     { paddingVertical: 4, paddingHorizontal: 12 },
-  debugLinkText: { color: Colors.brandBlue, fontSize: 12, fontWeight: '600' },
+  debugLinkText: { color: Colors.brandBlue, fontSize: scale(12), fontWeight: '600' },
 });

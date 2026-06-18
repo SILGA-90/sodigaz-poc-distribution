@@ -4,7 +4,7 @@
  */
 import React, { useState } from 'react';
 import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 import { EtapeInfo } from '../../db/repositories/saisieRepository';
 import { NAVY, TEXT2 } from './neoStyles';
 import NeoDialog from '../NeoDialog';
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
 
   gpsPill:     { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
   gpsDot:      { width: 7, height: 7, borderRadius: 4 },
-  gpsPillText: { fontSize: 12, fontWeight: '700' },
+  gpsPillText: { fontSize: scale(12), fontWeight: '700' },
 
   itineraireBtn: {
     paddingHorizontal: 14, paddingVertical: 9, borderRadius: 16,
@@ -90,13 +90,13 @@ const styles = StyleSheet.create({
     borderTopColor: '#2bb8ef', borderLeftColor: '#2bb8ef',
     borderBottomColor: '#046a96', borderRightColor: '#046a96',
   },
-  itineraireText: { color: '#fff', fontWeight: '700', fontSize: 12 },
+  itineraireText: { color: '#fff', fontWeight: '700', fontSize: scale(12) },
 
   typeChip:     { alignSelf: 'flex-start', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20, marginBottom: 8, borderWidth: 1 },
   typeChipC:    { backgroundColor: 'rgba(7,155,217,0.2)',  borderColor: 'rgba(7,155,217,0.4)' },
   typeChipR:    { backgroundColor: 'rgba(52,211,153,0.2)', borderColor: 'rgba(52,211,153,0.4)' },
-  typeChipText: { fontSize: 11, fontWeight: '700', color: '#e2e8f0' },
+  typeChipText: { fontSize: scale(11), fontWeight: '700', color: '#e2e8f0' },
   plvCodeChip:  { alignSelf: 'flex-start', backgroundColor: 'rgba(7,155,217,0.25)', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2, borderWidth: 1, borderColor: 'rgba(7,155,217,0.5)', marginBottom: 5 },
-  plvCodeText:  { fontSize: 11, fontWeight: '800', color: '#7dd3fa' },
-  clientName:   { fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
+  plvCodeText:  { fontSize: scale(11), fontWeight: '800', color: '#7dd3fa' },
+  clientName:   { fontSize: scale(20), fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
 });

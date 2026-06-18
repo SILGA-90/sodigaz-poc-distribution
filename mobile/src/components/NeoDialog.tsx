@@ -37,7 +37,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../theme';
+import { Colors, scale } from '../theme';
 
 const NEO     = '#e8edf2';
 const NEO_SHD = '#4a6880';
@@ -175,8 +175,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, marginBottom: 16,
   },
 
-  title:   { fontSize: 17, fontWeight: '800', color: TEXT,  textAlign: 'center', marginBottom: 8, letterSpacing: -0.2 },
-  message: { fontSize: 14, color: TEXT2, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+  title:   { fontSize: scale(17), fontWeight: '800', color: TEXT,  textAlign: 'center', marginBottom: 8, letterSpacing: -0.2 },
+  message: { fontSize: scale(14), color: TEXT2, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
 
   btnRow: { flexDirection: 'row', gap: 10, width: '100%' },
 
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#ffffff', borderLeftColor: '#ffffff',
     borderBottomColor: '#8aa8c0', borderRightColor: '#8aa8c0',
   },
-  cancelText: { fontSize: 14, fontWeight: '700', color: TEXT2 },
+  cancelText: { fontSize: scale(14), fontWeight: '700', color: TEXT2 },
 
   /* Confirmer : raised coloré */
   confirmOuter: {
@@ -210,5 +210,5 @@ const styles = StyleSheet.create({
     borderTopWidth: 1.5, borderLeftWidth: 1.5,
     borderBottomWidth: 1.5, borderRightWidth: 1.5,
   },
-  confirmText: { fontSize: 14, fontWeight: '800', color: '#fff' },
+  confirmText: { fontSize: scale(14), fontWeight: '800', color: '#fff' },
 });

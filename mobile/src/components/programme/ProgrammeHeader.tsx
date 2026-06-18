@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Programme } from '../../types/models';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 import { NAVY } from './progStyles';
 import TriButtons, { TriMode } from './TriButtons';
 
@@ -105,29 +105,29 @@ const styles = StyleSheet.create({
   /* Ligne 1 */
   headerTop:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 10, gap: 8 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, flexWrap: 'wrap' },
-  numero:     { fontSize: 16, fontWeight: '800', color: '#fff', letterSpacing: -0.3, flexShrink: 0 },
+  numero:     { fontSize: scale(16), fontWeight: '800', color: '#fff', letterSpacing: -0.3, flexShrink: 0 },
   chip:       { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, borderWidth: 1 },
   chipC:        { backgroundColor: 'rgba(7,155,217,0.2)',    borderColor: 'rgba(7,155,217,0.4)' },
   chipR:        { backgroundColor: 'rgba(16,185,129,0.2)',   borderColor: 'rgba(16,185,129,0.4)' },
   chipCloture:  { backgroundColor: 'rgba(16,185,129,0.2)',   borderColor: 'rgba(16,185,129,0.4)' },
   chipEnCours:  { backgroundColor: 'rgba(238,114,2,0.2)',    borderColor: 'rgba(238,114,2,0.4)' },
   chipPlanifie: { backgroundColor: 'rgba(148,163,184,0.15)', borderColor: 'rgba(148,163,184,0.3)' },
-  chipText:   { fontSize: 11, fontWeight: '700', color: '#e2e8f0' },
-  dateText:   { fontSize: 11, color: 'rgba(255,255,255,0.4)', flexShrink: 0 },
+  chipText:   { fontSize: scale(11), fontWeight: '700', color: '#e2e8f0' },
+  dateText:   { fontSize: scale(11), color: 'rgba(255,255,255,0.4)', flexShrink: 0 },
 
   /* Ligne 2 : stats + progress */
   statsRow:  { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 10, gap: 12 },
   statsPart: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', flexShrink: 1 },
-  statNum:         { fontSize: 14, fontWeight: '800', color: '#fff' },
+  statNum:         { fontSize: scale(14), fontWeight: '800', color: '#fff' },
   statNumEchec:    { color: '#fca5a5' },
   statNumAFaire:   { color: '#fcd34d' },
-  statLabel:       { fontSize: 11, color: 'rgba(255,255,255,0.5)' },
-  statSep:         { fontSize: 11, color: 'rgba(255,255,255,0.22)' },
+  statLabel:       { fontSize: scale(11), color: 'rgba(255,255,255,0.5)' },
+  statSep:         { fontSize: scale(11), color: 'rgba(255,255,255,0.22)' },
   progPart:        { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0, width: 110 },
   progTrack:       { flex: 1, height: 6, borderRadius: 3, flexDirection: 'row', overflow: 'hidden', backgroundColor: 'rgba(0,0,0,0.35)' },
   progFillVisitee: { height: 6, backgroundColor: '#34d399' },
   progFillEchec:   { height: 6, backgroundColor: '#f87171' },
-  progPct:         { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.75)', width: 28, textAlign: 'right' },
+  progPct:         { fontSize: scale(11), fontWeight: '700', color: 'rgba(255,255,255,0.75)', width: 28, textAlign: 'right' },
 
   /* Ligne 3 : tri */
   triRow: { paddingHorizontal: 12, marginBottom: 8 },
@@ -135,9 +135,9 @@ const styles = StyleSheet.create({
   /* Ligne 4 : actions */
   actionsRow:       { flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingBottom: 12 },
   anomaliesBtn:     { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12, backgroundColor: 'rgba(238,114,2,0.22)', borderWidth: 1.5, borderColor: Colors.brandOrange },
-  anomaliesBtnText: { fontSize: 13, fontWeight: '700', color: Colors.brandOrange },
+  anomaliesBtnText: { fontSize: scale(13), fontWeight: '700', color: Colors.brandOrange },
   clotureBtn:       { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: Colors.brandBlue, borderTopWidth: 1, borderLeftWidth: 1, borderBottomWidth: 1, borderRightWidth: 1, borderTopColor: '#2bb8ef', borderLeftColor: '#2bb8ef', borderBottomColor: '#046a96', borderRightColor: '#046a96' },
-  clotureBtnText:   { color: '#fff', fontWeight: '700', fontSize: 13 },
+  clotureBtnText:   { color: '#fff', fontWeight: '700', fontSize: scale(13) },
   clotureDone:      { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: 'rgba(52,211,153,0.15)', borderWidth: 1.5, borderColor: '#34d399' },
-  clotureDoneText:  { color: '#34d399', fontWeight: '700', fontSize: 13 },
+  clotureDoneText:  { color: '#34d399', fontWeight: '700', fontSize: scale(13) },
 });

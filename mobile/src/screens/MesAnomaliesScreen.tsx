@@ -32,7 +32,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { getAnomaliesDuProgramme, AnomalieLocale } from '../db/repositories/anomalieRepository';
 import { RootStackParamList } from '../types/navigation';
-import { Colors } from '../theme';
+import { Colors, scale } from '../theme';
 
 /* Palette néo claire */
 const NEO     = '#e8edf2';
@@ -235,8 +235,8 @@ const styles = StyleSheet.create({
     marginTop: 2, flexShrink: 0,
   },
   headerText:    { flex: 1 },
-  headerLabel:   { color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: '600', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2 },
-  headerNumero:  { color: '#fff', fontSize: 22, fontWeight: '800', marginBottom: 16 },
+  headerLabel:   { color: 'rgba(255,255,255,0.45)', fontSize: scale(11), fontWeight: '600', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2 },
+  headerNumero:  { color: '#fff', fontSize: scale(22), fontWeight: '800', marginBottom: 16 },
 
   /* Stats dans le header : chips glass */
   statsRow: { flexDirection: 'row', gap: 8 },
@@ -246,9 +246,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)',
   },
   statDot: { width: 6, height: 6, borderRadius: 3 },
-  statNum: { fontSize: 16, fontWeight: '800', lineHeight: 20 },
-  statLbl: { fontSize: 10, fontWeight: '500' },
-  headerZero: { color: 'rgba(255,255,255,0.35)', fontSize: 13, fontStyle: 'italic' },
+  statNum: { fontSize: scale(16), fontWeight: '800', lineHeight: 20 },
+  statLbl: { fontSize: scale(10), fontWeight: '500' },
+  headerZero: { color: 'rgba(255,255,255,0.35)', fontSize: scale(13), fontStyle: 'italic' },
 
   flatList:    { flex: 1 },
   list:        { padding: 14, paddingTop: 16, paddingBottom: 32 },
@@ -275,11 +275,11 @@ const styles = StyleSheet.create({
     marginRight: 12, borderWidth: 1,
   },
   cardMeta:  { flex: 1 },
-  typeLabel: { fontSize: 14, fontWeight: '700', color: TEXT, marginBottom: 2 },
-  dateText:  { fontSize: 12, color: TEXT3 },
+  typeLabel: { fontSize: scale(14), fontWeight: '700', color: TEXT, marginBottom: 2 },
+  dateText:  { fontSize: scale(12), color: TEXT3 },
 
   gravitePill: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
-  graviteText: { fontSize: 11, fontWeight: '700' },
+  graviteText: { fontSize: scale(11), fontWeight: '700' },
 
   /* Description inset */
   descBox: {
@@ -287,16 +287,16 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderLeftWidth: 1,
     borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8',
   },
-  description: { fontSize: 13, color: TEXT2, lineHeight: 20 },
+  description: { fontSize: scale(13), color: TEXT2, lineHeight: 20 },
 
   /* Footer */
   cardFooter: { flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: SEP, paddingTop: 8, gap: 8 },
   statutPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
-  statutText: { fontSize: 11, fontWeight: '600' },
+  statutText: { fontSize: scale(11), fontWeight: '600' },
   syncChip:   { marginLeft: 'auto' as 'auto', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 6 },
   syncChipSynced:  { backgroundColor: Colors.successBg },
   syncChipPending: { backgroundColor: Colors.warningBg },
-  syncText:        { fontSize: 11, fontWeight: '600' },
+  syncText:        { fontSize: scale(11), fontWeight: '600' },
 
   /* État vide */
   empty:      { paddingTop: 70, alignItems: 'center', paddingHorizontal: 40 },
@@ -312,6 +312,6 @@ const styles = StyleSheet.create({
     borderTopColor: '#d0fff0', borderLeftColor: '#d0fff0',
     borderBottomColor: Colors.successBorder, borderRightColor: Colors.successBorder,
   },
-  emptyTitle: { fontSize: 17, fontWeight: '700', color: TEXT2, marginBottom: 8 },
-  emptyText:  { fontSize: 13, color: TEXT3, textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: scale(17), fontWeight: '700', color: TEXT2, marginBottom: 8 },
+  emptyText:  { fontSize: scale(13), color: TEXT3, textAlign: 'center', lineHeight: 20 },
 });

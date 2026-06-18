@@ -44,7 +44,7 @@ import {
 } from '../db/repositories/programmeRepository';
 import { Programme } from '../types/models';
 import { RootStackParamList } from '../types/navigation';
-import { Colors } from '../theme';
+import { Colors, scale } from '../theme';
 import { neoCard, NEO, NEO_SHD, NAVY, TEXT, TEXT2, TEXT3, SEP } from '../components/saisie/neoStyles';
 import SectionHeader from '../components/saisie/SectionHeader';
 import RecapRow from '../components/saisie/RecapRow';
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
   scroll:      { paddingBottom: 40 },
   wideContent: { maxWidth: 700, alignSelf: 'center', width: '100%' },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: NEO, padding: 32 },
-  errorText: { color: TEXT3, fontSize: 15 },
+  errorText: { color: TEXT3, fontSize: scale(15) },
 
   /* Header navy */
   header:  { backgroundColor: NAVY, overflow: 'hidden' },
@@ -429,24 +429,24 @@ const styles = StyleSheet.create({
   typeChip:  { alignSelf: 'flex-start', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20, marginBottom: 8, borderWidth: 1 },
   typeChipC: { backgroundColor: 'rgba(7,155,217,0.2)',  borderColor: 'rgba(7,155,217,0.4)' },
   typeChipR: { backgroundColor: 'rgba(52,211,153,0.2)', borderColor: 'rgba(52,211,153,0.4)' },
-  typeChipText: { fontSize: 11, fontWeight: '700', color: '#e2e8f0' },
-  numero: { fontSize: 22, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
-  meta:   { fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 2 },
+  typeChipText: { fontSize: scale(11), fontWeight: '700', color: '#e2e8f0' },
+  numero: { fontSize: scale(22), fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
+  meta:   { fontSize: scale(13), color: 'rgba(255,255,255,0.5)', marginTop: 2 },
 
-  cardTitle: { fontSize: 15, fontWeight: '700', color: TEXT2, marginBottom: 8 },
+  cardTitle: { fontSize: scale(15), fontWeight: '700', color: TEXT2, marginBottom: 8 },
 
   /* Barre de progression */
   progressHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  progressLabel:  { fontSize: 13, fontWeight: '600', color: TEXT2 },
-  progressPct:    { fontSize: 14, fontWeight: '800', color: Colors.brandBlue },
+  progressLabel:  { fontSize: scale(13), fontWeight: '600', color: TEXT2 },
+  progressPct:    { fontSize: scale(14), fontWeight: '800', color: Colors.brandBlue },
   progressTrack:  { height: 8, borderRadius: 4, backgroundColor: '#d4dde6', marginBottom: 14, overflow: 'hidden' },
   progressFill:   { height: 8, borderRadius: 4 },
 
   /* Mini stats étapes */
   etapesRow:   { flexDirection: 'row', gap: 12, marginBottom: 4 },
   etapeStat:   { alignItems: 'center', flex: 1 },
-  etapeStatN:  { fontSize: 20, fontWeight: '800', letterSpacing: -0.5 },
-  etapeStatL:  { fontSize: 10, color: TEXT3, marginTop: 1, fontWeight: '600' },
+  etapeStatN:  { fontSize: scale(20), fontWeight: '800', letterSpacing: -0.5 },
+  etapeStatL:  { fontSize: scale(10), color: TEXT3, marginTop: 1, fontWeight: '600' },
 
   recapDivider: { height: 1, backgroundColor: SEP, marginVertical: 14 },
 
@@ -454,28 +454,28 @@ const styles = StyleSheet.create({
   opCardTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   opTypeChip:   { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
   opTypeDot:    { width: 6, height: 6, borderRadius: 3 },
-  opTypeLabel:  { fontSize: 11, fontWeight: '700' },
-  opHeure:      { fontSize: 12, fontWeight: '600', color: TEXT3 },
-  opClientName: { fontSize: 14, fontWeight: '700', color: TEXT, marginBottom: 4 },
+  opTypeLabel:  { fontSize: scale(11), fontWeight: '700' },
+  opHeure:      { fontSize: scale(12), fontWeight: '600', color: TEXT3 },
+  opClientName: { fontSize: scale(14), fontWeight: '700', color: TEXT, marginBottom: 4 },
   opPlvRow:       { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 4 },
   opPlvCodeChip:  { backgroundColor: '#e3f3fb', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: 'rgba(7,155,217,0.3)' },
-  opPlvCode:      { fontSize: 10, fontWeight: '800', color: Colors.brandBlue },
+  opPlvCode:      { fontSize: scale(10), fontWeight: '800', color: Colors.brandBlue },
   opAdresseRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 10 },
-  opAdresse:    { fontSize: 11, color: TEXT3, flex: 1 },
+  opAdresse:    { fontSize: scale(11), color: TEXT3, flex: 1 },
   /* Lignes d'articles */
   ligneRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: SEP },
-  ligneLibelle: { flex: 1, fontSize: 13, color: TEXT, fontWeight: '600', marginRight: 8 },
+  ligneLibelle: { flex: 1, fontSize: scale(13), color: TEXT, fontWeight: '600', marginRight: 8 },
   ligneRight:   { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  ligneQte:     { fontSize: 13, fontWeight: '800', color: Colors.brandBlue },
-  ligneMontant: { fontSize: 12, color: TEXT3 },
+  ligneQte:     { fontSize: scale(13), fontWeight: '800', color: Colors.brandBlue },
+  ligneMontant: { fontSize: scale(12), color: TEXT3 },
 
   opCardMid:    { flexDirection: 'row', gap: 10, marginTop: 8, marginBottom: 10 },
-  opMeta:       { fontSize: 12, color: TEXT2, fontWeight: '600' },
+  opMeta:       { fontSize: scale(12), color: TEXT2, fontWeight: '600' },
   opDivider:    { height: 1, backgroundColor: SEP, marginBottom: 10 },
   opCardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  opMontant:    { fontSize: 16, fontWeight: '800', color: TEXT },
+  opMontant:    { fontSize: scale(16), fontWeight: '800', color: TEXT },
   opEncaissePill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 },
-  opEncaisseText: { fontSize: 11, fontWeight: '700' },
+  opEncaisseText: { fontSize: scale(11), fontWeight: '700' },
 
   /* Badge "déjà clôturé" : raised vert */
   clotureBadgeOuter: {
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#d0fff0', borderLeftColor: '#d0fff0',
     borderBottomColor: Colors.successBorder, borderRightColor: Colors.successBorder,
   },
-  clotureBadgeText: { color: Colors.success, fontWeight: '700', fontSize: 14 },
+  clotureBadgeText: { color: Colors.success, fontWeight: '700', fontSize: scale(14) },
 
   /* Bouton clôturer : raised vert */
   clotureBtnOuter: {
@@ -507,8 +507,8 @@ const styles = StyleSheet.create({
     borderTopColor: '#6ee7b7', borderLeftColor: '#6ee7b7',
     borderBottomColor: '#065f46', borderRightColor: '#065f46',
   },
-  clotureBtnText: { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
-  clotureBtnSub:  { color: 'rgba(255,255,255,0.65)', fontSize: 11, marginTop: 4 },
+  clotureBtnText: { color: '#fff', fontSize: scale(16), fontWeight: '800', letterSpacing: -0.2 },
+  clotureBtnSub:  { color: 'rgba(255,255,255,0.65)', fontSize: scale(11), marginTop: 4 },
 
   /* État succès */
   successRoot: { flex: 1, backgroundColor: NEO, padding: 24, alignItems: 'center', justifyContent: 'center' },
@@ -528,8 +528,8 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.successBorder, borderRightColor: Colors.successBorder,
   },
 
-  successTitle: { fontSize: 24, fontWeight: '800', color: TEXT, letterSpacing: -0.5, marginBottom: 4 },
-  successSub:   { fontSize: 13, color: TEXT3, marginBottom: 28 },
+  successTitle: { fontSize: scale(24), fontWeight: '800', color: TEXT, letterSpacing: -0.5, marginBottom: 4 },
+  successSub:   { fontSize: scale(13), color: TEXT3, marginBottom: 28 },
 
   /* Notice sync : warning raised */
   syncNoticeOuter: {
@@ -545,7 +545,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#fffdf0', borderLeftColor: '#fffdf0',
     borderBottomColor: Colors.warningBorder, borderRightColor: Colors.warningBorder,
   },
-  syncNoticeText: { flex: 1, fontSize: 13, color: TEXT2, lineHeight: 18 },
+  syncNoticeText: { flex: 1, fontSize: scale(13), color: TEXT2, lineHeight: 18 },
 
   /* Bouton retour : raised bleu */
   backBtnOuter: {
@@ -561,5 +561,5 @@ const styles = StyleSheet.create({
     borderTopColor: '#2bb8ef', borderLeftColor: '#2bb8ef',
     borderBottomColor: '#046a96', borderRightColor: '#046a96',
   },
-  backBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  backBtnText: { color: '#fff', fontSize: scale(16), fontWeight: '700' },
 });

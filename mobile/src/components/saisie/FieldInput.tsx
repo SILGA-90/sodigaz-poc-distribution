@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, TextInput, TextInputProps } from 'react-native';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 import { NEO_IN, TEXT } from './neoStyles';
 
 interface Props {
@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
     borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8',
     borderBottomColor: '#f4f8fb', borderRightColor: '#f4f8fb',
-    paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: TEXT,
+    paddingHorizontal: 14, paddingVertical: 13, fontSize: scale(15), color: TEXT,
   },
   inputFocused: {
     borderTopColor: Colors.brandBlue, borderLeftColor: Colors.brandBlue,

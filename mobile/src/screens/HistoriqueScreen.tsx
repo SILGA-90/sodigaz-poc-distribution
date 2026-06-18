@@ -32,7 +32,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { getTousLesProgrammes, ProgrammeAvecProgression } from '../db/repositories/programmeRepository';
 import { RootStackParamList } from '../types/navigation';
-import { Colors } from '../theme';
+import { Colors, scale } from '../theme';
 import { useLayout } from '../hooks/useLayout';
 
 /* Palette néo claire */
@@ -169,8 +169,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center', justifyContent: 'center',
   },
-  headerLabel: { fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.45)', letterSpacing: 1.2, textTransform: 'uppercase' },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.3 },
+  headerLabel: { fontSize: scale(11), fontWeight: '600', color: 'rgba(255,255,255,0.45)', letterSpacing: 1.2, textTransform: 'uppercase' },
+  headerTitle: { fontSize: scale(20), fontWeight: '800', color: '#fff', letterSpacing: -0.3 },
 
   list: { padding: 12, paddingBottom: 32 },
 
@@ -190,19 +190,19 @@ const styles = StyleSheet.create({
     borderRightWidth: 1.5, borderRightColor: '#8aa8c0',
   },
   cardTop:  { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 14 },
-  numero:   { fontSize: 15, fontWeight: '800', color: TEXT, marginBottom: 6 },
+  numero:   { fontSize: scale(15), fontWeight: '800', color: TEXT, marginBottom: 6 },
   metaRow:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
 
   typeChip:      { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, borderWidth: 1 },
   typeChipC:     { backgroundColor: Colors.infoBg,    borderColor: Colors.infoBorder },
   typeChipR:     { backgroundColor: Colors.successBg, borderColor: Colors.successBorder },
-  typeChipText:  { fontSize: 10, fontWeight: '700' },
+  typeChipText:  { fontSize: scale(10), fontWeight: '700' },
   typeChipTextC: { color: Colors.brandBlue },
   typeChipTextR: { color: Colors.success },
-  dateLine:      { fontSize: 12, color: TEXT3 },
+  dateLine:      { fontSize: scale(12), color: TEXT3 },
 
   statutPill:     { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, alignSelf: 'flex-start', borderWidth: 1 },
-  statutPillText: { fontSize: 11, fontWeight: '700' },
+  statutPillText: { fontSize: scale(11), fontWeight: '700' },
 
   /* Barre de progression inset */
   barRow:   { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8',
   },
   barFill:  { height: 7, borderRadius: 6 },
-  barLabel: { fontSize: 12, fontWeight: '700', minWidth: 36, textAlign: 'right' },
+  barLabel: { fontSize: scale(12), fontWeight: '700', minWidth: 36, textAlign: 'right' },
 
   /* État vide */
   empty:      { paddingTop: 70, alignItems: 'center', paddingHorizontal: 40 },
@@ -229,6 +229,6 @@ const styles = StyleSheet.create({
     borderTopColor: '#ffffff', borderLeftColor: '#ffffff',
     borderBottomColor: '#8aa8c0', borderRightColor: '#8aa8c0',
   },
-  emptyTitle: { fontSize: 17, fontWeight: '700', color: TEXT2, marginBottom: 8 },
-  emptyText:  { fontSize: 13, color: TEXT3, textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: scale(17), fontWeight: '700', color: TEXT2, marginBottom: 8 },
+  emptyText:  { fontSize: scale(13), color: TEXT3, textAlign: 'center', lineHeight: 20 },
 });

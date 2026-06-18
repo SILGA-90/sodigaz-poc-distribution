@@ -31,7 +31,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { getDatabase } from '../db/database';
 import { RootStackParamList } from '../types/navigation';
-import { Colors } from '../theme';
+import { Colors, scale } from '../theme';
 import SectionHeader from '../components/saisie/SectionHeader';
 import SigChip from '../components/SigChip';
 import { NEO, NEO_SHD, NEO_IN, NAVY, TEXT, TEXT2, TEXT3, SEP, neoCard } from '../components/saisie/neoStyles';
@@ -257,8 +257,8 @@ function InfoRow({ label, value, valueColor }: { label: string; value: string; v
 }
 const irS = StyleSheet.create({
   row:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
-  label: { fontSize: 13, color: TEXT3, fontWeight: '500' },
-  value: { fontSize: 13, fontWeight: '700', color: TEXT },
+  label: { fontSize: scale(13), color: TEXT3, fontWeight: '500' },
+  value: { fontSize: scale(13), fontWeight: '700', color: TEXT },
 });
 
 function modePaiementLabel(mode: string): string {
@@ -288,8 +288,8 @@ const styles = StyleSheet.create({
     borderTopColor: '#ffffff', borderLeftColor: '#ffffff',
     borderBottomColor: '#8aa8c0', borderRightColor: '#8aa8c0',
   },
-  emptyTitle: { fontSize: 16, fontWeight: '700', color: TEXT2, marginBottom: 6 },
-  emptyText:  { fontSize: 13, color: TEXT3, textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: scale(16), fontWeight: '700', color: TEXT2, marginBottom: 6 },
+  emptyText:  { fontSize: scale(13), color: TEXT3, textAlign: 'center', lineHeight: 20 },
 
   /* Header navy */
   header:  { backgroundColor: NAVY, overflow: 'hidden' },
@@ -301,18 +301,18 @@ const styles = StyleSheet.create({
   typeChip:  { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
   typeChipC: { backgroundColor: 'rgba(7,155,217,0.2)',  borderColor: 'rgba(7,155,217,0.4)' },
   typeChipR: { backgroundColor: 'rgba(52,211,153,0.2)', borderColor: 'rgba(52,211,153,0.4)' },
-  typeChipText: { fontSize: 12, fontWeight: '700', color: '#e2e8f0' },
+  typeChipText: { fontSize: scale(12), fontWeight: '700', color: '#e2e8f0' },
   plvCodeChip: { alignSelf: 'flex-start', backgroundColor: 'rgba(7,155,217,0.25)', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2, borderWidth: 1, borderColor: 'rgba(7,155,217,0.5)', marginTop: 12, marginBottom: 5 },
-  plvCodeText: { fontSize: 11, fontWeight: '800', color: '#7dd3fa' },
-  clientName:  { fontSize: 18, fontWeight: '800', color: '#fff', letterSpacing: -0.3, marginBottom: 8 },
-  sousType:    { fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 4 },
-  dateText:    { fontSize: 13, color: 'rgba(255,255,255,0.5)' },
+  plvCodeText: { fontSize: scale(11), fontWeight: '800', color: '#7dd3fa' },
+  clientName:  { fontSize: scale(18), fontWeight: '800', color: '#fff', letterSpacing: -0.3, marginBottom: 8 },
+  sousType:    { fontSize: scale(11), color: 'rgba(255,255,255,0.4)', marginBottom: 4 },
+  dateText:    { fontSize: scale(13), color: 'rgba(255,255,255,0.5)' },
 
   syncPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
   syncPillSynced:  { backgroundColor: Colors.successBg, borderColor: Colors.successBorder },
   syncPillPending: { backgroundColor: Colors.warningBg, borderColor: Colors.warningBorder },
   syncDot:         { width: 7, height: 7, borderRadius: 4 },
-  syncPillText:    { fontSize: 12, fontWeight: '700' },
+  syncPillText:    { fontSize: scale(12), fontWeight: '700' },
 
   fieldSep: { height: 1, backgroundColor: SEP, marginVertical: 8 },
 
@@ -320,15 +320,15 @@ const styles = StyleSheet.create({
   ligneRow:     { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
   ligneRowSep:  { borderTopWidth: 1, borderTopColor: SEP },
   codeBadge:    { backgroundColor: Colors.infoBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  codeBadgeText:{ fontSize: 12, fontWeight: '700', color: Colors.brandBlue },
-  ligneQte:     { flex: 1, fontSize: 14, color: TEXT2, fontWeight: '600' },
-  ligneMontant: { fontSize: 14, fontWeight: '700', color: TEXT },
-  emptyRowText: { color: TEXT3, fontSize: 13 },
+  codeBadgeText:{ fontSize: scale(12), fontWeight: '700', color: Colors.brandBlue },
+  ligneQte:     { flex: 1, fontSize: scale(14), color: TEXT2, fontWeight: '600' },
+  ligneMontant: { fontSize: scale(14), fontWeight: '700', color: TEXT },
+  emptyRowText: { color: TEXT3, fontSize: scale(13) },
 
   /* Montant héro */
   montantHeroRow:  { flexDirection: 'row', alignItems: 'baseline', paddingVertical: 8 },
-  montantHeroValue:{ fontSize: 34, fontWeight: '800', color: TEXT, letterSpacing: -1 },
-  montantHeroUnit: { fontSize: 16, fontWeight: '600', color: TEXT2 },
+  montantHeroValue:{ fontSize: scale(34), fontWeight: '800', color: TEXT, letterSpacing: -1 },
+  montantHeroUnit: { fontSize: scale(16), fontWeight: '600', color: TEXT2 },
 
   /* Commentaire inset */
   commentaireBox: {
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8',
     borderBottomColor: '#f4f8fb', borderRightColor: '#f4f8fb',
   },
-  commentaire: { fontSize: 14, color: TEXT2, lineHeight: 22 },
+  commentaire: { fontSize: scale(14), color: TEXT2, lineHeight: 22 },
 
   /* Sig row */
   sigRow: { flexDirection: 'row', gap: 10, marginTop: 4 },

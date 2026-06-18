@@ -48,7 +48,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { login } from '../api/authService';
 import { RootStackParamList } from '../types/navigation';
-import { Colors } from '../theme';
+import { Colors, scale } from '../theme';
 
 /* Palette néomorphique claire */
 const NEO     = '#e8edf2';   // fond de la carte et de ses enfants
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   /* Logo */
   logoWrap: { alignItems: 'center', marginBottom: 32, width: '100%' },
   logo:     { marginBottom: 10 },
-  tagline:  { color: 'rgba(255,255,255,0.45)', fontSize: 13, letterSpacing: 0.6, marginBottom: 14 },
+  tagline:  { color: 'rgba(255,255,255,0.45)', fontSize: scale(13), letterSpacing: 0.6, marginBottom: 14 },
   pill: {
     flexDirection:     'row',
     alignItems:        'center',
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     borderRadius:      999,
   },
   pillDot:  { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.brandBlue, marginRight: 8 },
-  pillText: { color: Colors.brandBlue, fontSize: 11, fontWeight: '700', letterSpacing: 2 },
+  pillText: { color: Colors.brandBlue, fontSize: scale(11), fontWeight: '700', letterSpacing: 2 },
 
   /* Carte raised : double ombre */
   cardOuter: {
@@ -301,11 +301,11 @@ const styles = StyleSheet.create({
     borderRadius:     2,
     backgroundColor: Colors.brandOrange,
   },
-  cardTitle: { fontSize: 24, fontWeight: '800', color: '#1a2a3a', marginBottom: 22, textAlign: 'center' },
+  cardTitle: { fontSize: scale(24), fontWeight: '800', color: '#1a2a3a', marginBottom: 22, textAlign: 'center' },
 
   /* Labels */
   label: {
-    fontSize:      11,
+    fontSize: scale(11),
     fontWeight:    '700',
     color:         '#5a7080',
     letterSpacing: 1.5,
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     borderRightColor:  '#b0daf2',
     backgroundColor:   '#cce6f4',
   },
-  fieldInput: { flex: 1, fontSize: 15, color: '#1a2a3a', paddingVertical: 0 },
+  fieldInput: { flex: 1, fontSize: scale(15), color: '#1a2a3a', paddingVertical: 0 },
 
   /* Bouton raised orange : effet sortant néomorphique */
   btnOuter: {
@@ -373,16 +373,16 @@ const styles = StyleSheet.create({
     borderBottomColor: '#b83a00',
     borderRightColor:  '#b83a00',
   },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.4 },
+  btnText: { color: '#fff', fontSize: scale(16), fontWeight: '700', letterSpacing: 0.4 },
 
   /* Séparateur */
   divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 20, gap: 12 },
   divLine:  { flex: 1, height: 1, backgroundColor: '#c8d4de' },
-  divLabel: { fontSize: 11, color: '#8aa0b0', letterSpacing: 1 },
+  divLabel: { fontSize: scale(11), color: '#8aa0b0', letterSpacing: 1 },
 
-  demoText: { fontSize: 12, color: Colors.brandBlue, fontWeight: '500', textAlign: 'center' },
+  demoText: { fontSize: scale(12), color: Colors.brandBlue, fontWeight: '500', textAlign: 'center' },
 
-  footer: { color: 'rgba(255,255,255,0.2)', fontSize: 11, marginTop: 28, letterSpacing: 1 },
+  footer: { color: 'rgba(255,255,255,0.2)', fontSize: scale(11), marginTop: 28, letterSpacing: 1 },
 
   /* Bannière erreur : raised danger dans la carte NEO */
   errorBanner: {
@@ -393,5 +393,5 @@ const styles = StyleSheet.create({
     borderTopColor: '#fdd',              borderLeftColor: '#fdd',
     borderBottomColor: Colors.dangerBorder, borderRightColor: Colors.dangerBorder,
   },
-  errorBannerText: { flex: 1, fontSize: 13, color: Colors.danger, lineHeight: 18 },
+  errorBannerText: { flex: 1, fontSize: scale(13), color: Colors.danger, lineHeight: 18 },
 });

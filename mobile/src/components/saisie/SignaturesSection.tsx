@@ -5,7 +5,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 import SectionHeader from './SectionHeader';
 import FieldInput from './FieldInput';
 import { neoCard, NEO, NEO_SHD, TEXT2, TEXT3 } from './neoStyles';
@@ -75,7 +75,7 @@ export default function SignaturesSection({
 }
 
 const styles = StyleSheet.create({
-  label: { fontSize: 13, fontWeight: '700', color: TEXT2, marginTop: 2 },
+  label: { fontSize: scale(13), fontWeight: '700', color: TEXT2, marginTop: 2 },
 
   errorBanner: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 8,
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#fdd', borderLeftColor: '#fdd',
     borderBottomColor: Colors.dangerBorder, borderRightColor: Colors.dangerBorder,
   },
-  errorText: { flex: 1, fontSize: 13, color: Colors.danger, lineHeight: 18 },
+  errorText: { flex: 1, fontSize: scale(13), color: Colors.danger, lineHeight: 18 },
 
   sigRow: { flexDirection: 'row', gap: 10 },
   sigBtn: {
@@ -107,13 +107,13 @@ const styles = StyleSheet.create({
     borderTopColor: '#fdd', borderLeftColor: '#fdd',
     borderBottomColor: Colors.dangerBorder, borderRightColor: Colors.dangerBorder,
   },
-  sigIcon:      { fontSize: 22, marginBottom: 5, color: TEXT3 },
+  sigIcon:      { fontSize: scale(22), marginBottom: 5, color: TEXT3 },
   sigIconDone:  { color: Colors.success },
   sigIconError: { color: Colors.danger },
-  sigLabel:      { fontSize: 13, fontWeight: '700', color: TEXT2 },
+  sigLabel:      { fontSize: scale(13), fontWeight: '700', color: TEXT2 },
   sigLabelDone:  { color: Colors.success },
   sigLabelError: { color: Colors.danger },
-  sigSub:      { fontSize: 10, color: TEXT3, marginTop: 2, textAlign: 'center' },
+  sigSub:      { fontSize: scale(10), color: TEXT3, marginTop: 2, textAlign: 'center' },
   sigSubDone:  { color: Colors.success },
   sigSubError: { color: Colors.danger, fontWeight: '700' },
 });

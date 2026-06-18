@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 
 export type TriMode = 'optimise' | 'alpha' | 'a_visiter';
 
@@ -41,6 +41,6 @@ const styles = StyleSheet.create({
   },
   btn:         { flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center' },
   btnActive:   { backgroundColor: '#ffffff', shadowColor: '#040d1a', shadowOffset: { width: 2, height: 2 }, shadowOpacity: 0.5, shadowRadius: 3, elevation: 2 },
-  btnText:     { fontSize: 12, fontWeight: '600', color: '#ffffff' },
+  btnText:     { fontSize: scale(12), fontWeight: '600', color: '#ffffff' },
   btnTextActive: { color: Colors.brandBlue, fontWeight: '700' },
 });

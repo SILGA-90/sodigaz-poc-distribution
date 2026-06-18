@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ProgrammeAvecProgression } from '../../db/repositories/programmeRepository';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 import { NEO, NEO_IN, TEXT, TEXT3 } from './dashStyles';
 
 interface Props {
@@ -76,18 +76,18 @@ const styles = StyleSheet.create({
   accent: { width: 5 },
   body:   { flex: 1, padding: 14 },
   row1:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  numero: { fontSize: 14, fontWeight: '700', color: TEXT, flex: 1, marginRight: 8 },
+  numero: { fontSize: scale(14), fontWeight: '700', color: TEXT, flex: 1, marginRight: 8 },
   statutPill:     { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   statutDot:      { width: 6, height: 6, borderRadius: 3 },
-  statutPillText: { fontSize: 11, fontWeight: '700' },
+  statutPillText: { fontSize: scale(11), fontWeight: '700' },
   row2:        { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
   typeChip:    { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   typeC:       { backgroundColor: Colors.infoBg },
   typeR:       { backgroundColor: Colors.successBg },
-  typeChipText: { fontSize: 10, fontWeight: '700' },
+  typeChipText: { fontSize: scale(10), fontWeight: '700' },
   typeCText:   { color: Colors.brandBlue },
   typeRText:   { color: Colors.success },
-  date:        { fontSize: 12, color: TEXT3 },
+  date:        { fontSize: scale(12), color: TEXT3 },
   barWrap:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
   barTrack: {
     flex: 1, height: 6, borderRadius: 3, overflow: 'hidden', backgroundColor: NEO_IN,
@@ -96,5 +96,5 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f4f8fb', borderRightColor: '#f4f8fb',
   },
   barFill: { height: 6, borderRadius: 3 },
-  pct:     { fontSize: 12, fontWeight: '700', minWidth: 38, textAlign: 'right' },
+  pct:     { fontSize: scale(12), fontWeight: '700', minWidth: 38, textAlign: 'right' },
 });

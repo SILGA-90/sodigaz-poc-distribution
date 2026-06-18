@@ -40,7 +40,7 @@ import {
 } from 'react-native';
 
 import { prendrePhoto, choisirPhoto, PhotoCapturee } from '../services/photoService';
-import { Colors } from '../theme';
+import { Colors, scale } from '../theme';
 import NeoDialog from './NeoDialog';
 
 export interface PhotoEnAttente {
@@ -156,11 +156,11 @@ const styles = StyleSheet.create({
   typeRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
   typeChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: '#e9ecef' },
   typeChipActive: { backgroundColor: Colors.brandBlue },
-  typeChipText: { fontSize: 12, color: '#333', fontWeight: '600' },
+  typeChipText: { fontSize: scale(12), color: '#333', fontWeight: '600' },
   typeChipTextActive: { color: '#fff' },
   actionsRow: { flexDirection: 'row', gap: 8 },
   actionButton: { flex: 1, padding: 12, borderRadius: 8, backgroundColor: '#6c757d', alignItems: 'center' },
-  actionText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+  actionText: { color: '#fff', fontWeight: '600', fontSize: scale(13) },
   thumbs: { marginTop: 12 },
   thumbWrap: { marginRight: 10, alignItems: 'center' },
   thumb: { width: 80, height: 80, borderRadius: 8, backgroundColor: '#eee' },
@@ -169,6 +169,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#dc3545', width: 22, height: 22, borderRadius: 11,
     justifyContent: 'center', alignItems: 'center',
   },
-  thumbRemoveText: { color: '#fff', fontWeight: '700', fontSize: 11 },
-  thumbType: { fontSize: 10, color: '#888', marginTop: 2 },
+  thumbRemoveText: { color: '#fff', fontWeight: '700', fontSize: scale(11) },
+  thumbType: { fontSize: scale(10), color: '#888', marginTop: 2 },
 });

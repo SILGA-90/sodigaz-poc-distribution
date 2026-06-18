@@ -42,7 +42,7 @@ import { ajouterPhotoAnomalie } from '../db/repositories/photoRepository';
 import { acquerirPositionProbante } from '../services/locationService';
 import PhotosSection, { PhotoEnAttente } from '../components/PhotosSection';
 import { RootStackParamList } from '../types/navigation';
-import { Colors } from '../theme';
+import { Colors, scale } from '../theme';
 import SectionHeader from '../components/saisie/SectionHeader';
 import { NEO, NEO_IN, NAVY, TEXT, TEXT2, TEXT3, neoCard } from '../components/saisie/neoStyles';
 
@@ -297,18 +297,18 @@ const styles = StyleSheet.create({
   },
   gpsPill:     { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
   gpsDot:      { width: 7, height: 7, borderRadius: 4 },
-  gpsPillText: { fontSize: 12, fontWeight: '700' },
+  gpsPillText: { fontSize: scale(12), fontWeight: '700' },
 
-  headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
-  headerSub:   { fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 4 },
+  headerTitle: { fontSize: scale(20), fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
+  headerSub:   { fontSize: scale(12), color: 'rgba(255,255,255,0.45)', marginTop: 4 },
 
 
   sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: 14 },
-  charCount: { fontSize: 12, color: TEXT3 },
+  charCount: { fontSize: scale(12), color: TEXT3 },
 
   /* Description inset */
   descInput: {
-    minHeight: 100, padding: 12, fontSize: 14, color: TEXT, lineHeight: 21,
+    minHeight: 100, padding: 12, fontSize: scale(14), color: TEXT, lineHeight: 21,
     backgroundColor: NEO_IN, borderRadius: 10,
     borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
     borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8',
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#e0f6ff', borderLeftColor: '#e0f6ff',
     borderBottomColor: Colors.infoBorder, borderRightColor: Colors.infoBorder,
   },
-  infoText: { flex: 1, fontSize: 12, color: TEXT2, lineHeight: 18 },
+  infoText: { flex: 1, fontSize: scale(12), color: TEXT2, lineHeight: 18 },
 
   /* Bouton raised danger */
   saveBtnOuter: {
@@ -350,6 +350,6 @@ const styles = StyleSheet.create({
     borderTopColor: '#fca5a5', borderLeftColor: '#fca5a5',
     borderBottomColor: '#991b1b', borderRightColor: '#991b1b',
   },
-  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
-  saveBtnSub:  { color: 'rgba(255,255,255,0.65)', fontSize: 12, marginTop: 4 },
+  saveBtnText: { color: '#fff', fontSize: scale(16), fontWeight: '800', letterSpacing: -0.2 },
+  saveBtnSub:  { color: 'rgba(255,255,255,0.65)', fontSize: scale(12), marginTop: 4 },
 });

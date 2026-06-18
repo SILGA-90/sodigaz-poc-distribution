@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 
 interface Props {
   visible:          boolean;
@@ -61,10 +61,10 @@ export default function DevPinOverlay({ visible, pinInput, pinLoading, onChangeP
 const styles = StyleSheet.create({
   overlay:    { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', alignItems: 'center' },
   card:       { width: 300, backgroundColor: '#0d1e35', borderRadius: 24, padding: 28, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
-  title:      { fontSize: 17, fontWeight: '700', color: '#fff', textAlign: 'center' },
-  sub:        { fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center', marginTop: 4, marginBottom: 20 },
+  title:      { fontSize: scale(17), fontWeight: '700', color: '#fff', textAlign: 'center' },
+  sub:        { fontSize: scale(13), color: 'rgba(255,255,255,0.4)', textAlign: 'center', marginTop: 4, marginBottom: 20 },
   inputWrap:  { backgroundColor: '#091527', borderRadius: 12, marginBottom: 20, borderWidth: 1.5, borderColor: 'rgba(0,0,0,0.5)' },
-  input:      { paddingVertical: 14, fontSize: 24, textAlign: 'center', letterSpacing: 10, color: '#fff' },
+  input:      { paddingVertical: 14, fontSize: scale(24), textAlign: 'center', letterSpacing: 10, color: '#fff' },
   actions:    { flexDirection: 'row', gap: 12 },
   cancelBtn:  { flex: 1, paddingVertical: 13, borderRadius: 12, alignItems: 'center', backgroundColor: '#112240' },
   cancelText: { color: 'rgba(255,255,255,0.6)', fontWeight: '600' },

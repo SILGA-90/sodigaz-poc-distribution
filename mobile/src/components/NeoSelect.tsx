@@ -35,7 +35,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../theme';
+import { Colors, scale } from '../theme';
 
 const NEO     = '#e8edf2';
 const NEO_SHD = '#4a6880';
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f4f8fb', borderRightColor: '#f4f8fb',
     paddingHorizontal: 14, paddingVertical: 15,
   },
-  triggerText:        { flex: 1, fontSize: 15, color: TEXT, marginRight: 8 },
+  triggerText:        { flex: 1, fontSize: scale(15), color: TEXT, marginRight: 8 },
   triggerPlaceholder: { color: '#8fa4b4' },
 
   /* Overlay semi-transparent */
@@ -172,6 +172,6 @@ const styles = StyleSheet.create({
   optionBorder: { borderBottomWidth: 1, borderBottomColor: '#c8d4de' },
   optionSelected: { backgroundColor: Colors.infoBg },
   optionCheck: { marginRight: 10 },
-  optionText:         { fontSize: 15, color: TEXT2, flex: 1 },
+  optionText:         { fontSize: scale(15), color: TEXT2, flex: 1 },
   optionTextSelected: { color: Colors.brandBlue, fontWeight: '700' },
 });

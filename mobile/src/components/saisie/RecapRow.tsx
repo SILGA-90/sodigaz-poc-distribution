@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 import { SEP, TEXT, TEXT2 } from './neoStyles';
 
 interface Props {
@@ -27,6 +27,6 @@ export default function RecapRow({ label, value, success, danger, warning }: Pro
 
 const styles = StyleSheet.create({
   row:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: SEP },
-  label: { fontSize: 14, color: TEXT2, flex: 1, marginRight: 8 },
-  value: { fontSize: 15, fontWeight: '700' },
+  label: { fontSize: scale(14), color: TEXT2, flex: 1, marginRight: 8 },
+  value: { fontSize: scale(15), fontWeight: '700' },
 });

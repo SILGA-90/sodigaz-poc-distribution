@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../theme';
+import { Colors, scale } from '../theme';
 import { NEO, NEO_SHD } from './saisie/neoStyles';
 
 interface Props {
@@ -37,10 +37,10 @@ const styles = StyleSheet.create({
   },
   innerSigned:   { backgroundColor: Colors.successBg, borderColor: Colors.successBorder },
   innerUnsigned: { backgroundColor: NEO,              borderColor: '#b8ccd8' },
-  label:         { fontSize: 13, fontWeight: '700' },
+  label:         { fontSize: scale(13), fontWeight: '700' },
   labelSigned:   { color: Colors.success },
   labelUnsigned: { color: Colors.danger },
-  sub:           { fontSize: 10, marginTop: 2 },
+  sub:           { fontSize: scale(10), marginTop: 2 },
   subSigned:     { color: Colors.success },
   subUnsigned:   { color: Colors.danger },
 });

@@ -41,6 +41,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { scale } from '../theme';
 
 interface Props {
   visible: boolean;
@@ -166,8 +167,8 @@ export default function SignaturePad({ visible, titre, onSave, onCancel }: Props
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', padding: 16, paddingTop: 48, alignItems: 'center' },
-  titre: { fontSize: 18, fontWeight: '700', color: '#333', textAlign: 'center' },
-  hint: { fontSize: 13, color: '#888', textAlign: 'center', marginVertical: 8 },
+  titre: { fontSize: scale(18), fontWeight: '700', color: '#333', textAlign: 'center' },
+  hint: { fontSize: scale(13), color: '#888', textAlign: 'center', marginVertical: 8 },
   canvasContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   canvas: {
     borderWidth: 1,

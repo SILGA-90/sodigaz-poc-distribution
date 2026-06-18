@@ -16,6 +16,7 @@
  */
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { scale } from '../theme';
 
 interface Props {
   isConnected: boolean | null;
@@ -36,5 +37,5 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     alignItems: 'center',
   },
-  text: { color: '#fff', fontSize: 12, fontWeight: '700', letterSpacing: 0.3 },
+  text: { color: '#fff', fontSize: scale(12), fontWeight: '700', letterSpacing: 0.3 },
 });

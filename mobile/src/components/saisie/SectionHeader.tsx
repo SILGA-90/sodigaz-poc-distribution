@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 import { NEO_IN, TEXT, TEXT2 } from './neoStyles';
 
 export type IconColor = 'blue' | 'green' | 'red' | 'orange' | 'navy' | 'gray';
@@ -46,6 +46,6 @@ export default function SectionHeader({ icon, color, title, optional }: Props): 
 const styles = StyleSheet.create({
   row:      { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 14, marginTop: 22, marginBottom: 8 },
   iconBox:  { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  title:    { fontSize: 15, fontWeight: '800', color: TEXT, letterSpacing: -0.2 },
-  optional: { fontSize: 12, color: TEXT2, marginLeft: 2 },
+  title:    { fontSize: scale(15), fontWeight: '800', color: TEXT, letterSpacing: -0.2 },
+  optional: { fontSize: scale(12), color: TEXT2, marginLeft: 2 },
 });

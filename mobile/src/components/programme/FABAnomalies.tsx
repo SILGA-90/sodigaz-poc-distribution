@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../../theme';
+import { Colors, scale } from '../../theme';
 
 interface Props {
   visible: boolean;
@@ -34,5 +34,5 @@ const styles = StyleSheet.create({
     borderTopColor: '#ffb060', borderLeftColor: '#ffb060',
     borderBottomColor: '#b83a00', borderRightColor: '#b83a00',
   },
-  text:  { color: '#fff', fontWeight: '700', fontSize: 14 },
+  text:  { color: '#fff', fontWeight: '700', fontSize: scale(14) },
 });
