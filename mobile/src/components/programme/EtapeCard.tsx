@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { EtapeAvecPlv } from '../../db/repositories/programmeRepository';
 import { Colors } from '../../theme';
-import { NEO, NEO_SHD, NEO_IN, TEXT, TEXT3 } from './progStyles';
+import { NEO, NEO_SHD, NEO_IN, TEXT } from './progStyles';
 import NeoDialog from '../NeoDialog';
 
 interface Props {

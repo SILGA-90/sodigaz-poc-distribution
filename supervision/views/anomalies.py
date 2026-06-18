@@ -31,7 +31,6 @@ from accounts.models import Role, Utilisateur
 from distribution.models import Anomalie
 
 from ..decorators import superviseur_required
-from ._base import _get_date_filter
 
 
 @superviseur_required

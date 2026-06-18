@@ -30,7 +30,6 @@ Feature GeoJSON. La charge utile est aussi plus légère.
 """
 from rest_framework import serializers
 
-from accounts.models import Utilisateur
 from distribution.models import (
     Anomalie,
     Client,

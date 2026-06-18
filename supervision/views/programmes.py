@@ -22,7 +22,7 @@ from datetime import date, timedelta
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, render
 
-from distribution.models import Etape, LigneOperation, Operation, Programme, StatutVisite
+from distribution.models import LigneOperation, Operation, Programme, StatutVisite
 
 from ..decorators import superviseur_required
 from ._base import _get_date_filter
