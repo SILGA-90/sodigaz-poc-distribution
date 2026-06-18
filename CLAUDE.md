@@ -439,6 +439,20 @@ Aucun bug connu en suspens au 18 juin 2026.
   simulation suffit pour le POC ; en production, `_sync_x3()` devrait être remplacé
   par un vrai appel API X3 (ou queue de messages). À expliciter dans le mémoire.
 
+- **Suivi des consignes d'emballages non implémenté dans l'UI** : le modèle
+  `LigneOperation` possède deux champs prévus pour tracer le mouvement des
+  bouteilles consignées : `quantite_consignee` (emballages pris en consignation)
+  et `quantite_deconsignee` (emballages rendus). Ces champs traversent toute la
+  plomberie (SQLite mobile → push → PostgreSQL) mais sont **toujours insérés à 0**
+  dans `saisieRepository.ts` (INSERT câblé en dur) car aucun champ de saisie ne
+  les capture dans `SaisieOperationScreen`. Ils ne sont ni affichés en supervision
+  ni utilisés dans la simulation X3. Le modèle anticipait le rapprochement
+  BCR/BL des emballages consignés avec Sage X3, fonctionnalité qui dépasse le
+  périmètre du POC. À mentionner comme perspective d'évolution nécessitant :
+  1. Des champs de saisie dédiés dans `SaisieOperationScreen` (par article de
+     type emballage vide E*).
+  2. L'utilisation de ces valeurs dans `creer_documents_x3()` pour les BCR/BL.
+
 - **SQL brut répété dans les repositories mobiles** : les repositories
   (`pull.ts`, `programmeRepository.ts`, `photoRepository.ts`…) contiennent des
   `INSERT OR REPLACE INTO` explicites par table, sans couche d'abstraction
