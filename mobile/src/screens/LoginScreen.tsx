@@ -118,8 +118,8 @@ export default function LoginScreen({ navigation }: Props): React.ReactElement {
           />
           <Text style={styles.tagline}>Le gaz plus proche de vous</Text>
           <View style={styles.pill}>
-            <View style={styles.pillDot} />
-            <Text style={styles.pillText}>ESPACE LIVREUR</Text>
+            <Ionicons name="car-outline" size={13} color={Colors.brandOrange} />
+            <Text style={styles.pillText}>LIVREUR</Text>
           </View>
         </View>
 
@@ -260,15 +260,15 @@ const styles = StyleSheet.create({
   pill: {
     flexDirection:     'row',
     alignItems:        'center',
-    backgroundColor:   'rgba(7,155,217,0.12)',
+    gap:               7,
+    backgroundColor:   'rgba(238,114,2,0.12)',
     borderWidth:       1,
-    borderColor:       'rgba(7,155,217,0.3)',
-    paddingHorizontal: 16,
+    borderColor:       'rgba(238,114,2,0.32)',
+    paddingHorizontal: 14,
     paddingVertical:    6,
     borderRadius:      999,
   },
-  pillDot:  { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.brandBlue, marginRight: 8 },
-  pillText: { color: Colors.brandBlue, fontSize: scale(11), fontWeight: '700', letterSpacing: 2 },
+  pillText: { color: Colors.brandOrange, fontSize: scale(11), fontWeight: '700', letterSpacing: 2 },
 
   /* Carte raised : double ombre */
   cardOuter: {
