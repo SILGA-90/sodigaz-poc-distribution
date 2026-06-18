@@ -68,11 +68,17 @@ Apps Django :
 - `supervision` : interface web superviseur (login session Django)
 - `config/`     : settings, urls, wsgi
 
-Commandes de gestion utiles (mock_x3/management/commands/) :
+Commandes de gestion (mock_x3/management/commands/) :
 
 - `generer_programmes_du_jour` (--date / --livreur / --type COL|RES|LES2 / --reset)
 - `seed_demo` (--reset pour repartir de zéro)
 - `calculer_circuits` (--date / --livreur / --verbose ; heuristique plus proche voisin)
+
+Commandes de gestion (distribution/management/commands/) :
+
+- `nettoyer_photos_orphelines` (--heures N, défaut 24 ; --dry-run) — marque
+  `is_deleted=True` les enregistrements Photo dont le fichier est encore le
+  placeholder (upload binaire jamais reçu). À planifier en cron journalier.
 
 Endpoints API REST (JWT) :
 
@@ -81,6 +87,8 @@ Endpoints API REST (JWT) :
 - `GET  /api/auth/me/` — profil utilisateur connecté
 - `POST /api/auth/dev-access/` — vérification PIN dev (throttle 3/h, JWT requis)
 - `GET  /api/mock-x3/programmes/` — programmes générés par le mock X3
+- `POST /api/mock-x3/operations-realisees/` — endpoint mock X3 (non appelé par le
+  mobile dans le POC ; point d'extension pour simulation de remontée)
 - `POST /api/sync/pull/` — delta serveur depuis lastPulledAt (throttle 60/h)
 - `POST /api/sync/push/` — upload opérations/anomalies/photos (throttle 60/h)
 - `POST /api/sync/photos/<uuid>/upload/` — upload fichier binaire photo (throttle 300/h)
@@ -88,6 +96,9 @@ Endpoints API REST (JWT) :
 
 Endpoints supervision web (session Django, décorateur `@superviseur_required`) :
 
+- `GET/POST /supervision/login/` — connexion session (`RateLimitedLoginView` :
+  5 tentatives en 5 min → blocage 15 min par IP, compatible reverse proxy)
+- `GET  /supervision/logout/` — déconnexion session
 - `GET  /supervision/` — dashboard (KPIs, carte Leaflet, anomalies récentes)
 - `GET  /supervision/api/carte/` — AJAX : GeoJSON PLVs + statuts pour Leaflet
 - `GET  /supervision/api/stats/` — AJAX : 4 KPIs (programmes, opérations, montant, taux)
@@ -127,8 +138,8 @@ Le rôle SUPERVISEUR donne accès à `/supervision/` via `@superviseur_required`
 **Données de planification** (descendantes, pull) :
 
 - `Programme` : uuid, numero_x3, type_programme COLLECTE/RESTITUTION,
-  statut PLANIFIE/EN_COURS/CLOTURE, date_programme, heure_fin (remplie à la clôture),
-  vehicule FK
+  statut PLANIFIE/EN_COURS/CLOTURE, date_programme, heure_debut, heure_fin
+  (remplies respectivement à la mise en cours et à la clôture), vehicule FK
 - `Etape` : ordre_prevu, ordre_optimise (calculé par circuit.py), statut_visite
   A_VISITER/VISITEE/ECHEC
 - `LigneProgramme` : quantite_prevue = LE PRÉVU
@@ -136,13 +147,28 @@ Le rôle SUPERVISEUR donne accès à `/supervision/` via `@superviseur_required`
 **Données terrain** (ascendantes, créées sur le mobile, push) :
 
 - `Operation` : uuid mobile, type_operation COLLECTE/RESTITUTION/LIVRAISON_DIRECTE/CONSIGNE,
-  sous_type BCR/BCT (obligatoire si type=COLLECTE), signatures, montant_total,
-  montant_encaisse, est_encaissee, mode_paiement, localisation_saisie (PointField),
-  gps_precision, gps_horodatage
-- `LigneOperation` : quantite_realisee = LE RÉALISÉ
+  sous_type BCR/BCT (obligatoire si type=COLLECTE), signatures (base64 SVG),
+  montant_total, montant_encaisse, est_encaissee, mode_paiement
+  (ESPECES/MOBILE_MONEY/CHEQUE/VIREMENT/CREDIT), localisation_saisie (PointField),
+  gps_precision (rayon en mètres), gps_horodatage
+- `LigneOperation` : quantite_realisee = LE RÉALISÉ ; aussi quantite_collectee_vide,
+  quantite_consignee, quantite_deconsignee, montant_ligne
 - `Anomalie` : gravite FAIBLE/MOYENNE/ELEVEE, statut OUVERTE/EN_TRAITEMENT/RESOLUE
 - `Photo` (XOR : rattachée soit à une operation, soit à une anomalie) :
   type_photo BORDEREAU/LIVRAISON/ETAT_PLV/ANOMALIE, fichier, taille_octets
+
+**Modèle de simulation X3** (dans l'app `mock_x3`) :
+
+- `DocumentX3` : enregistrement créé après chaque push réussi (non bloquant).
+  Champs : numero_x3 (unique, format `PREFIX-AAAAMMJJ-PK`), type_document BCR/BL,
+  operation (OneToOne → distribution.Operation), bcr (FK self, BL → BCR du même PLV),
+  statut (SYNCHRONISE par défaut). COLLECTE → BCR ; RESTITUTION → BL référençant
+  le BCR le plus récent du même PLV. LIVRAISON_DIRECTE et CONSIGNE ignorés.
+
+**Constante métier** : `PHOTO_PLACEHOLDER = "placeholder.bin"` définie dans
+`distribution/models.py`. Valeur sentinelle pour les Photo dont l'upload binaire
+n'est pas encore arrivé. Utilisée dans `engine.py` (création) et
+`nettoyer_photos_orphelines` (filtre). Ne jamais la dupliquer en string littérale.
 
 **Champs de synchronisation** présents sur les tables concernées :
 
@@ -314,12 +340,23 @@ article.code_x3, v5 rename produit→article, v6 ajout code_plv sur plv.
 ## 8. État d'avancement (juin 2026)
 
 - **Back-end** : opérationnel (auth JWT, mock X3, sync pull/push, supervision web,
-  photos, endpoint dev-access avec throttle). Ajouts récents :
+  photos, endpoint dev-access avec throttle). Ajouts et corrections notables :
   - Rate limiting sur tous les endpoints sync (60/h) et upload photo (300/h)
     via `SyncRateThrottle` / `PhotoUploadThrottle` (`sync_api/views.py`)
   - Gestionnaire d'exceptions global JSON (`config/exceptions.py`) —
     garantit que l'API renvoie toujours du JSON, même sur une erreur 500
   - Logs des 500 non gérés dans `logs/django.log` via `logger.exception()`
+  - `RateLimitedLoginView` (supervision) : 5 tentatives en 5 min → blocage 15 min
+    par IP (cache Django), compatible reverse proxy (X-Forwarded-For)
+  - `PHOTO_PLACEHOLDER` défini comme constante dans `distribution/models.py` ;
+    suppression de la duplication entre `engine.py` et `nettoyer_photos_orphelines`
+  - Correction bug : `nettoyer_photos_orphelines` utilisait `.delete()` physique
+    → corrigé en `.update(is_deleted=True)` pour respecter le contrat soft-delete
+  - Correction bug : `get_object_or_404` dans `engine.py._apply_lignes_operation`
+    remplacé par `try/except Article.DoesNotExist` → Response 400 propre
+  - `GraviteAnomalie` / `StatutAnomalie` (TextChoices) importés dans
+    `supervision/views/anomalies.py` — suppression des strings brutes
+  - Commande `nettoyer_photos_orphelines` (distribution) documentée + cron recommandé
 - **Mobile** : fonctionnel bout en bout. 10 écrans implémentés :
   `LoginScreen`, `DashboardScreen`, `ProgrammeScreen`, `EtapeDetailScreen`,
   `SaisieOperationScreen`, `AnomalieScreen`, `ClotureScreen`,
@@ -336,13 +373,17 @@ article.code_x3, v5 rename produit→article, v6 ajout code_plv sur plv.
     `useNetworkStatus()` (connectivité temps réel + événement justReconnected)
   - Services : `locationService.ts` (GPS qualifié fiable/dégradé/absent),
     `photoService.ts` (compression + stockage local), `logger.ts`
-- **Supervision web** : refonte design — Bootstrap primary overridé (ancienne valeur
-  `#1a7fba`, à migrer vers `#079BD9` officiel), tables en cards (`table-card`),
-  filtres stylés (`filter-card`), login page avec fond dégradé navy. Export CSV
-  opérations (séparateur `;` pour compatibilité Excel français). Modification
-  statut/gravité anomalies via AJAX sans rechargement de page.
+  - Composant `SigChip.tsx` (mini-badge signature client, réutilisable)
+  - `mobile/src/sync/types.ts` : interfaces `PullResult`, `PushResult`
+  - Tokens couleur `syncGreen` / `syncPending` / `primaryLight` ajoutés dans
+    `theme.ts` ; `EtapeCard.tsx` ne contient plus de valeurs hex en dur
+  - Tests automatisés : `mobile/src/__tests__/sync/` (couverture partielle sync)
+- **Supervision web** : refonte design — Bootstrap primary overridé (#079BD9 officiel),
+  tables en cards (`table-card`), filtres stylés (`filter-card`), login page avec
+  fond dégradé navy. Export CSV opérations (séparateur `;` pour compatibilité Excel
+  français). Modification statut/gravité anomalies via AJAX sans rechargement de page.
 - **Documentation** : README.md et .env.example mis à jour (DEV_ACCESS_CODE,
-  précision GPS).
+  précision GPS). CLAUDE.md tenu à jour en continu.
 - En cours : rédaction du mémoire.
 
 ## 9. Conventions et attentes de travail
@@ -376,7 +417,7 @@ article.code_x3, v5 rename produit→article, v6 ajout code_plv sur plv.
 
 ## 10. Bugs à traiter
 
-Aucun bug connu en suspens au 17 juin 2026.
+Aucun bug connu en suspens au 18 juin 2026.
 (Consigner ici au fil de l'eau les nouveaux bugs inter-sessions.)
 
 ## 11. Perspectives et limites connues (pour le mémoire)
