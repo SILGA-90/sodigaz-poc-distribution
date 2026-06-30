@@ -23,6 +23,39 @@ Deux utilisateurs, deux contextes :
 Règle d'or : **un même système de design alimente les deux surfaces.** Un statut
 « Visitée » a la même couleur et le même mot sur mobile et sur le web.
 
+## Direction visuelle (anti-générique)
+
+Le piège à éviter absolument : l'interface « générée par IA ». On la reconnaît à
+des signes précis — tout en relief mou et ombres douces uniformes, contrastes
+faibles, surfaces gris clair qui flottent, coins très arrondis partout, aucune
+hiérarchie (tout a le même poids visuel), dégradés violet/rose décoratifs,
+emojis en guise d'icônes. Une interface ne paraît PAS générée par IA quand ses
+choix répondent visiblement à un contexte d'usage réel, qu'un générateur
+générique n'aurait pas connu.
+
+**Position arrêtée sur le néomorphisme.** Le néomorphisme (relief simulé par
+ombres douces et faibles contrastes) est SOIT abandonné, SOIT cantonné à un
+accent ponctuel — jamais le style dominant de cette application. Deux raisons
+qui pointent dans le même sens :
+- Il dégrade la lisibilité en plein soleil, qui est la condition d'usage réelle
+  du livreur. Un bouton gris clair en relief sur fond gris clair est invisible
+  dehors à midi. C'est un défaut fonctionnel, pas une question de goût.
+- Appliqué uniformément, c'est précisément ce qui produit l'impression « IA
+  générique » : pas de hiérarchie, pas de point d'ancrage pour l'œil.
+
+Si un effet néomorphique est conservé, il l'est uniquement sur des éléments
+**non critiques consultés à l'intérieur** (par exemple une carte de statistique
+dans la supervision web, regardée au bureau), jamais sur ce que le livreur doit
+lire ou toucher sur le terrain.
+
+**La base à privilégier : nette et franche.** Surfaces claires bien séparées par
+des bordures fines OU des ombres portées discrètes mais présentes (pas diffuses).
+Hiérarchie forte : ce qui est important est visiblement plus grand et plus
+contrasté. Couleur de marque en **accent** sur les actions clés, pas étalée en
+fond. Contraste assumé sur tout ce qui se lit ou se touche. Cette base n'a pas
+de nom de style à la mode — et c'est exactement pour cela qu'elle ne paraît pas
+générique.
+
 ## Avant de coder un écran (processus)
 
 1. **Réutilise les tokens** (couleurs, espacements, typo) ci-dessous. Ne pose
@@ -193,6 +226,64 @@ Les mots sont du matériau de design, pas de la décoration.
 - Français, casse de phrase (pas de TOUT EN MAJUSCULES sauf sigles), pas de
   remplissage. Le slogan de marque est « Le gaz plus proche de vous ».
 
+## Micro-interactions et animations
+
+Le mouvement sert le retour d'information, jamais la décoration. Une animation
+utile confirme une action ; une animation gratuite ralentit le livreur.
+
+Principes :
+- **Retour immédiat au tap.** Tout élément tappable réagit visiblement à la
+  pression : légère baisse d'opacité ou de teinte, ou enfoncement de 1 à 2 points.
+  Sur mobile, `Pressable` avec un style `pressed`, ou `activeOpacity` autour de
+  0.7 sur `TouchableOpacity`. Sur web, un état `:active` et `:hover` net avec
+  `cursor: pointer`.
+- **Transitions courtes.** 150 à 250 ms, jamais plus. Au-delà, l'interface
+  paraît lente sur le terrain. Courbe `ease-out` par défaut.
+- **Transitions d'état signifiantes.** Quand un statut change (À visiter →
+  Visitée, En attente → Synchronisé), une transition douce de couleur aide
+  l'œil à suivre le changement. C'est le seul endroit où l'animation porte du
+  sens métier — soigne-la.
+- **Indicateur de synchronisation animé.** Pendant une synchro, l'indicateur
+  tourne ou pulse discrètement ; à la fin, il se fige sur l'état atteint. C'est
+  le retour le plus important de l'app.
+- **Respecte `prefers-reduced-motion`** côté web : si l'utilisateur a désactivé
+  les animations, réduis-les au minimum.
+
+Contraintes : pas de bibliothèque d'animation lourde qui casserait Expo Go.
+L'API `Animated` de React Native et les transitions CSS suffisent à tout ce qui
+précède. Pas d'animation en boucle permanente (consomme la batterie sur le
+terrain).
+
+## Patterns de composants
+
+Chaque composant a un comportement défini dans TOUS ses états. Un composant qui
+n'existe qu'à l'état « normal » est incomplet.
+
+**Bouton** — trois variantes : primaire (bleu Sodigaz, actions courantes),
+accent (orange APC, l'action LA plus importante d'un écran, une seule par écran),
+danger (rouge, actions destructrices). États obligatoires : normal, pressé
+(retour visuel), désactivé (opacité réduite, non tappable), en cours (spinner +
+texte « … en cours », bouton non recliquable pour éviter le double envoi —
+critique pour la saisie d'opération). Texte ≥ 16, hauteur ≥ 48.
+
+**Carte** (étape, opération) — surface claire, séparation nette du fond (bordure
+fine ou ombre basse), zone tappable couvrant toute la carte si elle mène à un
+détail. Hiérarchie interne : un élément principal (nom du PLV) nettement plus
+fort que les secondaires (client, coordonnées).
+
+**Champ de saisie** — label toujours visible (pas seulement un placeholder qui
+disparaît), état focus net (bordure accent), état erreur (bordure danger +
+message sous le champ expliquant quoi corriger), clavier adapté au contenu
+(`number-pad` pour les quantités). Cible ≥ 48 de haut.
+
+**Badge de statut** — pastille colorée selon le code couleur des statuts, texte
+court, jamais seulement une couleur (toujours un mot, pour l'accessibilité et le
+plein soleil).
+
+**Indicateur de connectivité / sync** — toujours visible, trois états lisibles
+d'un coup d'œil : en ligne / hors ligne / synchronisation en cours, avec le
+nombre d'opérations en attente le cas échéant.
+
 ## Garde-fous (cohérents avec CLAUDE.md)
 
 - **Ne réintroduis pas** ce qui a été écarté : carte embarquée sur mobile,
@@ -216,3 +307,8 @@ Les mots sont du matériau de design, pas de la décoration.
 - Cibles tactiles ≥ 48, corps de texte ≥ 16 (mobile).
 - Cohérent visuellement et verbalement avec les écrans voisins.
 - Contraste suffisant pour une lecture en plein soleil.
+- Hiérarchie visuelle claire : l'élément important ressort, tout n'a pas le même poids.
+- Chaque élément tappable réagit à la pression ; transitions ≤ 250 ms.
+- Composants gérés dans tous leurs états (normal, pressé, désactivé, en cours, erreur).
+- Aucun signe d'interface « générée par IA » : pas de relief mou uniforme, pas
+  de dégradé décoratif gratuit, pas d'emoji en guise d'icône, hiérarchie présente.
