@@ -37,12 +37,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, scale } from '../theme';
 
-const NEO     = '#e8edf2';
-const NEO_SHD = '#4a6880';
-const NEO_IN  = '#d4dde6';
-const TEXT    = '#1a2a3a';
-const TEXT2   = '#3a5060';
-const TEXT3   = '#3a5060';
+const NEO_IN = '#E8EEF2';
+const TEXT   = '#1a2a3a';
+const TEXT2  = '#3a5060';
+const TEXT3  = '#5B6770';
 
 export interface NeoSelectOption {
   label: string;
@@ -83,8 +81,7 @@ export default function NeoSelect({ value, onChange, options, placeholder = 'Sé
         <TouchableWithoutFeedback onPress={() => setOpen(false)}>
           <View style={styles.overlay}>
             <TouchableWithoutFeedback>
-              <View style={styles.sheetOuter}>
-                <View style={styles.sheetInner}>
+              <View style={styles.sheet}>
 
                   {/* Handle */}
                   <View style={styles.handle} />
@@ -112,7 +109,6 @@ export default function NeoSelect({ value, onChange, options, placeholder = 'Sé
                       );
                     }}
                   />
-                </View>
               </View>
             </TouchableWithoutFeedback>
           </View>
@@ -123,15 +119,12 @@ export default function NeoSelect({ value, onChange, options, placeholder = 'Sé
 }
 
 const styles = StyleSheet.create({
-  /* Trigger : inset style */
+  /* Trigger */
   trigger: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginTop: 8,
-    backgroundColor: NEO_IN, borderRadius: 10,
-    borderTopWidth:    1.5, borderLeftWidth:    1.5,
-    borderBottomWidth: 1.5, borderRightWidth:   1.5,
-    borderTopColor: '#a8bac8',    borderLeftColor: '#a8bac8',
-    borderBottomColor: '#f4f8fb', borderRightColor: '#f4f8fb',
+    backgroundColor: '#FFFFFF', borderRadius: 10,
+    borderWidth: 1.5, borderColor: '#DDE2E6',
     paddingHorizontal: 14, paddingVertical: 15,
   },
   triggerText:        { flex: 1, fontSize: scale(15), color: TEXT, marginRight: 8 },
@@ -143,25 +136,20 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
 
-  /* Feuille raised */
-  sheetOuter: {
+  /* Feuille bottom sheet */
+  sheet: {
     borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    backgroundColor: NEO,
-    shadowColor: NEO_SHD, shadowOffset: { width: 0, height: -6 }, shadowOpacity: 1, shadowRadius: 12, elevation: 20,
-  },
-  sheetInner: {
-    borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    backgroundColor: NEO,
-    shadowColor: '#ffffff', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.7, shadowRadius: 8,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#ffffff', borderLeftColor: '#ffffff', borderRightColor: '#ffffff',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 20,
+    borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1,
+    borderTopColor: '#DDE2E6', borderLeftColor: '#DDE2E6', borderRightColor: '#DDE2E6',
     paddingBottom: 32, maxHeight: 420,
   },
 
   handle: {
     alignSelf: 'center', marginTop: 12, marginBottom: 8,
     width: 36, height: 4, borderRadius: 2,
-    backgroundColor: NEO_SHD + '50',
+    backgroundColor: '#DDE2E6',
   },
 
   /* Options */
@@ -169,7 +157,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     paddingVertical: 15, paddingHorizontal: 20,
   },
-  optionBorder: { borderBottomWidth: 1, borderBottomColor: '#c8d4de' },
+  optionBorder: { borderBottomWidth: 1, borderBottomColor: '#DDE2E6' },
   optionSelected: { backgroundColor: Colors.infoBg },
   optionCheck: { marginRight: 10 },
   optionText:         { fontSize: scale(15), color: TEXT2, flex: 1 },

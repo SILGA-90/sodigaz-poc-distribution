@@ -300,24 +300,26 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
         </View>
       </View>
 
-      <View style={[styles.saveBtnOuter, saving && { opacity: 0.5 }]}>
-        <TouchableOpacity style={styles.saveBtnInner} onPress={handleSave} disabled={saving} activeOpacity={0.85}>
-          {saving ? <ActivityIndicator color="#fff" /> : (
-            <>
-              <Text style={styles.saveBtnText}>Enregistrer l'opération</Text>
-              <Text style={styles.saveBtnSub}>{isCollecte ? 'Collecte' : 'Restitution'}{etapeInfo ? ` · ${etapeInfo.plv_libelle}` : ''}</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+        style={[styles.saveBtn, saving && { opacity: 0.5 }]}
+        onPress={handleSave} disabled={saving} activeOpacity={0.85}
+      >
+        {saving ? <ActivityIndicator color="#fff" /> : (
+          <>
+            <Text style={styles.saveBtnText}>Enregistrer l'opération</Text>
+            <Text style={styles.saveBtnSub}>{isCollecte ? 'Collecte' : 'Restitution'}{etapeInfo ? ` · ${etapeInfo.plv_libelle}` : ''}</Text>
+          </>
+        )}
+      </TouchableOpacity>
 
       {etapeInfo && (
-        <View style={styles.echecOuter}>
-          <TouchableOpacity style={styles.echecInner} disabled={saving} onPress={() => setShowEchecDialog(true)} activeOpacity={0.82}>
-            <Ionicons name="close-circle-outline" size={14} color={Colors.danger} style={{ marginRight: 6 }} />
-            <Text style={styles.echecBtnText}>Étape non réalisable — Marquer en échec</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.echecBtn} disabled={saving}
+          onPress={() => setShowEchecDialog(true)} activeOpacity={0.82}
+        >
+          <Ionicons name="close-circle-outline" size={14} color={Colors.danger} style={{ marginRight: 6 }} />
+          <Text style={styles.echecBtnText}>Étape non réalisable — Marquer en échec</Text>
+        </TouchableOpacity>
       )}
 
       <SignaturePad
@@ -444,38 +446,22 @@ const styles = StyleSheet.create({
   commentaire: {
     minHeight: 80, fontSize: scale(14), color: '#1a2a3a', lineHeight: 20,
     backgroundColor: NEO_IN, borderRadius: 10, padding: 12,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8',
-    borderBottomColor: '#f4f8fb', borderRightColor: '#f4f8fb',
+    borderWidth: 1, borderColor: '#DDE2E6',
   },
 
-  saveBtnOuter: {
+  saveBtn: {
     marginHorizontal: 12, marginTop: 22, marginBottom: 8, borderRadius: 14,
     backgroundColor: Colors.brandOrange,
-    shadowColor: '#5c1a00', shadowOffset: { width: 6, height: 6 }, shadowOpacity: 1, shadowRadius: 7, elevation: 10,
-  },
-  saveBtnInner: {
-    borderRadius: 14, backgroundColor: Colors.brandOrange,
     paddingVertical: 17, paddingHorizontal: 20, alignItems: 'center',
-    shadowColor: '#ffcc88', shadowOffset: { width: -4, height: -4 }, shadowOpacity: 0.5, shadowRadius: 8,
-    borderTopWidth: 1, borderLeftWidth: 1, borderBottomWidth: 1, borderRightWidth: 1,
-    borderTopColor: '#ffb060', borderLeftColor: '#ffb060',
-    borderBottomColor: '#b83a00', borderRightColor: '#b83a00',
+    shadowColor: '#5c1a00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8,
   },
   saveBtnText: { color: '#fff', fontSize: scale(16), fontWeight: '800', letterSpacing: -0.2 },
   saveBtnSub:  { color: 'rgba(255,255,255,0.75)', fontSize: scale(12), marginTop: 4 },
 
-  echecOuter: {
+  echecBtn: {
     marginHorizontal: 12, marginBottom: 8, borderRadius: 12,
-    backgroundColor: Colors.dangerBg,
-    shadowColor: '#991111', shadowOffset: { width: 5, height: 5 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 5,
-  },
-  echecInner: {
-    borderRadius: 12, backgroundColor: Colors.dangerBg,
+    backgroundColor: Colors.dangerBg, borderWidth: 1, borderColor: Colors.dangerBorder,
     paddingVertical: 13, alignItems: 'center', flexDirection: 'row', justifyContent: 'center',
-    shadowColor: '#fff0f0', shadowOffset: { width: -3, height: -3 }, shadowOpacity: 0.7, shadowRadius: 6,
-    borderTopWidth: 1, borderLeftWidth: 1, borderBottomWidth: 1, borderRightWidth: 1,
-    borderTopColor: '#fdd', borderLeftColor: '#fdd', borderBottomColor: '#e88', borderRightColor: '#e88',
   },
   echecBtnText: { color: Colors.danger, fontWeight: '600', fontSize: scale(13) },
 });

@@ -7,7 +7,7 @@ import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-nativ
 import { Colors, scale } from '../../theme';
 import SectionHeader from './SectionHeader';
 import { LigneState } from './types';
-import { neoCard, NEO, NEO_IN, NEO_SHD, SEP, TEXT, TEXT3 } from './neoStyles';
+import { neoCard, NEO_IN, SEP, TEXT, TEXT3 } from './neoStyles';
 
 interface Props {
   isCollecte:      boolean;
@@ -44,15 +44,13 @@ export default function QuantitesSection({ isCollecte, lignes, onUpdateQuantite 
                 </View>
               </View>
               <View style={styles.stepper}>
-                <View style={styles.stepOuter}>
-                  <TouchableOpacity
-                    style={styles.stepInner}
-                    onPress={() => { const c = parseInt(ligne.quantite, 10) || 0; if (c > 0) onUpdateQuantite(index, String(c - 1)); }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.stepBtnText}>−</Text>
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity
+                  style={styles.stepBtn}
+                  onPress={() => { const c = parseInt(ligne.quantite, 10) || 0; if (c > 0) onUpdateQuantite(index, String(c - 1)); }}
+                  activeOpacity={0.82}
+                >
+                  <Text style={styles.stepBtnText}>−</Text>
+                </TouchableOpacity>
                 <TextInput
                   style={styles.qteInput}
                   value={ligne.quantite}
@@ -61,15 +59,13 @@ export default function QuantitesSection({ isCollecte, lignes, onUpdateQuantite 
                   maxLength={4}
                   textAlign="center"
                 />
-                <View style={styles.stepOuter}>
-                  <TouchableOpacity
-                    style={styles.stepInner}
-                    onPress={() => { const c = parseInt(ligne.quantite, 10) || 0; onUpdateQuantite(index, String(c + 1)); }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.stepBtnText}>+</Text>
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity
+                  style={styles.stepBtn}
+                  onPress={() => { const c = parseInt(ligne.quantite, 10) || 0; onUpdateQuantite(index, String(c + 1)); }}
+                  activeOpacity={0.82}
+                >
+                  <Text style={styles.stepBtnText}>+</Text>
+                </TouchableOpacity>
               </View>
             </View>
           ))}
@@ -89,27 +85,19 @@ const styles = StyleSheet.create({
   prix:          { fontSize: scale(11), color: TEXT3 },
   prevueBadge:     { backgroundColor: Colors.infoBg, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 20 },
   prevueBadgeText: { fontSize: scale(11), fontWeight: '700', color: Colors.brandBlue },
-  stepper:  { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  stepOuter: {
-    borderRadius: 10, backgroundColor: NEO,
-    shadowColor: NEO_SHD, shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 1, shadowRadius: 5, elevation: 6,
-  },
-  stepInner: {
-    width: 44, height: 48, borderRadius: 10, backgroundColor: NEO,
-    shadowColor: '#ffffff', shadowOffset: { width: -3, height: -3 },
-    shadowOpacity: 1, shadowRadius: 4,
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  stepBtn: {
+    width: 44, height: 48, borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1, borderColor: '#DDE2E6',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
     alignItems: 'center', justifyContent: 'center',
-    borderTopWidth: 1, borderLeftWidth: 1, borderBottomWidth: 1, borderRightWidth: 1,
-    borderTopColor: '#ffffff', borderLeftColor: '#ffffff',
-    borderBottomColor: '#8aa8c0', borderRightColor: '#8aa8c0',
   },
   stepBtnText: { fontSize: scale(26), fontWeight: '700', color: TEXT, lineHeight: 30 },
   qteInput: {
-    width: 56, height: 48, borderRadius: 10, backgroundColor: NEO_IN,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8',
-    borderBottomColor: '#f4f8fb', borderRightColor: '#f4f8fb',
+    width: 56, height: 48, borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5, borderColor: '#DDE2E6',
     fontSize: scale(18), fontWeight: '700', color: TEXT, textAlign: 'center',
   },
 });

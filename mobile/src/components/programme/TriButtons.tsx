@@ -35,9 +35,6 @@ const styles = StyleSheet.create({
   track: {
     flexDirection: 'row', borderRadius: 12, padding: 4, gap: 3,
     backgroundColor: 'rgba(0,0,0,0.28)',
-    borderTopWidth: 1, borderLeftWidth: 1, borderBottomWidth: 1, borderRightWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.45)', borderLeftColor: 'rgba(0,0,0,0.45)',
-    borderBottomColor: 'rgba(255,255,255,0.07)', borderRightColor: 'rgba(255,255,255,0.07)',
   },
   btn:         { flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center' },
   btnActive:   { backgroundColor: '#ffffff', shadowColor: '#040d1a', shadowOffset: { width: 2, height: 2 }, shadowOpacity: 0.5, shadowRadius: 3, elevation: 2 },

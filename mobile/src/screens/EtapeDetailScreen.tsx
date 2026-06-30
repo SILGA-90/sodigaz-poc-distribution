@@ -34,7 +34,7 @@ import { RootStackParamList } from '../types/navigation';
 import { Colors, scale } from '../theme';
 import SectionHeader from '../components/saisie/SectionHeader';
 import SigChip from '../components/SigChip';
-import { NEO, NEO_SHD, NEO_IN, NAVY, TEXT, TEXT2, TEXT3, SEP, neoCard } from '../components/saisie/neoStyles';
+import { NEO, NEO_IN, NAVY, TEXT, TEXT2, TEXT3, SEP, neoCard } from '../components/saisie/neoStyles';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EtapeDetail'>;
 
@@ -111,12 +111,10 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
   if (!operation) {
     return (
       <View style={styles.center}>
-        <View style={styles.emptyOuter}>
-          <View style={styles.emptyInner}>
-            <Ionicons name="document-outline" size={36} color={TEXT3} style={{ marginBottom: 10 }} />
-            <Text style={styles.emptyTitle}>Aucune opération</Text>
-            <Text style={styles.emptyText}>Cette étape ne possède pas encore d'opération enregistrée.</Text>
-          </View>
+        <View style={styles.emptyCard}>
+          <Ionicons name="document-outline" size={36} color={TEXT3} style={{ marginBottom: 10 }} />
+          <Text style={styles.emptyTitle}>Aucune opération</Text>
+          <Text style={styles.emptyText}>Cette étape ne possède pas encore d'opération enregistrée.</Text>
         </View>
       </View>
     );
@@ -276,17 +274,11 @@ const styles = StyleSheet.create({
   wideContent: { maxWidth: 700, alignSelf: 'center', width: '100%' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: NEO, padding: 32 },
 
-  /* État vide : raised */
-  emptyOuter: {
-    borderRadius: 16, backgroundColor: NEO,
-    shadowColor: NEO_SHD, shadowOffset: { width: 6, height: 6 }, shadowOpacity: 1, shadowRadius: 7, elevation: 8,
-  },
-  emptyInner: {
-    borderRadius: 16, backgroundColor: NEO, padding: 28, alignItems: 'center',
-    shadowColor: '#ffffff', shadowOffset: { width: -5, height: -5 }, shadowOpacity: 1, shadowRadius: 7,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#ffffff', borderLeftColor: '#ffffff',
-    borderBottomColor: '#8aa8c0', borderRightColor: '#8aa8c0',
+  /* État vide : carte nette */
+  emptyCard: {
+    borderRadius: 14, backgroundColor: '#FFFFFF', padding: 28, alignItems: 'center', maxWidth: 340,
+    borderWidth: 1, borderColor: '#DDE2E6',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
   },
   emptyTitle: { fontSize: scale(16), fontWeight: '700', color: TEXT2, marginBottom: 6 },
   emptyText:  { fontSize: scale(13), color: TEXT3, textAlign: 'center', lineHeight: 20 },
@@ -330,12 +322,10 @@ const styles = StyleSheet.create({
   montantHeroValue:{ fontSize: scale(34), fontWeight: '800', color: TEXT, letterSpacing: -1 },
   montantHeroUnit: { fontSize: scale(16), fontWeight: '600', color: TEXT2 },
 
-  /* Commentaire inset */
+  /* Commentaire */
   commentaireBox: {
     backgroundColor: NEO_IN, borderRadius: 10, padding: 12,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8',
-    borderBottomColor: '#f4f8fb', borderRightColor: '#f4f8fb',
+    borderWidth: 1, borderColor: SEP,
   },
   commentaire: { fontSize: scale(14), color: TEXT2, lineHeight: 22 },
 

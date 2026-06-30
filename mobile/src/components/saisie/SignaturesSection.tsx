@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, scale } from '../../theme';
 import SectionHeader from './SectionHeader';
 import FieldInput from './FieldInput';
-import { neoCard, NEO, NEO_SHD, TEXT2, TEXT3 } from './neoStyles';
+import { neoCard, TEXT2, TEXT3 } from './neoStyles';
 
 interface Props {
   nomSignataire:        string;
@@ -53,11 +53,14 @@ export default function SignaturesSection({
                   key={who}
                   style={[styles.sigBtn, signed && styles.sigBtnDone, missing && styles.sigBtnError]}
                   onPress={() => { onClearSigError(); onOpenPad(who); }}
-                  activeOpacity={0.8}
+                  activeOpacity={0.82}
                 >
-                  <Text style={[styles.sigIcon, signed && styles.sigIconDone, missing && styles.sigIconError]}>
-                    {signed ? '✓' : '✎'}
-                  </Text>
+                  <Ionicons
+                    name={signed ? 'checkmark-circle' : 'create-outline'}
+                    size={22}
+                    color={missing ? Colors.danger : signed ? Colors.success : TEXT3}
+                    style={{ marginBottom: 5 }}
+                  />
                   <Text style={[styles.sigLabel, signed && styles.sigLabelDone, missing && styles.sigLabelError]}>
                     {who === 'LIVREUR' ? 'Livreur' : 'Client'}
                   </Text>
@@ -81,35 +84,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'flex-start', gap: 8,
     marginBottom: 12, padding: 11, borderRadius: 10,
     backgroundColor: Colors.dangerBg,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#fdd', borderLeftColor: '#fdd',
-    borderBottomColor: Colors.dangerBorder, borderRightColor: Colors.dangerBorder,
+    borderWidth: 1, borderColor: Colors.dangerBorder,
   },
   errorText: { flex: 1, fontSize: scale(13), color: Colors.danger, lineHeight: 18 },
 
   sigRow: { flexDirection: 'row', gap: 10 },
   sigBtn: {
     flex: 1, borderRadius: 12, paddingVertical: 16, alignItems: 'center',
-    backgroundColor: NEO,
-    shadowColor: NEO_SHD, shadowOffset: { width: 5, height: 5 },
-    shadowOpacity: 1, shadowRadius: 6, elevation: 7,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#ffffff', borderLeftColor: '#ffffff',
-    borderBottomColor: '#8aa8c0', borderRightColor: '#8aa8c0',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1, borderColor: '#DDE2E6',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
-  sigBtnDone: {
-    backgroundColor: Colors.successBg, shadowColor: '#107a30', shadowOpacity: 0.4,
-    borderTopColor: 'rgba(210,255,230,0.8)', borderLeftColor: 'rgba(210,255,230,0.8)',
-    borderBottomColor: Colors.successBorder, borderRightColor: Colors.successBorder,
-  },
-  sigBtnError: {
-    backgroundColor: Colors.dangerBg, shadowColor: '#991b1b', shadowOpacity: 0.35,
-    borderTopColor: '#fdd', borderLeftColor: '#fdd',
-    borderBottomColor: Colors.dangerBorder, borderRightColor: Colors.dangerBorder,
-  },
-  sigIcon:      { fontSize: scale(22), marginBottom: 5, color: TEXT3 },
-  sigIconDone:  { color: Colors.success },
-  sigIconError: { color: Colors.danger },
+  sigBtnDone:  { backgroundColor: Colors.successBg, borderColor: Colors.successBorder },
+  sigBtnError: { backgroundColor: Colors.dangerBg,  borderColor: Colors.dangerBorder },
+
   sigLabel:      { fontSize: scale(13), fontWeight: '700', color: TEXT2 },
   sigLabelDone:  { color: Colors.success },
   sigLabelError: { color: Colors.danger },

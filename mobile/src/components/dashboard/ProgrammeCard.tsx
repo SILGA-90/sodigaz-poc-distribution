@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ProgrammeAvecProgression } from '../../db/repositories/programmeRepository';
 import { Colors, scale } from '../../theme';
-import { NEO, NEO_IN, TEXT, TEXT3 } from './dashStyles';
+import { NEO_IN, SURFACE, TEXT, TEXT3 } from './dashStyles';
 
 interface Props {
   item:    ProgrammeAvecProgression;
@@ -24,54 +24,44 @@ export default function ProgrammeCard({ item, onPress }: Props): React.ReactElem
     item.statut === 'EN_COURS' ? 'En cours' : 'Planifié';
 
   return (
-    <View style={styles.outer}>
-      <View style={styles.shadowLight}>
-        <TouchableOpacity style={styles.content} onPress={onPress} activeOpacity={0.8}>
-          <View style={[styles.accent, { backgroundColor: accentColor }]} />
-          <View style={styles.body}>
-            <View style={styles.row1}>
-              <Text style={styles.numero} numberOfLines={1}>{item.numero_x3}</Text>
-              <View style={[styles.statutPill, { backgroundColor: pillBg }]}>
-                <View style={[styles.statutDot, { backgroundColor: accentColor }]} />
-                <Text style={[styles.statutPillText, { color: accentColor }]}>{statutLabel}</Text>
-              </View>
-            </View>
-            <View style={styles.row2}>
-              <View style={[styles.typeChip, isCollecte ? styles.typeC : styles.typeR]}>
-                <Text style={[styles.typeChipText, isCollecte ? styles.typeCText : styles.typeRText]}>
-                  {isCollecte ? 'Collecte' : 'Restitution'}
-                </Text>
-              </View>
-              <Text style={styles.date}>{item.date_programme}</Text>
-            </View>
-            {/* Barre de progression inset */}
-            <View style={styles.barWrap}>
-              <View style={styles.barTrack}>
-                <View style={[styles.barFill, { width: `${pct}%` as `${number}%`, backgroundColor: accentColor }]} />
-              </View>
-              <Text style={[styles.pct, { color: accentColor }]}>{item.etapes_visitees}/{item.total_etapes}</Text>
-            </View>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.82}>
+      <View style={[styles.accent, { backgroundColor: accentColor }]} />
+      <View style={styles.body}>
+        <View style={styles.row1}>
+          <Text style={styles.numero} numberOfLines={1}>{item.numero_x3}</Text>
+          <View style={[styles.statutPill, { backgroundColor: pillBg }]}>
+            <View style={[styles.statutDot, { backgroundColor: accentColor }]} />
+            <Text style={[styles.statutPillText, { color: accentColor }]}>{statutLabel}</Text>
           </View>
-        </TouchableOpacity>
+        </View>
+        <View style={styles.row2}>
+          <View style={[styles.typeChip, isCollecte ? styles.typeC : styles.typeR]}>
+            <Text style={[styles.typeChipText, isCollecte ? styles.typeCText : styles.typeRText]}>
+              {isCollecte ? 'Collecte' : 'Restitution'}
+            </Text>
+          </View>
+          <Text style={styles.date}>{item.date_programme}</Text>
+        </View>
+        <View style={styles.barWrap}>
+          <View style={styles.barTrack}>
+            <View style={[styles.barFill, { width: `${pct}%` as `${number}%`, backgroundColor: accentColor }]} />
+          </View>
+          <Text style={[styles.pct, { color: accentColor }]}>{item.etapes_visitees}/{item.total_etapes}</Text>
+        </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  outer: {
-    marginBottom: 14, borderRadius: 16, backgroundColor: NEO,
-    shadowColor: '#4a6880', shadowOffset: { width: 6, height: 6 }, shadowOpacity: 1, shadowRadius: 7, elevation: 10,
-  },
-  shadowLight: {
-    borderRadius: 16, backgroundColor: NEO,
-    shadowColor: '#ffffff', shadowOffset: { width: -6, height: -6 }, shadowOpacity: 1, shadowRadius: 7,
-  },
-  content: {
-    flexDirection: 'row', borderRadius: 16, backgroundColor: NEO, overflow: 'hidden',
-    borderTopWidth: 1, borderLeftWidth: 1, borderBottomWidth: 1, borderRightWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.85)', borderLeftColor: 'rgba(255,255,255,0.85)',
-    borderBottomColor: 'rgba(74,104,128,0.35)', borderRightColor: 'rgba(74,104,128,0.35)',
+  card: {
+    marginBottom: 12,
+    borderRadius: 12,
+    backgroundColor: SURFACE,
+    borderWidth: 1, borderColor: '#DDE2E6',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
+    flexDirection: 'row',
+    overflow: 'hidden',
   },
   accent: { width: 5 },
   body:   { flex: 1, padding: 14 },
@@ -90,10 +80,8 @@ const styles = StyleSheet.create({
   date:        { fontSize: scale(12), color: TEXT3 },
   barWrap:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
   barTrack: {
-    flex: 1, height: 6, borderRadius: 3, overflow: 'hidden', backgroundColor: NEO_IN,
-    borderTopWidth: 1, borderLeftWidth: 1, borderBottomWidth: 1, borderRightWidth: 1,
-    borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8',
-    borderBottomColor: '#f4f8fb', borderRightColor: '#f4f8fb',
+    flex: 1, height: 6, borderRadius: 3, overflow: 'hidden',
+    backgroundColor: NEO_IN,
   },
   barFill: { height: 6, borderRadius: 3 },
   pct:     { fontSize: scale(12), fontWeight: '700', minWidth: 38, textAlign: 'right' },

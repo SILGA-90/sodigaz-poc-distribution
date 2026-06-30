@@ -86,9 +86,6 @@ const styles = StyleSheet.create({
   itineraireBtn: {
     paddingHorizontal: 14, paddingVertical: 9, borderRadius: 16,
     backgroundColor: Colors.brandBlue,
-    borderTopWidth: 1, borderLeftWidth: 1, borderBottomWidth: 1, borderRightWidth: 1,
-    borderTopColor: '#2bb8ef', borderLeftColor: '#2bb8ef',
-    borderBottomColor: '#046a96', borderRightColor: '#046a96',
   },
   itineraireText: { color: '#fff', fontWeight: '700', fontSize: scale(12) },
 

@@ -34,15 +34,14 @@ import { getAnomaliesDuProgramme, AnomalieLocale } from '../db/repositories/anom
 import { RootStackParamList } from '../types/navigation';
 import { Colors, scale } from '../theme';
 
-/* Palette néo claire */
-const NEO     = '#e8edf2';
-const NEO_SHD = '#4a6880';
-const NEO_IN  = '#d4dde6';
-const NAVY    = '#0a1628';
-const TEXT    = '#1a2a3a';
-const TEXT2   = '#3a5060';
-const TEXT3   = '#3a5060';
-const SEP     = '#c8d4de';
+/* Palette */
+const NEO    = '#F2F4F6';
+const NEO_IN = '#E8EEF2';
+const NAVY   = '#0a1628';
+const TEXT   = '#1a2a3a';
+const TEXT2  = '#3a5060';
+const TEXT3  = '#5B6770';
+const SEP    = '#DDE2E6';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MesAnomalies'>;
 
@@ -62,10 +61,10 @@ const GRAVITE_CFG = {
 } as const;
 
 const STATUT_CFG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  OUVERTE:  { label: 'Ouverte',  color: Colors.danger,      bg: Colors.dangerBg,  border: Colors.dangerBorder  },
-  EN_COURS: { label: 'En cours', color: Colors.warning,      bg: Colors.warningBg, border: Colors.warningBorder },
-  RESOLUE:  { label: 'Résolue',  color: Colors.success,      bg: Colors.successBg, border: Colors.successBorder },
-  CLASSEE:  { label: 'Classée',  color: Colors.textMuted,    bg: NEO_IN,           border: SEP                  },
+  OUVERTE:  { label: 'Ouverte',  color: Colors.danger,   bg: Colors.dangerBg,  border: Colors.dangerBorder  },
+  EN_COURS: { label: 'En cours', color: Colors.warning,   bg: Colors.warningBg, border: Colors.warningBorder },
+  RESOLUE:  { label: 'Résolue',  color: Colors.success,   bg: Colors.successBg, border: Colors.successBorder },
+  CLASSEE:  { label: 'Classée',  color: Colors.textMuted, bg: NEO_IN,           border: SEP                  },
 };
 
 export default function MesAnomaliesScreen({ route, navigation }: Props): React.ReactElement {
@@ -101,47 +100,43 @@ export default function MesAnomaliesScreen({ route, navigation }: Props): React.
     });
 
     return (
-      <View style={styles.cardOuter}>
-        <View style={[styles.cardInner, { borderLeftColor: gcfg.color }]}>
-          {/* Ligne principale */}
-          <View style={styles.cardTop}>
-            {/* Icône type */}
-            <View style={[styles.iconBox, { backgroundColor: gcfg.bg, borderColor: gcfg.border }]}>
-              <Ionicons name={meta.icon} size={20} color={gcfg.color} />
-            </View>
-            <View style={styles.cardMeta}>
-              <Text style={styles.typeLabel}>{meta.label}</Text>
-              <Text style={styles.dateText}>{date}</Text>
-            </View>
-            {/* Gravité pill */}
-            <View style={[styles.gravitePill, { backgroundColor: gcfg.bg, borderColor: gcfg.border }]}>
-              <Text style={[styles.graviteText, { color: gcfg.color }]}>{gcfg.label}</Text>
-            </View>
+      <View style={[styles.card, { borderLeftColor: gcfg.color }]}>
+        {/* Ligne principale */}
+        <View style={styles.cardTop}>
+          <View style={[styles.iconBox, { backgroundColor: gcfg.bg, borderColor: gcfg.border }]}>
+            <Ionicons name={meta.icon} size={20} color={gcfg.color} />
           </View>
+          <View style={styles.cardMeta}>
+            <Text style={styles.typeLabel}>{meta.label}</Text>
+            <Text style={styles.dateText}>{date}</Text>
+          </View>
+          <View style={[styles.gravitePill, { backgroundColor: gcfg.bg, borderColor: gcfg.border }]}>
+            <Text style={[styles.graviteText, { color: gcfg.color }]}>{gcfg.label}</Text>
+          </View>
+        </View>
 
-          {/* Description inset */}
-          {item.description ? (
-            <View style={styles.descBox}>
-              <Text style={styles.description}>{item.description}</Text>
-            </View>
-          ) : null}
+        {/* Description */}
+        {item.description ? (
+          <View style={styles.descBox}>
+            <Text style={styles.description}>{item.description}</Text>
+          </View>
+        ) : null}
 
-          {/* Footer statut + sync */}
-          <View style={styles.cardFooter}>
-            <View style={[styles.statutPill, { backgroundColor: scfg.bg, borderColor: scfg.border }]}>
-              <Text style={[styles.statutText, { color: scfg.color }]}>{scfg.label}</Text>
-            </View>
-            <View style={[styles.syncChip, synced ? styles.syncChipSynced : styles.syncChipPending]}>
-              <Ionicons
-                name={synced ? 'checkmark-circle-outline' : 'cloud-upload-outline'}
-                size={12}
-                color={synced ? Colors.success : Colors.warning}
-                style={{ marginRight: 3 }}
-              />
-              <Text style={[styles.syncText, { color: synced ? Colors.success : Colors.warning }]}>
-                {synced ? 'Synchronisée' : 'En attente'}
-              </Text>
-            </View>
+        {/* Footer statut + sync */}
+        <View style={styles.cardFooter}>
+          <View style={[styles.statutPill, { backgroundColor: scfg.bg, borderColor: scfg.border }]}>
+            <Text style={[styles.statutText, { color: scfg.color }]}>{scfg.label}</Text>
+          </View>
+          <View style={[styles.syncChip, synced ? styles.syncChipSynced : styles.syncChipPending]}>
+            <Ionicons
+              name={synced ? 'checkmark-circle-outline' : 'cloud-upload-outline'}
+              size={12}
+              color={synced ? Colors.success : Colors.warning}
+              style={{ marginRight: 3 }}
+            />
+            <Text style={[styles.syncText, { color: synced ? Colors.success : Colors.warning }]}>
+              {synced ? 'Synchronisée' : 'En attente'}
+            </Text>
           </View>
         </View>
       </View>
@@ -160,36 +155,36 @@ export default function MesAnomaliesScreen({ route, navigation }: Props): React.
             <Ionicons name="chevron-back" size={22} color="#fff" />
           </TouchableOpacity>
           <View style={styles.headerText}>
-          <Text style={styles.headerLabel}>Anomalies</Text>
-          <Text style={styles.headerNumero}>{programmeNumero}</Text>
+            <Text style={styles.headerLabel}>Anomalies</Text>
+            <Text style={styles.headerNumero}>{programmeNumero}</Text>
 
-          {anomalies.length > 0 ? (
-            <View style={styles.statsRow}>
-              {counts.elevee > 0 && (
-                <View style={styles.statChip}>
-                  <View style={[styles.statDot, { backgroundColor: Colors.danger }]} />
-                  <Text style={[styles.statNum, { color: Colors.danger }]}>{counts.elevee}</Text>
-                  <Text style={[styles.statLbl, { color: Colors.danger }]}>élevée{counts.elevee > 1 ? 's' : ''}</Text>
-                </View>
-              )}
-              {counts.moyenne > 0 && (
-                <View style={styles.statChip}>
-                  <View style={[styles.statDot, { backgroundColor: Colors.warning }]} />
-                  <Text style={[styles.statNum, { color: Colors.warning }]}>{counts.moyenne}</Text>
-                  <Text style={[styles.statLbl, { color: Colors.warning }]}>moyenne{counts.moyenne > 1 ? 's' : ''}</Text>
-                </View>
-              )}
-              {counts.faible > 0 && (
-                <View style={styles.statChip}>
-                  <View style={[styles.statDot, { backgroundColor: Colors.success }]} />
-                  <Text style={[styles.statNum, { color: Colors.success }]}>{counts.faible}</Text>
-                  <Text style={[styles.statLbl, { color: Colors.success }]}>faible{counts.faible > 1 ? 's' : ''}</Text>
-                </View>
-              )}
-            </View>
-          ) : (
-            <Text style={styles.headerZero}>Aucun signalement</Text>
-          )}
+            {anomalies.length > 0 ? (
+              <View style={styles.statsRow}>
+                {counts.elevee > 0 && (
+                  <View style={styles.statChip}>
+                    <View style={[styles.statDot, { backgroundColor: Colors.danger }]} />
+                    <Text style={[styles.statNum, { color: Colors.danger }]}>{counts.elevee}</Text>
+                    <Text style={[styles.statLbl, { color: Colors.danger }]}>élevée{counts.elevee > 1 ? 's' : ''}</Text>
+                  </View>
+                )}
+                {counts.moyenne > 0 && (
+                  <View style={styles.statChip}>
+                    <View style={[styles.statDot, { backgroundColor: Colors.warning }]} />
+                    <Text style={[styles.statNum, { color: Colors.warning }]}>{counts.moyenne}</Text>
+                    <Text style={[styles.statLbl, { color: Colors.warning }]}>moyenne{counts.moyenne > 1 ? 's' : ''}</Text>
+                  </View>
+                )}
+                {counts.faible > 0 && (
+                  <View style={styles.statChip}>
+                    <View style={[styles.statDot, { backgroundColor: Colors.success }]} />
+                    <Text style={[styles.statNum, { color: Colors.success }]}>{counts.faible}</Text>
+                    <Text style={[styles.statLbl, { color: Colors.success }]}>faible{counts.faible > 1 ? 's' : ''}</Text>
+                  </View>
+                )}
+              </View>
+            ) : (
+              <Text style={styles.headerZero}>Aucun signalement</Text>
+            )}
           </View>
         </View>
       </View>
@@ -203,10 +198,8 @@ export default function MesAnomaliesScreen({ route, navigation }: Props): React.
         contentContainerStyle={[styles.list, width >= 700 && styles.wideContent]}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <View style={styles.emptyOuter}>
-              <View style={styles.emptyInner}>
-                <Ionicons name="checkmark-circle" size={34} color={Colors.success} />
-              </View>
+            <View style={styles.emptyIconWrap}>
+              <Ionicons name="checkmark-circle" size={34} color={Colors.success} />
             </View>
             <Text style={styles.emptyTitle}>Aucune anomalie</Text>
             <Text style={styles.emptyText}>Ce programme ne comporte aucun signalement.</Text>
@@ -234,11 +227,11 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     marginTop: 2, flexShrink: 0,
   },
-  headerText:    { flex: 1 },
-  headerLabel:   { color: 'rgba(255,255,255,0.45)', fontSize: scale(11), fontWeight: '600', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2 },
-  headerNumero:  { color: '#fff', fontSize: scale(22), fontWeight: '800', marginBottom: 16 },
+  headerText:   { flex: 1 },
+  headerLabel:  { color: 'rgba(255,255,255,0.45)', fontSize: scale(11), fontWeight: '600', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2 },
+  headerNumero: { color: '#fff', fontSize: scale(22), fontWeight: '800', marginBottom: 16 },
 
-  /* Stats dans le header : chips glass */
+  /* Stats glass chips */
   statsRow: { flexDirection: 'row', gap: 8 },
   statChip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
@@ -254,19 +247,15 @@ const styles = StyleSheet.create({
   list:        { padding: 14, paddingTop: 16, paddingBottom: 32 },
   wideContent: { maxWidth: 700, alignSelf: 'center', width: '100%' },
 
-  /* Carte anomalie raised + bande accent gravité */
-  cardOuter: {
-    marginBottom: 10,
-    borderRadius: 14, backgroundColor: NEO,
-    shadowColor: NEO_SHD, shadowOffset: { width: 6, height: 6 }, shadowOpacity: 1, shadowRadius: 7, elevation: 10,
-  },
-  cardInner: {
-    borderRadius: 14, backgroundColor: NEO, paddingHorizontal: 14, paddingTop: 13, paddingBottom: 12,
-    shadowColor: '#ffffff', shadowOffset: { width: -6, height: -6 }, shadowOpacity: 1, shadowRadius: 7,
+  /* Carte anomalie avec bande accent gauche */
+  card: {
+    marginBottom: 10, borderRadius: 14, backgroundColor: '#FFFFFF',
+    borderTopWidth: 1, borderTopColor: '#DDE2E6',
+    borderBottomWidth: 1, borderBottomColor: '#DDE2E6',
+    borderRightWidth: 1, borderRightColor: '#DDE2E6',
     borderLeftWidth: 4,
-    borderTopWidth: 1.5, borderTopColor: '#ffffff',
-    borderBottomWidth: 1.5, borderBottomColor: '#8aa8c0',
-    borderRightWidth: 1.5, borderRightColor: '#8aa8c0',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
+    paddingHorizontal: 14, paddingTop: 13, paddingBottom: 12,
   },
   cardTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
 
@@ -281,11 +270,10 @@ const styles = StyleSheet.create({
   gravitePill: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
   graviteText: { fontSize: scale(11), fontWeight: '700' },
 
-  /* Description inset */
+  /* Description */
   descBox: {
     backgroundColor: NEO_IN, borderRadius: 8, padding: 10, marginBottom: 10,
-    borderTopWidth: 1, borderLeftWidth: 1,
-    borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8',
+    borderWidth: 1, borderColor: '#DDE2E6',
   },
   description: { fontSize: scale(13), color: TEXT2, lineHeight: 20 },
 
@@ -299,18 +287,11 @@ const styles = StyleSheet.create({
   syncText:        { fontSize: scale(11), fontWeight: '600' },
 
   /* État vide */
-  empty:      { paddingTop: 70, alignItems: 'center', paddingHorizontal: 40 },
-  emptyOuter: {
-    borderRadius: 38, backgroundColor: NEO, marginBottom: 18,
-    shadowColor: '#107a30', shadowOffset: { width: 5, height: 5 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 6,
-  },
-  emptyInner: {
-    width: 76, height: 76, borderRadius: 38, backgroundColor: Colors.successBg,
-    shadowColor: '#d0fff0', shadowOffset: { width: -4, height: -4 }, shadowOpacity: 0.9, shadowRadius: 6,
-    alignItems: 'center', justifyContent: 'center',
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#d0fff0', borderLeftColor: '#d0fff0',
-    borderBottomColor: Colors.successBorder, borderRightColor: Colors.successBorder,
+  empty:         { paddingTop: 70, alignItems: 'center', paddingHorizontal: 40 },
+  emptyIconWrap: {
+    width: 76, height: 76, borderRadius: 38,
+    backgroundColor: Colors.successBg, borderWidth: 1, borderColor: Colors.successBorder,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 18,
   },
   emptyTitle: { fontSize: scale(17), fontWeight: '700', color: TEXT2, marginBottom: 8 },
   emptyText:  { fontSize: scale(13), color: TEXT3, textAlign: 'center', lineHeight: 20 },

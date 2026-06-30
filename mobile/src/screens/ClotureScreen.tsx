@@ -45,7 +45,7 @@ import {
 import { Programme } from '../types/models';
 import { RootStackParamList } from '../types/navigation';
 import { Colors, scale } from '../theme';
-import { neoCard, NEO, NEO_SHD, NAVY, TEXT, TEXT2, TEXT3, SEP } from '../components/saisie/neoStyles';
+import { neoCard, NEO, NEO_IN, NAVY, TEXT, TEXT2, TEXT3, SEP } from '../components/saisie/neoStyles';
 import SectionHeader from '../components/saisie/SectionHeader';
 import RecapRow from '../components/saisie/RecapRow';
 import NeoDialog from '../components/NeoDialog';
@@ -135,11 +135,9 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
         <View style={styles.bubble1} pointerEvents="none" />
         <View style={styles.bubble2} pointerEvents="none" />
 
-        {/* Grande icône raised ✓ */}
-        <View style={styles.checkOuter}>
-          <View style={styles.checkInner}>
-            <Ionicons name="checkmark-circle" size={56} color={Colors.success} />
-          </View>
+        {/* Grande icône ✓ */}
+        <View style={styles.checkCircle}>
+          <Ionicons name="checkmark-circle" size={56} color={Colors.success} />
         </View>
         <Text style={styles.successTitle}>Tournée terminée</Text>
         <Text style={styles.successSub}>{programme.numero_x3} · {programme.date_programme}</Text>
@@ -172,22 +170,18 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
         </View>
 
         {/* Avertissement sync */}
-        <View style={styles.syncNoticeOuter}>
-          <View style={styles.syncNoticeInner}>
-            <Ionicons name="cloud-upload-outline" size={18} color={Colors.warning} />
-            <Text style={styles.syncNoticeText}>
-              Synchronisez dès que possible pour remonter vos données au superviseur.
-            </Text>
-          </View>
+        <View style={styles.syncNotice}>
+          <Ionicons name="cloud-upload-outline" size={18} color={Colors.warning} />
+          <Text style={styles.syncNoticeText}>
+            Synchronisez dès que possible pour remonter vos données au superviseur.
+          </Text>
         </View>
 
-        {/* Bouton retour : raised bleu */}
-        <View style={styles.backBtnOuter}>
-          <TouchableOpacity style={styles.backBtnInner}
-            onPress={() => navigation.navigate('Dashboard')} activeOpacity={0.85}>
-            <Text style={styles.backBtnText}>Retour au tableau de bord</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Bouton retour */}
+        <TouchableOpacity style={styles.backBtn}
+          onPress={() => navigation.navigate('Dashboard')} activeOpacity={0.85}>
+          <Text style={styles.backBtnText}>Retour au tableau de bord</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -367,26 +361,22 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
 
       {/* ACTION */}
       {dejaCloture ? (
-        /* Badge déjà clôturé : raised vert */
-        <View style={styles.clotureBadgeOuter}>
-          <View style={styles.clotureBadgeInner}>
-            <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
-            <Text style={styles.clotureBadgeText}>Programme déjà clôturé</Text>
-          </View>
+        /* Badge déjà clôturé */
+        <View style={styles.clotureBadge}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.clotureBadgeText}>Programme déjà clôturé</Text>
         </View>
       ) : (
-        /* Bouton clôturer : raised vert */
-        <View style={[styles.clotureBtnOuter, closing && { opacity: 0.5 }]}>
-          <TouchableOpacity style={styles.clotureBtnInner}
-            onPress={confirmerCloture} disabled={closing} activeOpacity={0.85}>
-            {closing ? <ActivityIndicator color="#fff" /> : (
-              <>
-                <Text style={styles.clotureBtnText}>Clôturer le programme</Text>
-                <Text style={styles.clotureBtnSub}>Action irréversible</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
+        /* Bouton clôturer */
+        <TouchableOpacity style={[styles.clotureBtn, closing && { opacity: 0.5 }]}
+          onPress={confirmerCloture} disabled={closing} activeOpacity={0.85}>
+          {closing ? <ActivityIndicator color="#fff" /> : (
+            <>
+              <Text style={styles.clotureBtnText}>Clôturer le programme</Text>
+              <Text style={styles.clotureBtnSub}>Action irréversible</Text>
+            </>
+          )}
+        </TouchableOpacity>
       )}
 
       <NeoDialog
@@ -439,7 +429,7 @@ const styles = StyleSheet.create({
   progressHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   progressLabel:  { fontSize: scale(13), fontWeight: '600', color: TEXT2 },
   progressPct:    { fontSize: scale(14), fontWeight: '800', color: Colors.brandBlue },
-  progressTrack:  { height: 8, borderRadius: 4, backgroundColor: '#d4dde6', marginBottom: 14, overflow: 'hidden' },
+  progressTrack:  { height: 8, borderRadius: 4, backgroundColor: NEO_IN, marginBottom: 14, overflow: 'hidden' },
   progressFill:   { height: 8, borderRadius: 4 },
 
   /* Mini stats étapes */
@@ -477,35 +467,21 @@ const styles = StyleSheet.create({
   opEncaissePill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 },
   opEncaisseText: { fontSize: scale(11), fontWeight: '700' },
 
-  /* Badge "déjà clôturé" : raised vert */
-  clotureBadgeOuter: {
-    marginHorizontal: 12, marginTop: 20,
-    borderRadius: 12, backgroundColor: Colors.successBg,
-    shadowColor: '#107a30', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
-  },
-  clotureBadgeInner: {
+  /* Badge "déjà clôturé" */
+  clotureBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    borderRadius: 12, backgroundColor: Colors.successBg, padding: 16, justifyContent: 'center',
-    shadowColor: '#d0fff0', shadowOffset: { width: -3, height: -3 }, shadowOpacity: 0.7, shadowRadius: 5,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#d0fff0', borderLeftColor: '#d0fff0',
-    borderBottomColor: Colors.successBorder, borderRightColor: Colors.successBorder,
+    marginHorizontal: 12, marginTop: 20, padding: 16, justifyContent: 'center',
+    borderRadius: 12, backgroundColor: Colors.successBg,
+    borderWidth: 1, borderColor: Colors.successBorder,
   },
   clotureBadgeText: { color: Colors.success, fontWeight: '700', fontSize: scale(14) },
 
-  /* Bouton clôturer : raised vert */
-  clotureBtnOuter: {
+  /* Bouton clôturer */
+  clotureBtn: {
     marginHorizontal: 12, marginTop: 22, marginBottom: 8,
     borderRadius: 14, backgroundColor: Colors.success,
-    shadowColor: '#065f46', shadowOffset: { width: 6, height: 6 }, shadowOpacity: 0.7, shadowRadius: 10, elevation: 10,
-  },
-  clotureBtnInner: {
-    borderRadius: 14, backgroundColor: Colors.success,
     paddingVertical: 17, alignItems: 'center',
-    shadowColor: '#6ee7b7', shadowOffset: { width: -4, height: -4 }, shadowOpacity: 0.5, shadowRadius: 8,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#6ee7b7', borderLeftColor: '#6ee7b7',
-    borderBottomColor: '#065f46', borderRightColor: '#065f46',
+    shadowColor: '#065f46', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8,
   },
   clotureBtnText: { color: '#fff', fontSize: scale(16), fontWeight: '800', letterSpacing: -0.2 },
   clotureBtnSub:  { color: 'rgba(255,255,255,0.65)', fontSize: scale(11), marginTop: 4 },
@@ -513,53 +489,33 @@ const styles = StyleSheet.create({
   /* État succès */
   successRoot: { flex: 1, backgroundColor: NEO, padding: 24, alignItems: 'center', justifyContent: 'center' },
 
-  checkOuter: {
-    borderRadius: 50, backgroundColor: NEO,
-    shadowColor: NEO_SHD, shadowOffset: { width: 6, height: 6 }, shadowOpacity: 1, shadowRadius: 10, elevation: 10,
-    marginBottom: 20,
-  },
-  checkInner: {
+  checkCircle: {
     width: 100, height: 100, borderRadius: 50,
     backgroundColor: Colors.successBg,
-    shadowColor: '#ffffff', shadowOffset: { width: -5, height: -5 }, shadowOpacity: 1, shadowRadius: 8,
+    borderWidth: 1.5, borderColor: Colors.successBorder,
     alignItems: 'center', justifyContent: 'center',
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#d0fff0', borderLeftColor: '#d0fff0',
-    borderBottomColor: Colors.successBorder, borderRightColor: Colors.successBorder,
+    marginBottom: 20,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 4,
   },
 
   successTitle: { fontSize: scale(24), fontWeight: '800', color: TEXT, letterSpacing: -0.5, marginBottom: 4 },
   successSub:   { fontSize: scale(13), color: TEXT3, marginBottom: 28 },
 
-  /* Notice sync : warning raised */
-  syncNoticeOuter: {
-    width: '100%', marginBottom: 14,
-    borderRadius: 12, backgroundColor: Colors.warningBg,
-    shadowColor: '#92400e', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 4,
-  },
-  syncNoticeInner: {
+  /* Notice sync */
+  syncNotice: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    borderRadius: 12, backgroundColor: Colors.warningBg, padding: 14,
-    shadowColor: '#fffdf0', shadowOffset: { width: -3, height: -3 }, shadowOpacity: 0.8, shadowRadius: 5,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#fffdf0', borderLeftColor: '#fffdf0',
-    borderBottomColor: Colors.warningBorder, borderRightColor: Colors.warningBorder,
+    width: '100%', marginBottom: 14, padding: 14,
+    borderRadius: 12, backgroundColor: Colors.warningBg,
+    borderWidth: 1, borderColor: Colors.warningBorder,
   },
   syncNoticeText: { flex: 1, fontSize: scale(13), color: TEXT2, lineHeight: 18 },
 
-  /* Bouton retour : raised bleu */
-  backBtnOuter: {
+  /* Bouton retour */
+  backBtn: {
     width: '100%', marginTop: 8,
     borderRadius: 14, backgroundColor: Colors.brandBlue,
-    shadowColor: '#046a96', shadowOffset: { width: 6, height: 6 }, shadowOpacity: 0.7, shadowRadius: 10, elevation: 10,
-  },
-  backBtnInner: {
-    borderRadius: 14, backgroundColor: Colors.brandBlue,
     paddingVertical: 17, alignItems: 'center',
-    shadowColor: '#7dd3fa', shadowOffset: { width: -4, height: -4 }, shadowOpacity: 0.45, shadowRadius: 8,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#2bb8ef', borderLeftColor: '#2bb8ef',
-    borderBottomColor: '#046a96', borderRightColor: '#046a96',
+    shadowColor: '#046a96', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 8,
   },
   backBtnText: { color: '#fff', fontSize: scale(16), fontWeight: '700' },
 });

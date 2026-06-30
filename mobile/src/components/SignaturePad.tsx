@@ -41,7 +41,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { scale } from '../theme';
+import { Colors, scale } from '../theme';
 
 interface Props {
   visible: boolean;
@@ -166,20 +166,20 @@ export default function SignaturePad({ visible, titre, onSave, onCancel }: Props
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16, paddingTop: 48, alignItems: 'center' },
-  titre: { fontSize: scale(18), fontWeight: '700', color: '#333', textAlign: 'center' },
-  hint: { fontSize: scale(13), color: '#888', textAlign: 'center', marginVertical: 8 },
+  container: { flex: 1, backgroundColor: '#FFFFFF', padding: 16, paddingTop: 48, alignItems: 'center' },
+  titre: { fontSize: scale(18), fontWeight: '700', color: '#1a2a3a', textAlign: 'center' },
+  hint: { fontSize: scale(13), color: '#5B6770', textAlign: 'center', marginVertical: 8 },
   canvasContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   canvas: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#DDE2E6',
     borderRadius: 8,
-    backgroundColor: '#fafafa',
+    backgroundColor: '#FFFFFF',
   },
   buttonsRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, width: '100%' },
   button: { flex: 1, padding: 14, borderRadius: 8, alignItems: 'center' },
-  buttonClear: { backgroundColor: '#6c757d' },
-  buttonCancel: { backgroundColor: '#dc3545' },
-  buttonSave: { backgroundColor: '#198754' },
+  buttonClear:  { backgroundColor: '#5B6770' },
+  buttonCancel: { backgroundColor: Colors.danger },
+  buttonSave:   { backgroundColor: Colors.success },
   buttonText: { color: '#fff', fontWeight: '600' },
 });

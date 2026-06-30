@@ -46,15 +46,13 @@ import { RootStackParamList } from '../types/navigation';
 import { Colors, scale } from '../theme';
 import NeoDialog from '../components/NeoDialog';
 
-/* Palette néo claire */
-const NEO     = '#e8edf2';
-const NEO_SHD = '#4a6880';
-const NEO_IN  = '#d4dde6';
-const NAVY    = '#0a1628';
-const TEXT    = '#1a2a3a';
-const TEXT2   = '#3a5060';
-const TEXT3   = '#5a7080';
-const SEP     = '#c8d4de';
+/* Palette */
+const NEO    = '#F2F4F6';
+const NEO_IN = '#E8EEF2';
+const NAVY   = '#0a1628';
+const TEXT2  = '#3a5060';
+const TEXT3  = '#5a7080';
+const SEP    = '#DDE2E6';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Debug'>;
 
@@ -123,47 +121,40 @@ export default function DebugScreen({ navigation }: Props): React.ReactElement {
 
         {/* Erreur */}
         {error && (
-          <View style={styles.bannerOuter}>
-            <View style={[styles.bannerInner, styles.bannerDanger]}>
-              <Ionicons name="alert-circle-outline" size={18} color={Colors.danger} style={{ marginTop: 1 }} />
-              <Text style={styles.bannerDangerText}>{error}</Text>
-            </View>
+          <View style={styles.bannerDanger}>
+            <Ionicons name="alert-circle-outline" size={18} color={Colors.danger} style={{ marginTop: 1 }} />
+            <Text style={styles.bannerDangerText}>{error}</Text>
           </View>
         )}
 
         {counts && !loading && (
           <>
             {/* Succès */}
-            <View style={styles.bannerOuter}>
-              <View style={[styles.bannerInner, styles.bannerSuccess]}>
-                <Ionicons name="checkmark-circle-outline" size={18} color={Colors.success} style={{ marginTop: 1 }} />
-                <Text style={styles.bannerSuccessText}>Base initialisée correctement.</Text>
-              </View>
+            <View style={styles.bannerSuccess}>
+              <Ionicons name="checkmark-circle-outline" size={18} color={Colors.success} style={{ marginTop: 1 }} />
+              <Text style={styles.bannerSuccessText}>Base initialisée correctement.</Text>
             </View>
 
             {/* Table des lignes */}
-            <View style={styles.cardOuter}>
-              <View style={styles.cardInner}>
-                {/* En-tête inset */}
-                <View style={styles.tableHead}>
-                  <Text style={styles.tableHeadText}>TABLE</Text>
-                  <Text style={styles.tableHeadText}>LIGNES</Text>
-                </View>
-                {Object.entries(counts).map(([table, n], i) => {
-                  const hasRows = (n as number) > 0;
-                  const isLast  = i === Object.entries(counts).length - 1;
-                  return (
-                    <View key={table} style={[styles.tableRow, !isLast && styles.tableRowSep]}>
-                      <Text style={styles.tableName}>{table}</Text>
-                      <View style={[styles.countBadge, hasRows && styles.countBadgeActive]}>
-                        <Text style={[styles.countText, hasRows && styles.countTextActive]}>
-                          {String(n)}
-                        </Text>
-                      </View>
-                    </View>
-                  );
-                })}
+            <View style={styles.card}>
+              <View style={styles.tableHead}>
+                <Text style={styles.tableHeadText}>TABLE</Text>
+                <Text style={styles.tableHeadText}>LIGNES</Text>
               </View>
+              {Object.entries(counts).map(([table, n], i) => {
+                const hasRows = (n as number) > 0;
+                const isLast  = i === Object.entries(counts).length - 1;
+                return (
+                  <View key={table} style={[styles.tableRow, !isLast && styles.tableRowSep]}>
+                    <Text style={styles.tableName}>{table}</Text>
+                    <View style={[styles.countBadge, hasRows && styles.countBadgeActive]}>
+                      <Text style={[styles.countText, hasRows && styles.countTextActive]}>
+                        {String(n)}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
             </View>
 
             {/* Dernière sync */}
@@ -175,45 +166,39 @@ export default function DebugScreen({ navigation }: Props): React.ReactElement {
 
         {/* Pending */}
         {!loading && (
-          <View style={styles.pendingOuter}>
-            <View style={[styles.pendingInner, pending > 0 ? styles.pendingWarn : styles.pendingOk]}>
-              <Ionicons
-                name={pending > 0 ? 'cloud-upload-outline' : 'checkmark-circle-outline'}
-                size={20}
-                color={pending > 0 ? Colors.warning : Colors.success}
-              />
-              <Text style={[styles.pendingText, pending > 0 ? styles.pendingTextWarn : styles.pendingTextOk]}>
-                {pending > 0
-                  ? `${pending} enregistrement(s) en attente de synchronisation`
-                  : 'Aucun enregistrement PENDING'}
-              </Text>
-            </View>
+          <View style={[styles.pendingBanner, pending > 0 ? styles.pendingWarn : styles.pendingOk]}>
+            <Ionicons
+              name={pending > 0 ? 'cloud-upload-outline' : 'checkmark-circle-outline'}
+              size={20}
+              color={pending > 0 ? Colors.warning : Colors.success}
+            />
+            <Text style={[styles.pendingText, pending > 0 ? styles.pendingTextWarn : styles.pendingTextOk]}>
+              {pending > 0
+                ? `${pending} enregistrement(s) en attente de synchronisation`
+                : 'Aucun enregistrement PENDING'}
+            </Text>
           </View>
         )}
 
-        {/* Bouton Rafraîchir : raised bleu */}
-        <View style={styles.refreshOuter}>
-          <TouchableOpacity style={styles.refreshInner} onPress={refresh} disabled={loading} activeOpacity={0.82}>
-            {loading
-              ? <ActivityIndicator color="#fff" size="small" />
-              : <>
-                  <Ionicons name="refresh-outline" size={17} color="#fff" />
-                  <Text style={styles.refreshText}>Rafraîchir</Text>
-                </>
-            }
-          </TouchableOpacity>
-        </View>
+        {/* Bouton Rafraîchir */}
+        <TouchableOpacity style={styles.refreshBtn} onPress={refresh} disabled={loading} activeOpacity={0.82}>
+          {loading
+            ? <ActivityIndicator color="#fff" size="small" />
+            : <>
+                <Ionicons name="refresh-outline" size={17} color="#fff" />
+                <Text style={styles.refreshText}>Rafraîchir</Text>
+              </>
+          }
+        </TouchableOpacity>
 
-        {/* Bouton Réinitialiser : raised danger */}
-        <View style={styles.resetOuter}>
-          <TouchableOpacity style={styles.resetInner} onPress={() => setShowResetDialog(true)} activeOpacity={0.85}>
-            <Ionicons name="trash-outline" size={16} color={Colors.danger} />
-            <View>
-              <Text style={styles.resetText}>Réinitialiser la base (debug)</Text>
-              <Text style={styles.resetSub}>Action irréversible · données PENDING perdues</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+        {/* Bouton Réinitialiser */}
+        <TouchableOpacity style={styles.resetBtn} onPress={() => setShowResetDialog(true)} activeOpacity={0.85}>
+          <Ionicons name="trash-outline" size={16} color={Colors.danger} />
+          <View>
+            <Text style={styles.resetText}>Réinitialiser la base (debug)</Text>
+            <Text style={styles.resetSub}>Action irréversible · données PENDING perdues</Text>
+          </View>
+        </TouchableOpacity>
 
         {/* Dialog confirmation reset */}
         <NeoDialog
@@ -279,134 +264,70 @@ const styles = StyleSheet.create({
   loadingText: { fontSize: scale(13), color: TEXT3 },
 
   /* Bannières */
-  bannerOuter: {
-    marginBottom: 12, borderRadius: 12,
-    backgroundColor: NEO,
-    shadowColor: NEO_SHD, shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 1, shadowRadius: 6, elevation: 6,
-  },
-  bannerInner: {
-    borderRadius: 12, flexDirection: 'row', alignItems: 'flex-start',
-    gap: 10, padding: 13,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5,
-    borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    shadowColor: '#ffffff',
-    shadowOffset: { width: -3, height: -3 }, shadowOpacity: 1, shadowRadius: 5,
-  },
   bannerDanger: {
-    backgroundColor: Colors.dangerBg,
-    borderTopColor: '#fdd', borderLeftColor: '#fdd',
-    borderBottomColor: Colors.dangerBorder, borderRightColor: Colors.dangerBorder,
+    marginBottom: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'flex-start',
+    gap: 10, padding: 13,
+    backgroundColor: Colors.dangerBg, borderWidth: 1, borderColor: Colors.dangerBorder,
   },
   bannerDangerText: { flex: 1, fontSize: scale(13), color: Colors.danger, lineHeight: 18 },
   bannerSuccess: {
-    backgroundColor: Colors.successBg,
-    borderTopColor: '#a7f3d0', borderLeftColor: '#a7f3d0',
-    borderBottomColor: '#065f46', borderRightColor: '#065f46',
+    marginBottom: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'flex-start',
+    gap: 10, padding: 13,
+    backgroundColor: Colors.successBg, borderWidth: 1, borderColor: Colors.successBorder,
   },
   bannerSuccessText: { flex: 1, fontSize: scale(13), color: Colors.success, lineHeight: 18, fontWeight: '600' },
 
   /* Carte table */
-  cardOuter: {
-    marginBottom: 8, borderRadius: 16,
-    backgroundColor: NEO,
-    shadowColor: NEO_SHD, shadowOffset: { width: 6, height: 6 },
-    shadowOpacity: 1, shadowRadius: 8, elevation: 10,
-  },
-  cardInner: {
-    borderRadius: 16, backgroundColor: NEO,
-    shadowColor: '#ffffff', shadowOffset: { width: -5, height: -5 },
-    shadowOpacity: 1, shadowRadius: 7,
-    overflow: 'hidden',
-    borderTopWidth: 1.5, borderLeftWidth: 1.5,
-    borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#ffffff', borderLeftColor: '#ffffff',
-    borderBottomColor: '#8aa8c0', borderRightColor: '#8aa8c0',
+  card: {
+    marginBottom: 8, borderRadius: 16, overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1, borderColor: '#DDE2E6',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
   },
   tableHead: {
     flexDirection: 'row', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 10,
     backgroundColor: NEO_IN,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8', borderRightColor: '#a8bac8',
     borderBottomWidth: 1, borderBottomColor: SEP,
   },
   tableHeadText: { fontSize: scale(11), fontWeight: '700', color: TEXT3, letterSpacing: 1.2 },
-  tableRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 13 },
+  tableRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 13 },
   tableRowSep:   { borderBottomWidth: 1, borderBottomColor: SEP },
   tableName:     { fontSize: scale(13), color: TEXT2, fontFamily: 'monospace', flex: 1, marginRight: 8 },
-  countBadge:    { backgroundColor: NEO_IN, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6, minWidth: 36, alignItems: 'center' },
+  countBadge:       { backgroundColor: NEO_IN, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6, minWidth: 36, alignItems: 'center' },
   countBadgeActive: { backgroundColor: Colors.infoBg },
-  countText:     { fontSize: scale(13), fontWeight: '700', color: TEXT3, fontFamily: 'monospace' },
+  countText:        { fontSize: scale(13), fontWeight: '700', color: TEXT3, fontFamily: 'monospace' },
   countTextActive:  { color: Colors.brandBlue },
 
   meta: { fontSize: scale(12), color: TEXT3, marginBottom: 14, marginTop: 4, fontStyle: 'italic', textAlign: 'center' },
 
   /* Pending */
-  pendingOuter: {
-    marginBottom: 18, borderRadius: 12,
-    backgroundColor: NEO,
-    shadowColor: NEO_SHD, shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 1, shadowRadius: 6, elevation: 6,
+  pendingBanner: {
+    marginBottom: 18, borderRadius: 12, flexDirection: 'row', alignItems: 'center',
+    gap: 12, padding: 14, borderWidth: 1,
   },
-  pendingInner: {
-    borderRadius: 12, flexDirection: 'row', alignItems: 'center',
-    gap: 12, padding: 14,
-    shadowColor: '#ffffff', shadowOffset: { width: -3, height: -3 },
-    shadowOpacity: 1, shadowRadius: 5,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5,
-    borderBottomWidth: 1.5, borderRightWidth: 1.5,
-  },
-  pendingOk: {
-    backgroundColor: Colors.successBg,
-    borderTopColor: '#a7f3d0', borderLeftColor: '#a7f3d0',
-    borderBottomColor: '#065f46', borderRightColor: '#065f46',
-  },
-  pendingWarn: {
-    backgroundColor: Colors.warningBg,
-    borderTopColor: '#fde68a', borderLeftColor: '#fde68a',
-    borderBottomColor: '#92400e', borderRightColor: '#92400e',
-  },
+  pendingOk:       { backgroundColor: Colors.successBg, borderColor: Colors.successBorder },
+  pendingWarn:     { backgroundColor: Colors.warningBg, borderColor: Colors.warningBorder },
   pendingText:     { flex: 1, fontSize: scale(13), fontWeight: '600', lineHeight: 18 },
   pendingTextOk:   { color: Colors.success },
   pendingTextWarn: { color: Colors.warning },
 
-  /* Bouton Rafraîchir : raised bleu */
-  refreshOuter: {
+  /* Bouton Rafraîchir */
+  refreshBtn: {
     marginBottom: 10, borderRadius: 13,
     backgroundColor: Colors.brandBlue,
-    shadowColor: '#046a96', shadowOffset: { width: 5, height: 5 },
-    shadowOpacity: 0.7, shadowRadius: 8, elevation: 10,
-  },
-  refreshInner: {
-    borderRadius: 13, backgroundColor: Colors.brandBlue,
     paddingVertical: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    shadowColor: '#7dd3fa', shadowOffset: { width: -3, height: -3 },
-    shadowOpacity: 0.5, shadowRadius: 6,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5,
-    borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#2bb8ef', borderLeftColor: '#2bb8ef',
-    borderBottomColor: '#046a96', borderRightColor: '#046a96',
+    shadowColor: '#046a96', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 8,
   },
   refreshText: { color: '#fff', fontSize: scale(14), fontWeight: '700' },
 
-  /* Bouton Réinitialiser : raised danger */
-  resetOuter: {
+  /* Bouton Réinitialiser */
+  resetBtn: {
     marginBottom: 12, borderRadius: 12,
-    backgroundColor: NEO,
-    shadowColor: '#991b1b', shadowOffset: { width: 5, height: 5 },
-    shadowOpacity: 0.35, shadowRadius: 8, elevation: 6,
-  },
-  resetInner: {
-    borderRadius: 12, backgroundColor: Colors.dangerBg,
+    backgroundColor: Colors.dangerBg,
     paddingVertical: 14, paddingHorizontal: 16,
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    shadowColor: '#fff0f0', shadowOffset: { width: -3, height: -3 },
-    shadowOpacity: 0.8, shadowRadius: 6,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5,
-    borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#fdd', borderLeftColor: '#fdd',
-    borderBottomColor: Colors.dangerBorder, borderRightColor: Colors.dangerBorder,
+    borderWidth: 1, borderColor: Colors.dangerBorder,
   },
   resetText: { color: Colors.danger, fontSize: scale(14), fontWeight: '700' },
   resetSub:  { color: Colors.danger, fontSize: scale(11), opacity: 0.6, marginTop: 2 },

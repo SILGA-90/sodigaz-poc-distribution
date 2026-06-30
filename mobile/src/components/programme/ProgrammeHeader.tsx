@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Programme } from '../../types/models';
 import { Colors, scale } from '../../theme';
 import { NAVY } from './progStyles';
@@ -73,11 +74,12 @@ export default function ProgrammeHeader({
       {/* Ligne 4 : actions */}
       <View style={styles.actionsRow}>
         <TouchableOpacity style={styles.anomaliesBtn} onPress={onNavigateAnomalies} activeOpacity={0.8}>
-          <Text style={styles.anomaliesBtnText}>⚠ Anomalies</Text>
+          <Ionicons name="warning-outline" size={14} color={Colors.brandOrange} />
+          <Text style={styles.anomaliesBtnText}> Anomalies</Text>
         </TouchableOpacity>
         {programme.statut !== 'CLOTURE' ? (
           <TouchableOpacity style={styles.clotureBtn} onPress={onNavigateCloture} activeOpacity={0.82}>
-            <Text style={styles.clotureBtnText}>{'Clôturer ->'}</Text>
+            <Text style={styles.clotureBtnText}>Clôturer →</Text>
           </TouchableOpacity>
         ) : (
           <View style={styles.clotureDone}>
@@ -134,9 +136,9 @@ const styles = StyleSheet.create({
 
   /* Ligne 4 : actions */
   actionsRow:       { flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingBottom: 12 },
-  anomaliesBtn:     { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12, backgroundColor: 'rgba(238,114,2,0.22)', borderWidth: 1.5, borderColor: Colors.brandOrange },
+  anomaliesBtn:     { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12, backgroundColor: 'rgba(238,114,2,0.22)', borderWidth: 1.5, borderColor: Colors.brandOrange },
   anomaliesBtnText: { fontSize: scale(13), fontWeight: '700', color: Colors.brandOrange },
-  clotureBtn:       { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: Colors.brandBlue, borderTopWidth: 1, borderLeftWidth: 1, borderBottomWidth: 1, borderRightWidth: 1, borderTopColor: '#2bb8ef', borderLeftColor: '#2bb8ef', borderBottomColor: '#046a96', borderRightColor: '#046a96' },
+  clotureBtn:       { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: Colors.brandBlue },
   clotureBtnText:   { color: '#fff', fontWeight: '700', fontSize: scale(13) },
   clotureDone:      { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', backgroundColor: 'rgba(52,211,153,0.15)', borderWidth: 1.5, borderColor: '#34d399' },
   clotureDoneText:  { color: '#34d399', fontWeight: '700', fontSize: scale(13) },

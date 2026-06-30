@@ -35,15 +35,14 @@ import { RootStackParamList } from '../types/navigation';
 import { Colors, scale } from '../theme';
 import { useLayout } from '../hooks/useLayout';
 
-/* Palette néo claire */
-const NEO     = '#e8edf2';
-const NEO_SHD = '#4a6880';
-const NEO_IN  = '#d4dde6';
-const NAVY    = '#0a1628';
-const TEXT    = '#1a2a3a';
-const TEXT2   = '#3a5060';
-const TEXT3   = '#3a5060';
-const SEP     = '#c8d4de';
+/* Palette */
+const NEO    = '#F2F4F6';
+const NEO_IN = '#E8EEF2';
+const NAVY   = '#0a1628';
+const TEXT   = '#1a2a3a';
+const TEXT2  = '#3a5060';
+const TEXT3  = '#5B6770';
+const SEP    = '#DDE2E6';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Historique'>;
 
@@ -53,9 +52,9 @@ function formatDate(dateStr: string): string {
 }
 
 function statutInfo(statut: string): { color: string; bg: string; border: string; label: string } {
-  if (statut === 'CLOTURE')  return { color: Colors.success,     bg: Colors.successBg, border: Colors.successBorder, label: 'Clôturé' };
-  if (statut === 'EN_COURS') return { color: Colors.brandBlue,   bg: Colors.infoBg,    border: Colors.infoBorder,    label: 'En cours' };
-  return                            { color: Colors.textMuted,   bg: NEO_IN,           border: SEP,                  label: 'Planifié' };
+  if (statut === 'CLOTURE')  return { color: Colors.success,   bg: Colors.successBg, border: Colors.successBorder, label: 'Clôturé' };
+  if (statut === 'EN_COURS') return { color: Colors.brandBlue, bg: Colors.infoBg,    border: Colors.infoBorder,    label: 'En cours' };
+  return                            { color: Colors.textMuted,  bg: NEO_IN,           border: SEP,                  label: 'Planifié' };
 }
 
 export default function HistoriqueScreen({ navigation }: Props): React.ReactElement {
@@ -72,39 +71,36 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
     const st         = statutInfo(item.statut);
 
     return (
-      <View style={[styles.cardOuter, numColumns > 1 && { flex: 1 }]}>
-        <TouchableOpacity
-          style={[styles.cardInner, { borderLeftColor: st.color }]}
-          onPress={() => navigation.navigate('Programme', { programmeId: item.id })}
-          activeOpacity={0.82}
-        >
-          <View style={styles.cardTop}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.numero}>{item.numero_x3}</Text>
-              <View style={styles.metaRow}>
-                <View style={[styles.typeChip, isCollecte ? styles.typeChipC : styles.typeChipR]}>
-                  <Text style={[styles.typeChipText, isCollecte ? styles.typeChipTextC : styles.typeChipTextR]}>
-                    {isCollecte ? 'Collecte' : 'Restitution'}
-                  </Text>
-                </View>
-                <Text style={styles.dateLine}>{formatDate(item.date_programme)}</Text>
+      <TouchableOpacity
+        style={[styles.card, { borderLeftColor: st.color }, numColumns > 1 && { flex: 1 }]}
+        onPress={() => navigation.navigate('Programme', { programmeId: item.id })}
+        activeOpacity={0.82}
+      >
+        <View style={styles.cardTop}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.numero}>{item.numero_x3}</Text>
+            <View style={styles.metaRow}>
+              <View style={[styles.typeChip, isCollecte ? styles.typeChipC : styles.typeChipR]}>
+                <Text style={[styles.typeChipText, isCollecte ? styles.typeChipTextC : styles.typeChipTextR]}>
+                  {isCollecte ? 'Collecte' : 'Restitution'}
+                </Text>
               </View>
-            </View>
-            {/* Statut pill */}
-            <View style={[styles.statutPill, { backgroundColor: st.bg, borderColor: st.border }]}>
-              <Text style={[styles.statutPillText, { color: st.color }]}>{st.label}</Text>
+              <Text style={styles.dateLine}>{formatDate(item.date_programme)}</Text>
             </View>
           </View>
+          <View style={[styles.statutPill, { backgroundColor: st.bg, borderColor: st.border }]}>
+            <Text style={[styles.statutPillText, { color: st.color }]}>{st.label}</Text>
+          </View>
+        </View>
 
-          {/* Barre de progression inset */}
-          <View style={styles.barRow}>
-            <View style={styles.barTrack}>
-              <View style={[styles.barFill, { width: `${pct}%` as `${number}%`, backgroundColor: st.color }]} />
-            </View>
-            <Text style={[styles.barLabel, { color: st.color }]}>{item.etapes_visitees}/{item.total_etapes}</Text>
+        {/* Barre de progression */}
+        <View style={styles.barRow}>
+          <View style={styles.barTrack}>
+            <View style={[styles.barFill, { width: `${pct}%` as `${number}%`, backgroundColor: st.color }]} />
           </View>
-        </TouchableOpacity>
-      </View>
+          <Text style={[styles.barLabel, { color: st.color }]}>{item.etapes_visitees}/{item.total_etapes}</Text>
+        </View>
+      </TouchableOpacity>
     );
   }, [navigation, numColumns]);
 
@@ -126,7 +122,6 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
         </View>
       </View>
 
-      {/* Liste */}
       <FlatList
         key={numColumns}
         data={programmes}
@@ -138,10 +133,8 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <View style={styles.emptyOuter}>
-              <View style={styles.emptyInner}>
-                <Ionicons name="calendar-outline" size={32} color={TEXT3} />
-              </View>
+            <View style={styles.emptyIconWrap}>
+              <Ionicons name="calendar-outline" size={32} color={Colors.brandBlue} />
             </View>
             <Text style={styles.emptyTitle}>Aucun programme clôturé</Text>
             <Text style={styles.emptyText}>Les programmes terminés apparaissent ici une fois clôturés.</Text>
@@ -174,20 +167,15 @@ const styles = StyleSheet.create({
 
   list: { padding: 12, paddingBottom: 32 },
 
-  /* Cartes raised + bande accent gauche */
-  cardOuter: {
-    marginBottom: 10,
-    borderRadius: 14, backgroundColor: NEO,
-    shadowColor: NEO_SHD, shadowOffset: { width: 6, height: 6 }, shadowOpacity: 1, shadowRadius: 7, elevation: 10,
-  },
-  cardInner: {
-    borderRadius: 14, backgroundColor: NEO, padding: 14,
-    shadowColor: '#ffffff', shadowOffset: { width: -6, height: -6 }, shadowOpacity: 1, shadowRadius: 7,
-    /* bande accent = borderLeft coloré 4px ; top/bottom/right = biseau NEO */
+  /* Cartes avec bande accent gauche */
+  card: {
+    marginBottom: 10, borderRadius: 14, backgroundColor: '#FFFFFF',
+    borderTopWidth: 1, borderTopColor: '#DDE2E6',
+    borderBottomWidth: 1, borderBottomColor: '#DDE2E6',
+    borderRightWidth: 1, borderRightColor: '#DDE2E6',
     borderLeftWidth: 4,
-    borderTopWidth: 1.5, borderTopColor: '#ffffff',
-    borderBottomWidth: 1.5, borderBottomColor: '#8aa8c0',
-    borderRightWidth: 1.5, borderRightColor: '#8aa8c0',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
+    padding: 14,
   },
   cardTop:  { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 14 },
   numero:   { fontSize: scale(15), fontWeight: '800', color: TEXT, marginBottom: 6 },
@@ -204,31 +192,15 @@ const styles = StyleSheet.create({
   statutPill:     { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, alignSelf: 'flex-start', borderWidth: 1 },
   statutPillText: { fontSize: scale(11), fontWeight: '700' },
 
-  /* Barre de progression inset */
+  /* Barre de progression */
   barRow:   { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  barTrack: {
-    flex: 1, height: 7, borderRadius: 6, overflow: 'hidden',
-    backgroundColor: NEO_IN,
-    borderTopWidth: 1, borderLeftWidth: 1,
-    borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8',
-  },
+  barTrack: { flex: 1, height: 7, borderRadius: 6, overflow: 'hidden', backgroundColor: NEO_IN },
   barFill:  { height: 7, borderRadius: 6 },
   barLabel: { fontSize: scale(12), fontWeight: '700', minWidth: 36, textAlign: 'right' },
 
   /* État vide */
-  empty:      { paddingTop: 70, alignItems: 'center', paddingHorizontal: 40 },
-  emptyOuter: {
-    borderRadius: 38, backgroundColor: NEO, marginBottom: 18,
-    shadowColor: NEO_SHD, shadowOffset: { width: 5, height: 5 }, shadowOpacity: 1, shadowRadius: 8, elevation: 7,
-  },
-  emptyInner: {
-    width: 76, height: 76, borderRadius: 38, backgroundColor: NEO,
-    shadowColor: '#ffffff', shadowOffset: { width: -4, height: -4 }, shadowOpacity: 1, shadowRadius: 6,
-    alignItems: 'center', justifyContent: 'center',
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#ffffff', borderLeftColor: '#ffffff',
-    borderBottomColor: '#8aa8c0', borderRightColor: '#8aa8c0',
-  },
-  emptyTitle: { fontSize: scale(17), fontWeight: '700', color: TEXT2, marginBottom: 8 },
-  emptyText:  { fontSize: scale(13), color: TEXT3, textAlign: 'center', lineHeight: 20 },
+  empty:         { paddingTop: 70, alignItems: 'center', paddingHorizontal: 40 },
+  emptyIconWrap: { width: 76, height: 76, borderRadius: 38, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 18 },
+  emptyTitle:    { fontSize: scale(17), fontWeight: '700', color: TEXT2, marginBottom: 8 },
+  emptyText:     { fontSize: scale(13), color: TEXT3, textAlign: 'center', lineHeight: 20 },
 });

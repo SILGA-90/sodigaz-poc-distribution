@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, TextInput, TextInputProps } from 'react-native';
 import { Colors, scale } from '../../theme';
-import { NEO_IN, TEXT } from './neoStyles';
+import { TEXT } from './neoStyles';
 
 interface Props {
   value:          string;
@@ -29,15 +29,15 @@ export default function FieldInput({ value, onChangeText, placeholder, keyboardT
 
 const styles = StyleSheet.create({
   input: {
-    marginTop: 8, backgroundColor: NEO_IN, borderRadius: 10,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8',
-    borderBottomColor: '#f4f8fb', borderRightColor: '#f4f8fb',
-    paddingHorizontal: 14, paddingVertical: 13, fontSize: scale(15), color: TEXT,
+    marginTop: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    borderWidth: 1.5, borderColor: '#DDE2E6',
+    paddingHorizontal: 14, paddingVertical: 13,
+    fontSize: scale(15), color: TEXT,
   },
   inputFocused: {
-    borderTopColor: Colors.brandBlue, borderLeftColor: Colors.brandBlue,
-    borderBottomColor: '#b0daf2', borderRightColor: '#b0daf2',
-    backgroundColor: '#cce6f4',
+    borderColor: Colors.brandBlue,
+    backgroundColor: Colors.primaryLight,
   },
 });

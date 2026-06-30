@@ -226,24 +226,20 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
       </View>
 
       {/* NOTE INFO */}
-      <View style={styles.infoOuter}>
-        <View style={styles.infoInner}>
-          <Ionicons name="information-circle-outline" size={16} color={Colors.brandBlue} />
-          <Text style={styles.infoText}>La gravité sera évaluée et ajustée par votre superviseur après réception.</Text>
-        </View>
+      <View style={styles.infoBox}>
+        <Ionicons name="information-circle-outline" size={16} color={Colors.brandBlue} />
+        <Text style={styles.infoText}>La gravité sera évaluée et ajustée par votre superviseur après réception.</Text>
       </View>
 
-      {/* ENREGISTRER : raised danger */}
-      <View style={[styles.saveBtnOuter, saving && { opacity: 0.5 }]}>
-        <TouchableOpacity style={styles.saveBtnInner} onPress={handleSave} disabled={saving} activeOpacity={0.85}>
-          {saving ? <ActivityIndicator color="#fff" /> : (
-            <>
-              <Text style={styles.saveBtnText}>Enregistrer l'anomalie</Text>
-              <Text style={styles.saveBtnSub}>{TYPES_ANOMALIE.find((t) => t.value === typeAnomalie)?.label ?? typeAnomalie}</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
+      {/* ENREGISTRER */}
+      <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.5 }]} onPress={handleSave} disabled={saving} activeOpacity={0.85}>
+        {saving ? <ActivityIndicator color="#fff" /> : (
+          <>
+            <Text style={styles.saveBtnText}>Enregistrer l'anomalie</Text>
+            <Text style={styles.saveBtnSub}>{TYPES_ANOMALIE.find((t) => t.value === typeAnomalie)?.label ?? typeAnomalie}</Text>
+          </>
+        )}
+      </TouchableOpacity>
 
       <NeoDialog
         visible={showDescAlert}
@@ -306,49 +302,32 @@ const styles = StyleSheet.create({
   sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: 14 },
   charCount: { fontSize: scale(12), color: TEXT3 },
 
-  /* Description inset */
+  /* Description */
   descInput: {
     minHeight: 100, padding: 12, fontSize: scale(14), color: TEXT, lineHeight: 21,
-    backgroundColor: NEO_IN, borderRadius: 10,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#a8bac8', borderLeftColor: '#a8bac8',
-    borderBottomColor: '#f4f8fb', borderRightColor: '#f4f8fb',
+    backgroundColor: '#FFFFFF', borderRadius: 10,
+    borderWidth: 1.5, borderColor: '#DDE2E6',
   },
   descInputFocused: {
-    borderTopColor: Colors.brandBlue, borderLeftColor: Colors.brandBlue,
-    borderBottomColor: '#b0daf2', borderRightColor: '#b0daf2',
-    backgroundColor: '#cce6f4',
+    borderColor: Colors.brandBlue,
+    backgroundColor: Colors.primaryLight,
   },
 
   /* Info box */
-  infoOuter: {
-    marginHorizontal: 12, marginTop: 16, marginBottom: 4,
-    borderRadius: 12, backgroundColor: Colors.infoBg,
-    shadowColor: '#046a96', shadowOffset: { width: 3, height: 3 }, shadowOpacity: 0.15, shadowRadius: 5, elevation: 3,
-  },
-  infoInner: {
+  infoBox: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
+    marginHorizontal: 12, marginTop: 16, marginBottom: 4,
     borderRadius: 12, backgroundColor: Colors.infoBg, padding: 12,
-    shadowColor: '#e0f6ff', shadowOffset: { width: -2, height: -2 }, shadowOpacity: 0.8, shadowRadius: 4,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#e0f6ff', borderLeftColor: '#e0f6ff',
-    borderBottomColor: Colors.infoBorder, borderRightColor: Colors.infoBorder,
+    borderWidth: 1, borderColor: Colors.infoBorder,
   },
   infoText: { flex: 1, fontSize: scale(12), color: TEXT2, lineHeight: 18 },
 
-  /* Bouton raised danger */
-  saveBtnOuter: {
+  /* Bouton danger */
+  saveBtn: {
     marginHorizontal: 12, marginTop: 20, marginBottom: 8,
     borderRadius: 14, backgroundColor: Colors.danger,
-    shadowColor: '#991b1b', shadowOffset: { width: 6, height: 6 }, shadowOpacity: 0.7, shadowRadius: 10, elevation: 10,
-  },
-  saveBtnInner: {
-    borderRadius: 14, backgroundColor: Colors.danger,
     paddingVertical: 17, paddingHorizontal: 20, alignItems: 'center',
-    shadowColor: '#fca5a5', shadowOffset: { width: -4, height: -4 }, shadowOpacity: 0.4, shadowRadius: 8,
-    borderTopWidth: 1.5, borderLeftWidth: 1.5, borderBottomWidth: 1.5, borderRightWidth: 1.5,
-    borderTopColor: '#fca5a5', borderLeftColor: '#fca5a5',
-    borderBottomColor: '#991b1b', borderRightColor: '#991b1b',
+    shadowColor: '#991b1b', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8,
   },
   saveBtnText: { color: '#fff', fontSize: scale(16), fontWeight: '800', letterSpacing: -0.2 },
   saveBtnSub:  { color: 'rgba(255,255,255,0.65)', fontSize: scale(12), marginTop: 4 },

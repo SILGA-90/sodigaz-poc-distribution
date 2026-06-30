@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { EtapeAvecPlv } from '../../db/repositories/programmeRepository';
 import { Colors, scale } from '../../theme';
-import { NEO, NEO_SHD, NEO_IN, TEXT } from './progStyles';
+import { NEO_IN, SURFACE, TEXT } from './progStyles';
 import NeoDialog from '../NeoDialog';
 
 interface Props {
@@ -49,45 +49,42 @@ export default function EtapeCard({ etape, programmeCloture, onNavigateDetail, o
   }
 
   return (
-    <View style={[styles.outer, disabled && styles.disabled]}>
-      <View style={styles.shadowLight}>
-        <TouchableOpacity style={styles.content} onPress={handlePress} activeOpacity={disabled ? 1 : 0.8}>
-          <View style={[styles.accent, { backgroundColor: accentColor }]} />
-          <View style={styles.body}>
-            <View style={styles.main}>
-              <View style={[styles.ordreCircle, { backgroundColor: accentColor }]}>
-                <Text style={styles.ordreText}>{etape.ordre_prevu}</Text>
-              </View>
-              <View style={styles.info}>
-                {etape.plv_code ? (
-                  <View style={styles.plvCodeChip}>
-                    <Text style={styles.plvCodeText}>{etape.plv_code}</Text>
-                  </View>
-                ) : null}
-                <Text style={styles.clientName} numberOfLines={1}>{etape.client_raison_sociale}</Text>
-              </View>
-              <View style={styles.right}>
-                <View style={[styles.statutBadge, { backgroundColor: badgeBg }]}>
-                  <View style={[styles.statutDot, { backgroundColor: accentColor }]} />
-                  <Text style={[styles.statutText, { color: badgeText }]}>{badgeLabel}</Text>
-                </View>
-                {visite && etape.op_sync_status !== null && (
-                  <View style={[styles.syncIndicator,
-                    etape.op_sync_status === 'SYNCED' ? styles.syncGreen : styles.syncOrange]} />
-                )}
-              </View>
+    <View style={[styles.card, disabled && styles.disabled]}>
+      <TouchableOpacity style={styles.content} onPress={handlePress} activeOpacity={disabled ? 1 : 0.82}>
+        <View style={[styles.accent, { backgroundColor: accentColor }]} />
+        <View style={styles.body}>
+          <View style={styles.main}>
+            <View style={[styles.ordreCircle, { backgroundColor: accentColor }]}>
+              <Text style={styles.ordreText}>{etape.ordre_prevu}</Text>
             </View>
-            {/* Itinéraire : inset */}
-            <TouchableOpacity
-              style={styles.itineraireRow}
-              onPress={(e) => { e.stopPropagation(); ouvrirItineraire(etape.plv_latitude, etape.plv_longitude); }}
-              activeOpacity={0.65}
-            >
-              <Text style={styles.itineraireTxt}>Ouvrir l'itinéraire  ›</Text>
-            </TouchableOpacity>
+            <View style={styles.info}>
+              {etape.plv_code ? (
+                <View style={styles.plvCodeChip}>
+                  <Text style={styles.plvCodeText}>{etape.plv_code}</Text>
+                </View>
+              ) : null}
+              <Text style={styles.clientName} numberOfLines={1}>{etape.client_raison_sociale}</Text>
+            </View>
+            <View style={styles.right}>
+              <View style={[styles.statutBadge, { backgroundColor: badgeBg }]}>
+                <View style={[styles.statutDot, { backgroundColor: accentColor }]} />
+                <Text style={[styles.statutText, { color: badgeText }]}>{badgeLabel}</Text>
+              </View>
+              {visite && etape.op_sync_status !== null && (
+                <View style={[styles.syncIndicator,
+                  etape.op_sync_status === 'SYNCED' ? styles.syncGreen : styles.syncOrange]} />
+              )}
+            </View>
           </View>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.itineraireRow}
+            onPress={(e) => { e.stopPropagation(); ouvrirItineraire(etape.plv_latitude, etape.plv_longitude); }}
+            activeOpacity={0.65}
+          >
+            <Text style={styles.itineraireTxt}>Ouvrir l'itinéraire  ›</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
 
       <NeoDialog
         visible={showNavError}
@@ -112,24 +109,19 @@ export default function EtapeCard({ etape, programmeCloture, onNavigateDetail, o
 }
 
 const styles = StyleSheet.create({
-  outer: {
-    marginBottom: 12, borderRadius: 14, backgroundColor: NEO,
-    shadowColor: NEO_SHD, shadowOffset: { width: 6, height: 6 }, shadowOpacity: 1, shadowRadius: 7, elevation: 10,
+  card: {
+    marginBottom: 12,
+    borderRadius: 12,
+    backgroundColor: SURFACE,
+    borderWidth: 1, borderColor: '#DDE2E6',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
+    overflow: 'hidden',
   },
   disabled: { opacity: 0.45 },
-  shadowLight: {
-    borderRadius: 14, backgroundColor: NEO,
-    shadowColor: '#ffffff', shadowOffset: { width: -6, height: -6 }, shadowOpacity: 1, shadowRadius: 7,
-  },
-  content: {
-    flexDirection: 'row', borderRadius: 14, backgroundColor: NEO, overflow: 'hidden',
-    borderTopWidth: 1, borderLeftWidth: 1, borderBottomWidth: 1, borderRightWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.85)', borderLeftColor: 'rgba(255,255,255,0.85)',
-    borderBottomColor: 'rgba(74,104,128,0.35)', borderRightColor: 'rgba(74,104,128,0.35)',
-  },
-  accent: { width: 5 },
-  body:   { flex: 1 },
-  main:   { flexDirection: 'row', alignItems: 'center', padding: 14, paddingBottom: 10 },
+  content:  { flexDirection: 'row' },
+  accent:   { width: 5 },
+  body:     { flex: 1 },
+  main:     { flexDirection: 'row', alignItems: 'center', padding: 14, paddingBottom: 10 },
 
   ordreCircle: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 12, flexShrink: 0 },
   ordreText:   { color: '#fff', fontWeight: '800', fontSize: scale(15) },
@@ -148,8 +140,9 @@ const styles = StyleSheet.create({
   syncOrange:   { backgroundColor: Colors.syncPending },
 
   itineraireRow: {
-    backgroundColor: NEO_IN, paddingVertical: 10, paddingHorizontal: 14, alignItems: 'flex-end',
-    borderTopWidth: 1, borderTopColor: 'rgba(74,104,128,0.25)',
+    backgroundColor: NEO_IN,
+    paddingVertical: 10, paddingHorizontal: 14, alignItems: 'flex-end',
+    borderTopWidth: 1, borderTopColor: '#DDE2E6',
   },
   itineraireTxt: { fontSize: scale(12), fontWeight: '700', color: Colors.brandBlue },
 });
