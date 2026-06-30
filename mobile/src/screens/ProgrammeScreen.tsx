@@ -41,7 +41,7 @@ import { useLayout } from '../hooks/useLayout';
 import ProgrammeHeader from '../components/programme/ProgrammeHeader';
 import EtapeCard from '../components/programme/EtapeCard';
 import FABAnomalies from '../components/programme/FABAnomalies';
-import { TriMode } from '../components/programme/TriButtons';
+import TriButtons, { TriMode } from '../components/programme/TriButtons';
 import { NEO, TEXT3 } from '../components/programme/progStyles';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Programme'>;
@@ -96,14 +96,17 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
   }
 
   const listHeader = programme ? (
-    <ProgrammeHeader
-      programme={programme}
-      progression={progression}
-      triMode={triMode}
-      onTriModeChange={setTriMode}
-      onNavigateAnomalies={() => navigation.navigate('MesAnomalies', { programmeUuid: programme.uuid, programmeNumero: programme.numero_x3 })}
-      onNavigateCloture={() => navigation.navigate('Cloture', { programmeId: programme.id })}
-    />
+    <>
+      <ProgrammeHeader
+        programme={programme}
+        progression={progression}
+        onNavigateAnomalies={() => navigation.navigate('MesAnomalies', { programmeUuid: programme.uuid, programmeNumero: programme.numero_x3 })}
+        onNavigateCloture={() => navigation.navigate('Cloture', { programmeId: programme.id })}
+      />
+      <View style={styles.triBar}>
+        <TriButtons triMode={triMode} onTriModeChange={setTriMode} />
+      </View>
+    </>
   ) : null;
 
   return (
@@ -139,4 +142,5 @@ const styles = StyleSheet.create({
   list:      { paddingHorizontal: 12, paddingBottom: 12 },
   emptyWrap: { padding: 40, alignItems: 'center' },
   emptyText: { color: TEXT3, textAlign: 'center', fontSize: scale(14) },
+  triBar:    { paddingHorizontal: 12, paddingVertical: 10 },
 });

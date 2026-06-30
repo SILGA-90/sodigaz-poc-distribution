@@ -6,7 +6,6 @@ export type TriMode = 'optimise' | 'alpha' | 'a_visiter';
 
 export const TRI_MODES: { key: TriMode; label: string }[] = [
   { key: 'optimise',  label: 'Circuit' },
-  { key: 'alpha',     label: 'A–Z' },
   { key: 'a_visiter', label: 'À faire' },
 ];
 

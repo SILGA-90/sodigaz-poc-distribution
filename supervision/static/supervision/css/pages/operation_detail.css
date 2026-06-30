@@ -1,18 +1,17 @@
 /* ══════════════════════════════════════════════════════════
-   OPÉRATION DETAIL : Thème NEO SODIGAZ
+   OPÉRATION DETAIL — SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
 /* En-tête */
 .op-header {
     display: flex; justify-content: space-between; align-items: flex-start;
     flex-wrap: wrap; gap: 1rem;
-    background: var(--neo-bg, #e8edf2); border-radius: 14px;
-    box-shadow: var(--neo-raised,
-        6px 6px 14px rgba(74,104,128,.22), -5px -5px 12px rgba(255,255,255,.88));
-    border-top:    2px solid rgba(255,255,255,.95);
+    background: #FFFFFF; border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    border-top:    1px solid #DDE2E6;
     border-left:   5px solid #079BD9;
-    border-bottom: 2px solid rgba(74,104,128,.38);
-    border-right:  2px solid rgba(74,104,128,.38);
+    border-bottom: 1px solid #DDE2E6;
+    border-right:  1px solid #DDE2E6;
     padding: 1.4rem 1.5rem;
     margin-bottom: 1.25rem;
 }
@@ -24,9 +23,7 @@
 .sous-type-chip {
     font-size: .7rem; font-weight: 700;
     padding: .2rem .6rem; border-radius: 6px;
-    background: var(--neo-in-bg, #d4dde6);
-    box-shadow: inset 1px 1px 3px rgba(74,104,128,.16),
-                inset -1px -1px 2px rgba(255,255,255,.8);
+    background: #E8EEF2; border: 1px solid #DDE2E6;
     color: #5a7080;
 }
 
@@ -44,18 +41,16 @@
     font-size: .7rem; font-weight: 700;
     padding: .28rem .85rem; border-radius: 20px;
 }
-.enc-pill-green  { background: rgba(25,135,84,.13);   color: #198754; }
-.enc-pill-warn   { background: rgba(238,114,2,.12);   color: #c45a00; }
-.enc-pill-orange { background: rgba(238,114,2,.12);   color: #c45a00; }
-.enc-pill-gray   { background: rgba(74,104,128,.12);  color: #6a8898; }
+.enc-pill-green  { background: rgba(25,135,84,.13);  color: #198754; }
+.enc-pill-warn   { background: rgba(238,114,2,.12);  color: #c45a00; }
+.enc-pill-orange { background: rgba(238,114,2,.12);  color: #c45a00; }
+.enc-pill-gray   { background: rgba(74,104,128,.12); color: #6a8898; }
 
 /* Code X3 */
 .code-x3 {
     font-family: 'SFMono-Regular', Consolas, monospace;
     font-size: .76rem; color: #5a7080;
-    background: var(--neo-in-bg, #d4dde6);
-    box-shadow: inset 1px 1px 2px rgba(74,104,128,.15),
-                inset -1px -1px 2px rgba(255,255,255,.75);
+    background: #E8EEF2; border: 1px solid #DDE2E6;
     padding: .12rem .45rem; border-radius: 5px;
 }
 
@@ -70,16 +65,9 @@
 .sig-box {
     width: 260px; height: 130px; overflow: hidden;
     border-radius: 10px;
-    background: var(--neo-in-bg, #d4dde6);
-    box-shadow: inset 3px 3px 8px rgba(74,104,128,.2),
-                inset -3px -3px 6px rgba(255,255,255,.8);
-    border-top:  1px solid rgba(74,104,128,.12);
-    border-left: 1px solid rgba(74,104,128,.12);
-    border-bottom: 1px solid rgba(255,255,255,.85);
-    border-right:  1px solid rgba(255,255,255,.85);
+    background: #FFFFFF; border: 1px solid #DDE2E6;
     display: flex; align-items: center; justify-content: center;
 }
-/* Les SVG de signature s'affichent sur fond NEO inset */
 .sig-box svg { max-width: 100%; max-height: 100%; }
 
 /* Commentaire */

@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors, scale } from '../../theme';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '../../theme';
 
 interface Props {
   visible: boolean;
@@ -12,7 +13,7 @@ export default function FABAnomalies({ visible, onPress }: Props): React.ReactEl
   return (
     <View style={styles.fab}>
       <TouchableOpacity style={styles.btn} onPress={onPress} activeOpacity={0.82}>
-        <Text style={styles.text}>+ Anomalie</Text>
+        <Ionicons name="warning-outline" size={26} color="#fff" />
       </TouchableOpacity>
     </View>
   );
@@ -21,10 +22,9 @@ export default function FABAnomalies({ visible, onPress }: Props): React.ReactEl
 const styles = StyleSheet.create({
   fab: { position: 'absolute', bottom: 24, right: 20 },
   btn: {
-    borderRadius: 30,
+    width: 56, height: 56, borderRadius: 28,
     backgroundColor: Colors.brandOrange,
-    paddingHorizontal: 22, paddingVertical: 15,
+    alignItems: 'center', justifyContent: 'center',
     shadowColor: '#5c1a00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 8,
   },
-  text: { color: '#fff', fontWeight: '700', fontSize: scale(14) },
 });

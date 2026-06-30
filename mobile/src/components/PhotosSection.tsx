@@ -38,6 +38,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { prendrePhoto, choisirPhoto, PhotoCapturee } from '../services/photoService';
 import { Colors, scale } from '../theme';
@@ -113,6 +114,7 @@ export default function PhotosSection({ photos, onChange, types = DEFAULT_TYPES,
 
       <View style={styles.actionsRow}>
         <TouchableOpacity style={styles.actionButton} onPress={() => ajouter(prendrePhoto)} disabled={busy}>
+          <Ionicons name="camera-outline" size={16} color="#fff" />
           <Text style={styles.actionText}>Prendre une photo</Text>
         </TouchableOpacity>
         {!cameraOnly && (
@@ -159,7 +161,7 @@ const styles = StyleSheet.create({
   typeChipText: { fontSize: scale(12), color: '#3a5060', fontWeight: '600' },
   typeChipTextActive: { color: '#fff' },
   actionsRow: { flexDirection: 'row', gap: 8 },
-  actionButton: { flex: 1, padding: 12, borderRadius: 8, backgroundColor: Colors.brandBlue, alignItems: 'center' },
+  actionButton: { flex: 1, padding: 12, borderRadius: 8, backgroundColor: Colors.brandBlue, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   actionText: { color: '#fff', fontWeight: '600', fontSize: scale(13) },
   thumbs: { marginTop: 12 },
   thumbWrap: { marginRight: 10, alignItems: 'center' },

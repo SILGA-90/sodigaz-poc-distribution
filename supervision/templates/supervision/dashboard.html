@@ -24,7 +24,7 @@
             <input type="date" name="date" id="dash-date-fp"
                    value="{{ date_filter|date:'Y-m-d' }}" class="dash-date-input">
             {% if not is_today %}
-            <a href="?" class="btn-today"><i class="bi bi-house"></i> Aujourd'hui</a>
+            <a href="?date={{ today|date:'Y-m-d' }}" class="btn-today"><i class="bi bi-house"></i> Aujourd'hui</a>
             {% endif %}
         </div>
         <div class="live-indicator">

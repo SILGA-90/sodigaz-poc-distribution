@@ -1,44 +1,32 @@
 /* ══════════════════════════════════════════════════════════
-   PROGRAMMES LIST : Thème NEO SODIGAZ
+   PROGRAMMES LIST — SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
 /* Boutons nav date */
 .btn-nav-date {
     display: inline-flex; align-items: center; justify-content: center;
     width: 32px; height: 32px; border-radius: 8px;
-    background: var(--neo-bg, #e8edf2); border: none; cursor: pointer;
+    background: #FFFFFF; border: 1px solid #DDE2E6; cursor: pointer;
     color: #3a5060; font-size: .95rem; text-decoration: none;
-    box-shadow: var(--neo-raised-sm,
-        3px 3px 8px rgba(74,104,128,.18), -3px -3px 7px rgba(255,255,255,.85));
-    border-top:  1px solid rgba(255,255,255,.85);
-    border-left: 1px solid rgba(255,255,255,.85);
-    border-bottom: 1px solid rgba(74,104,128,.25);
-    border-right:  1px solid rgba(74,104,128,.25);
     transition: all .15s;
 }
 .btn-nav-date:hover {
     background: #079BD9; color: #fff;
-    box-shadow: 0 3px 10px rgba(7,155,217,.35);
     border-color: #079BD9;
+    box-shadow: 0 3px 10px rgba(7,155,217,.3);
 }
 .btn-today-prog {
     display: inline-flex; align-items: center; gap: .3rem;
     padding: 0 .9rem; height: 32px; border-radius: 8px;
-    background: var(--neo-bg, #e8edf2); border: none; cursor: pointer;
+    background: #FFFFFF; border: 1px solid #DDE2E6; cursor: pointer;
     color: #3a5060; font-size: .8rem; font-weight: 600; text-decoration: none;
-    box-shadow: var(--neo-raised-sm,
-        3px 3px 8px rgba(74,104,128,.18), -3px -3px 7px rgba(255,255,255,.85));
-    border-top:  1px solid rgba(255,255,255,.85);
-    border-left: 1px solid rgba(255,255,255,.85);
-    border-bottom: 1px solid rgba(74,104,128,.25);
-    border-right:  1px solid rgba(74,104,128,.25);
     transition: all .15s;
 }
 .btn-today-prog.active,
 .btn-today-prog:hover {
     background: #079BD9; color: #fff;
-    box-shadow: 0 3px 10px rgba(7,155,217,.35);
     border-color: #079BD9;
+    box-shadow: 0 3px 10px rgba(7,155,217,.3);
 }
 
 /* Liste */
@@ -46,18 +34,18 @@
 
 /* Card programme */
 .prog-card {
-    background: var(--neo-bg, #e8edf2);
+    background: #FFFFFF;
     border-radius: 14px;
-    box-shadow: 7px 7px 16px rgba(74,104,128,.26), -5px -5px 13px rgba(255,255,255,.9);
-    border-top:    2.5px solid #ffffff;
-    border-bottom: 2.5px solid rgba(74,104,128,.55);
-    border-right:  2.5px solid rgba(74,104,128,.55);
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    border-top:    1px solid #DDE2E6;
+    border-bottom: 1px solid #DDE2E6;
+    border-right:  1px solid #DDE2E6;
     border-left:   5px solid #6c757d;
     transition: box-shadow .18s, transform .18s;
     overflow: hidden;
 }
 .prog-card:hover {
-    box-shadow: 10px 10px 22px rgba(74,104,128,.32), -7px -7px 16px rgba(255,255,255,.95);
+    box-shadow: 0 6px 20px rgba(0,0,0,.1);
     transform: translateY(-2px);
 }
 .prog-PLANIFIE { border-left-color: #6c757d; }
@@ -72,14 +60,13 @@
     align-items: center; flex-wrap: wrap; gap: .5rem;
 }
 
-/* Numéro programme : inset monospace */
+/* Numéro programme */
 .prog-numero {
     font-family: 'SFMono-Regular', Consolas, monospace;
     font-size: .85rem; font-weight: 700; color: #1a2a3a;
-    background: var(--neo-in-bg, #d4dde6);
+    background: #E8EEF2;
     padding: .22rem .65rem; border-radius: 7px;
-    box-shadow: inset 2px 2px 4px rgba(74,104,128,.18),
-                inset -2px -2px 4px rgba(255,255,255,.8);
+    border: 1px solid #DDE2E6;
 }
 
 .vehicule-tag {
@@ -90,11 +77,7 @@
 /* Séparateur */
 .prog-divider {
     height: 1px;
-    background: linear-gradient(to right,
-        transparent,
-        rgba(74,104,128,.25) 20%,
-        rgba(74,104,128,.25) 80%,
-        transparent);
+    background: #DDE2E6;
     margin: .9rem 0;
 }
 
@@ -104,15 +87,14 @@
     gap: 1.5rem; flex-wrap: wrap;
 }
 
-/* Avatar livreur : NEO raised cercle */
+/* Avatar livreur */
 .prog-livreur { display: flex; align-items: center; gap: .65rem; flex-shrink: 0; min-width: 160px; }
 .prog-avatar {
     width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
     background: linear-gradient(135deg, #079BD9, #0670A0);
     color: #fff; font-size: .88rem; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 3px 3px 8px rgba(74,104,128,.3), -2px -2px 6px rgba(255,255,255,.8);
-    border: 1.5px solid rgba(255,255,255,.7);
+    box-shadow: 0 2px 6px rgba(7,155,217,.3);
 }
 .prog-livreur-nom  { font-size: .82rem; font-weight: 600; color: #1a2a3a; }
 .prog-livreur-code { font-size: .72rem; color: #5a7080; margin-top: 1px; }
@@ -142,63 +124,41 @@
 .prog-pct-EN_COURS  { background: rgba(7,155,217,.14);  color: #0670A0; }
 .prog-pct-CLOTURE   { background: rgba(25,135,84,.14);  color: #198754; }
 
-/* Track inset */
+/* Track */
 .prog-bar {
-    position: relative;
-    height: 14px; border-radius: 8px; overflow: hidden;
-    background: var(--neo-in-bg, #d4dde6);
-    box-shadow: inset 3px 3px 6px rgba(74,104,128,.25),
-                inset -2px -2px 4px rgba(255,255,255,.8);
+    height: 10px; border-radius: 6px; overflow: hidden;
+    background: #E8EEF2;
 }
 
 /* Fill */
 .prog-bar-fill {
-    height: 100%; border-radius: 8px;
-    position: relative; overflow: hidden;
+    height: 100%; border-radius: 6px;
     transition: width .6s cubic-bezier(.25,.8,.25,1);
 }
-/* Reflet de brillance sur le fill */
-.prog-bar-fill::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(180deg,
-        rgba(255,255,255,.35) 0%,
-        rgba(255,255,255,.05) 55%,
-        transparent 100%);
-    border-radius: 8px;
-}
 
-.prog-bar-PLANIFIE { background: linear-gradient(90deg, #94a3b8, #b0bec5); }
-.prog-bar-EN_COURS  { background: linear-gradient(90deg, #0670A0, #079BD9, #3bbfe8); }
+.prog-bar-PLANIFIE { background: #94a3b8; }
+.prog-bar-EN_COURS  { background: linear-gradient(90deg, #0670A0, #079BD9); }
 .prog-bar-CLOTURE   { background: linear-gradient(90deg, #198754, #25c070); }
 
-/* Bouton détail : NEO raised bleu */
+/* Bouton détail */
 .btn-detail {
     flex-shrink: 0; display: inline-flex; align-items: center; gap: .4rem;
     padding: .52rem 1.1rem; border-radius: 10px;
     font-size: .8rem; font-weight: 700; color: #fff; text-decoration: none;
     background: #079BD9; white-space: nowrap;
-    box-shadow: 4px 4px 10px rgba(7,155,217,.35), -2px -2px 6px rgba(255,255,255,.5);
-    border-top:  1.5px solid rgba(255,255,255,.5);
-    border-left: 1.5px solid rgba(255,255,255,.5);
-    border-bottom: 1.5px solid rgba(4,90,130,.5);
-    border-right:  1.5px solid rgba(4,90,130,.5);
+    box-shadow: 0 3px 10px rgba(7,155,217,.3);
     transition: all .15s;
 }
 .btn-detail:hover {
     background: #0670A0; color: #fff; gap: .65rem;
-    box-shadow: 5px 5px 14px rgba(7,155,217,.45), -2px -2px 6px rgba(255,255,255,.5);
+    box-shadow: 0 5px 14px rgba(7,155,217,.4);
 }
 
 /* État vide */
 .prog-empty {
-    background: var(--neo-bg, #e8edf2); border-radius: 14px; padding: 3.5rem 2rem;
-    box-shadow: var(--neo-raised,
-        6px 6px 14px rgba(74,104,128,.22), -5px -5px 12px rgba(255,255,255,.88));
-    border-top:  2px solid rgba(255,255,255,.95);
-    border-left: 2px solid rgba(255,255,255,.95);
-    border-bottom: 2px solid rgba(74,104,128,.38);
-    border-right:  2px solid rgba(74,104,128,.38);
+    background: #FFFFFF; border-radius: 14px; padding: 3.5rem 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    border: 1px solid #DDE2E6;
     text-align: center;
 }
 .prog-empty .bi-truck { font-size: 3.5rem; color: #94a8b8; }

@@ -14,18 +14,18 @@
     --brand-orange:   #EE7202;
     --brand-navy:     #0a1628;
 
-    /* Néomorphisme */
-    --neo-bg:         #e8edf2;
-    --neo-in-bg:      #d4dde6;
-    --neo-raised:     6px 6px 14px rgba(74,104,128,0.22), -5px -5px 12px rgba(255,255,255,0.88);
-    --neo-raised-sm:  3px 3px 8px rgba(74,104,128,0.18), -3px -3px 7px rgba(255,255,255,0.85);
-    --neo-inset:      inset 3px 3px 8px rgba(74,104,128,0.18), inset -3px -3px 6px rgba(255,255,255,0.82);
-    --neo-bevel-lt:   rgba(255,255,255,0.95);
-    --neo-bevel-rb:   rgba(74,104,128,0.38);
-
-    --body-bg:        var(--neo-bg);
+    --body-bg:        #F2F4F6;
     --card-radius:    10px;
-    --card-shadow:    var(--neo-raised);
+    --card-shadow:    0 2px 8px rgba(0,0,0,.07);
+
+    /* Tokens neutralisés — conservés pour compatibilité ; ne plus en créer */
+    --neo-bg:         #F2F4F6;
+    --neo-in-bg:      #E8EEF2;
+    --neo-raised:     0 2px 8px rgba(0,0,0,.07);
+    --neo-raised-sm:  0 1px 4px rgba(0,0,0,.06);
+    --neo-inset:      none;
+    --neo-bevel-lt:   #DDE2E6;
+    --neo-bevel-rb:   #DDE2E6;
 }
 
 /* Base */
@@ -43,7 +43,6 @@ body { font-family: 'Inter', sans-serif; background: var(--body-bg); }
     overflow-y: auto; overflow-x: hidden;
     transition: transform .25s ease;
     border-radius: 16px;
-    /* Floating effect */
     box-shadow:
         0 10px 32px rgba(0,0,0,.45),
         0  3px 10px rgba(0,0,0,.3),
@@ -51,7 +50,7 @@ body { font-family: 'Inter', sans-serif; background: var(--body-bg); }
         inset 0 1px 0 rgba(255,255,255,.1);
     border: 1px solid rgba(255,255,255,.07);
 }
-/* Barre de signature de marque SODIGAZ : flamme -> bleu (clippée par border-radius) */
+/* Barre de signature de marque SODIGAZ : flamme -> bleu */
 .sidebar::before {
     content: '';
     position: absolute; top: 0; left: 0; right: 0; height: 3px; z-index: 2;
@@ -83,13 +82,11 @@ body { font-family: 'Inter', sans-serif; background: var(--body-bg); }
     border-left: 3px solid transparent; transition: all .18s;
     border-radius: 0 10px 10px 0; margin: 2px .55rem 2px 0;
 }
-/* Hover : légèrement levé sur fond sombre */
 .sidebar-link:hover {
     background: rgba(255,255,255,.06); color: rgba(255,255,255,.9);
     border-left-color: rgba(255,255,255,.16);
     box-shadow: 3px 3px 10px rgba(0,0,0,.45), -1px -1px 4px rgba(255,255,255,.04);
 }
-/* Actif : raised + accent orange + icône colorée */
 .sidebar-link.active {
     background: linear-gradient(90deg, rgba(238,114,2,.24) 0%, rgba(238,114,2,.06) 100%);
     color: #fff; border-left-color: var(--brand-orange);
@@ -156,20 +153,16 @@ body { font-family: 'Inter', sans-serif; background: var(--body-bg); }
 
 /* Modal déconnexion */
 .logout-modal {
-    background: var(--neo-bg);
-    border: none; border-radius: 18px;
-    box-shadow: var(--neo-raised);
+    background: #FFFFFF;
+    border: 1px solid #DDE2E6;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.12);
     padding: 1.75rem 1.5rem 1.5rem;
     text-align: center;
-    border-top: 1px solid rgba(255,255,255,.92);
-    border-left: 1px solid rgba(255,255,255,.92);
 }
 .logout-modal-icon {
     width: 52px; height: 52px; border-radius: 14px; margin: 0 auto .9rem;
-    background: var(--neo-bg);
-    box-shadow: var(--neo-raised-sm);
-    border-top: 1px solid rgba(255,255,255,.88);
-    border-left: 1px solid rgba(255,255,255,.88);
+    background: #FEF2F2; border: 1px solid #FECACA;
     display: flex; align-items: center; justify-content: center;
     font-size: 1.35rem; color: #dc3545;
 }
@@ -185,12 +178,10 @@ body { font-family: 'Inter', sans-serif; background: var(--body-bg); }
 .logout-btn-cancel {
     flex: 1; padding: .55rem; border-radius: 10px;
     font-size: .82rem; font-weight: 600; color: #4a7090;
-    background: var(--neo-bg); border: none; cursor: pointer;
-    box-shadow: var(--neo-raised-sm);
-    border-top: 1px solid rgba(255,255,255,.88);
+    background: #F2F4F6; border: 1px solid #DDE2E6; cursor: pointer;
     transition: all .15s;
 }
-.logout-btn-cancel:hover { color: #1a2332; }
+.logout-btn-cancel:hover { color: #1a2332; background: #E8EEF2; }
 .logout-btn-confirm {
     flex: 1; padding: .55rem; border-radius: 10px;
     font-size: .82rem; font-weight: 700; color: #fff;
@@ -280,16 +271,13 @@ a.text-primary:hover { color: #0670A0 !important; }
    ══════════════════════════════════════════════════════════ */
 .card {
     border-radius: var(--card-radius);
-    background: var(--neo-bg);
-    box-shadow: var(--neo-raised);
-    border-top: 1.5px solid var(--neo-bevel-lt);
-    border-left: 1.5px solid var(--neo-bevel-lt);
-    border-bottom: 1.5px solid var(--neo-bevel-rb);
-    border-right: 1.5px solid var(--neo-bevel-rb);
+    background: #FFFFFF;
+    box-shadow: var(--card-shadow);
+    border: 1px solid #DDE2E6;
 }
 .card-header {
-    background: rgba(255,255,255,0.35);
-    border-bottom: 1px solid var(--neo-bevel-rb);
+    background: #FAFBFC;
+    border-bottom: 1px solid #DDE2E6;
     border-radius: var(--card-radius) var(--card-radius) 0 0 !important;
     font-weight: 600; font-size: .875rem; color: #1a2332;
 }
@@ -305,12 +293,9 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
 
 /* Table dans une card */
 .table-card {
-    background: var(--neo-bg); border-radius: var(--card-radius);
-    box-shadow: var(--neo-raised); overflow: hidden;
-    border-top: 1.5px solid var(--neo-bevel-lt);
-    border-left: 1.5px solid var(--neo-bevel-lt);
-    border-bottom: 1.5px solid var(--neo-bevel-rb);
-    border-right: 1.5px solid var(--neo-bevel-rb);
+    background: #FFFFFF; border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow); overflow: hidden;
+    border: 1px solid #DDE2E6;
 }
 .table-card .table { margin-bottom: 0; }
 .table-card > .table > thead > tr > th:first-child,
@@ -322,13 +307,10 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
 
 /* Filtre bar */
 .filter-card {
-    background: var(--neo-bg); border-radius: var(--card-radius);
-    box-shadow: var(--neo-raised); padding: .85rem 1.1rem;
+    background: #FFFFFF; border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow); padding: .85rem 1.1rem;
     margin-bottom: 1.25rem;
-    border-top: 1.5px solid var(--neo-bevel-lt);
-    border-left: 1.5px solid var(--neo-bevel-lt);
-    border-bottom: 1.5px solid var(--neo-bevel-rb);
-    border-right: 1.5px solid var(--neo-bevel-rb);
+    border: 1px solid #DDE2E6;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -346,45 +328,38 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
     50%       { opacity: .4; }
 }
 
-/* Inputs texte dans les barres de filtre — style neumorphique inset */
+/* Inputs texte dans les barres de filtre */
 .filter-card .form-control {
-    background-color: var(--neo-in-bg, #d4dde6);
-    border: none;
-    box-shadow: inset 2px 2px 5px rgba(74,104,128,.18),
-                inset -2px -2px 4px rgba(255,255,255,.8);
+    background-color: #FFFFFF;
+    border: 1px solid #DDE2E6;
     border-radius: 8px;
     color: #0a1628; font-size: .88rem;
     padding: .35rem .7rem;
     min-width: 130px;
+    transition: border-color .15s, box-shadow .15s;
 }
 .filter-card .form-control:focus {
-    background-color: var(--neo-in-bg, #d4dde6);
-    box-shadow: inset 2px 2px 5px rgba(74,104,128,.22),
-                inset -2px -2px 4px rgba(255,255,255,.8),
-                0 0 0 3px rgba(7,155,217,.15);
+    background-color: #FFFFFF;
+    border-color: #079BD9;
+    box-shadow: 0 0 0 3px rgba(7,155,217,.15);
     outline: none;
 }
 
 /* ══════════════════════════════════════════════════════════
    DROPDOWN FILTRE CUSTOM  (.filter-dropdown)
-   Remplace les <select> natifs. Rendu identique sur tous les
-   navigateurs. Même thème neumorphique inset que les dates.
    ══════════════════════════════════════════════════════════ */
 .filter-dropdown-btn {
     display: inline-flex; align-items: center;
     gap: .55rem; justify-content: space-between;
-    background-color: var(--neo-in-bg, #d4dde6);
-    border: none;
-    box-shadow: inset 2px 2px 5px rgba(74,104,128,.18),
-                inset -2px -2px 4px rgba(255,255,255,.8);
+    background-color: #FFFFFF;
+    border: 1px solid #DDE2E6;
     border-radius: 8px;
     color: #0a1628; font-size: .88rem;
     padding: .35rem .75rem;
     min-width: 155px;
     text-align: left; white-space: nowrap;
-    cursor: pointer; transition: box-shadow .15s;
+    cursor: pointer; transition: border-color .15s, box-shadow .15s;
 }
-/* Supprimer la flèche Bootstrap par défaut */
 .filter-dropdown-btn.dropdown-toggle::after { display: none; }
 .filter-dropdown-caret {
     font-size: .72rem; color: #6080a0; flex-shrink: 0;
@@ -393,20 +368,16 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
 .filter-dropdown-btn.show .filter-dropdown-caret { transform: rotate(180deg); }
 .filter-dropdown-btn:focus,
 .filter-dropdown-btn.show {
-    box-shadow: inset 2px 2px 5px rgba(74,104,128,.22),
-                inset -2px -2px 4px rgba(255,255,255,.8),
-                0 0 0 3px rgba(7,155,217,.15);
+    border-color: #079BD9;
+    box-shadow: 0 0 0 3px rgba(7,155,217,.15);
     outline: none;
 }
-/* Menu déroulant — même surface neumorphique raised que les cartes */
+/* Menu déroulant */
 .filter-dropdown-menu {
-    background: var(--neo-bg, #e8edf2);
-    border-top:    1.5px solid var(--neo-bevel-lt, rgba(255,255,255,.95));
-    border-left:   1.5px solid var(--neo-bevel-lt, rgba(255,255,255,.95));
-    border-bottom: 1.5px solid var(--neo-bevel-rb, rgba(74,104,128,.38));
-    border-right:  1.5px solid var(--neo-bevel-rb, rgba(74,104,128,.38));
+    background: #FFFFFF;
+    border: 1px solid #DDE2E6;
     border-radius: 10px;
-    box-shadow: var(--neo-raised, 6px 6px 14px rgba(74,104,128,.22), -5px -5px 12px rgba(255,255,255,.88));
+    box-shadow: 0 4px 16px rgba(0,0,0,.1);
     padding: .3rem 0;
     min-width: 100%;
 }
@@ -430,7 +401,7 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
 }
 
 /* ══════════════════════════════════════════════════════════
-   BADGES STATUT (anciens, conservés pour compatibilité)
+   BADGES STATUT
    ══════════════════════════════════════════════════════════ */
 .badge-statut-PLANIFIE      { background-color: #6c757d; }
 .badge-statut-EN_COURS      { background-color: var(--brand-blue); }
@@ -466,10 +437,9 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
     display: flex; align-items: center; justify-content: center;
     font-size: 1.25rem;
 }
-.pg-icon-red     { background: rgba(220,53,69,.1);   color: #dc3545; }
+.pg-icon-red     { background: rgba(220,53,69,.1);  color: #dc3545; }
 .pg-icon-orange  { background: rgba(238,114,2,.1);  color: #EE7202; }
 .pg-icon-lg      { width: 44px; height: 44px; border-radius: 12px; font-size: 1.3rem; }
-/* Variantes gravité anomalie */
 .pg-icon-ELEVEE  { background: rgba(220,53,69,.14);  color: #b91c1c; }
 .pg-icon-MOYENNE { background: rgba(238,114,2,.14);  color: #c45a00; }
 .pg-icon-FAIBLE  { background: rgba(25,135,84,.12);  color: #198754; }
@@ -480,12 +450,9 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
 .kpi-pill {
     display: flex; flex-direction: column; align-items: center;
     padding: .55rem 1rem; border-radius: 12px; min-width: 72px;
-    background: var(--neo-bg);
-    box-shadow: var(--neo-raised-sm);
-    border-top: 1.5px solid var(--neo-bevel-lt);
-    border-left: 1.5px solid var(--neo-bevel-lt);
-    border-bottom: 1.5px solid var(--neo-bevel-rb);
-    border-right: 1.5px solid var(--neo-bevel-rb);
+    background: #FFFFFF;
+    border: 1px solid #DDE2E6;
+    box-shadow: var(--card-shadow);
 }
 .kpi-pill-n {
     font-size: 1.4rem; font-weight: 700; line-height: 1.1; color: #1a2332;
@@ -537,13 +504,10 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
 .info-row  { display: flex; flex-wrap: wrap; gap: .75rem; }
 .info-card {
     display: flex; align-items: flex-start; gap: .75rem;
-    background: var(--neo-bg); border-radius: 12px;
+    background: #FFFFFF; border-radius: 12px;
     padding: .85rem 1rem;
-    box-shadow: var(--neo-raised-sm);
-    border-top: 1.5px solid var(--neo-bevel-lt);
-    border-left: 1.5px solid var(--neo-bevel-lt);
-    border-bottom: 1.5px solid var(--neo-bevel-rb);
-    border-right: 1.5px solid var(--neo-bevel-rb);
+    box-shadow: var(--card-shadow);
+    border: 1px solid #DDE2E6;
     flex: 1; min-width: 160px;
 }
 .info-avatar {
@@ -581,21 +545,17 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
    SECTION CARDS  (opération-détail, anomalie-détail, dashboard)
    ══════════════════════════════════════════════════════════ */
 .section-card {
-    background: var(--neo-bg); border-radius: 12px;
-    box-shadow: var(--neo-raised); overflow: hidden;
-    border-top: 2px solid var(--neo-bevel-lt);
-    border-left: 2px solid var(--neo-bevel-lt);
-    border-bottom: 2px solid var(--neo-bevel-rb);
-    border-right: 2px solid var(--neo-bevel-rb);
+    background: #FFFFFF; border-radius: 12px;
+    box-shadow: var(--card-shadow); overflow: hidden;
+    border: 1px solid #DDE2E6;
 }
-/* Carte Leaflet : overflow visible pour que les tuiles se chargent correctement */
 .map-card { overflow: visible; }
 .section-header {
     display: flex; align-items: center;
     padding: .85rem 1.25rem;
     font-size: .82rem; font-weight: 700; color: #1a2332;
-    background: rgba(255,255,255,0.32);
-    border-bottom: 1px solid var(--neo-bevel-rb);
+    background: #FAFBFC;
+    border-bottom: 1px solid #DDE2E6;
 }
 .section-body  { padding: 1.1rem 1.25rem; }
 .section-count {
@@ -605,7 +565,7 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
 }
 
 /* ══════════════════════════════════════════════════════════
-   STATUT PILLS : PROGRAMME  (PLANIFIÉ / EN_COURS / CLÔTURÉ)
+   STATUT PILLS : PROGRAMME
    ══════════════════════════════════════════════════════════ */
 .statut-pill {
     font-size: .73rem; font-weight: 700;
@@ -651,22 +611,17 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
 .photo-thumb {
     width: 130px; height: 130px; object-fit: cover;
     border-radius: 10px;
-    box-shadow: 4px 4px 10px rgba(74,104,128,.22), -3px -3px 7px rgba(255,255,255,.85);
-    border-top:  1.5px solid rgba(255,255,255,.9);
-    border-left: 1.5px solid rgba(255,255,255,.9);
-    border-bottom: 1.5px solid rgba(74,104,128,.28);
-    border-right:  1.5px solid rgba(74,104,128,.28);
+    border: 1px solid #DDE2E6;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
 }
 .photo-thumb-wrap:hover .photo-thumb {
-    box-shadow: 6px 6px 14px rgba(74,104,128,.28), -4px -4px 10px rgba(255,255,255,.9);
+    box-shadow: 0 4px 14px rgba(0,0,0,.12);
 }
 .photo-label { font-size: .72rem; font-weight: 600; color: #5a7080; }
 .photo-time  { font-size: .68rem; color: #8aa8c0; }
 .photo-pending {
     width: 130px; height: 130px; border-radius: 10px;
-    background: var(--neo-in-bg, #d4dde6);
-    box-shadow: inset 2px 2px 5px rgba(74,104,128,.18),
-                inset -2px -2px 4px rgba(255,255,255,.8);
+    background: #E8EEF2; border: 1px solid #DDE2E6;
     display: flex; flex-direction: column; align-items: center;
     justify-content: center; gap: .4rem;
     color: #8aa8c0; font-size: .72rem; text-align: center; padding: .75rem;
@@ -674,27 +629,25 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
 .photo-pending i { font-size: 1.6rem; }
 
 /* ══════════════════════════════════════════════════════════
-   TABLEAU RÉCONCILIATION  (programme-détail, opération-détail)
+   TABLEAU RÉCONCILIATION
    ══════════════════════════════════════════════════════════ */
 .recon-table-wrap {
-    border-radius: 10px; overflow: hidden; border: none;
-    background: var(--neo-in-bg, #d4dde6);
-    box-shadow: inset 2px 2px 6px rgba(74,104,128,.18),
-                inset -2px -2px 4px rgba(255,255,255,.8);
+    border-radius: 10px; overflow: hidden;
+    background: #F2F4F6; border: 1px solid #DDE2E6;
 }
 .recon-table { width: 100%; border-collapse: collapse; font-size: .84rem; background: transparent; }
 .recon-table thead th {
     background: transparent; padding: .5rem 1rem;
     font-size: .67rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: .06em; color: #8aa8c0;
-    border-bottom: 1px solid rgba(74,104,128,.12);
+    border-bottom: 1px solid #DDE2E6;
 }
 .recon-table tbody td {
-    padding: .55rem 1rem; border-bottom: 1px solid rgba(74,104,128,.08);
+    padding: .55rem 1rem; border-bottom: 1px solid rgba(0,0,0,.04);
     color: #1a2332; vertical-align: middle;
 }
 .recon-table tbody tr:last-child td { border-bottom: none; }
-.recon-table tbody tr:hover td { background: rgba(255,255,255,.25); }
+.recon-table tbody tr:hover td { background: rgba(255,255,255,.6); }
 
 .produit-dot {
     display: inline-block; width: 7px; height: 7px; border-radius: 50%;
@@ -708,32 +661,29 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
     display: inline-flex; align-items: center; gap: .3rem;
     padding: .4rem .95rem; border-radius: 9px;
     font-size: .78rem; font-weight: 700; cursor: pointer;
-    background: var(--neo-bg, #e8edf2);
-    box-shadow: 3px 3px 7px rgba(74,104,128,.18), -2px -2px 5px rgba(255,255,255,.85);
-    border-top:  1.5px solid rgba(255,255,255,.9);
-    border-left: 1.5px solid rgba(255,255,255,.9);
+    background: #FFFFFF;
+    border: 1px solid #DDE2E6;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
     transition: all .15s;
 }
 .btn-action-warn {
     color: #c45a00;
-    border-bottom: 1.5px solid rgba(238,114,2,.3);
-    border-right:  1.5px solid rgba(238,114,2,.3);
+    border-color: rgba(238,114,2,.35);
 }
 .btn-action-warn:hover  { background: #EE7202; color: #fff; box-shadow: 0 4px 12px rgba(238,114,2,.32); border-color: #EE7202; }
 .btn-action-green {
     color: #198754;
-    border-bottom: 1.5px solid rgba(25,135,84,.28);
-    border-right:  1.5px solid rgba(25,135,84,.28);
+    border-color: rgba(25,135,84,.3);
 }
 .btn-action-green:hover { background: #198754; color: #fff; box-shadow: 0 4px 12px rgba(25,135,84,.32); border-color: #198754; }
 
 /* ══════════════════════════════════════════════════════════
-   DEVISE OPÉRATION  (.ops-devise)
+   DEVISE OPÉRATION
    ══════════════════════════════════════════════════════════ */
 .ops-devise { font-size: .72rem; color: #94a3b8; }
 
 /* ══════════════════════════════════════════════════════════
-   CHIP ÉCHEC  (programmes-liste, rapport)
+   CHIP ÉCHEC
    ══════════════════════════════════════════════════════════ */
 .echec-chip {
     display: inline-flex; align-items: center; gap: .3rem;
@@ -743,15 +693,12 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
 }
 
 /* ══════════════════════════════════════════════════════════
-   ÉTAT VIDE  (programme-détail, rapport)
+   ÉTAT VIDE
    ══════════════════════════════════════════════════════════ */
 .empty-state {
-    background: var(--neo-bg); border-radius: 12px; padding: 3.5rem 2rem;
-    box-shadow: var(--neo-raised);
-    border-top: 1.5px solid var(--neo-bevel-lt);
-    border-left: 1.5px solid var(--neo-bevel-lt);
-    border-bottom: 1.5px solid var(--neo-bevel-rb);
-    border-right: 1.5px solid var(--neo-bevel-rb);
+    background: #FFFFFF; border-radius: 12px; padding: 3.5rem 2rem;
+    box-shadow: var(--card-shadow);
+    border: 1px solid #DDE2E6;
 }
 .empty-state i  { font-size: 3.5rem; color: #cbd5e1; }
 .empty-title    { font-weight: 700; color: #6c757d; margin: 1rem 0 .25rem; }
@@ -759,14 +706,13 @@ tr.cursor-pointer:hover td { background-color: #f6f9ff; }
 
 /* ══════════════════════════════════════════════════════════
    UTILITAIRES COULEUR ICÔNE / VALEUR KPI
-   (rapport-journée + dashboard)
    ══════════════════════════════════════════════════════════ */
 .kpi-icon-blue   { background: rgba(7,155,217,.1);  color: #079BD9; }
-.kpi-icon-navy   { background: rgba(10,22,40,.08);   color: #0a1628; }
-.kpi-icon-green  { background: rgba(25,135,84,.1);   color: #198754; }
+.kpi-icon-navy   { background: rgba(10,22,40,.08);  color: #0a1628; }
+.kpi-icon-green  { background: rgba(25,135,84,.1);  color: #198754; }
 .kpi-icon-orange { background: rgba(238,114,2,.1);  color: #EE7202; }
-.kpi-icon-gray   { background: #f1f5f9;              color: #94a3b8; }
-.kpi-icon-red    { background: rgba(220,53,69,.1);   color: #dc3545; }
+.kpi-icon-gray   { background: #f1f5f9;             color: #94a3b8; }
+.kpi-icon-red    { background: rgba(220,53,69,.1);  color: #dc3545; }
 
 .kpi-value-blue   { color: #079BD9; }
 .kpi-value-navy   { color: #0a1628; }

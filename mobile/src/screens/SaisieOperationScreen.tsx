@@ -318,7 +318,7 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
           onPress={() => setShowEchecDialog(true)} activeOpacity={0.82}
         >
           <Ionicons name="close-circle-outline" size={14} color={Colors.danger} style={{ marginRight: 6 }} />
-          <Text style={styles.echecBtnText}>Étape non réalisable — Marquer en échec</Text>
+          <Text style={styles.echecBtnText}>Marquer en échec</Text>
         </TouchableOpacity>
       )}
 

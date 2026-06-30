@@ -54,7 +54,14 @@ def dashboard_carte_data(request):
             etape__programme__utilisateur__code_livreur=livreur_code,
         )
     else:
-        plvs_qs      = Plv.objects.filter(statut="ACTIF")
+        plvs_qs = (
+            Plv.objects.filter(
+                statut="ACTIF",
+                etapes__programme__date_programme=date_filter,
+                etapes__programme__is_deleted=False,
+                etapes__is_deleted=False,
+            ).distinct()
+        )
         visite_filter = {}
 
     plvs = []

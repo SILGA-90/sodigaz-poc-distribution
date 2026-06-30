@@ -4,19 +4,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { Programme } from '../../types/models';
 import { Colors, scale } from '../../theme';
 import { NAVY } from './progStyles';
-import TriButtons, { TriMode } from './TriButtons';
-
 interface Props {
   programme:          Programme;
   progression:        { visitees: number; echec: number; total: number };
-  triMode:            TriMode;
-  onTriModeChange:    (mode: TriMode) => void;
   onNavigateAnomalies: () => void;
   onNavigateCloture:  () => void;
 }
 
 export default function ProgrammeHeader({
-  programme, progression, triMode, onTriModeChange, onNavigateAnomalies, onNavigateCloture,
+  programme, progression, onNavigateAnomalies, onNavigateCloture,
 }: Props): React.ReactElement {
   const aFaire = Math.max(0, progression.total - progression.visitees - progression.echec);
   const pct    = progression.total > 0 ? Math.round(progression.visitees / progression.total * 100) : 0;
@@ -45,7 +41,7 @@ export default function ProgrammeHeader({
         <Text style={styles.dateText} numberOfLines={1}>{programme.date_programme}</Text>
       </View>
 
-      {/* Ligne 2 : stats compactes inline + barre de progression */}
+      {/* Ligne 2a : stats compactes */}
       <View style={styles.statsRow}>
         <View style={styles.statsPart}>
           <Text style={styles.statNum}>{progression.visitees}</Text>
@@ -57,21 +53,16 @@ export default function ProgrammeHeader({
           <Text style={[styles.statNum, styles.statNumAFaire]}>{aFaire}</Text>
           <Text style={styles.statLabel}> à faire</Text>
         </View>
-        <View style={styles.progPart}>
-          <View style={styles.progTrack}>
-            <View style={[styles.progFillVisitee, { flex: progression.total > 0 ? progression.visitees / progression.total : 0 }]} />
-            {progression.echec > 0 && <View style={[styles.progFillEchec, { flex: progression.echec / progression.total }]} />}
-          </View>
-          <Text style={styles.progPct}>{pct}%</Text>
-        </View>
+        <Text style={styles.progPct}>{pct}%</Text>
       </View>
 
-      {/* Ligne 3 : tri */}
-      <View style={styles.triRow}>
-        <TriButtons triMode={triMode} onTriModeChange={onTriModeChange} />
+      {/* Ligne 2b : barre de progression pleine largeur */}
+      <View style={styles.progTrack}>
+        <View style={[styles.progFillVisitee, { flex: progression.total > 0 ? progression.visitees / progression.total : 0 }]} />
+        {progression.echec > 0 && <View style={[styles.progFillEchec, { flex: progression.echec / progression.total }]} />}
       </View>
 
-      {/* Ligne 4 : actions */}
+      {/* Ligne 3 : actions */}
       <View style={styles.actionsRow}>
         <TouchableOpacity style={styles.anomaliesBtn} onPress={onNavigateAnomalies} activeOpacity={0.8}>
           <Ionicons name="warning-outline" size={14} color={Colors.brandOrange} />
@@ -117,24 +108,22 @@ const styles = StyleSheet.create({
   chipText:   { fontSize: scale(11), fontWeight: '700', color: '#e2e8f0' },
   dateText:   { fontSize: scale(11), color: 'rgba(255,255,255,0.4)', flexShrink: 0 },
 
-  /* Ligne 2 : stats + progress */
-  statsRow:  { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 10, gap: 12 },
+  /* Ligne 2a : stats */
+  statsRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8, gap: 8 },
   statsPart: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', flexShrink: 1 },
   statNum:         { fontSize: scale(14), fontWeight: '800', color: '#fff' },
   statNumEchec:    { color: '#fca5a5' },
   statNumAFaire:   { color: '#fcd34d' },
   statLabel:       { fontSize: scale(11), color: 'rgba(255,255,255,0.5)' },
   statSep:         { fontSize: scale(11), color: 'rgba(255,255,255,0.22)' },
-  progPart:        { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0, width: 110 },
-  progTrack:       { flex: 1, height: 6, borderRadius: 3, flexDirection: 'row', overflow: 'hidden', backgroundColor: 'rgba(0,0,0,0.35)' },
-  progFillVisitee: { height: 6, backgroundColor: '#34d399' },
-  progFillEchec:   { height: 6, backgroundColor: '#f87171' },
-  progPct:         { fontSize: scale(11), fontWeight: '700', color: 'rgba(255,255,255,0.75)', width: 28, textAlign: 'right' },
+  progPct:         { fontSize: scale(13), fontWeight: '800', color: '#fff' },
 
-  /* Ligne 3 : tri */
-  triRow: { paddingHorizontal: 12, marginBottom: 8 },
+  /* Ligne 2b : jauge pleine largeur */
+  progTrack:       { flexDirection: 'row', marginHorizontal: 16, marginBottom: 14, height: 10, borderRadius: 6, overflow: 'hidden', backgroundColor: 'rgba(0,0,0,0.35)' },
+  progFillVisitee: { height: 10, backgroundColor: '#34d399' },
+  progFillEchec:   { height: 10, backgroundColor: '#f87171' },
 
-  /* Ligne 4 : actions */
+  /* Ligne 3 : actions */
   actionsRow:       { flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingBottom: 12 },
   anomaliesBtn:     { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12, backgroundColor: 'rgba(238,114,2,0.22)', borderWidth: 1.5, borderColor: Colors.brandOrange },
   anomaliesBtnText: { fontSize: scale(13), fontWeight: '700', color: Colors.brandOrange },

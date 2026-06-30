@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════
-   OPÉRATIONS LIST : Thème NEO SODIGAZ
+   OPÉRATIONS LIST — SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
 /* Bouton export */
@@ -8,21 +8,17 @@
     padding: .5rem 1.05rem; border-radius: 10px;
     font-size: .8rem; font-weight: 700; color: #198754;
     text-decoration: none; white-space: nowrap;
-    background: var(--neo-bg, #e8edf2);
-    box-shadow: 3px 3px 8px rgba(74,104,128,.18), -2px -2px 6px rgba(255,255,255,.85);
-    border-top:  1.5px solid rgba(255,255,255,.9);
-    border-left: 1.5px solid rgba(255,255,255,.9);
-    border-bottom: 1.5px solid rgba(25,135,84,.28);
-    border-right:  1.5px solid rgba(25,135,84,.28);
+    background: #FFFFFF;
+    border: 1px solid rgba(25,135,84,.35);
     transition: all .15s;
 }
 .btn-export:hover {
     background: #198754; color: #fff;
-    box-shadow: 0 4px 12px rgba(25,135,84,.32);
+    box-shadow: 0 4px 12px rgba(25,135,84,.3);
     border-color: #198754;
 }
 
-/* Wrapper table (.table-card déjà NEO via supervision.css) */
+/* Wrapper table */
 .ops-table-wrap { overflow: hidden; }
 .ops-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
 
@@ -30,20 +26,20 @@
     padding: .65rem 1rem;
     font-size: .63rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: .07em; color: #8aa8c0;
-    border-bottom: 1px solid rgba(74,104,128,.12);
-    background: rgba(255,255,255,.28);
+    border-bottom: 1px solid #DDE2E6;
+    background: #FAFBFC;
     white-space: nowrap;
 }
 .ops-table thead th:first-child { padding-left: 1.5rem; }
 
 /* Ligne opération */
 .ops-row {
-    border-bottom: 1px solid rgba(74,104,128,.08);
+    border-bottom: 1px solid #f0f4f7;
     cursor: pointer; transition: background .12s;
     border-left: 4px solid transparent;
 }
 .ops-row:last-of-type { border-bottom: none; }
-.ops-row:hover { background: rgba(255,255,255,.35); }
+.ops-row:hover { background: #f8fafc; }
 .ops-row-COLLECTE    { border-left-color: #079BD9; }
 .ops-row-RESTITUTION { border-left-color: #198754; }
 
@@ -54,9 +50,7 @@
 .ops-time {
     font-family: 'SFMono-Regular', Consolas, monospace;
     font-size: .8rem; font-weight: 700; color: #1a2332;
-    background: var(--neo-in-bg, #d4dde6);
-    box-shadow: inset 1px 1px 3px rgba(74,104,128,.18),
-                inset -1px -1px 2px rgba(255,255,255,.8);
+    background: #E8EEF2; border: 1px solid #DDE2E6;
     padding: .2rem .6rem; border-radius: 6px;
     display: inline-block;
 }
@@ -66,7 +60,7 @@
     background: linear-gradient(135deg, #079BD9, #0670A0);
     color: #fff; font-size: .72rem; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 2px 2px 5px rgba(74,104,128,.22), -1px -1px 3px rgba(255,255,255,.7);
+    box-shadow: 0 1px 4px rgba(7,155,217,.3);
 }
 .ops-code      { font-size: .84rem; font-weight: 700; color: #1a2332; }
 .ops-sous-type { font-size: .7rem; color: #8aa8c0; margin-top: .18rem; }
@@ -79,8 +73,8 @@
 
 /* Ligne total */
 .ops-total-row {
-    border-top: 1.5px solid rgba(74,104,128,.18);
-    background: rgba(255,255,255,.22);
+    border-top: 1.5px solid #DDE2E6;
+    background: #FAFBFC;
 }
 .ops-total-row td { padding: .72rem 1rem; }
 .ops-total-row td:first-child { padding-left: 1.5rem; }
@@ -91,14 +85,11 @@
 
 /* État vide */
 .ops-empty {
-    background: var(--neo-bg, #e8edf2);
+    background: #FFFFFF;
     border-radius: 14px; padding: 3.5rem 2rem;
-    box-shadow: var(--neo-raised,
-        6px 6px 14px rgba(74,104,128,.22), -5px -5px 12px rgba(255,255,255,.88));
-    border-top:  2px solid rgba(255,255,255,.95);
-    border-left: 2px solid rgba(255,255,255,.95);
-    border-bottom: 2px solid rgba(74,104,128,.38);
-    border-right:  2px solid rgba(74,104,128,.38);
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    border: 1px solid #DDE2E6;
+    text-align: center;
 }
 .ops-empty .bi-lightning-charge { font-size: 3.5rem; color: #94a8b8; }
 .ops-empty-title { font-weight: 700; color: #3a5060; margin: 1rem 0 .25rem; }

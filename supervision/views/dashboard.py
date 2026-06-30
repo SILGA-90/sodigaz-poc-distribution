@@ -100,7 +100,7 @@ def dashboard(request):
     )
 
     return render(request, "supervision/dashboard.html", {
-        "today":                   date_filter,
+        "today":                   date_cls.today(),
         "date_filter":             date_filter,
         "is_today":                date_filter == date_cls.today(),
         "nb_programmes":           nb_programmes,

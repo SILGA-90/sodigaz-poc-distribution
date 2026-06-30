@@ -1,21 +1,19 @@
 /* ══════════════════════════════════════════════════════════
-   RAPPORT JOURNÉE : Thème NEO SODIGAZ
+   RAPPORT JOURNÉE — SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
 /* Input date dans l'en-tête */
 #rapport-date-fp {
-    background-color: var(--neo-in-bg, #d4dde6);
-    border: none;
-    box-shadow: inset 2px 2px 5px rgba(74,104,128,.18),
-                inset -2px -2px 4px rgba(255,255,255,.8);
+    background-color: #FFFFFF;
+    border: 1px solid #DDE2E6;
     border-radius: 8px;
     color: #0a1628;
+    box-shadow: none;
 }
 #rapport-date-fp:focus {
-    background-color: var(--neo-in-bg, #d4dde6);
-    box-shadow: inset 2px 2px 5px rgba(74,104,128,.22),
-                inset -2px -2px 4px rgba(255,255,255,.8),
-                0 0 0 3px rgba(7,155,217,.15);
+    background-color: #FFFFFF;
+    border-color: #079BD9;
+    box-shadow: 0 0 0 3px rgba(7,155,217,.15);
     outline: none;
 }
 
@@ -24,17 +22,12 @@
     display: inline-flex; align-items: center; gap: .35rem;
     padding: .5rem 1.05rem; border-radius: 10px;
     font-size: .82rem; font-weight: 700; cursor: pointer;
-    background: var(--neo-bg, #e8edf2);
-    box-shadow: 3px 3px 8px rgba(74,104,128,.18), -2px -2px 6px rgba(255,255,255,.85);
-    border-top:  1.5px solid rgba(255,255,255,.9);
-    border-left: 1.5px solid rgba(255,255,255,.9);
-    border-bottom: 1.5px solid rgba(10,22,40,.22);
-    border-right:  1.5px solid rgba(10,22,40,.22);
+    background: #FFFFFF; border: 1px solid #DDE2E6;
     color: #0a1628; transition: all .15s;
 }
 .btn-print:hover {
     background: #0a1628; color: #fff;
-    box-shadow: 0 4px 12px rgba(10,22,40,.35);
+    box-shadow: 0 4px 12px rgba(10,22,40,.3);
     border-color: #0a1628;
 }
 
@@ -43,24 +36,16 @@
 
 .kpi-big-card {
     display: flex; align-items: flex-start; gap: 1rem;
-    background: var(--neo-bg, #e8edf2); border-radius: 14px;
-    box-shadow: var(--neo-raised,
-        6px 6px 14px rgba(74,104,128,.22), -5px -5px 12px rgba(255,255,255,.88));
-    border-top:  2px solid rgba(255,255,255,.95);
-    border-left: 2px solid rgba(255,255,255,.95);
-    border-bottom: 2px solid rgba(74,104,128,.38);
-    border-right:  2px solid rgba(74,104,128,.38);
+    background: #FFFFFF; border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    border: 1px solid #DDE2E6;
     padding: 1.1rem 1.25rem; flex: 1; min-width: 200px;
 }
 
 .kpi-big-icon {
     width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
-    box-shadow: 3px 3px 7px rgba(74,104,128,.2), -2px -2px 5px rgba(255,255,255,.85);
-    border-top:  1px solid rgba(255,255,255,.9);
-    border-left: 1px solid rgba(255,255,255,.9);
-    border-bottom: 1px solid rgba(74,104,128,.22);
-    border-right:  1px solid rgba(74,104,128,.22);
+    background: rgba(7,155,217,.1);
 }
 
 .kpi-big-body { min-width: 0; }
@@ -80,21 +65,19 @@
 .kpi-link { font-size: .75rem; font-weight: 700; color: #EE7202; text-decoration: none; }
 .kpi-link:hover { color: #c45a00; }
 
-/* Wrapper table (table-card déjà NEO via supervision.css) */
+/* Wrapper table */
 .rpt-table-wrap { overflow: hidden; }
 
 .rpt-table-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: .85rem 1.5rem;
-    background: rgba(255,255,255,.32);
-    border-bottom: 1px solid rgba(74,104,128,.12);
+    background: #FAFBFC;
+    border-bottom: 1px solid #DDE2E6;
 }
 .rpt-table-title { font-size: .84rem; font-weight: 700; color: #1a2332; }
 .rpt-prog-count {
     font-size: .72rem; font-weight: 700; color: #079BD9;
     background: rgba(7,155,217,.1); padding: .18rem .65rem; border-radius: 20px;
-    box-shadow: inset 1px 1px 3px rgba(74,104,128,.12),
-                inset -1px -1px 2px rgba(255,255,255,.7);
 }
 
 /* Table */
@@ -104,20 +87,20 @@
     padding: .55rem 1rem;
     font-size: .66rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: .06em; color: #8aa8c0;
-    border-bottom: 1px solid rgba(74,104,128,.12);
-    background: rgba(255,255,255,.28);
+    border-bottom: 1px solid #DDE2E6;
+    background: #FAFBFC;
     white-space: nowrap;
 }
 .rpt-table thead th:first-child { padding-left: 1.5rem; }
 
 /* Lignes */
 .rpt-row {
-    border-bottom: 1px solid rgba(74,104,128,.08);
+    border-bottom: 1px solid #f0f4f7;
     border-left: 4px solid transparent;
     transition: background .12s;
 }
 .rpt-row:last-of-type { border-bottom: none; }
-.rpt-row:hover { background: rgba(255,255,255,.35); }
+.rpt-row:hover { background: #f8fafc; }
 .rpt-row-PLANIFIE { border-left-color: #94a3b8; }
 .rpt-row-EN_COURS  { border-left-color: #079BD9; }
 .rpt-row-CLOTURE   { border-left-color: #198754; }
@@ -125,89 +108,73 @@
 .rpt-table tbody td { padding: .75rem 1rem; vertical-align: middle; }
 .rpt-table tbody td:first-child { padding-left: 1.5rem; }
 
-/* Programme chip : NEO inset */
+/* Numéro programme */
 .rpt-numero {
     font-family: 'SFMono-Regular', Consolas, monospace;
     font-size: .82rem; font-weight: 700; color: #1a2332;
-    background: var(--neo-in-bg, #d4dde6);
-    box-shadow: inset 2px 2px 4px rgba(74,104,128,.18),
-                inset -2px -2px 4px rgba(255,255,255,.8);
+    background: #E8EEF2; border: 1px solid #DDE2E6;
     padding: .2rem .55rem; border-radius: 6px;
 }
 
-/* Avatar livreur : NEO raised */
+/* Avatar livreur */
 .rpt-livreur { display: flex; align-items: center; gap: .6rem; }
 .rpt-avatar {
     width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
     background: linear-gradient(135deg, #079BD9, #0670A0);
     color: #fff; font-size: .75rem; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 3px 3px 7px rgba(74,104,128,.28), -2px -2px 5px rgba(255,255,255,.8);
-    border: 1.5px solid rgba(255,255,255,.65);
+    box-shadow: 0 1px 4px rgba(7,155,217,.3);
 }
 .rpt-livreur-code { font-size: .82rem; font-weight: 700; color: #1a2332; }
 .rpt-livreur-nom  { font-size: .72rem; color: #94a3b8; margin-top: .05rem; }
 
-/* Barre de progression : track NEO inset */
+/* Barre de progression */
 .rpt-prog-header { display: flex; justify-content: space-between; margin-bottom: .3rem; }
 .rpt-prog-ratio  { font-size: .76rem; font-weight: 600; color: #1a2332; }
 .rpt-prog-pct    { font-size: .76rem; font-weight: 700; color: #6c757d; }
 
 .rpt-bar {
     height: 8px; border-radius: 5px; overflow: hidden;
-    background: var(--neo-in-bg, #d4dde6);
-    box-shadow: inset 2px 2px 4px rgba(74,104,128,.2),
-                inset -1px -1px 3px rgba(255,255,255,.8);
+    background: #E8EEF2;
 }
 .rpt-bar-fill {
     height: 100%; border-radius: 5px;
-    position: relative; overflow: hidden;
-}
-.rpt-bar-fill::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(180deg, rgba(255,255,255,.3) 0%, transparent 70%);
 }
 .rpt-bar-full { background: linear-gradient(90deg, #198754, #25c070); }
 .rpt-bar-mid  { background: linear-gradient(90deg, #0670A0, #079BD9, #3bbfe8); }
 .rpt-bar-low  { background: linear-gradient(90deg, #d97706, #fbbf24); }
 
-/* Chiffres / textes */
+/* Chiffres */
 .rpt-num           { font-size: .88rem; font-weight: 700; color: #1a2332; }
 .rpt-montant       { font-weight: 700; color: #1a2332; }
 .rpt-montant-green { color: #198754; }
 .rpt-devise        { font-size: .72rem; color: #94a3b8; }
 .rpt-dash          { color: #cbd5e1; }
 
-/* Chip anomalie : NEO inset orange */
+/* Chip anomalie */
 .anom-chip {
     display: inline-flex; align-items: center; justify-content: center;
     min-width: 24px; height: 24px; padding: 0 .45rem;
     border-radius: 20px; font-size: .72rem; font-weight: 700;
     background: rgba(238,114,2,.12); color: #c45a00;
-    box-shadow: inset 1px 1px 3px rgba(74,104,128,.12),
-                inset -1px -1px 2px rgba(255,255,255,.7);
 }
 
-/* Bouton "Voir" : NEO raised bleu */
+/* Bouton "Voir" */
 .btn-detail-sm {
     display: inline-flex; align-items: center; gap: .3rem;
     padding: .3rem .7rem; border-radius: 7px;
     font-size: .75rem; font-weight: 700; color: #fff;
     background: #079BD9; text-decoration: none; white-space: nowrap;
-    box-shadow: 3px 3px 8px rgba(7,155,217,.3), -1px -1px 4px rgba(255,255,255,.5);
-    border-top:  1px solid rgba(255,255,255,.45);
-    border-left: 1px solid rgba(255,255,255,.45);
-    border-bottom: 1px solid rgba(4,90,130,.45);
-    border-right:  1px solid rgba(4,90,130,.45);
+    border: none;
+    box-shadow: 0 2px 6px rgba(7,155,217,.3);
     transition: all .15s;
 }
 .btn-detail-sm:hover { background: #0670A0; color: #fff; gap: .5rem; }
 
 /* Ligne total */
 .rpt-total-row {
-    background: rgba(255,255,255,.22);
-    border-top: 1.5px solid rgba(74,104,128,.18);
+    background: #FAFBFC;
+    border-top: 1.5px solid #DDE2E6;
 }
 .rpt-total-row td { padding: .75rem 1rem; vertical-align: middle; }
 .rpt-total-row td:first-child { padding-left: 1.5rem; }
@@ -226,7 +193,7 @@
 .print-subtitle { font-size: .85rem; color: #6c757d; margin-top: .1rem; }
 
 /* ══════════════════════════════════════════════
-   IMPRESSION : flat + compact (pas de NEO)
+   IMPRESSION : flat + compact
    ══════════════════════════════════════════════ */
 @media print {
 
@@ -243,7 +210,6 @@
     .print-only   { display: flex !important; }
     .print-footer { display: flex !important; }
 
-    /* KPI strip : 4 colonnes */
     .kpi-strip {
         display: grid !important;
         grid-template-columns: repeat(4, 1fr);
@@ -257,14 +223,13 @@
         gap: .5rem !important; min-width: unset !important;
         background: #fff !important;
     }
-    .kpi-big-icon  { width: 30px !important; height: 30px !important; border-radius: 7px !important; font-size: .95rem !important; box-shadow: none !important; border: none !important; }
+    .kpi-big-icon  { width: 30px !important; height: 30px !important; border-radius: 7px !important; font-size: .95rem !important; }
     .kpi-big-label { font-size: 6pt !important; margin-bottom: .1rem !important; }
     .kpi-big-value { font-size: 13pt !important; letter-spacing: -.01em !important; }
     .kpi-big-sub   { font-size: 6.5pt !important; margin-top: .12rem !important; }
     .kpi-echec-note{ font-size: 6.5pt !important; }
     .kpi-link      { font-size: 6.5pt !important; }
 
-    /* Tableau */
     .rpt-table-wrap {
         box-shadow: none !important;
         border: 1px solid #d1d9e0 !important;
@@ -275,7 +240,7 @@
     .table-responsive { overflow: visible !important; width: 100% !important; }
     .rpt-table-header { padding: .4rem .7rem !important; background: #f1f5f9 !important; }
     .rpt-table-title  { font-size: 7.5pt !important; }
-    .rpt-prog-count   { font-size: 6.5pt !important; box-shadow: none !important; }
+    .rpt-prog-count   { font-size: 6.5pt !important; }
 
     .rpt-table        { font-size: 7.5pt !important; }
     .rpt-table thead th {
@@ -289,22 +254,21 @@
     .rpt-total-row td               { padding: .3rem .45rem !important; background: #f8fafc !important; }
     .rpt-total-row td:first-child   { padding-left: .7rem !important; }
 
-    .rpt-numero  { font-size: 7pt !important; padding: .08rem .3rem !important; background: #f1f5f9 !important; box-shadow: none !important; }
+    .rpt-numero  { font-size: 7pt !important; padding: .08rem .3rem !important; background: #f1f5f9 !important; }
     .type-chip   { font-size: 6pt !important; padding: .08rem .35rem !important; }
     .statut-pill { font-size: 6pt !important; padding: .08rem .4rem !important; }
     .echec-chip  { font-size: 6pt !important; padding: .08rem .3rem !important; margin-top: .2rem !important; }
-    .anom-chip   { font-size: 6.5pt !important; min-width: 16px !important; height: 16px !important; box-shadow: none !important; }
+    .anom-chip   { font-size: 6.5pt !important; min-width: 16px !important; height: 16px !important; }
 
-    .rpt-avatar       { width: 20px !important; height: 20px !important; font-size: .6rem !important; box-shadow: none !important; border: none !important; }
+    .rpt-avatar       { width: 20px !important; height: 20px !important; font-size: .6rem !important; box-shadow: none !important; }
     .rpt-livreur      { gap: .4rem !important; }
     .rpt-livreur-code { font-size: 7pt !important; }
     .rpt-livreur-nom  { font-size: 6pt !important; }
 
     .rpt-prog-header  { margin-bottom: .15rem !important; }
     .rpt-prog-ratio, .rpt-prog-pct { font-size: 6.5pt !important; }
-    .rpt-bar          { height: 5px !important; box-shadow: none !important; background: #e2e8f0 !important; }
+    .rpt-bar          { height: 5px !important; background: #e2e8f0 !important; }
     .rpt-bar-fill     { height: 5px !important; }
-    .rpt-bar-fill::after { display: none !important; }
 
     .rpt-montant { font-size: 7.5pt !important; }
     .rpt-devise  { font-size: 6pt !important; }
