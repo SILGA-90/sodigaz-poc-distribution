@@ -11,8 +11,7 @@
  * positionEstRecente() vérifie si la position capturée à l'ouverture est
  * encore valide (< 5 min) : évite une double acquisition.
  *
- * BCR = Bon de Collecte Retour (emballages
- * vides récupérés). BCT = Bon de Collecte Transfert (cas particulier).
+ * BCR = Bon de Commande Recharge. BCT = Bon de Commande Transport (cas particulier).
  * Ces sous-types correspondent aux types de documents Sage X3 qui seront
  * générés quand le flux retour X3 sera implémenté.
  *

@@ -2,85 +2,151 @@
    ANOMALIE DETAIL — SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
-/* En-tête */
-.anom-detail-header {
+/* ── Hero navy ──────────────────────────────────────────── */
+.anom-hero {
+    position: relative;
+    border-radius: 16px;
+    padding: 1.5rem 1.75rem 1.4rem;
+    overflow: hidden;
+    background-image:
+        linear-gradient(90deg, #EE7202 0%, #FAB848 45%, #079BD9 100%),
+        radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(160deg, #0a1628 60%, #0d2040 100%);
+    background-size: 100% 3px, 22px 22px, 100% 100%;
+    background-repeat: no-repeat, repeat, no-repeat;
+    background-position: top, 0 0, 0 0;
+}
+
+/* Glow avant (couleur selon gravité) */
+.anom-hero::before {
+    content: "";
+    position: absolute; top: -30px; left: -30px;
+    width: 260px; height: 180px;
+    pointer-events: none;
+}
+.anom-hero-ELEVEE::before  { background: radial-gradient(ellipse, rgba(220,53,69,.25)  0%, transparent 70%); }
+.anom-hero-MOYENNE::before { background: radial-gradient(ellipse, rgba(238,114,2,.22)  0%, transparent 70%); }
+.anom-hero-FAIBLE::before  { background: radial-gradient(ellipse, rgba(25,135,84,.22)  0%, transparent 70%); }
+
+/* Glow ambre bas-droite */
+.anom-hero::after {
+    content: "";
+    position: absolute; bottom: -30px; right: -20px;
+    width: 200px; height: 140px;
+    background: radial-gradient(ellipse, rgba(250,184,72,.14) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* ── Ligne 1 : identité + action ────────────────────────── */
+.anom-hero-top {
     display: flex; justify-content: space-between; align-items: flex-start;
     flex-wrap: wrap; gap: 1rem;
-    background: #FFFFFF; border-radius: 14px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.07);
-    border-top:    1px solid #DDE2E6;
-    border-left:   5px solid #94a3b8;
-    border-bottom: 1px solid #DDE2E6;
-    border-right:  1px solid #DDE2E6;
-    padding: 1.4rem 1.5rem;
+    position: relative; z-index: 1;
 }
-.anom-border-ELEVEE  { border-left-color: #dc3545; }
-.anom-border-MOYENNE { border-left-color: #EE7202; }
-.anom-border-FAIBLE  { border-left-color: #198754; }
+.anom-hero-id { flex: 1 1 auto; min-width: 0; }
 
-.anom-header-left  { display: flex; align-items: flex-start; gap: 1rem; }
-.anom-detail-type  {
-    font-size: 1.35rem; font-weight: 800; color: #0a1628;
-    letter-spacing: -.02em;
+.anom-type-title {
+    font-size: 1.45rem; font-weight: 800; color: #fff;
+    letter-spacing: -.02em; margin: .6rem 0 0;
+}
+.anom-date {
+    font-size: .78rem; color: rgba(255,255,255,.5);
+    margin: .3rem 0 0;
 }
 
-/* Bloc action */
-.anom-action-block { display: flex; align-items: center; }
+/* Bouton action sur fond sombre */
+.anom-action-block { display: flex; align-items: center; flex-shrink: 0; }
 
 .btn-action-lg {
     display: inline-flex; align-items: center; gap: .5rem;
     padding: .78rem 1.5rem; border-radius: 12px;
     font-size: .88rem; font-weight: 700; cursor: pointer;
-    background: #FFFFFF;
-    border: 1px solid #DDE2E6;
     transition: all .15s;
 }
 .btn-action-lg.btn-action-warn {
-    color: #c45a00;
-    border-color: rgba(238,114,2,.4);
+    background: rgba(238,114,2,.2);
+    border: 1px solid rgba(238,114,2,.45);
+    color: #f4a44e;
 }
 .btn-action-lg.btn-action-warn:hover {
-    background: #EE7202; color: #fff;
-    box-shadow: 0 5px 16px rgba(238,114,2,.38);
-    border-color: #EE7202;
+    background: #EE7202; color: #fff; border-color: #EE7202;
+    box-shadow: 0 5px 16px rgba(238,114,2,.4);
 }
 .btn-action-lg.btn-action-green {
-    color: #198754;
-    border-color: rgba(25,135,84,.4);
+    background: rgba(25,135,84,.2);
+    border: 1px solid rgba(25,135,84,.45);
+    color: #52c98b;
 }
 .btn-action-lg.btn-action-green:hover {
-    background: #198754; color: #fff;
-    box-shadow: 0 5px 16px rgba(25,135,84,.38);
-    border-color: #198754;
+    background: #198754; color: #fff; border-color: #198754;
+    box-shadow: 0 5px 16px rgba(25,135,84,.4);
 }
 
 .anom-resolved-badge {
     display: inline-flex; align-items: center; gap: .5rem;
     padding: .78rem 1.5rem; border-radius: 12px;
     font-size: .88rem; font-weight: 700;
-    background: #E8EEF2; border: 1px solid #DDE2E6;
-    color: #198754;
+    background: rgba(25,135,84,.2);
+    border: 1px solid rgba(25,135,84,.35);
+    color: #52c98b;
 }
 
-/* Section classification (accent gauche coloré) */
+/* Gravité pills sur fond sombre */
+.anom-hero .grav-pill { border: 1px solid rgba(255,255,255,.15); }
+.anom-hero .grav-elevee  { background: rgba(220,53,69,.2);  color: #f87171; border-color: rgba(220,53,69,.35); }
+.anom-hero .grav-moyenne { background: rgba(238,114,2,.2);  color: #f4a44e; border-color: rgba(238,114,2,.35); }
+.anom-hero .grav-faible  { background: rgba(25,135,84,.2);  color: #52c98b; border-color: rgba(25,135,84,.35); }
+
+/* ── Grille meta : auto-fit pour 2 à 4 cartes ───────────── */
+.anom-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: .75rem;
+    margin-top: 1rem;
+    position: relative; z-index: 1;
+}
+
+/* Dark overrides info-cards dans le hero */
+.anom-meta-grid .info-card {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.1);
+    box-shadow: none;
+    padding: .85rem 1rem;
+}
+.anom-meta-grid .info-label   { color: rgba(255,255,255,.45); }
+.anom-meta-grid .info-value   { color: #fff; }
+.anom-meta-grid .info-sub     { color: rgba(255,255,255,.4); }
+.anom-meta-grid .info-gps     { color: rgba(255,255,255,.8); font-size: .82rem; }
+.anom-meta-grid .info-link    { color: #5ac8f5; }
+.anom-meta-grid .info-link:hover { color: #fff; }
+.anom-meta-grid .info-avatar {
+    background: rgba(7,155,217,.2);
+    border: 1px solid rgba(7,155,217,.3);
+    color: #5ac8f5; flex-shrink: 0;
+}
+.anom-meta-grid .info-icon-box {
+    background: rgba(7,155,217,.2);
+    border: 1px solid rgba(7,155,217,.3);
+    color: #5ac8f5; flex-shrink: 0;
+}
+.anom-meta-grid .info-icon-muted {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.1);
+    color: rgba(255,255,255,.35);
+}
+.anom-meta-grid .plv-code-chip {
+    background: rgba(7,155,217,.2);
+    border: 1px solid rgba(7,155,217,.3);
+    color: #5ac8f5;
+}
+
+/* ── Sections en dessous ─────────────────────────────────── */
+
+/* Classification gravité */
 .classif-border-ELEVEE  { border-left: 4px solid #dc3545 !important; }
 .classif-border-MOYENNE { border-left: 4px solid #EE7202 !important; }
 .classif-border-FAIBLE  { border-left: 4px solid #198754 !important; }
 
-/* Select gravité dans le form de classification */
-.classif-form .form-select {
-    background-color: #FFFFFF;
-    border: 1px solid #DDE2E6;
-    border-radius: 8px;
-    color: #1a2332; font-size: .84rem;
-    box-shadow: none;
-}
-.classif-form .form-select:focus {
-    background-color: #FFFFFF;
-    border-color: #079BD9;
-    box-shadow: 0 0 0 3px rgba(7,155,217,.15);
-    outline: none;
-}
 
 /* Description */
 .anom-description {
@@ -90,20 +156,20 @@
 
 /* Minimap */
 #minimap { border-radius: 0 0 10px 10px; }
-
-/* Responsive */
-@media (max-width: 640px) {
-    .anom-detail-header { flex-direction: column; }
-    .anom-action-block  { width: 100%; }
-    .btn-action-lg, .anom-resolved-badge { width: 100%; justify-content: center; }
-    .info-row { flex-direction: column; }
-}
-
 .minimap-approx-badge {
     font-size: .7rem; font-weight: 600; color: #8094a8;
     background: rgba(74,104,128,.1); border-radius: 6px;
     padding: .15rem .5rem; vertical-align: middle;
 }
-.info-gps-approx {
-    font-size: .68rem; color: #8094a8; font-weight: 400;
+.info-gps-approx { font-size: .68rem; color: rgba(255,255,255,.4); font-weight: 400; }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+    .anom-meta-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 575.98px) {
+    .anom-hero-top  { flex-direction: column; }
+    .anom-action-block { width: 100%; }
+    .btn-action-lg, .anom-resolved-badge { width: 100%; justify-content: center; }
+    .anom-meta-grid { grid-template-columns: 1fr; }
 }

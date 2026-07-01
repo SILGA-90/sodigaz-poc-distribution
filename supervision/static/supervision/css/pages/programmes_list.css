@@ -2,35 +2,161 @@
    PROGRAMMES LIST — SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
-/* Boutons nav date */
-.btn-nav-date {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px; border-radius: 8px;
-    background: #FFFFFF; border: 1px solid #DDE2E6; cursor: pointer;
-    color: #3a5060; font-size: .95rem; text-decoration: none;
-    transition: all .15s;
+/* ── Hero navy (même recette que le dashboard) ─────────── */
+.prog-hero {
+    position: relative;
+    background: #0a1628;
+    border-radius: 18px;
+    padding: 1.4rem 1.75rem 1.35rem;
+    overflow: hidden;
+    background-image:
+        linear-gradient(90deg, #EE7202 0%, #FAB848 45%, #079BD9 100%),
+        radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(160deg, #0a1628 60%, #0d2040 100%);
+    background-size: 100% 3px, 22px 22px, 100% 100%;
+    background-repeat: no-repeat, repeat, no-repeat;
+    background-position: top, 0 0, 0 0;
 }
-.btn-nav-date:hover {
-    background: #079BD9; color: #fff;
-    border-color: #079BD9;
-    box-shadow: 0 3px 10px rgba(7,155,217,.3);
+/* Glow bleu en haut à gauche */
+.prog-hero::before {
+    content: "";
+    position: absolute; top: -30px; left: -30px;
+    width: 260px; height: 200px;
+    background: radial-gradient(ellipse at center, rgba(7,155,217,.22) 0%, transparent 70%);
+    pointer-events: none;
 }
-.btn-today-prog {
-    display: inline-flex; align-items: center; gap: .3rem;
-    padding: 0 .9rem; height: 32px; border-radius: 8px;
-    background: #FFFFFF; border: 1px solid #DDE2E6; cursor: pointer;
-    color: #3a5060; font-size: .8rem; font-weight: 600; text-decoration: none;
-    transition: all .15s;
-}
-.btn-today-prog.active,
-.btn-today-prog:hover {
-    background: #079BD9; color: #fff;
-    border-color: #079BD9;
-    box-shadow: 0 3px 10px rgba(7,155,217,.3);
+/* Glow ambre en bas à droite */
+.prog-hero::after {
+    content: "";
+    position: absolute; bottom: -30px; right: 40px;
+    width: 220px; height: 180px;
+    background: radial-gradient(ellipse at center, rgba(250,184,72,.12) 0%, transparent 70%);
+    pointer-events: none;
 }
 
-/* Liste */
-.prog-list { display: flex; flex-direction: column; gap: 1rem; }
+/* Bande supérieure : titre + nav date */
+.prog-hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+.prog-hero-icon {
+    width: 42px; height: 42px; border-radius: 11px;
+    background: rgba(7,155,217,.2);
+    border: 1px solid rgba(7,155,217,.35);
+    display: flex; align-items: center; justify-content: center;
+    color: #5ac8f5; font-size: 1.3rem; flex-shrink: 0;
+}
+.prog-hero-title {
+    font-size: 1.45rem; font-weight: 800; color: #fff;
+    margin: 0; letter-spacing: -.01em;
+}
+.prog-hero-sub {
+    font-size: .82rem; color: rgba(255,255,255,.5);
+    margin: .1rem 0 0;
+}
+
+/* Sélecteur de date sur fond navy */
+.prog-hero-date-wrap {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 9px;
+    padding: .38rem .75rem;
+}
+.prog-hero-date-icon { color: rgba(255,255,255,.5); font-size: .9rem; }
+.prog-hero-date-input {
+    -webkit-appearance: none; appearance: none;
+    background: transparent !important;
+    border: none !important; outline: none !important; box-shadow: none !important;
+    color: #fff !important; font-size: .85rem; font-weight: 600;
+    width: 100px; cursor: pointer;
+}
+
+/* Boutons navigation date (sur fond navy) */
+.prog-btn-nav {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.8); font-size: .95rem; text-decoration: none;
+    transition: all .15s;
+}
+.prog-btn-nav:hover {
+    background: #079BD9; border-color: #079BD9; color: #fff;
+    box-shadow: 0 3px 10px rgba(7,155,217,.35);
+}
+.prog-btn-today {
+    display: inline-flex; align-items: center;
+    padding: 0 .85rem; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.8); font-size: .8rem; font-weight: 600;
+    text-decoration: none; transition: all .15s;
+}
+.prog-btn-today:hover,
+.prog-btn-today.active {
+    background: #079BD9; border-color: #079BD9; color: #fff;
+    box-shadow: 0 3px 10px rgba(7,155,217,.35);
+}
+
+/* Grille KPI 3 colonnes */
+.prog-hero-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .75rem;
+    position: relative; z-index: 1;
+}
+.prog-kpi-card {
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.1);
+    border-left: 4px solid rgba(255,255,255,.2);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: flex; align-items: center; gap: 1rem;
+    transition: background .15s;
+}
+.prog-kpi-card:hover { background: rgba(255,255,255,.11); }
+.prog-kpi-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(255,255,255,.1);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,.7); font-size: 1.1rem; flex-shrink: 0;
+}
+.prog-kpi-label {
+    font-size: .7rem; font-weight: 600; color: rgba(255,255,255,.48);
+    text-transform: uppercase; letter-spacing: .05em;
+    margin-bottom: .2rem;
+}
+.prog-kpi-value {
+    font-size: 2rem; font-weight: 800; color: #fff; line-height: 1;
+}
+
+/* Variantes colorées par statut */
+.prog-kpi-gray  { border-left-color: #94a3b8; }
+.prog-kpi-blue  { border-left-color: #079BD9; }
+.prog-kpi-green { border-left-color: #198754; }
+
+.prog-kpi-blue  .prog-kpi-icon { background: rgba(7,155,217,.22);  color: #5ac8f5; }
+.prog-kpi-green .prog-kpi-icon { background: rgba(25,135,84,.22);  color: #52c98b; }
+
+.prog-kpi-value-blue  { color: #5ac8f5; }
+.prog-kpi-value-green { color: #52c98b; }
+
+/* Liste : 2 colonnes sur écran large, 1 colonne sinon — évite qu'une carte
+   isolée s'étire sur toute la largeur d'un grand écran */
+.prog-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    align-items: start;
+}
+@media (max-width: 1100px) {
+    .prog-list { grid-template-columns: 1fr; }
+}
 
 /* Card programme */
 .prog-card {
@@ -52,12 +178,20 @@
 .prog-EN_COURS  { border-left-color: #079BD9; }
 .prog-CLOTURE   { border-left-color: #198754; }
 
-.prog-card-inner { padding: 1.1rem 1.25rem; }
-
-/* Ligne haute */
-.prog-row-top {
+/* Entête de carte : fond légèrement grisé */
+.prog-card-head {
     display: flex; justify-content: space-between;
     align-items: center; flex-wrap: wrap; gap: .5rem;
+    padding: .7rem 1.25rem;
+    background: #FAFBFC;
+    border-bottom: 1px solid #DDE2E6;
+}
+
+/* Corps de carte */
+.prog-card-body {
+    display: flex; align-items: center;
+    gap: 1.5rem; flex-wrap: wrap;
+    padding: .9rem 1.25rem;
 }
 
 /* Numéro programme */
@@ -74,21 +208,19 @@
     display: inline-flex; align-items: center; gap: .3rem;
 }
 
-/* Séparateur */
-.prog-divider {
-    height: 1px;
-    background: #DDE2E6;
-    margin: .9rem 0;
+/* Avatar livreur cerclé d'un anneau de progression (fusionne identité + avancement) */
+.prog-livreur { display: flex; align-items: center; gap: .75rem; flex-shrink: 0; min-width: 180px; }
+.prog-avatar-ring {
+    --pct: 0;
+    --ring-color: #94a3b8;
+    width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+    background: conic-gradient(var(--ring-color) calc(var(--pct) * 1%), #E8EEF2 0);
+    display: flex; align-items: center; justify-content: center;
+    transition: background .6s ease;
 }
-
-/* Ligne basse */
-.prog-row-bottom {
-    display: flex; align-items: center;
-    gap: 1.5rem; flex-wrap: wrap;
-}
-
-/* Avatar livreur */
-.prog-livreur { display: flex; align-items: center; gap: .65rem; flex-shrink: 0; min-width: 160px; }
+.prog-ring-PLANIFIE { --ring-color: #94a3b8; }
+.prog-ring-EN_COURS  { --ring-color: #079BD9; }
+.prog-ring-CLOTURE   { --ring-color: #198754; }
 .prog-avatar {
     width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
     background: linear-gradient(135deg, #079BD9, #0670A0);
@@ -99,18 +231,13 @@
 .prog-livreur-nom  { font-size: .82rem; font-weight: 600; color: #1a2a3a; }
 .prog-livreur-code { font-size: .72rem; color: #5a7080; margin-top: 1px; }
 
-/* Barre de progression */
-.prog-prog { flex: 1; min-width: 160px; }
-.prog-prog-header {
-    display: flex; justify-content: space-between;
-    align-items: center; margin-bottom: .55rem;
-}
-.prog-prog-label {
-    font-size: .68rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .06em; color: #6a8898;
+/* Progression : ratio + chip échec alignés sur une ligne */
+.prog-prog {
+    flex: 1; min-width: 160px;
+    display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
 }
 .prog-prog-ratio {
-    font-size: .78rem; font-weight: 600; color: #3a5060;
+    font-size: .82rem; font-weight: 600; color: #3a5060;
     display: flex; align-items: center; gap: .45rem;
 }
 
@@ -124,21 +251,14 @@
 .prog-pct-EN_COURS  { background: rgba(7,155,217,.14);  color: #0670A0; }
 .prog-pct-CLOTURE   { background: rgba(25,135,84,.14);  color: #198754; }
 
-/* Track */
-.prog-bar {
-    height: 10px; border-radius: 6px; overflow: hidden;
-    background: #E8EEF2;
+/* Chip échec */
+.echec-chip {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .7rem; font-weight: 700;
+    padding: .15rem .5rem; border-radius: 20px;
+    background: rgba(220,53,69,.1); color: #dc3545;
+    border: 1px solid rgba(220,53,69,.2);
 }
-
-/* Fill */
-.prog-bar-fill {
-    height: 100%; border-radius: 6px;
-    transition: width .6s cubic-bezier(.25,.8,.25,1);
-}
-
-.prog-bar-PLANIFIE { background: #94a3b8; }
-.prog-bar-EN_COURS  { background: linear-gradient(90deg, #0670A0, #079BD9); }
-.prog-bar-CLOTURE   { background: linear-gradient(90deg, #198754, #25c070); }
 
 /* Bouton détail */
 .btn-detail {
@@ -167,7 +287,14 @@
 
 /* Responsive */
 @media (max-width: 640px) {
-    .prog-row-bottom { gap: .85rem; }
-    .prog-livreur    { min-width: unset; }
-    .btn-detail      { width: 100%; justify-content: center; }
+    .prog-hero          { padding: 1.1rem 1.1rem 1rem; }
+    .prog-hero-title    { font-size: 1.2rem; }
+    .prog-hero-kpis     { grid-template-columns: repeat(3, 1fr); gap: .4rem; }
+    .prog-kpi-card      { padding: .7rem .65rem; gap: .6rem; }
+    .prog-kpi-icon      { width: 32px; height: 32px; font-size: .9rem; }
+    .prog-kpi-value     { font-size: 1.5rem; }
+    .prog-kpi-label     { font-size: .62rem; }
+    .prog-card-body     { gap: .85rem; }
+    .prog-livreur       { min-width: unset; }
+    .btn-detail         { width: 100%; justify-content: center; }
 }

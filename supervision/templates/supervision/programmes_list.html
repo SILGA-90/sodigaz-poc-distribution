@@ -8,63 +8,63 @@
 {% block title %}Programmes{% endblock %}
 {% block content %}
 
-<!-- En-tête -->
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
-    <div>
-        <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="pg-icon"><i class="bi bi-truck"></i></span>
-            <h1 class="page-title mb-0">Programmes</h1>
-        </div>
-        <p class="page-sub mb-0">
-            <i class="bi bi-calendar3 me-1"></i>{{ date_filter|date:"l j F Y"|capfirst }}
-        </p>
-    </div>
-    <!-- KPI pills -->
-    <div class="d-flex flex-wrap gap-2 align-items-center">
-        <div class="kpi-pill">
-            <span class="kpi-pill-n">{{ nb_total }}</span>
-            <span class="kpi-pill-l">Total</span>
-        </div>
-        <div class="kpi-pill kpi-pill-gray">
-            <span class="kpi-pill-n">{{ nb_planifie }}</span>
-            <span class="kpi-pill-l">Planifiés</span>
-        </div>
-        <div class="kpi-pill kpi-pill-blue">
-            <span class="kpi-pill-n">{{ nb_en_cours }}</span>
-            <span class="kpi-pill-l">En cours</span>
-        </div>
-        <div class="kpi-pill kpi-pill-green">
-            <span class="kpi-pill-n">{{ nb_cloture }}</span>
-            <span class="kpi-pill-l">Clôturés</span>
-        </div>
-    </div>
-</div>
+<!-- Hero navy (titre + navigation date + KPIs) -->
+<div class="prog-hero mb-4">
 
-<!-- Filtre + navigation dates -->
-<div class="filter-card mb-4">
-    <div class="d-flex flex-wrap align-items-center gap-2">
-        <i class="bi bi-funnel text-muted"></i>
-        <form method="get" class="d-flex gap-2 align-items-center">
-            <input type="text" name="date" id="prog-date-fp"
-                   value="{{ date_filter|date:'Y-m-d' }}"
-                   class="form-control form-control-sm" style="width:auto;" readonly>
-            <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold">
-                <i class="bi bi-search me-1"></i>Filtrer
-            </button>
-        </form>
-        <div class="ms-auto d-flex gap-2 align-items-center">
-            <a href="?date={{ date_prev|date:'Y-m-d' }}" class="btn-nav-date" title="Jour précédent">
+    <!-- Bande supérieure : icône + titre + date à gauche ; sélecteur + nav à droite -->
+    <div class="prog-hero-top">
+        <div class="d-flex align-items-center gap-3">
+            <span class="prog-hero-icon"><i class="bi bi-truck"></i></span>
+            <div>
+                <h1 class="prog-hero-title">Programmes</h1>
+                <p class="prog-hero-sub">{{ date_filter|date:"l j F Y"|capfirst }}</p>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="prog-hero-date-wrap">
+                <i class="bi bi-calendar3 prog-hero-date-icon"></i>
+                <input type="text" id="prog-date-fp"
+                       value="{{ date_filter|date:'Y-m-d' }}"
+                       class="prog-hero-date-input" readonly>
+            </div>
+            <a href="?date={{ date_prev|date:'Y-m-d' }}" class="prog-btn-nav" title="Jour précédent">
                 <i class="bi bi-chevron-left"></i>
             </a>
             <a href="?date={{ date_today|date:'Y-m-d' }}"
-               class="btn-today-prog {% if date_filter == date_today %}active{% endif %}">
+               class="prog-btn-today {% if date_filter == date_today %}active{% endif %}">
                 Aujourd'hui
             </a>
-            <a href="?date={{ date_next|date:'Y-m-d' }}" class="btn-nav-date" title="Jour suivant">
+            <a href="?date={{ date_next|date:'Y-m-d' }}" class="prog-btn-nav" title="Jour suivant">
                 <i class="bi bi-chevron-right"></i>
             </a>
         </div>
     </div>
+
+    <!-- Grille KPI : 3 compteurs statut -->
+    <div class="prog-hero-kpis">
+        <div class="prog-kpi-card prog-kpi-gray">
+            <div class="prog-kpi-icon"><i class="bi bi-clock"></i></div>
+            <div>
+                <div class="prog-kpi-label">Planifiés</div>
+                <div class="prog-kpi-value">{{ nb_planifie }}</div>
+            </div>
+        </div>
+        <div class="prog-kpi-card prog-kpi-blue">
+            <div class="prog-kpi-icon"><i class="bi bi-play-circle-fill"></i></div>
+            <div>
+                <div class="prog-kpi-label">En cours</div>
+                <div class="prog-kpi-value prog-kpi-value-blue">{{ nb_en_cours }}</div>
+            </div>
+        </div>
+        <div class="prog-kpi-card prog-kpi-green">
+            <div class="prog-kpi-icon"><i class="bi bi-check-circle-fill"></i></div>
+            <div>
+                <div class="prog-kpi-label">Clôturés</div>
+                <div class="prog-kpi-value prog-kpi-value-green">{{ nb_cloture }}</div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <!-- Liste des programmes -->
@@ -72,81 +72,69 @@
 <div class="prog-list">
     {% for p in programmes %}
     <div class="prog-card prog-{{ p.statut }}">
-        <div class="prog-card-inner">
 
-            <!-- Ligne 1 : identité + statut -->
-            <div class="prog-row-top">
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span class="prog-numero">{{ p.numero_x3 }}</span>
-                    {% if p.type_programme == "COLLECTE" %}
-                    <span class="type-chip type-collecte">
-                        <i class="bi bi-arrow-down-circle"></i> Collecte
-                    </span>
-                    {% else %}
-                    <span class="type-chip type-restitution">
-                        <i class="bi bi-arrow-up-circle"></i> Restitution
-                    </span>
-                    {% endif %}
-                    {% if p.vehicule %}
-                    <span class="vehicule-tag">
-                        <i class="bi bi-car-front"></i> {{ p.vehicule.immatriculation }}
-                    </span>
-                    {% endif %}
-                </div>
-                <span class="statut-pill statut-{{ p.statut }}">
-                    {% if p.statut == "PLANIFIE" %}<i class="bi bi-clock"></i> Planifié
-                    {% elif p.statut == "EN_COURS" %}<i class="bi bi-play-circle-fill"></i> En cours
-                    {% else %}<i class="bi bi-check-circle-fill"></i> Clôturé
-                    {% endif %}
+        <!-- Entête carte : identité + statut -->
+        <div class="prog-card-head">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="prog-numero">{{ p.numero_x3 }}</span>
+                {% if p.type_programme == "COLLECTE" %}
+                <span class="type-chip type-collecte">
+                    <i class="bi bi-arrow-down-circle"></i> Collecte
                 </span>
+                {% else %}
+                <span class="type-chip type-restitution">
+                    <i class="bi bi-arrow-up-circle"></i> Restitution
+                </span>
+                {% endif %}
+                {% if p.vehicule %}
+                <span class="vehicule-tag">
+                    <i class="bi bi-truck"></i> {{ p.vehicule.immatriculation }}
+                </span>
+                {% endif %}
             </div>
+            <span class="statut-pill statut-{{ p.statut }}">
+                {% if p.statut == "PLANIFIE" %}<i class="bi bi-clock"></i> Planifié
+                {% elif p.statut == "EN_COURS" %}<i class="bi bi-play-circle-fill"></i> En cours
+                {% else %}<i class="bi bi-check-circle-fill"></i> Clôturé
+                {% endif %}
+            </span>
+        </div>
 
-            <div class="prog-divider"></div>
+        <!-- Corps carte : livreur + progression + action -->
+        <div class="prog-card-body">
 
-            <!-- Ligne 2 : livreur + progression + action -->
-            <div class="prog-row-bottom">
-
-                <!-- Livreur -->
-                <div class="prog-livreur">
+            <!-- Livreur : avatar cerclé d'un anneau de progression -->
+            <div class="prog-livreur">
+                <div class="prog-avatar-ring prog-ring-{{ p.statut }}"
+                     style="--pct: {% if p.total_etapes > 0 %}{% widthratio p.etapes_visitees p.total_etapes 100 %}{% else %}0{% endif %};">
                     <div class="prog-avatar">
-                        {{ p.utilisateur.code_livreur|slice:":1"|upper }}
-                    </div>
-                    <div>
-                        <div class="prog-livreur-nom">{{ p.utilisateur.get_full_name }}</div>
-                        <div class="prog-livreur-code">{{ p.utilisateur.code_livreur }}</div>
+                        {{ p.utilisateur.first_name|slice:":1"|upper }}{{ p.utilisateur.last_name|slice:":1"|upper }}
                     </div>
                 </div>
-
-                <!-- Progression -->
-                <div class="prog-prog">
-                    <div class="prog-prog-header">
-                        <span class="prog-prog-label">Progression</span>
-                        <span class="prog-prog-ratio">
-                            {{ p.etapes_visitees }}/{{ p.total_etapes }} étapes
-                            {% if p.total_etapes > 0 %}
-                            <span class="prog-pct-badge prog-pct-{{ p.statut }}">{% widthratio p.etapes_visitees p.total_etapes 100 %}%</span>
-                            {% endif %}
-                        </span>
-                    </div>
-                    <div class="prog-bar">
-                        <div class="prog-bar-fill prog-bar-{{ p.statut }}"
-                             style="width:{% if p.total_etapes > 0 %}{% widthratio p.etapes_visitees p.total_etapes 100 %}{% else %}0{% endif %}%">
-                        </div>
-                    </div>
-                    {% if p.etapes_echec > 0 %}
-                    <span class="echec-chip">
-                        <i class="bi bi-x-circle-fill"></i>
-                        {{ p.etapes_echec }}&nbsp;échec{% if p.etapes_echec > 1 %}s{% endif %}
-                    </span>
-                    {% endif %}
+                <div>
+                    <div class="prog-livreur-nom">{{ p.utilisateur.get_full_name }}</div>
+                    <div class="prog-livreur-code">{{ p.utilisateur.code_livreur }}</div>
                 </div>
-
-                <!-- Action -->
-                <a href="{% url 'supervision:programme-detail' p.id %}" class="btn-detail">
-                    Voir le détail <i class="bi bi-arrow-right"></i>
-                </a>
-
             </div>
+
+            <!-- Progression : ratio + écarts, sur une seule ligne -->
+            <div class="prog-prog">
+                <span class="prog-prog-ratio">
+                    {{ p.etapes_visitees }}/{{ p.total_etapes }} étapes
+                </span>
+                {% if p.etapes_echec > 0 %}
+                <span class="echec-chip">
+                    <i class="bi bi-x-circle-fill"></i>
+                    {{ p.etapes_echec }}&nbsp;échec{% if p.etapes_echec > 1 %}s{% endif %}
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Action -->
+            <a href="{% url 'supervision:programme-detail' p.id %}" class="btn-detail">
+                Voir le détail <i class="bi bi-arrow-right"></i>
+            </a>
+
         </div>
     </div>
     {% endfor %}

@@ -2,6 +2,116 @@
    RAPPORT JOURNÉE — SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
+/* ── Hero navy (écran uniquement — no-print) ──────────── */
+.rpt-hero {
+    position: relative;
+    background: #0a1628;
+    border-radius: 18px;
+    padding: 1.25rem 1.75rem;
+    overflow: hidden;
+    background-image:
+        linear-gradient(90deg, #EE7202 0%, #FAB848 45%, #079BD9 100%),
+        radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(160deg, #0a1628 60%, #0d2040 100%);
+    background-size: 100% 3px, 22px 22px, 100% 100%;
+    background-repeat: no-repeat, repeat, no-repeat;
+    background-position: top, 0 0, 0 0;
+    display: flex; align-items: center;
+    flex-wrap: wrap; gap: 1rem;
+    justify-content: space-between;
+}
+.rpt-hero::before {
+    content: "";
+    position: absolute; top: -30px; left: -30px;
+    width: 260px; height: 180px;
+    background: radial-gradient(ellipse, rgba(7,155,217,.2) 0%, transparent 70%);
+    pointer-events: none;
+}
+.rpt-hero::after {
+    content: "";
+    position: absolute; bottom: -30px; right: 40px;
+    width: 200px; height: 160px;
+    background: radial-gradient(ellipse, rgba(250,184,72,.11) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.rpt-hero-id { display: flex; align-items: center; gap: .75rem; flex-shrink: 0; }
+.rpt-hero-icon {
+    width: 42px; height: 42px; border-radius: 11px;
+    background: rgba(7,155,217,.2);
+    border: 1px solid rgba(7,155,217,.35);
+    display: flex; align-items: center; justify-content: center;
+    color: #5ac8f5; font-size: 1.3rem; flex-shrink: 0;
+}
+.rpt-hero-title {
+    font-size: 1.3rem; font-weight: 800; color: #fff;
+    margin: 0; letter-spacing: -.01em;
+}
+.rpt-hero-sub {
+    font-size: .82rem; color: rgba(255,255,255,.5); margin: .1rem 0 0;
+}
+
+/* Controls : date picker + nav + print */
+.rpt-hero-controls {
+    display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; position: relative; z-index: 1;
+}
+.rpt-hero-date-wrap {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 9px; padding: .38rem .75rem;
+}
+.rpt-hero-date-icon { color: rgba(255,255,255,.5); font-size: .9rem; }
+.rpt-hero-date-input {
+    -webkit-appearance: none; appearance: none;
+    background: transparent !important;
+    border: none !important; outline: none !important; box-shadow: none !important;
+    color: #fff !important; font-size: .85rem; font-weight: 600;
+    width: 100px; cursor: pointer;
+}
+.rpt-btn-nav {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.8); font-size: .95rem; text-decoration: none;
+    transition: all .15s;
+}
+.rpt-btn-nav:hover {
+    background: #079BD9; border-color: #079BD9; color: #fff;
+    box-shadow: 0 3px 10px rgba(7,155,217,.35);
+}
+.rpt-btn-today {
+    display: inline-flex; align-items: center;
+    padding: 0 .85rem; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.8); font-size: .8rem; font-weight: 600;
+    text-decoration: none; transition: all .15s;
+}
+.rpt-btn-today:hover,
+.rpt-btn-today.active {
+    background: #079BD9; border-color: #079BD9; color: #fff;
+    box-shadow: 0 3px 10px rgba(7,155,217,.35);
+}
+.rpt-btn-print {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .42rem 1rem; border-radius: 9px;
+    font-size: .8rem; font-weight: 700; cursor: pointer;
+    background: rgba(10,22,40,.5);
+    border: 1px solid rgba(255,255,255,.18);
+    color: rgba(255,255,255,.85); transition: all .15s;
+}
+.rpt-btn-print:hover {
+    background: #fff; color: #0a1628;
+    box-shadow: 0 3px 10px rgba(0,0,0,.2);
+}
+
+@media (max-width: 640px) {
+    .rpt-hero { padding: 1rem 1.1rem; }
+    .rpt-hero-title { font-size: 1.1rem; }
+}
+
 /* Input date dans l'en-tête */
 #rapport-date-fp {
     background-color: #FFFFFF;
@@ -129,9 +239,8 @@
 .rpt-livreur-nom  { font-size: .72rem; color: #94a3b8; margin-top: .05rem; }
 
 /* Barre de progression */
-.rpt-prog-header { display: flex; justify-content: space-between; margin-bottom: .3rem; }
+.rpt-prog-header { margin-bottom: .3rem; }
 .rpt-prog-ratio  { font-size: .76rem; font-weight: 600; color: #1a2332; }
-.rpt-prog-pct    { font-size: .76rem; font-weight: 700; color: #6c757d; }
 
 .rpt-bar {
     height: 8px; border-radius: 5px; overflow: hidden;
@@ -266,7 +375,7 @@
     .rpt-livreur-nom  { font-size: 6pt !important; }
 
     .rpt-prog-header  { margin-bottom: .15rem !important; }
-    .rpt-prog-ratio, .rpt-prog-pct { font-size: 6.5pt !important; }
+    .rpt-prog-ratio   { font-size: 6.5pt !important; }
     .rpt-bar          { height: 5px !important; background: #e2e8f0 !important; }
     .rpt-bar-fill     { height: 5px !important; }
 

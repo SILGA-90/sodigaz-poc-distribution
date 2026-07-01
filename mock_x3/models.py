@@ -6,7 +6,7 @@ créé dans Sage X3 en réponse à une opération remontée par le mobile.
 Dans le mock, la génération est locale et immédiate (x3_sync.py).
 
        Types de documents :
-         - BCR (Bon de Collecte Recharge) : créé pour chaque COLLECTE.
+         - BCR (Bon de Commande Recharge) : créé pour chaque COLLECTE.
          - BL  (Bordereau de Livraison)   : créé pour chaque RESTITUTION,
            obligatoirement rattaché au BCR existant sur le même PLV.
 
@@ -39,7 +39,7 @@ class DocumentX3(models.Model):
     TYPE_BCR     = "BCR"
     TYPE_BL      = "BL"
     TYPE_CHOICES = [
-        (TYPE_BCR, "Bon de Collecte Recharge"),
+        (TYPE_BCR, "Bon de Commande Recharge"),
         (TYPE_BL,  "Bordereau de Livraison"),
     ]
 

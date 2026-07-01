@@ -23,7 +23,7 @@ peuvent être déclenchées depuis la liste ou le détail. Rediriger vers
 la page précédente (Referer) offre une meilleure UX que de rediriger
 toujours vers la liste.
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -49,7 +49,7 @@ def anomalies_list(request):
          jour mérite une attention particulière. Ce compteur met en évidence
          les anomalies qui "traînent" sans être prises en charge.
     """
-    statut_filter  = request.GET.get("statut",    "OUVERTE")
+    statut_filter  = request.GET.get("statut",    "TOUS")
     gravite_filter = request.GET.get("gravite",   "").strip()
     livreur_filter = request.GET.get("livreur",   "").strip()
     prog_filter    = request.GET.get("programme", "").strip()
@@ -92,15 +92,38 @@ def anomalies_list(request):
     for a in anomalies:
         a.anciennete_jours = (now - a.date_heure).days
 
-    nb_total    = len(anomalies)
-    nb_elevee   = sum(1 for a in anomalies if a.gravite == GraviteAnomalie.ELEVEE)
-    nb_moyenne  = sum(1 for a in anomalies if a.gravite == GraviteAnomalie.MOYENNE)
-    nb_faible   = sum(1 for a in anomalies if a.gravite == GraviteAnomalie.FAIBLE)
-    nb_urgentes = sum(
-        1 for a in anomalies
-        if a.statut in (StatutAnomalie.OUVERTE, StatutAnomalie.EN_TRAITEMENT)
-        and a.anciennete_jours >= 1
+    nb_total   = len(anomalies)
+    nb_elevee  = sum(1 for a in anomalies if a.gravite == GraviteAnomalie.ELEVEE)
+    nb_moyenne = sum(1 for a in anomalies if a.gravite == GraviteAnomalie.MOYENNE)
+    nb_faible  = sum(1 for a in anomalies if a.gravite == GraviteAnomalie.FAIBLE)
+
+    # nb_urgentes : requête indépendante du filtre statut affiché.
+    # Le filtre statut de l'URL (ex. "OUVERTE") ne doit pas masquer les
+    # EN_TRAITEMENT en retard — on interroge toujours les deux statuts
+    # non résolus. Les filtres livreur / programme / date sont conservés
+    # pour rester cohérents avec le contexte affiché.
+    seuil_urgence = now - timedelta(days=1)
+    urgentes_qs = Anomalie.objects.filter(
+        is_deleted=False,
+        programme__is_deleted=False,
+        statut__in=[StatutAnomalie.OUVERTE, StatutAnomalie.EN_TRAITEMENT],
+        date_heure__lt=seuil_urgence,
     )
+    if livreur_filter:
+        urgentes_qs = urgentes_qs.filter(
+            programme__utilisateur__code_livreur=livreur_filter
+        )
+    if prog_filter:
+        urgentes_qs = urgentes_qs.filter(
+            programme__numero_x3__icontains=prog_filter
+        )
+    if date_str:
+        try:
+            d_urg = datetime.strptime(date_str, "%Y-%m-%d").date()
+            urgentes_qs = urgentes_qs.filter(programme__date_programme=d_urg)
+        except ValueError:
+            pass
+    nb_urgentes = urgentes_qs.count()
 
     return render(request, "supervision/anomalies_list.html", {
         "anomalies":      anomalies,

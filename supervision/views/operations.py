@@ -15,6 +15,7 @@ vers Excel ou un autre outil de reporting. Le CSV est le format le plus
 universel et ne nécessite pas de bibliothèque tierce côté serveur.
 """
 import csv
+from datetime import date, timedelta
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
@@ -70,14 +71,17 @@ def operations_list(request):
     total_montant = sum(op.montant_total or 0 for op in operations)
 
     return render(request, "supervision/operations_list.html", {
-        "operations":    operations,
-        "date_filter":   date_filter,
-        "livreur_code":  livreur_code,
-        "type_filter":   type_filter,
-        "livreurs":      livreurs,
-        "total_montant": total_montant,
-        "nb_total":      nb_total,
-        "nb_collecte":   nb_collecte,
+        "operations":     operations,
+        "date_filter":    date_filter,
+        "date_prev":      date_filter - timedelta(days=1),
+        "date_next":      date_filter + timedelta(days=1),
+        "date_today":     date.today(),
+        "livreur_code":   livreur_code,
+        "type_filter":    type_filter,
+        "livreurs":       livreurs,
+        "total_montant":  total_montant,
+        "nb_total":       nb_total,
+        "nb_collecte":    nb_collecte,
         "nb_restitution": nb_restitution,
     })
 

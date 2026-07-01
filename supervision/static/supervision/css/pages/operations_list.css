@@ -2,7 +2,171 @@
    OPÉRATIONS LIST — SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
-/* Bouton export */
+/* ── Hero navy ────────────────────────────────────────── */
+.ops-hero {
+    position: relative;
+    background: #0a1628;
+    border-radius: 18px;
+    padding: 1.4rem 1.75rem 1.35rem;
+    overflow: hidden;
+    background-image:
+        linear-gradient(90deg, #EE7202 0%, #FAB848 45%, #079BD9 100%),
+        radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(160deg, #0a1628 60%, #0d2040 100%);
+    background-size: 100% 3px, 22px 22px, 100% 100%;
+    background-repeat: no-repeat, repeat, no-repeat;
+    background-position: top, 0 0, 0 0;
+}
+.ops-hero::before {
+    content: "";
+    position: absolute; top: -30px; left: -30px;
+    width: 260px; height: 200px;
+    background: radial-gradient(ellipse at center, rgba(7,155,217,.22) 0%, transparent 70%);
+    pointer-events: none;
+}
+.ops-hero::after {
+    content: "";
+    position: absolute; bottom: -30px; right: 40px;
+    width: 220px; height: 180px;
+    background: radial-gradient(ellipse at center, rgba(250,184,72,.12) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.ops-hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+.ops-hero-icon {
+    width: 42px; height: 42px; border-radius: 11px;
+    background: rgba(7,155,217,.2);
+    border: 1px solid rgba(7,155,217,.35);
+    display: flex; align-items: center; justify-content: center;
+    color: #5ac8f5; font-size: 1.3rem; flex-shrink: 0;
+}
+.ops-hero-title {
+    font-size: 1.45rem; font-weight: 800; color: #fff;
+    margin: 0; letter-spacing: -.01em;
+}
+.ops-hero-sub {
+    font-size: .82rem; color: rgba(255,255,255,.5);
+    margin: .1rem 0 0;
+}
+.ops-hero-date-wrap {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 9px; padding: .38rem .75rem;
+}
+.ops-hero-date-icon { color: rgba(255,255,255,.5); font-size: .9rem; }
+.ops-hero-date-input {
+    -webkit-appearance: none; appearance: none;
+    background: transparent !important;
+    border: none !important; outline: none !important; box-shadow: none !important;
+    color: #fff !important; font-size: .85rem; font-weight: 600;
+    width: 100px; cursor: pointer;
+}
+.ops-btn-nav {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.8); font-size: .95rem; text-decoration: none;
+    transition: all .15s;
+}
+.ops-btn-nav:hover {
+    background: #079BD9; border-color: #079BD9; color: #fff;
+    box-shadow: 0 3px 10px rgba(7,155,217,.35);
+}
+.ops-btn-today {
+    display: inline-flex; align-items: center;
+    padding: 0 .85rem; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.8); font-size: .8rem; font-weight: 600;
+    text-decoration: none; transition: all .15s;
+}
+.ops-btn-today:hover,
+.ops-btn-today.active {
+    background: #079BD9; border-color: #079BD9; color: #fff;
+    box-shadow: 0 3px 10px rgba(7,155,217,.35);
+}
+
+/* KPI grid 3 colonnes */
+.ops-hero-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .75rem;
+    position: relative; z-index: 1;
+}
+.ops-kpi-card {
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.1);
+    border-left: 4px solid rgba(255,255,255,.2);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: flex; align-items: center; gap: 1rem;
+    transition: background .15s;
+}
+.ops-kpi-card:hover { background: rgba(255,255,255,.11); }
+.ops-kpi-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(255,255,255,.1);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,.7); font-size: 1.1rem; flex-shrink: 0;
+}
+.ops-kpi-label {
+    font-size: .7rem; font-weight: 600; color: rgba(255,255,255,.48);
+    text-transform: uppercase; letter-spacing: .05em; margin-bottom: .2rem;
+}
+.ops-kpi-value {
+    font-size: 2rem; font-weight: 800; color: #fff; line-height: 1;
+}
+.ops-kpi-value-sm { font-size: 1.3rem; }
+
+.ops-kpi-blue   { border-left-color: #079BD9; }
+.ops-kpi-green  { border-left-color: #198754; }
+.ops-kpi-orange { border-left-color: #EE7202; }
+
+.ops-kpi-blue   .ops-kpi-icon { background: rgba(7,155,217,.22);  color: #5ac8f5; }
+.ops-kpi-green  .ops-kpi-icon { background: rgba(25,135,84,.22);  color: #52c98b; }
+.ops-kpi-orange .ops-kpi-icon { background: rgba(238,114,2,.22);  color: #f4a44e; }
+
+.ops-kpi-value-blue   { color: #5ac8f5; }
+.ops-kpi-value-green  { color: #52c98b; }
+.ops-kpi-value-orange { color: #f4a44e; }
+
+/* Bouton export dans le hero */
+.btn-export-hero {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .42rem 1rem; border-radius: 9px;
+    font-size: .8rem; font-weight: 700;
+    color: rgba(255,255,255,.85); text-decoration: none; white-space: nowrap;
+    background: rgba(25,135,84,.25);
+    border: 1px solid rgba(25,135,84,.45);
+    transition: all .15s;
+}
+.btn-export-hero:hover {
+    background: #198754; color: #fff; border-color: #198754;
+    box-shadow: 0 3px 10px rgba(25,135,84,.35);
+}
+
+/* Responsive hero */
+@media (max-width: 640px) {
+    .ops-hero        { padding: 1.1rem 1.1rem 1rem; }
+    .ops-hero-title  { font-size: 1.2rem; }
+    .ops-hero-kpis   { grid-template-columns: repeat(3, 1fr); gap: .4rem; }
+    .ops-kpi-card    { padding: .7rem .65rem; gap: .6rem; }
+    .ops-kpi-icon    { width: 32px; height: 32px; font-size: .9rem; }
+    .ops-kpi-value   { font-size: 1.5rem; }
+    .ops-kpi-value-sm { font-size: 1.1rem; }
+    .ops-kpi-label   { font-size: .62rem; }
+}
+
+/* ── Bouton export (version page claire — conservé pour export CSV lien) */
 .btn-export {
     display: inline-flex; align-items: center; gap: .35rem;
     padding: .5rem 1.05rem; border-radius: 10px;

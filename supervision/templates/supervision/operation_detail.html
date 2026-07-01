@@ -14,17 +14,13 @@
     <i class="bi bi-chevron-left"></i> Retour aux opérations
 </a>
 
-<!-- En-tête -->
-<div class="op-header op-header-{{ operation.type_operation }}">
-    <div class="op-header-left">
-        <span class="pg-icon">
-            {% if operation.type_operation == "COLLECTE" %}
-            <i class="bi bi-arrow-down-circle"></i>
-            {% else %}
-            <i class="bi bi-arrow-up-circle"></i>
-            {% endif %}
-        </span>
-        <div>
+<!-- Hero opération -->
+<div class="op-detail-hero{% if operation.type_operation == 'RESTITUTION' %} hero-restit{% endif %}">
+
+    <!-- Ligne 1 : type + date  |  montant + paiement -->
+    <div class="odh-top">
+
+        <div class="odh-id">
             <div class="d-flex align-items-center gap-2 flex-wrap">
                 {% if operation.type_operation == "COLLECTE" %}
                 <span class="type-chip type-collecte"><i class="bi bi-arrow-down-circle"></i> Collecte</span>
@@ -35,108 +31,87 @@
                 <span class="sous-type-chip">{{ operation.sous_type }}</span>
                 {% endif %}
             </div>
-            <p class="page-sub mb-0 mt-1">
+            <p class="odh-date mt-2 mb-0">
                 <i class="bi bi-calendar3 me-1"></i>
                 {{ operation.date_heure|date:"l j F Y \à H\hi"|capfirst }}
             </p>
         </div>
-    </div>
-    <div class="op-amount-block">
-        <div class="op-amount-value">{{ operation.montant_total|floatformat:0 }}</div>
-        <div class="op-amount-devise">FCFA</div>
-        <div class="mt-1">
-            {% if operation.type_operation == "COLLECTE" %}
-                {% if operation.montant_total > 0 %}
-                <span class="enc-pill enc-pill-orange"><i class="bi bi-cash-coin me-1"></i>Acompte versé</span>
+
+        <div class="op-amount-block">
+            <div class="odh-amount-row">
+                <span class="op-amount-value">{{ operation.montant_total|floatformat:0 }}</span>
+                <span class="op-amount-devise">FCFA</span>
+                {% if operation.type_operation == "COLLECTE" %}
+                    {% if operation.montant_total > 0 %}
+                    <span class="enc-pill enc-pill-orange"><i class="bi bi-cash-coin me-1"></i>Acompte versé</span>
+                    {% else %}
+                    <span class="enc-pill enc-pill-gray">Aucun paiement</span>
+                    {% endif %}
                 {% else %}
-                <span class="enc-pill enc-pill-gray">Aucun paiement</span>
+                    {% if operation.est_encaissee %}
+                    <span class="enc-pill enc-pill-green"><i class="bi bi-check-circle me-1"></i>Encaissé</span>
+                    {% else %}
+                    <span class="enc-pill enc-pill-warn"><i class="bi bi-exclamation-circle me-1"></i>Non encaissé</span>
+                    {% endif %}
                 {% endif %}
-            {% else %}
-                {% if operation.est_encaissee %}
-                <span class="enc-pill enc-pill-green">
-                    <i class="bi bi-check-circle me-1"></i>Encaissé : {{ operation.montant_encaisse|floatformat:0 }} FCFA
-                </span>
+                {% if operation.mode_paiement %}
+                <span class="odh-payment-sub">· {{ operation.get_mode_paiement_display }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Ligne 2 : grille 3 colonnes — Livreur · PLV · GPS -->
+    <div class="odh-meta-grid">
+
+        <div class="info-card">
+            <div class="info-avatar">{{ prog.utilisateur.code_livreur|slice:":1"|upper }}</div>
+            <div>
+                <div class="info-label">Livreur</div>
+                <div class="info-value">{{ prog.utilisateur.get_full_name }}</div>
+                <div class="info-sub">{{ prog.utilisateur.code_livreur }}{% if prog.vehicule %} · {{ prog.vehicule.immatriculation }}{% endif %}</div>
+                <a href="{% url 'supervision:programme-detail' prog.id %}" class="info-link mt-1">
+                    <i class="bi bi-clipboard2-check me-1"></i>{{ prog.numero_x3 }}
+                </a>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-icon-box"><i class="bi bi-building"></i></div>
+            <div>
+                <div class="info-label">Point de livraison</div>
+                <div class="info-value">{{ plv.libelle }}</div>
+                {% if plv.code_plv %}<div class="info-sub"><span class="plv-code-chip">{{ plv.code_plv }}</span></div>{% endif %}
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-icon-box {% if not operation.localisation_saisie %}info-icon-muted{% endif %}">
+                <i class="bi bi-geo-alt-fill"></i>
+            </div>
+            <div>
+                <div class="info-label">Position GPS</div>
+                {% if operation.localisation_saisie %}
+                <div class="info-gps">
+                    {{ operation.localisation_saisie.y|floatformat:4 }}, {{ operation.localisation_saisie.x|floatformat:4 }}
+                </div>
+                <div class="info-sub">
+                    {% if operation.gps_precision %}<span class="gps-prec">±{{ operation.gps_precision|floatformat:0 }} m</span>{% endif %}
+                </div>
+                <a href="https://www.google.com/maps?q={{ operation.localisation_saisie.y|stringformat:'.6f' }},{{ operation.localisation_saisie.x|stringformat:'.6f' }}"
+                   target="_blank" class="info-link mt-1">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>Ouvrir dans Maps
+                </a>
                 {% else %}
-                <span class="enc-pill enc-pill-warn"><i class="bi bi-exclamation-circle me-1"></i>Non encaissé</span>
-                {% endif %}
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-<!-- Info row -->
-<div class="info-row mb-4">
-
-    <!-- Livreur -->
-    <div class="info-card">
-        <div class="info-avatar">{{ prog.utilisateur.code_livreur|slice:":1"|upper }}</div>
-        <div>
-            <div class="info-label">Livreur</div>
-            <div class="info-value">{{ prog.utilisateur.get_full_name }}</div>
-            <div class="info-sub">{{ prog.utilisateur.code_livreur }}
-                {% if prog.vehicule %}&nbsp;·&nbsp;{{ prog.vehicule.immatriculation }}{% endif %}
-            </div>
-            <a href="{% url 'supervision:programme-detail' prog.id %}" class="info-link mt-1">
-                <i class="bi bi-clipboard2-check me-1"></i>{{ prog.numero_x3 }}
-            </a>
-        </div>
-    </div>
-
-    <!-- PLV / Client -->
-    <div class="info-card">
-        <div class="info-icon-box"><i class="bi bi-building"></i></div>
-        <div>
-            <div class="info-label">Point de livraison</div>
-            <div class="info-value">{{ plv.client.raison_sociale }}</div>
-            {% if plv.code_plv %}<div class="info-sub"><span class="plv-code-chip">{{ plv.code_plv }}</span></div>{% endif %}
-        </div>
-    </div>
-
-    <!-- GPS -->
-    <div class="info-card">
-        <div class="info-icon-box {% if not operation.localisation_saisie %}info-icon-muted{% endif %}">
-            <i class="bi bi-geo-alt{% if not operation.localisation_saisie %}-fill{% endif %}"></i>
-        </div>
-        <div>
-            <div class="info-label">Position GPS</div>
-            {% if operation.localisation_saisie %}
-            <div class="info-gps">
-                {{ operation.localisation_saisie.y|floatformat:5 }},
-                {{ operation.localisation_saisie.x|floatformat:5 }}
-                {% if operation.gps_precision %}
-                <span class="gps-prec">&nbsp;±{{ operation.gps_precision|floatformat:0 }} m</span>
+                <div class="info-sub">Non disponible</div>
                 {% endif %}
             </div>
-            <a href="https://www.google.com/maps?q={{ operation.localisation_saisie.y|stringformat:'.6f' }},{{ operation.localisation_saisie.x|stringformat:'.6f' }}"
-               target="_blank" class="info-link mt-1">
-                <i class="bi bi-box-arrow-up-right me-1"></i>Ouvrir dans Maps
-            </a>
-            {% else %}
-            <div class="info-sub">Position non disponible</div>
-            {% endif %}
         </div>
+
     </div>
 
-    <!-- Paiement (si pertinent) -->
-    {% if operation.mode_paiement or operation.montant_total > 0 %}
-    <div class="info-card">
-        <div class="info-icon-box"><i class="bi bi-cash-stack"></i></div>
-        <div>
-            <div class="info-label">
-                {% if operation.type_operation == "COLLECTE" %}Acompte{% else %}Paiement{% endif %}
-            </div>
-            <div class="info-value">{{ operation.montant_total|floatformat:0 }} FCFA</div>
-            {% if operation.mode_paiement %}
-            <div class="info-sub">{{ operation.get_mode_paiement_display }}</div>
-            {% endif %}
-            {% if operation.nom_signataire_client %}
-            <div class="info-sub"><i class="bi bi-pen me-1"></i>{{ operation.nom_signataire_client }}</div>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
-
-</div>
+</div>{# /op-detail-hero #}
 
 <!-- Articles -->
 {% with lignes=operation.lignes.all %}
@@ -152,7 +127,7 @@
                 <tr>
                     <th>Article</th>
                     <th>Code X3</th>
-                    <th class="text-end">Qté réalisée</th>
+                    <th class="text-end">{% if operation.type_operation == "RESTITUTION" %}Qté restituée{% else %}Qté collectée{% endif %}</th>
                     <th class="text-end">Montant ligne</th>
                 </tr>
             </thead>
@@ -191,7 +166,7 @@
         <div class="sig-block">
             <div class="sig-label">
                 <i class="bi bi-person me-1"></i>Client
-                {% if operation.nom_signataire_client %}— {{ operation.nom_signataire_client }}{% endif %}
+                {% if operation.nom_signataire_client %} · {{ operation.nom_signataire_client }}{% endif %}
             </div>
             <div class="sig-box">{{ operation.signature_client|safe }}</div>
         </div>

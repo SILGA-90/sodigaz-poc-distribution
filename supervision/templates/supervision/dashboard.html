@@ -1,42 +1,131 @@
 {% extends "supervision/base.html" %}
 {% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="{% static 'supervision/css/pages/flatpickr-neo.css' %}">
+<link rel="stylesheet" href="{% static 'supervision/css/pages/dashboard.css' %}">
+{% endblock %}
 {% block title %}Tableau de bord{% endblock %}
 {% block content %}
 
-<!-- En-tête -->
-<div class="dash-header mb-4">
-    <div class="d-flex align-items-center gap-3">
-        <span class="pg-icon"><i class="bi bi-speedometer2"></i></span>
-        <div>
-            <h1 class="page-title mb-0">Tableau de bord</h1>
-            <p class="page-sub mb-0">
+<!-- ═══════════════════════════════════════════════════════════════════
+     HERO NAVY — titre + date + KPIs sur fond sombre
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="dash-hero mb-4">
+
+    <!-- Barre supérieure : titre + date + live -->
+    <div class="dash-hero-top">
+        <div class="d-flex align-items-center gap-3">
+            <span class="dash-hero-icon"><i class="bi bi-speedometer2"></i></span>
+            <div>
+                <h1 class="dash-hero-title">Tableau de bord</h1>
+                <p class="dash-hero-sub">
+                    {% if not is_today %}
+                    <span class="hist-badge"><i class="bi bi-clock-history me-1"></i>{{ date_filter|date:"l j F Y"|capfirst }}</span>
+                    {% else %}
+                    {{ today|date:"l j F Y"|capfirst }}
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="dash-date-wrap">
+                <i class="bi bi-calendar3 dash-date-icon"></i>
+                <input type="date" name="date" id="dash-date-fp"
+                       value="{{ date_filter|date:'Y-m-d' }}" class="dash-date-input">
                 {% if not is_today %}
-                <span class="hist-badge"><i class="bi bi-clock-history me-1"></i>{{ date_filter|date:"l j F Y"|capfirst }}</span>
-                {% else %}
-                <span>{{ today|date:"l j F Y"|capfirst }}</span>
+                <a href="?date={{ today|date:'Y-m-d' }}" class="btn-today">
+                    <i class="bi bi-house"></i> Aujourd'hui
+                </a>
                 {% endif %}
-            </p>
+            </div>
+            <div class="live-indicator">
+                <span class="live-dot" id="live-dot"></span>
+                <span id="live-status">Connexion...</span>
+                <span class="live-sep">·</span>
+                <span id="last-update">à l'instant</span>
+            </div>
         </div>
     </div>
-    <div class="dash-header-right">
-        <div class="dash-date-wrap">
-            <i class="bi bi-calendar3 dash-date-icon"></i>
-            <input type="date" name="date" id="dash-date-fp"
-                   value="{{ date_filter|date:'Y-m-d' }}" class="dash-date-input">
-            {% if not is_today %}
-            <a href="?date={{ today|date:'Y-m-d' }}" class="btn-today"><i class="bi bi-house"></i> Aujourd'hui</a>
+
+    <!-- KPI grid (thème sombre, toujours 5 colonnes) -->
+    <div class="kpi-grid">
+
+        <div class="kpi-card-v2 kpi-card-blue" id="kpi-programmes">
+            <div class="kpi-card-icon kpi-icon-blue"><i class="bi bi-clipboard2-check"></i></div>
+            <div class="kpi-card-body">
+                <div class="kpi-card-label">Programmes</div>
+                <div class="kpi-card-value" data-stat="nb_programmes">{{ nb_programmes }}</div>
+                <div class="kpi-card-sub">
+                    <span class="kpi-sub-blue">
+                        <span data-stat="nb_programmes_en_cours">{{ nb_programmes_en_cours }}</span> en cours
+                    </span>
+                    <span class="kpi-sub-sep">·</span>
+                    <span class="kpi-sub-green">
+                        <span data-stat="nb_programmes_clotures">{{ nb_programmes_clotures }}</span> clôturés
+                    </span>
+                </div>
+            </div>
+            <a href="{% url 'supervision:programmes' %}" class="kpi-card-link"></a>
+        </div>
+
+        <div class="kpi-card-v2 kpi-card-navy">
+            <div class="kpi-card-icon kpi-icon-navy"><i class="bi bi-lightning-charge"></i></div>
+            <div class="kpi-card-body">
+                <div class="kpi-card-label">Opérations</div>
+                <div class="kpi-card-value" data-stat="nb_operations">{{ nb_operations }}</div>
+            </div>
+            <a href="{% url 'supervision:operations' %}" class="kpi-card-link"></a>
+        </div>
+
+        <div class="kpi-card-v2 kpi-card-orange">
+            <div class="kpi-card-icon kpi-icon-orange"><i class="bi bi-cash-coin"></i></div>
+            <div class="kpi-card-body">
+                <div class="kpi-card-label">Encaissé</div>
+                <div class="kpi-card-value kpi-value-orange" data-stat="montant_encaisse">{{ montant_encaisse|floatformat:0 }}</div>
+                <div class="kpi-card-sub">FCFA</div>
+            </div>
+        </div>
+
+        <div class="kpi-card-v2 {% if nb_anomalies_ouvertes > 0 %}kpi-card-danger{% endif %}" id="kpi-anomalies">
+            <div class="kpi-card-icon kpi-icon-red"><i class="bi bi-exclamation-circle"></i></div>
+            <div class="kpi-card-body">
+                <div class="kpi-card-label">Anomalies</div>
+                <div class="kpi-card-value kpi-value-red" data-stat="nb_anomalies_ouvertes">{{ nb_anomalies_ouvertes }}</div>
+                <div class="kpi-card-sub">
+                    {% if nb_anomalies_ouvertes == 0 %}
+                    <span class="kpi-sub-green"><i class="bi bi-check-circle-fill me-1"></i>Aucune ouverte</span>
+                    {% else %}
+                    <span class="kpi-link-anomalie">Voir les anomalies &rsaquo;</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if nb_anomalies_ouvertes > 0 %}
+            <a href="{% url 'supervision:anomalies' %}" class="kpi-card-link" id="anomalies-link"></a>
             {% endif %}
         </div>
-        <div class="live-indicator">
-            <span class="live-dot" id="live-dot"></span>
-            <span id="live-status">Connexion...</span>
-            <span class="live-sep">·</span>
-            <span id="last-update">à l'instant</span>
-        </div>
-    </div>
-</div>
 
-<!-- Alerte anomalies élevées -->
+        <div class="kpi-card-v2 kpi-card-green" id="kpi-couverture">
+            <div class="kpi-card-icon kpi-icon-green"><i class="bi bi-check2-all"></i></div>
+            <div class="kpi-card-body">
+                <div class="kpi-card-label">Couverture</div>
+                <div class="kpi-card-value kpi-value-green">
+                    <span data-stat="taux_couverture">{{ taux_couverture }}</span><span class="kpi-pct">%</span>
+                </div>
+                <div class="kpi-card-sub">
+                    <span data-stat="nb_etapes_visitees">{{ nb_etapes_visitees }}</span> /
+                    <span data-stat="nb_etapes_total">{{ nb_etapes_total }}</span> étapes
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /kpi-grid -->
+</div><!-- /dash-hero -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     Alerte anomalies élevées (entre hero et grille)
+     ═══════════════════════════════════════════════════════════════════ -->
 {% if anomalies_elevees %}
 <div class="alerte-card mb-4" id="alerte-elevee">
     <div class="alerte-header">
@@ -64,89 +153,14 @@
 </div>
 {% endif %}
 
-<!-- KPI cards -->
-<div class="kpi-grid mb-4">
 
-    <div class="kpi-card-v2 kpi-card-blue" id="kpi-programmes">
-        <div class="kpi-card-icon kpi-icon-blue"><i class="bi bi-clipboard2-check"></i></div>
-        <div class="kpi-card-body">
-            <div class="kpi-card-label">Programmes du jour</div>
-            <div class="kpi-card-value" data-stat="nb_programmes">{{ nb_programmes }}</div>
-            <div class="kpi-card-sub">
-                <span class="kpi-sub-blue">
-                    <span data-stat="nb_programmes_en_cours">{{ nb_programmes_en_cours }}</span> en cours
-                </span>
-                <span class="kpi-sub-sep">·</span>
-                <span class="kpi-sub-green">
-                    <span data-stat="nb_programmes_clotures">{{ nb_programmes_clotures }}</span> clôturés
-                </span>
-            </div>
-        </div>
-        <a href="{% url 'supervision:programmes' %}" class="kpi-card-link"></a>
-    </div>
+<!-- ═══════════════════════════════════════════════════════════════════
+     GRILLE 2 PANNEAUX : carte (gauche) · colonne droite (bilan + activité)
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="dash-content-grid">
 
-    <div class="kpi-card-v2 kpi-card-navy">
-        <div class="kpi-card-icon kpi-icon-navy"><i class="bi bi-lightning-charge"></i></div>
-        <div class="kpi-card-body">
-            <div class="kpi-card-label">Opérations réalisées</div>
-            <div class="kpi-card-value" data-stat="nb_operations">{{ nb_operations }}</div>
-            <div class="kpi-card-sub">livraisons du jour</div>
-        </div>
-        <a href="{% url 'supervision:operations' %}" class="kpi-card-link"></a>
-    </div>
-
-    <div class="kpi-card-v2 kpi-card-orange">
-        <div class="kpi-card-icon kpi-icon-orange"><i class="bi bi-cash-coin"></i></div>
-        <div class="kpi-card-body">
-            <div class="kpi-card-label">Montant encaissé</div>
-            <div class="kpi-card-value kpi-value-orange" data-stat="montant_encaisse">{{ montant_encaisse|floatformat:0 }}</div>
-            <div class="kpi-card-sub">FCFA</div>
-        </div>
-    </div>
-
-    <div class="kpi-card-v2 {% if nb_anomalies_ouvertes > 0 %}kpi-card-danger{% endif %}" id="kpi-anomalies">
-        <div class="kpi-card-icon kpi-icon-red"><i class="bi bi-exclamation-circle"></i></div>
-        <div class="kpi-card-body">
-            <div class="kpi-card-label">Anomalies ouvertes</div>
-            <div class="kpi-card-value kpi-value-red" data-stat="nb_anomalies_ouvertes">{{ nb_anomalies_ouvertes }}</div>
-            <div class="kpi-card-sub">
-                {% if nb_anomalies_ouvertes == 0 %}
-                <span class="kpi-sub-green"><i class="bi bi-check-circle-fill me-1"></i>Aucune</span>
-                {% else %}
-                <span class="kpi-link-anomalie">Voir les anomalies &rsaquo;</span>
-                {% endif %}
-            </div>
-        </div>
-        {% if nb_anomalies_ouvertes > 0 %}
-        <a href="{% url 'supervision:anomalies' %}" class="kpi-card-link" id="anomalies-link"></a>
-        {% endif %}
-    </div>
-
-    <div class="kpi-card-v2 kpi-card-green" id="kpi-couverture">
-        <div class="kpi-card-icon kpi-icon-green"><i class="bi bi-check2-all"></i></div>
-        <div class="kpi-card-body">
-            <div class="kpi-card-label">Couverture journée</div>
-            <div class="kpi-card-value kpi-value-green">
-                <span data-stat="taux_couverture">{{ taux_couverture }}</span><span class="kpi-pct">%</span>
-            </div>
-            <div class="kpi-card-sub">
-                <span data-stat="nb_etapes_visitees">{{ nb_etapes_visitees }}</span> /
-                <span data-stat="nb_etapes_total">{{ nb_etapes_total }}</span> étapes visitées
-            </div>
-            <div class="kpi-progress-bar-wrap">
-                <div class="kpi-progress-bar-fill" id="kpi-coverage-bar"
-                     style="width: {{ taux_couverture }}%;"></div>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-<!-- Corps principal : carte + bilan articles -->
-<div class="dash-main-row">
-
-    <!-- Carte Leaflet -->
-    <div class="dash-map-col">
+    <!-- ── Panneau gauche : Carte Leaflet ── -->
+    <div class="dash-map-panel">
         <div class="section-card map-card">
             <div class="section-header d-flex align-items-center justify-content-between gap-2">
                 <div class="d-flex align-items-center gap-2">
@@ -159,7 +173,7 @@
                         <i class="bi bi-signpost-split me-1"></i>Afficher parcours
                     </button>
                     <a href="{% url 'supervision:carte' %}?date={{ date_filter|date:'Y-m-d' }}"
-                       class="btn-carte-fullscreen" title="Ouvrir en plein écran avec filtre livreur">
+                       class="btn-carte-fullscreen" title="Plein écran">
                         <i class="bi bi-fullscreen"></i>
                     </a>
                 </div>
@@ -168,77 +182,58 @@
             <div class="map-legend">
                 <div class="map-legend-item"><span class="map-dot map-dot-blue"></span>PLV à visiter</div>
                 <div class="map-legend-item"><span class="map-dot map-dot-green"></span>PLV visitée</div>
-                <div class="map-legend-item"><span class="map-dot map-dot-orange"></span>Opération géolocalisée</div>
+                <div class="map-legend-item"><span class="map-dot map-dot-orange" style="width:10px;height:10px;"></span>Position opération</div>
             </div>
         </div>
     </div>
 
-    <!-- Bilan articles du jour -->
-    <div class="dash-bilan-col">
-        <div class="section-card d-flex flex-column" style="height:100%;">
+    <!-- ── Colonne droite : Bilan + Activité empilés ── -->
+    <div class="dash-right-col">
+
+        <!-- Bilan articles -->
+        <div class="section-card dash-side-card">
             <div class="section-header">
                 <div class="d-flex align-items-center gap-2">
                     <span class="section-icon"><i class="bi bi-bar-chart-line"></i></span>
                     <span class="section-title">Bilan articles</span>
                 </div>
             </div>
-            <div style="flex:1; overflow-y:auto;">
-
-                <div class="bilan-section-head bilan-collecte">
-                    <i class="bi bi-arrow-down-circle-fill me-1"></i>Collecte
+            <div class="bilan-block">
+                <div class="bilan-block-title bilan-block-collecte">
+                    <i class="bi bi-arrow-down-circle-fill"></i> Collecte
                 </div>
-                <table class="bilan-table">
-                    <thead>
-                        <tr><th>Article</th><th class="text-end">Réalisé</th></tr>
-                    </thead>
-                    <tbody id="bilanCollecteTbody">
-                        <tr><td colspan="2" class="bilan-loading">Chargement...</td></tr>
-                    </tbody>
-                </table>
-
-                <div class="bilan-section-head bilan-restit">
-                    <i class="bi bi-arrow-up-circle-fill me-1"></i>Restitution
-                    <span class="bilan-section-sub">Prév. / Réal. / Écart</span>
+                <div id="bilanCollecteTbody" class="bilan-rows">
+                    <div class="bilan-loading">Chargement...</div>
                 </div>
-                <table class="bilan-table">
-                    <thead>
-                        <tr>
-                            <th>Article</th>
-                            <th class="text-end">Prév.</th>
-                            <th class="text-end">Réal.</th>
-                            <th class="text-end">Écart</th>
-                        </tr>
-                    </thead>
-                    <tbody id="bilanRestitutionTbody">
-                        <tr><td colspan="4" class="bilan-loading">Chargement...</td></tr>
-                    </tbody>
-                </table>
-
+                <div class="bilan-block-title bilan-block-restit">
+                    <i class="bi bi-arrow-up-circle-fill"></i> Restitution
+                    <span class="bilan-block-legend">Réal. / Prév. · Écart</span>
+                </div>
+                <div id="bilanRestitutionTbody" class="bilan-rows">
+                    <div class="bilan-loading">Chargement...</div>
+                </div>
             </div>
         </div>
-    </div>
 
-</div>
-
-<!-- Fil d'activité récente -->
-<div class="section-card mt-4" id="activ-section">
-    <div class="section-header d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center gap-2">
-            <span class="section-icon"><i class="bi bi-activity"></i></span>
-            <span class="section-title">Activité récente</span>
+        <!-- Activité récente -->
+        <div class="section-card dash-side-card" id="activ-section">
+            <div class="section-header d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="section-icon"><i class="bi bi-activity"></i></span>
+                    <span class="section-title">Activité récente</span>
+                </div>
+                <span class="activ-refresh-label" id="activ-refresh-label">-</span>
+            </div>
+            <div class="activ-feed dash-side-scroll" id="activ-feed">
+                <div class="activ-empty">
+                    <i class="bi bi-hourglass-split me-1"></i>Chargement...
+                </div>
+            </div>
         </div>
-        <span class="activ-refresh-label" id="activ-refresh-label">Chargement...</span>
-    </div>
-    <div class="activ-feed" id="activ-feed">
-        <div class="activ-empty"><i class="bi bi-hourglass-split me-1"></i>Chargement...</div>
-    </div>
-</div>
 
-{% block extra_css %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<link rel="stylesheet" href="{% static 'supervision/css/pages/flatpickr-neo.css' %}">
-<link rel="stylesheet" href="{% static 'supervision/css/pages/dashboard.css' %}">
-{% endblock %}
+    </div><!-- /dash-right-col -->
+
+</div><!-- /dash-content-grid -->
 
 {% endblock %}
 

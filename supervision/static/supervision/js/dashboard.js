@@ -22,51 +22,42 @@ function refreshBilanProduits() {
     return fetch(BILAN_URL, { credentials: 'same-origin' })
         .then(r => r.json())
         .then(d => {
-            const tbodyC = document.getElementById('bilanCollecteTbody');
-            const tbodyR = document.getElementById('bilanRestitutionTbody');
-            const vide2  = '<tr><td colspan="2" class="bilan-loading">Aucune donnée</td></tr>';
-            const vide4  = '<tr><td colspan="4" class="bilan-loading">Aucune donnée</td></tr>';
+            const rowsC = document.getElementById('bilanCollecteTbody');
+            const rowsR = document.getElementById('bilanRestitutionTbody');
+            const vide  = '<div class="bilan-loading">Aucune donnée</div>';
 
             if (!d.collecte || d.collecte.length === 0) {
-                tbodyC.innerHTML = vide2;
+                rowsC.innerHTML = vide;
             } else {
-                const totalC = d.collecte.reduce((s, p) => s + p.realise, 0);
-                tbodyC.innerHTML = d.collecte.map(p =>
-                    `<tr>
-                        <td><span class="bilan-code-x3">${escapeHtml(p.code_x3)}</span>${escapeHtml(p.libelle)}</td>
-                        <td class="fw-semibold">${p.realise}</td>
-                    </tr>`
-                ).join('') +
-                `<tr class="bilan-total-collecte">
-                    <td>Total collecté</td>
-                    <td>${totalC}</td>
-                </tr>`;
+                rowsC.innerHTML = d.collecte.map(p =>
+                    `<div class="bilan-row">
+                        <span class="bilan-code-x3">${escapeHtml(p.code_x3)}</span>
+                        <span class="bilan-libelle">${escapeHtml(p.libelle)}</span>
+                        <span class="bilan-qty">${p.realise}</span>
+                    </div>`
+                ).join('');
             }
 
             if (!d.restitution || d.restitution.length === 0) {
-                tbodyR.innerHTML = vide4;
+                rowsR.innerHTML = vide;
             } else {
-                const totalR = d.restitution.reduce((s, p) => s + p.realise, 0);
-                tbodyR.innerHTML = d.restitution.map(p => {
-                    const sign = p.ecart >= 0 ? '+' : '';
-                    const cls  = p.ecart < 0 ? 'bilan-ecart-neg'
-                               : p.ecart > 0 ? 'bilan-ecart-pos'
-                               : 'bilan-ecart-nul';
-                    const mont = p.montant > 0
-                        ? `<span class="bilan-montant-sm">${p.montant.toLocaleString('fr-FR')} F</span>`
-                        : '';
-                    return `<tr>
-                        <td><span class="bilan-code-x3">${escapeHtml(p.code_x3)}</span>${escapeHtml(p.libelle)}${mont}</td>
-                        <td class="text-muted">${p.prevu}</td>
-                        <td class="fw-semibold">${p.realise}</td>
-                        <td class="${cls}">${sign}${p.ecart}</td>
-                    </tr>`;
-                }).join('') +
-                `<tr class="bilan-total-restit">
-                    <td colspan="2">Total restitué</td>
-                    <td>${totalR}</td>
-                    <td></td>
-                </tr>`;
+                rowsR.innerHTML = d.restitution.map(p => {
+                    const sign   = p.ecart >= 0 ? '+' : '';
+                    const cls    = p.ecart < 0 ? 'bilan-ecart-neg'
+                                 : p.ecart > 0 ? 'bilan-ecart-pos'
+                                 : 'bilan-ecart-nul';
+                    const pct    = p.prevu > 0
+                                 ? Math.min(100, Math.round(p.realise / p.prevu * 100))
+                                 : (p.realise > 0 ? 100 : 0);
+                    const barCls = p.realise >= p.prevu ? 'bilan-bar-ok' : 'bilan-bar-wip';
+                    return `<div class="bilan-row bilan-row-restit">
+                        <span class="bilan-code-x3">${escapeHtml(p.code_x3)}</span>
+                        <span class="bilan-libelle">${escapeHtml(p.libelle)}</span>
+                        <div class="bilan-bar-wrap"><div class="bilan-bar-fill ${barCls}" style="width:${pct}%"></div></div>
+                        <span class="bilan-ratio">${p.realise}<span class="bilan-ratio-sep">/</span>${p.prevu}</span>
+                        <span class="bilan-ecart-badge ${cls}">${sign}${p.ecart}</span>
+                    </div>`;
+                }).join('');
             }
         });
 }
@@ -82,7 +73,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 const blueIcon = L.divIcon({
     className: '',
-    html: '<div style="background:#1a7fba;width:14px;height:14px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);"></div>',
+    html: '<div style="background:#079BD9;width:14px;height:14px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);"></div>',
     iconSize: [18, 18], iconAnchor: [9, 9],
 });
 const greenIcon = L.divIcon({
@@ -100,7 +91,7 @@ const plvMarkers  = new Map();
 const opMarkers   = new Map();
 let routePolylines = [];
 let showParcours   = false;
-const LIVREUR_COLORS = ['#1a7fba', '#dc3545', '#198754', '#f47920', '#6f42c1'];
+const LIVREUR_COLORS = ['#079BD9', '#EE7202', '#6f42c1', '#20c997', '#ffc107'];
 
 const toggleBtn = document.getElementById('toggleParcours');
 toggleBtn.addEventListener('click', function () {
@@ -109,7 +100,7 @@ toggleBtn.addEventListener('click', function () {
 
     if (showParcours && routePolylines.length === 0) {
         showParcours = false;
-        parcoursMsg.textContent = "Aucun parcours — synchronisez d'abord des opérations.";
+        parcoursMsg.textContent = "Aucun parcours : synchronisez d'abord des opérations.";
         parcoursMsg.style.display = '';
         setTimeout(() => { parcoursMsg.style.display = 'none'; }, 5000);
         return;
@@ -174,7 +165,7 @@ function refreshCarte() {
             data.operations.forEach(op => {
                 const key = op.uuid;
                 seenOpUuids.add(key);
-                const typeColor = op.type === 'COLLECTE' ? '#1a7fba' : '#198754';
+                const typeColor = op.type === 'COLLECTE' ? '#079BD9' : '#198754';
                 const popup = `<strong style="color:${typeColor}">${escapeHtml(op.type)}</strong>`
                     + `<br>Livreur ${escapeHtml(op.livreur)}<br>PLV : ${escapeHtml(op.plv)}`;
                 if (opMarkers.has(key)) {
@@ -256,8 +247,8 @@ function refreshActivite() {
                 const typeLabel = op.type === 'COLLECTE' ? 'Collecte' : 'Restitution';
                 const montant  = op.montant > 0
                     ? `<span class="activ-montant">${Math.round(op.montant).toLocaleString('fr-FR')} F</span>`
-                    : `<span class="activ-montant activ-montant-nil">—</span>`;
-                return `<li class="activ-item">
+                    : `<span class="activ-montant activ-montant-nil">-</span>`;
+                return `<li class="activ-item activ-item-${escapeHtml(op.type)}">
                     <span class="activ-time">${escapeHtml(op.heure)}</span>
                     <div class="activ-av" style="background:${color}">${escapeHtml(initial)}</div>
                     <span class="activ-livreur">${escapeHtml(op.livreur)}</span>

@@ -2,7 +2,130 @@
    STATISTIQUES & TENDANCES — SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
-/* Toggle période */
+/* ── Hero navy ──────────────────────────────────────────── */
+.stat-hero {
+    position: relative;
+    border-radius: 16px;
+    padding: 1.5rem 1.75rem 1.4rem;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    background-image:
+        linear-gradient(90deg, #EE7202 0%, #FAB848 45%, #079BD9 100%),
+        radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(160deg, #0a1628 60%, #0d2040 100%);
+    background-size: 100% 3px, 22px 22px, 100% 100%;
+    background-repeat: no-repeat, repeat, no-repeat;
+    background-position: top, 0 0, 0 0;
+}
+.stat-hero::before {
+    content: "";
+    position: absolute; top: -30px; left: -30px;
+    width: 260px; height: 180px;
+    background: radial-gradient(ellipse, rgba(7,155,217,.22) 0%, transparent 70%);
+    pointer-events: none;
+}
+.stat-hero::after {
+    content: "";
+    position: absolute; bottom: -30px; right: -20px;
+    width: 200px; height: 140px;
+    background: radial-gradient(ellipse, rgba(250,184,72,.14) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* Ligne supérieure : identité + toggle période */
+.stat-hero-top {
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap;
+    gap: .75rem; margin-bottom: 1.1rem;
+    position: relative; z-index: 1;
+}
+
+/* Bloc identité */
+.stat-hero-id {
+    display: flex; align-items: center; gap: .9rem;
+}
+.stat-hero-icon {
+    width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0;
+    background: rgba(7,155,217,.18);
+    border: 1px solid rgba(7,155,217,.35);
+    display: flex; align-items: center; justify-content: center;
+    color: #5ac8f5; font-size: 1.35rem;
+}
+.stat-hero-title {
+    font-size: 1.4rem; font-weight: 800; color: #fff;
+    margin: 0; line-height: 1.15;
+}
+.stat-hero-sub {
+    font-size: .78rem; color: rgba(255,255,255,.5);
+    margin: .18rem 0 0;
+}
+
+/* Toggle période dans le hero (variante dark) */
+.stat-hero-period {
+    display: inline-flex; gap: 0;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 10px; padding: 3px;
+    position: relative; z-index: 1;
+    flex-shrink: 0;
+}
+.stat-hero-period-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: .38rem 1rem; border-radius: 8px;
+    font-size: .8rem; font-weight: 700; color: rgba(255,255,255,.5);
+    text-decoration: none; transition: all .18s;
+    white-space: nowrap;
+}
+.stat-hero-period-btn.active {
+    background: rgba(7,155,217,.28);
+    color: #5ac8f5;
+    box-shadow: 0 1px 6px rgba(7,155,217,.2);
+}
+.stat-hero-period-btn:hover:not(.active) {
+    color: rgba(255,255,255,.8);
+    background: rgba(255,255,255,.06);
+}
+
+/* Grille KPI hero (4 colonnes) */
+.stat-hero-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .75rem;
+    position: relative; z-index: 1;
+}
+.stat-hero-kpi-card {
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    padding: .85rem 1rem;
+    display: flex; align-items: center; gap: .75rem;
+    transition: background .15s;
+}
+.stat-hero-kpi-card:hover { background: rgba(255,255,255,.1); }
+.stat-hero-kpi-icon {
+    width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; color: #fff;
+}
+.stat-hero-kpi-icon.c-blue   { background: rgba(7,155,217,.25);  border-left: 3px solid #079BD9; }
+.stat-hero-kpi-icon.c-orange { background: rgba(238,114,2,.22);  border-left: 3px solid #EE7202; }
+.stat-hero-kpi-icon.c-green  { background: rgba(25,135,84,.22);  border-left: 3px solid #198754; }
+.stat-hero-kpi-icon.c-red    { background: rgba(220,53,69,.2);   border-left: 3px solid #dc3545; }
+.stat-hero-kpi-val   { font-size: 1.3rem; font-weight: 800; color: #fff; line-height: 1.1; }
+.stat-hero-kpi-label { font-size: .72rem; font-weight: 700; color: rgba(255,255,255,.5); margin-top: .1rem; }
+.stat-hero-kpi-sub   { font-size: .65rem; color: rgba(255,255,255,.35); margin-top: .1rem; }
+
+@media (max-width: 991.98px) {
+    .stat-hero-kpis { grid-template-columns: repeat(2, 1fr); }
+    .stat-hero-period-btn { padding: .32rem .7rem; font-size: .75rem; }
+}
+@media (max-width: 575.98px) {
+    .stat-hero-kpis { grid-template-columns: 1fr 1fr; }
+    .stat-hero-title { font-size: 1.15rem; }
+    .stat-hero { padding: 1.1rem 1rem 1rem; }
+}
+
+/* Toggle période (conservé pour rétrocompatibilité) */
 .stat-period-toggle {
     display: inline-flex; gap: 0;
     background: #E8EEF2; border: 1px solid #DDE2E6;

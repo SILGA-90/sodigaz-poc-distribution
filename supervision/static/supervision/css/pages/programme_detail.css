@@ -2,17 +2,113 @@
    PROGRAMME DETAIL — SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
-/* En-tête */
-.detail-header {
-    background: #FFFFFF;
-    border-radius: 14px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.07);
-    border-top:    1px solid #DDE2E6;
-    border-left:   5px solid #079BD9;
-    border-bottom: 1px solid #DDE2E6;
-    border-right:  1px solid #DDE2E6;
-    padding: 1.4rem 1.5rem 1.25rem;
+/* ── Hero navy ──────────────────────────────────────────── */
+.prog-detail-hero {
+    position: relative;
+    border-radius: 16px;
+    padding: 1.5rem 1.75rem 1.4rem;
     margin-bottom: 1.5rem;
+    overflow: hidden;
+    background-image:
+        linear-gradient(90deg, #EE7202 0%, #FAB848 45%, #079BD9 100%),
+        radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(160deg, #0a1628 60%, #0d2040 100%);
+    background-size: 100% 3px, 22px 22px, 100% 100%;
+    background-repeat: no-repeat, repeat, no-repeat;
+    background-position: top, 0 0, 0 0;
+}
+.prog-detail-hero::before {
+    content: "";
+    position: absolute; top: -30px; left: -30px;
+    width: 280px; height: 180px;
+    background: radial-gradient(ellipse, rgba(7,155,217,.22) 0%, transparent 70%);
+    pointer-events: none;
+}
+.prog-detail-hero::after {
+    content: "";
+    position: absolute; bottom: -30px; right: -20px;
+    width: 200px; height: 140px;
+    background: radial-gradient(ellipse, rgba(250,184,72,.14) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* Ligne supérieure : identité + anneau */
+.dh-top {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1.5rem; flex-wrap: wrap;
+    position: relative; z-index: 1;
+}
+
+/* Bloc identité (icône + numero + chips + date) */
+.pdh-id {
+    display: flex; align-items: flex-start; gap: .9rem;
+}
+.pdh-icon {
+    width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0;
+    background: rgba(7,155,217,.18);
+    border: 1px solid rgba(7,155,217,.35);
+    display: flex; align-items: center; justify-content: center;
+    color: #5ac8f5; font-size: 1.35rem;
+}
+.pdh-numero {
+    font-size: 1.35rem; font-weight: 800; color: #fff;
+    margin: 0; letter-spacing: .04em;
+}
+.pdh-date {
+    font-size: .78rem; color: rgba(255,255,255,.5);
+    margin: .25rem 0 0;
+}
+
+/* Anneau sur fond sombre : piste vide gardée, disque interne blanc = bon contraste */
+.prog-detail-hero .dh-ring-wrap { position: relative; z-index: 1; }
+
+/* Infos contextuelles (livreur, véhicule, horaires) — dark override */
+.prog-detail-hero .info-row { margin-top: 1.1rem; position: relative; z-index: 1; }
+.prog-detail-hero .info-card {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.1);
+    box-shadow: none;
+}
+.prog-detail-hero .info-label { color: rgba(255,255,255,.45); }
+.prog-detail-hero .info-value { color: #fff; }
+.prog-detail-hero .info-sub   { color: rgba(255,255,255,.4); }
+.prog-detail-hero .info-icon-box {
+    background: rgba(7,155,217,.2);
+    border: 1px solid rgba(7,155,217,.3);
+    color: #5ac8f5;
+}
+.prog-detail-hero .info-icon-muted {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.1);
+    color: rgba(255,255,255,.4);
+}
+
+/* Anneau de progression (étapes visitées / total) */
+.dh-ring-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    gap: .4rem; flex-shrink: 0;
+}
+.dh-ring {
+    --pct: 0;
+    width: 88px; height: 88px; border-radius: 50%;
+    background: conic-gradient(#079BD9 calc(var(--pct) * 1%), #E8EEF2 0);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    transition: background .8s ease;
+}
+.dh-ring::before {
+    content: ''; position: absolute; inset: 8px;
+    border-radius: 50%; background: #fff;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,.06);
+}
+.dh-ring-done { background: conic-gradient(#198754 calc(var(--pct) * 1%), #E8EEF2 0); }
+.dh-ring-label { position: relative; z-index: 1; text-align: center; }
+.dh-ring-pct { font-size: 1.05rem; font-weight: 800; color: #0a1628; line-height: 1; }
+.dh-ring-sign { font-size: .65rem; font-weight: 700; }
+.dh-ring-sub { font-size: .58rem; font-weight: 600; color: #8aa8c0; margin-top: .2rem; white-space: nowrap; }
+.dh-ring-echec {
+    font-size: .66rem; font-weight: 700; color: #dc3545;
+    display: flex; align-items: center; gap: .25rem;
 }
 
 /* Onglets pills */
@@ -74,6 +170,37 @@
 .filter-pill-green.active { color: #198754; background: rgba(25,135,84,.08); border-color: rgba(25,135,84,.3); }
 .filter-pill-red.active   { color: #b91c1c; background: rgba(220,53,69,.07); border-color: rgba(220,53,69,.25); }
 
+/* Stepper d'étapes : ligne verticale + nœuds numérotés (évoque le circuit) */
+.etapes-stepper { position: relative; padding-left: 3.4rem; }
+.etapes-stepper::before {
+    content: ''; position: absolute;
+    left: 1.5rem; top: 1.2rem; bottom: 1.2rem; width: 2px;
+    background: linear-gradient(to bottom,
+        transparent,
+        #DDE2E6 6%,
+        #DDE2E6 94%,
+        transparent);
+    border-radius: 2px;
+}
+.es-item { position: relative; margin-bottom: 1rem; }
+.es-item:last-child { margin-bottom: 0; }
+.es-node {
+    position: absolute; left: -3rem; top: 0; z-index: 1;
+    width: 2.3rem; height: 2.3rem; border-radius: 50%;
+    background: #E8EEF2; color: #5a7080;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; font-weight: 800;
+    border: 1px solid #DDE2E6;
+}
+.es-node-VISITEE {
+    background: #198754; color: #fff; border-color: #198754;
+    box-shadow: 0 2px 6px rgba(25,135,84,.3);
+}
+.es-node-ECHEC {
+    background: #dc3545; color: #fff; border-color: #dc3545;
+    box-shadow: 0 2px 6px rgba(220,53,69,.3);
+}
+
 /* Carte étape */
 .etape-card {
     background: #FFFFFF;
@@ -101,23 +228,6 @@
     background: #FAFBFC;
     border-bottom: 1px solid #DDE2E6;
 }
-.etape-ordre {
-    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
-    background: #E8EEF2; color: #5a7080;
-    display: flex; align-items: center; justify-content: center;
-    font-size: .85rem; font-weight: 800;
-    border: 1px solid #DDE2E6;
-}
-.etape-VISITEE .etape-ordre {
-    background: #198754; color: #fff;
-    border-color: #198754;
-    box-shadow: 0 2px 6px rgba(25,135,84,.3);
-}
-.etape-ECHEC .etape-ordre {
-    background: #dc3545; color: #fff;
-    border-color: #dc3545;
-    box-shadow: 0 2px 6px rgba(220,53,69,.3);
-}
 .etape-plv    { font-size: .92rem; font-weight: 700; color: #1a2332; }
 .etape-client { font-size: .75rem; color: #8aa8c0; margin-top: .12rem; }
 
@@ -137,23 +247,45 @@
     border-radius: 8px; padding: .65rem 1rem; margin: 0;
 }
 
-/* Tableau réconciliation */
-.recon-table-wrap {
+/* Réconciliation prévu/réalisé — lignes avec mini-barres */
+.recon-rows {
     border-radius: 10px; overflow: hidden;
     background: #F2F4F6; border: 1px solid #DDE2E6;
+    padding: .25rem 0;
 }
-.recon-table { background: transparent; }
-.recon-table thead th {
-    background: transparent;
-    border-bottom: 1px solid #DDE2E6;
+.recon-row {
+    display: grid; align-items: center;
+    gap: .6rem; padding: .5rem 1rem;
 }
-.recon-table tbody td { border-bottom: 1px solid rgba(0,0,0,.04); }
-.recon-table tbody tr:last-child td { border-bottom: none; }
-.recon-table tbody tr:hover td { background: rgba(255,255,255,.6); }
+.recon-row-restit { grid-template-columns: 64px 1fr 90px 64px 56px; }
+.recon-row-simple { grid-template-columns: 64px 1fr 50px; }
+.recon-row + .recon-row { border-top: 1px solid rgba(0,0,0,.05); }
+.recon-row:hover { background: rgba(255,255,255,.6); }
+
+.recon-code {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: .68rem; font-weight: 700; color: #0670A0;
+    background: #E3F3FB; border-radius: 5px;
+    padding: .12rem .4rem; text-align: center;
+}
+.recon-libelle { font-size: .85rem; font-weight: 600; color: #1a2332; }
+.recon-qty { font-size: .9rem; font-weight: 800; color: #1a2332; text-align: right; }
+
+.recon-bar-wrap {
+    height: 7px; border-radius: 5px; overflow: hidden;
+    background: #E8EEF2;
+}
+.recon-bar-fill { height: 100%; border-radius: 5px; transition: width .5s ease; }
+.recon-bar-ok  { background: #198754; }
+.recon-bar-wip { background: linear-gradient(90deg, #0670A0, #079BD9); }
+
+.recon-ratio { font-size: .78rem; font-weight: 700; color: #3a5060; text-align: right; }
+.recon-ratio-sep { color: #b0bec5; margin: 0 .1rem; }
 
 .ecart-badge {
     display: inline-block; padding: .18rem .55rem;
     border-radius: 20px; font-size: .75rem; font-weight: 800;
+    justify-self: center;
 }
 .ecart-pos { background: rgba(25,135,84,.14);  color: #198754; }
 .ecart-neg { background: rgba(220,53,69,.14);  color: #b91c1c; }
@@ -257,4 +389,13 @@
     .etape-header  { flex-direction: column; align-items: flex-start; }
     .nav-tabs      { gap: .35rem; }
     .filter-pill-bar { gap: .4rem; }
+    .dh-top        { flex-direction: column; align-items: flex-start; }
+    .dh-ring-wrap  { align-self: center; }
+    .etapes-stepper { padding-left: 2.6rem; }
+    .etapes-stepper::before { left: 1.1rem; }
+    .es-node       { left: -2.3rem; width: 1.9rem; height: 1.9rem; font-size: .75rem; }
+    .recon-row-restit { grid-template-columns: 46px 1fr 56px 50px 44px; gap: .35rem; }
+    .recon-row-simple { grid-template-columns: 46px 1fr 40px; gap: .35rem; }
+    .recon-libelle { font-size: .78rem; }
+    .recon-code    { font-size: .6rem; padding: .1rem .3rem; }
 }

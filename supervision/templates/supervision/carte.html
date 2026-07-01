@@ -10,58 +10,52 @@
 {% block content %}
 <div class="carte-layout">
 
-    <!-- En-tête -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <div class="d-flex align-items-center gap-2">
-            <span class="pg-icon"><i class="bi bi-map"></i></span>
-            <div>
-                <h1 class="page-title mb-0">Cartographie PLV</h1>
-                <p class="page-sub mb-0">
-                    <i class="bi bi-calendar3 me-1"></i>{{ date_filter|date:"l j F Y"|capfirst }}
-                </p>
-            </div>
+    <!-- Barre de contrôle compacte (navy) -->
+    <div class="carte-topbar">
+
+        <!-- Identité -->
+        <div class="carte-topbar-id">
+            <span class="carte-topbar-icon"><i class="bi bi-map-fill"></i></span>
+            <h1 class="carte-topbar-title">Cartographie PLV</h1>
         </div>
-        <div class="d-flex align-items-center gap-2">
+
+        <div class="carte-topbar-divider"></div>
+
+        <!-- Indicateur live -->
+        <div class="d-flex align-items-center gap-2 flex-shrink-0">
             <span class="live-dot" id="carte-live-dot"></span>
             <span id="carte-live-status" class="carte-live-label">Connexion...</span>
             <span class="carte-live-sep">·</span>
             <span id="carte-last-update" class="carte-live-label">à l'instant</span>
         </div>
-    </div>
 
-    <!-- Filtres -->
-    <div class="filter-card mb-3">
-        <div class="d-flex flex-wrap align-items-end gap-3">
-            <i class="bi bi-funnel text-muted" style="margin-bottom:.3rem;"></i>
-            <form method="get" class="d-flex flex-wrap gap-3 align-items-end">
-                <div>
-                    <label class="filter-label">Date</label>
-                    <input type="text" name="date" id="carte-date-fp"
-                           value="{{ date_filter|date:'Y-m-d' }}"
-                           class="form-control form-control-sm" style="width:auto;">
-                </div>
-                <div>
-                    <label class="filter-label">Livreur</label>
-                    <div class="dropdown filter-dropdown">
-                        <button class="btn filter-dropdown-btn dropdown-toggle" type="button"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                            <span class="filter-dropdown-label">{% if livreur_code %}{% for liv in livreurs %}{% if liv.code_livreur == livreur_code %}{{ liv.code_livreur }} : {{ liv.get_full_name }}{% endif %}{% endfor %}{% else %}Tous{% endif %}</span>
-                            <i class="bi bi-chevron-down filter-dropdown-caret"></i>
-                        </button>
-                        <ul class="dropdown-menu filter-dropdown-menu">
-                            <li><a class="dropdown-item {% if not livreur_code %}active{% endif %}" data-value="" href="#">
-                                <i class="bi bi-check filter-dropdown-check" style="visibility:{% if not livreur_code %}visible{% else %}hidden{% endif %};"></i>
-                                <span class="filter-dropdown-option-label">Tous</span>
-                            </a></li>
-                            {% for liv in livreurs %}
-                            <li><a class="dropdown-item {% if liv.code_livreur == livreur_code %}active{% endif %}" data-value="{{ liv.code_livreur }}" href="#">
-                                <i class="bi bi-check filter-dropdown-check" style="visibility:{% if liv.code_livreur == livreur_code %}visible{% else %}hidden{% endif %};"></i>
-                                <span class="filter-dropdown-option-label">{{ liv.code_livreur }} : {{ liv.get_full_name }}</span>
-                            </a></li>
-                            {% endfor %}
-                        </ul>
-                        <input type="hidden" name="livreur" value="{{ livreur_code }}">
-                    </div>
+        <div class="carte-topbar-divider"></div>
+
+        <!-- Filtres + parcours -->
+        <div class="carte-topbar-filters">
+            <form method="get" class="d-flex flex-wrap gap-2 align-items-center">
+                <input type="text" name="date" id="carte-date-fp"
+                       value="{{ date_filter|date:'Y-m-d' }}"
+                       class="form-control form-control-sm" style="width:auto;">
+                <div class="dropdown filter-dropdown" id="carte-liv-dropdown">
+                    <button class="btn filter-dropdown-btn dropdown-toggle" type="button"
+                            id="carte-liv-toggle" aria-haspopup="true" aria-expanded="false">
+                        <span class="filter-dropdown-label">{% if livreur_code %}{% for liv in livreurs %}{% if liv.code_livreur == livreur_code %}{{ liv.code_livreur }} : {{ liv.get_full_name }}{% endif %}{% endfor %}{% else %}Tous les livreurs{% endif %}</span>
+                        <i class="bi bi-chevron-down filter-dropdown-caret"></i>
+                    </button>
+                    <ul class="dropdown-menu filter-dropdown-menu">
+                        <li><a class="dropdown-item {% if not livreur_code %}active{% endif %}" data-value="" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if not livreur_code %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">Tous</span>
+                        </a></li>
+                        {% for liv in livreurs %}
+                        <li><a class="dropdown-item {% if liv.code_livreur == livreur_code %}active{% endif %}" data-value="{{ liv.code_livreur }}" href="#">
+                            <i class="bi bi-check filter-dropdown-check" style="visibility:{% if liv.code_livreur == livreur_code %}visible{% else %}hidden{% endif %};"></i>
+                            <span class="filter-dropdown-option-label">{{ liv.code_livreur }} : {{ liv.get_full_name }}</span>
+                        </a></li>
+                        {% endfor %}
+                    </ul>
+                    <input type="hidden" name="livreur" value="{{ livreur_code }}">
                 </div>
                 <button type="submit" class="btn btn-sm btn-primary">
                     <i class="bi bi-search me-1"></i>Filtrer
@@ -71,6 +65,7 @@
                 <i class="bi bi-signpost-split me-1"></i>Afficher parcours
             </button>
         </div>
+
     </div>
 
     <!-- Carte plein écran -->
@@ -94,7 +89,7 @@
                 <span class="carte-dot carte-dot-green"></span>Visitée
             </div>
             <div class="carte-legend-item">
-                <span class="carte-dot carte-dot-orange"></span>Opération
+                <span class="carte-dot carte-dot-orange" style="width:10px;height:10px;"></span>Position opération
             </div>
         </div>
 
@@ -125,15 +120,73 @@ flatpickr("#carte-date-fp", {
         if (!dateStr) return;
         var url = new URL(window.location.href);
         url.searchParams.set("date", dateStr);
-        // Conserver la sélection du livreur même si le formulaire n'a pas encore été soumis
-        var sel = document.querySelector('select[name="livreur"]');
-        if (sel && sel.value) {
-            url.searchParams.set("livreur", sel.value);
-        } else {
-            url.searchParams.delete("livreur");
-        }
         window.location.href = url.toString();
     }
 });
+// Dropdown livreur : teleportation vers <body> pour passer au-dessus de Leaflet.
+// Bootstrap + Popper ne peuvent pas gérer ce cas (height:100vh + z-index map).
+// On gère l'ouverture manuellement, comme flatpickr le fait pour son calendrier.
+(function () {
+    var toggle  = document.getElementById('carte-liv-toggle');
+    var wrapper = document.getElementById('carte-liv-dropdown');
+    var menu    = wrapper ? wrapper.querySelector('.dropdown-menu') : null;
+    if (!toggle || !menu) return;
+
+    var isOpen = false;
+    var originalParent = menu.parentNode;
+
+    function open() {
+        var r = toggle.getBoundingClientRect();
+        document.body.appendChild(menu);
+        Object.assign(menu.style, {
+            position: 'fixed',
+            top:      (r.bottom + 4) + 'px',
+            left:     r.left + 'px',
+            minWidth: Math.max(r.width, 180) + 'px',
+            maxWidth: '320px',
+            zIndex:   '9999',
+            margin:   '0',
+            display:  'block'
+        });
+        menu.classList.add('show');
+        toggle.classList.add('show');
+        toggle.setAttribute('aria-expanded', 'true');
+        isOpen = true;
+    }
+
+    function close() {
+        originalParent.appendChild(menu);
+        menu.removeAttribute('style');
+        menu.classList.remove('show');
+        toggle.classList.remove('show');
+        toggle.setAttribute('aria-expanded', 'false');
+        isOpen = false;
+    }
+
+    toggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        isOpen ? close() : open();
+    });
+
+    document.addEventListener('click', function (e) {
+        if (isOpen && !menu.contains(e.target) && !toggle.contains(e.target)) {
+            close();
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (isOpen && e.key === 'Escape') close();
+    });
+
+    menu.addEventListener('click', function (e) {
+        var item = e.target.closest('.dropdown-item');
+        if (!item) return;
+        e.preventDefault();
+        wrapper.querySelector('input[type=hidden]').value = item.dataset.value;
+        toggle.querySelector('.filter-dropdown-label').textContent =
+            item.querySelector('.filter-dropdown-option-label').textContent;
+        close();
+    });
+})();
 </script>
 {% endblock %}

@@ -8,6 +8,8 @@ Ce module regroupe les vues qui ne rentrent pas dans les autres modules :
 Évite d'alourdir les autres modules avec des vues qui n'ont
 pas de relation directe avec leur domaine (programmes, opérations...).
 """
+from datetime import date, timedelta
+
 from django.contrib.auth import logout as django_logout
 from django.db.models import Count, DecimalField, Q, Sum
 from django.db.models.functions import Coalesce
@@ -110,4 +112,7 @@ def rapport_journee(request):
         "programmes":  programmes,
         "totaux":      totaux,
         "date_filter": date_filter,
+        "date_prev":   date_filter - timedelta(days=1),
+        "date_next":   date_filter + timedelta(days=1),
+        "date_today":  date.today(),
     })

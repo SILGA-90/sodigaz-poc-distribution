@@ -8,52 +8,79 @@
 {% block title %}Opérations{% endblock %}
 {% block content %}
 
-<!-- En-tête -->
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
-    <div>
-        <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="pg-icon"><i class="bi bi-lightning-charge"></i></span>
-            <h1 class="page-title mb-0">Opérations</h1>
+<!-- Hero navy -->
+<div class="ops-hero mb-4">
+
+    <!-- Titre + navigation date + export -->
+    <div class="ops-hero-top">
+        <div class="d-flex align-items-center gap-3">
+            <span class="ops-hero-icon"><i class="bi bi-lightning-charge"></i></span>
+            <div>
+                <h1 class="ops-hero-title">Opérations</h1>
+                <p class="ops-hero-sub">{{ date_filter|date:"l j F Y"|capfirst }}</p>
+            </div>
         </div>
-        <p class="page-sub mb-0">
-            <i class="bi bi-calendar3 me-1"></i>{{ date_filter|date:"l j F Y"|capfirst }}
-        </p>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="ops-hero-date-wrap">
+                <i class="bi bi-calendar3 ops-hero-date-icon"></i>
+                <input type="text" id="ops-date-fp"
+                       value="{{ date_filter|date:'Y-m-d' }}"
+                       class="ops-hero-date-input" readonly>
+            </div>
+            <a href="?date={{ date_prev|date:'Y-m-d' }}{% if livreur_code %}&livreur={{ livreur_code }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}"
+               class="ops-btn-nav" title="Jour précédent">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+            <a href="?date={{ date_today|date:'Y-m-d' }}{% if livreur_code %}&livreur={{ livreur_code }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}"
+               class="ops-btn-today {% if date_filter == date_today %}active{% endif %}">
+                Aujourd'hui
+            </a>
+            <a href="?date={{ date_next|date:'Y-m-d' }}{% if livreur_code %}&livreur={{ livreur_code }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}"
+               class="ops-btn-nav" title="Jour suivant">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+            <a href="{% url 'supervision:operations-export' %}?date={{ date_filter|date:'Y-m-d' }}{% if livreur_code %}&livreur={{ livreur_code }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}"
+               class="btn-export-hero">
+                <i class="bi bi-download"></i> CSV
+            </a>
+        </div>
     </div>
-    <div class="d-flex flex-wrap gap-2 align-items-center">
-        <div class="kpi-pill">
-            <span class="kpi-pill-n">{{ nb_total }}</span>
-            <span class="kpi-pill-l">Total</span>
+
+    <!-- KPIs -->
+    <div class="ops-hero-kpis">
+        <div class="ops-kpi-card ops-kpi-blue">
+            <div class="ops-kpi-icon"><i class="bi bi-arrow-down-circle-fill"></i></div>
+            <div>
+                <div class="ops-kpi-label">Collectes</div>
+                <div class="ops-kpi-value ops-kpi-value-blue">{{ nb_collecte }}</div>
+            </div>
         </div>
-        <div class="kpi-pill kpi-pill-blue">
-            <span class="kpi-pill-n">{{ nb_collecte }}</span>
-            <span class="kpi-pill-l">Collectes</span>
+        <div class="ops-kpi-card ops-kpi-green">
+            <div class="ops-kpi-icon"><i class="bi bi-arrow-up-circle-fill"></i></div>
+            <div>
+                <div class="ops-kpi-label">Restitutions</div>
+                <div class="ops-kpi-value ops-kpi-value-green">{{ nb_restitution }}</div>
+            </div>
         </div>
-        <div class="kpi-pill kpi-pill-green">
-            <span class="kpi-pill-n">{{ nb_restitution }}</span>
-            <span class="kpi-pill-l">Restitutions</span>
+        <div class="ops-kpi-card ops-kpi-orange">
+            <div class="ops-kpi-icon"><i class="bi bi-cash-coin"></i></div>
+            <div>
+                <div class="ops-kpi-label">Montant total</div>
+                <div class="ops-kpi-value ops-kpi-value-orange ops-kpi-value-sm">
+                    {{ total_montant|floatformat:0 }} <span style="font-size:.7rem;opacity:.7;">FCFA</span>
+                </div>
+            </div>
         </div>
-        <div class="kpi-pill kpi-pill-orange">
-            <span class="kpi-pill-n" style="font-size:1rem;">{{ total_montant|floatformat:0 }}</span>
-            <span class="kpi-pill-l">FCFA total</span>
-        </div>
-        <a href="{% url 'supervision:operations-export' %}?date={{ date_filter|date:'Y-m-d' }}{% if livreur_code %}&livreur={{ livreur_code }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}"
-           class="btn-export">
-            <i class="bi bi-download me-1"></i>Exporter CSV
-        </a>
     </div>
+
 </div>
 
-<!-- Filtres -->
+<!-- Filtres livreur + type -->
 <div class="filter-card mb-4">
     <div class="d-flex flex-wrap align-items-end gap-3">
         <i class="bi bi-funnel text-muted" style="margin-bottom:.4rem;"></i>
         <form method="get" class="d-flex flex-wrap gap-3 align-items-end">
-            <div>
-                <label class="filter-label">Date</label>
-                <input type="text" name="date" id="ops-date-fp"
-                       value="{{ date_filter|date:'Y-m-d' }}"
-                       class="form-control form-control-sm" style="width:auto;">
-            </div>
+            <input type="hidden" name="date" value="{{ date_filter|date:'Y-m-d' }}">
             <div>
                 <label class="filter-label">Livreur</label>
                 <div class="dropdown filter-dropdown">
@@ -118,7 +145,7 @@
             <th>Heure</th>
             <th>Livreur</th>
             <th>Type</th>
-            <th>Client / PLV</th>
+            <th>PLV</th>
             <th class="text-end">Montant</th>
             <th>Paiement</th>
             <th>Signataire</th>
@@ -147,32 +174,18 @@
             {% if op.sous_type %}<div class="ops-sous-type">{{ op.sous_type }}</div>{% endif %}
         </td>
         <td>
-            <div class="ops-client">{{ op.etape.plv.client.raison_sociale }}</div>
-            <div class="ops-plv">{% if op.etape.plv.code_plv %}<span class="plv-code-chip">{{ op.etape.plv.code_plv }}</span>{% else %}{{ op.etape.plv.libelle }}{% endif %}</div>
+            <div class="ops-plv">{% if op.etape.plv.code_plv %}<span class="plv-code-chip">{{ op.etape.plv.code_plv }}</span> {% endif %}{{ op.etape.plv.libelle }}</div>
         </td>
         <td class="text-end">
             <span class="ops-montant">{{ op.montant_total|floatformat:0 }}</span>
             <span class="ops-devise"> FCFA</span>
         </td>
-        <td class="ops-muted">{{ op.get_mode_paiement_display|default:"—" }}</td>
-        <td class="ops-muted">{{ op.nom_signataire_client|default:"—" }}</td>
+        <td class="ops-muted">{{ op.get_mode_paiement_display|default:"-" }}</td>
+        <td class="ops-muted">{{ op.nom_signataire_client|default:"-" }}</td>
         <td class="ops-arrow"><i class="bi bi-chevron-right"></i></td>
     </tr>
     {% endfor %}
     </tbody>
-    <tfoot>
-        <tr class="ops-total-row">
-            <td colspan="4" class="ops-total-label">
-                {{ nb_total }}&nbsp;opération{% if nb_total > 1 %}s{% endif %}
-                &nbsp;·&nbsp; {{ nb_collecte }}&nbsp;collecte{% if nb_collecte > 1 %}s{% endif %}
-                &nbsp;·&nbsp; {{ nb_restitution }}&nbsp;restitution{% if nb_restitution > 1 %}s{% endif %}
-            </td>
-            <td class="text-end ops-total-amount">
-                {{ total_montant|floatformat:0 }}&nbsp;<span class="ops-devise">FCFA</span>
-            </td>
-            <td colspan="3"></td>
-        </tr>
-    </tfoot>
 </table>
 </div>
 
@@ -201,6 +214,18 @@ flatpickr("#ops-date-fp", {
         url.searchParams.set("date", dateStr);
         window.location.href = url.toString();
     }
+});
+// Synchronise la valeur du hidden "date" dans le formulaire de filtres
+// quand la date change dans le hero (cas où l'utilisateur change de date
+// et qu'il veut aussi filtrer sans recharger — non nécessaire ici car
+// flatpickr navigue directement, mais garde la cohérence à la soumission).
+document.querySelectorAll(".filter-dropdown .dropdown-item").forEach(function(item) {
+    item.addEventListener("click", function(e) {
+        e.preventDefault();
+        var dropdown = this.closest(".filter-dropdown");
+        dropdown.querySelector("input[type=hidden]").value = this.dataset.value;
+        dropdown.querySelector(".filter-dropdown-label").textContent = this.querySelector(".filter-dropdown-option-label").textContent;
+    });
 });
 </script>
 {% endblock %}

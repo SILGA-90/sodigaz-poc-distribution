@@ -12,50 +12,70 @@
     <i class="bi bi-chevron-left"></i> Retour aux programmes
 </a>
 
-<!-- En-tête -->
-<div class="detail-header">
-    <div class="d-flex align-items-center gap-3 flex-wrap">
-        <span class="pg-icon"><i class="bi bi-clipboard2-check"></i></span>
-        <div>
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-                <h1 class="page-title mb-0 font-monospace">{{ programme.numero_x3 }}</h1>
-                {% if programme.type_programme == "COLLECTE" %}
-                <span class="type-chip type-collecte">
-                    <i class="bi bi-arrow-down-circle"></i> Collecte
-                </span>
-                {% else %}
-                <span class="type-chip type-restitution">
-                    <i class="bi bi-arrow-up-circle"></i> Restitution
-                </span>
-                {% endif %}
-                <span class="statut-pill statut-{{ programme.statut }}">
-                    {% if programme.statut == "PLANIFIE" %}<i class="bi bi-clock"></i> Planifié
-                    {% elif programme.statut == "EN_COURS" %}<i class="bi bi-play-circle-fill"></i> En cours
-                    {% else %}<i class="bi bi-check-circle-fill"></i> Clôturé
+<!-- Hero programme -->
+<div class="prog-detail-hero">
+
+    <div class="dh-top">
+
+        <!-- Identité : icône + numéro + chips + date -->
+        <div class="pdh-id">
+            <span class="pdh-icon"><i class="bi bi-clipboard2-check"></i></span>
+            <div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <h1 class="pdh-numero font-monospace">{{ programme.numero_x3 }}</h1>
+                    {% if programme.type_programme == "COLLECTE" %}
+                    <span class="type-chip type-collecte">
+                        <i class="bi bi-arrow-down-circle"></i> Collecte
+                    </span>
+                    {% else %}
+                    <span class="type-chip type-restitution">
+                        <i class="bi bi-arrow-up-circle"></i> Restitution
+                    </span>
                     {% endif %}
-                </span>
+                    <span class="statut-pill statut-{{ programme.statut }}">
+                        {% if programme.statut == "PLANIFIE" %}<i class="bi bi-clock"></i> Planifié
+                        {% elif programme.statut == "EN_COURS" %}<i class="bi bi-play-circle-fill"></i> En cours
+                        {% else %}<i class="bi bi-check-circle-fill"></i> Clôturé
+                        {% endif %}
+                    </span>
+                </div>
+                <p class="pdh-date">
+                    <i class="bi bi-calendar3 me-1"></i>{{ programme.date_programme|date:"l j F Y"|capfirst }}
+                </p>
             </div>
-            <p class="page-sub mb-0 mt-1">
-                <i class="bi bi-calendar3 me-1"></i>{{ programme.date_programme|date:"l j F Y"|capfirst }}
-            </p>
         </div>
+
+        <!-- Anneau de progression -->
+        {% if total_etapes > 0 %}
+        <div class="dh-ring-wrap">
+            <div class="dh-ring {% if programme.statut == 'CLOTURE' %}dh-ring-done{% endif %}"
+                 style="--pct: {% widthratio etapes_visitees total_etapes 100 %};">
+                <div class="dh-ring-label">
+                    <div class="dh-ring-pct">{% widthratio etapes_visitees total_etapes 100 %}<span class="dh-ring-sign">%</span></div>
+                    <div class="dh-ring-sub">{{ etapes_visitees }}/{{ total_etapes }} étapes</div>
+                </div>
+            </div>
+            {% if etapes_echec > 0 %}
+            <div class="dh-ring-echec">
+                <i class="bi bi-x-circle-fill"></i> {{ etapes_echec }} échec{{ etapes_echec|pluralize }}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
     </div>
 
-    <!-- Infos contextuelles -->
+    <!-- Infos contextuelles (dark override via CSS) -->
     <div class="info-row mt-3">
         <div class="info-card">
             <div class="info-avatar">{{ programme.utilisateur.code_livreur|slice:":1"|upper }}</div>
             <div>
                 <div class="info-label">Livreur</div>
                 <div class="info-value">{{ programme.utilisateur.get_full_name }}</div>
-                <div class="info-sub">{{ programme.utilisateur.code_livreur }}</div>
-            </div>
-        </div>
-        <div class="info-card">
-            <div class="info-icon-box"><i class="bi bi-car-front"></i></div>
-            <div>
-                <div class="info-label">Véhicule</div>
-                <div class="info-value">{{ programme.vehicule.immatriculation|default:"—" }}</div>
+                <div class="info-sub">
+                    {{ programme.utilisateur.code_livreur }}
+                    {% if programme.vehicule %}&nbsp;·&nbsp;<i class="bi bi-truck me-1"></i>{{ programme.vehicule.immatriculation }}{% endif %}
+                </div>
             </div>
         </div>
         <div class="info-card">
@@ -65,12 +85,13 @@
                 <div class="info-value">
                     {% if programme.heure_debut %}
                         {{ programme.heure_debut|time:"H:i" }}
-                        {% if programme.heure_fin %}&nbsp;→&nbsp;{{ programme.heure_fin|time:"H:i" }}{% else %}&nbsp;→&nbsp;<span class="text-muted fw-normal">en cours</span>{% endif %}
-                    {% else %}—{% endif %}
+                        {% if programme.heure_fin %}&nbsp;→&nbsp;{{ programme.heure_fin|time:"H:i" }}{% else %}&nbsp;→&nbsp;<span style="color:rgba(255,255,255,.4);font-weight:400;">en cours</span>{% endif %}
+                    {% else %}-{% endif %}
                 </div>
             </div>
         </div>
     </div>
+
 </div>
 
 <!-- Onglets -->
@@ -113,18 +134,16 @@
     </div>
 
     <!-- Étapes -->
+    {% if reconciliation %}
+    <div class="etapes-stepper">
     {% for r in reconciliation %}
-    <div class="etape-card etape-{{ r.etape.statut_visite }} mb-3">
+    <div class="es-item">
+        <div class="es-node es-node-{{ r.etape.statut_visite }}">{{ r.etape.ordre_prevu }}</div>
+        <div class="etape-card etape-{{ r.etape.statut_visite }}">
 
         <div class="etape-header">
-            <div class="d-flex align-items-center gap-3 flex-wrap">
-                <div class="etape-ordre">{{ r.etape.ordre_prevu }}</div>
-                <div>
-                    <div class="etape-plv">{% if r.etape.plv.code_plv %}<span class="plv-code-chip">{{ r.etape.plv.code_plv }}</span> {% endif %}{{ r.etape.plv.libelle }}</div>
-                    <div class="etape-client">
-                        <i class="bi bi-building me-1"></i>{{ r.etape.plv.client.raison_sociale }}
-                    </div>
-                </div>
+            <div>
+                <div class="etape-plv"><i class="bi bi-building me-1"></i>{% if r.etape.plv.code_plv %}<span class="plv-code-chip">{{ r.etape.plv.code_plv }}</span> {% endif %}{{ r.etape.plv.libelle }}</div>
             </div>
             <span class="statut-visite-pill statut-v-{{ r.etape.statut_visite }}">
                 {% if r.etape.statut_visite == "A_VISITER" %}
@@ -139,39 +158,29 @@
 
         <div class="etape-body">
             {% if r.lignes %}
-            <div class="recon-table-wrap">
-                <table class="recon-table">
-                    <thead>
-                        <tr>
-                            <th>Article</th>
-                            {% if programme.type_programme == "RESTITUTION" %}
-                            <th class="text-end">Prévu</th>
-                            {% endif %}
-                            <th class="text-end">Réalisé</th>
-                            {% if programme.type_programme == "RESTITUTION" %}
-                            <th class="text-end">Écart</th>
-                            {% endif %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for l in r.lignes %}
-                        <tr>
-                            <td><span class="produit-dot"></span>{{ l.produit.libelle }}</td>
-                            {% if programme.type_programme == "RESTITUTION" %}
-                            <td class="text-end fw-semibold">{{ l.prevu }}</td>
-                            {% endif %}
-                            <td class="text-end fw-semibold">{{ l.realise }}</td>
-                            {% if programme.type_programme == "RESTITUTION" %}
-                            <td class="text-end">
-                                <span class="ecart-badge {% if l.ecart > 0 %}ecart-pos{% elif l.ecart < 0 %}ecart-neg{% else %}ecart-nul{% endif %}">
-                                    {% if l.ecart > 0 %}+{% endif %}{{ l.ecart }}
-                                </span>
-                            </td>
-                            {% endif %}
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+            <div class="recon-rows">
+                {% for l in r.lignes %}
+                    {% if programme.type_programme == "RESTITUTION" %}
+                    <div class="recon-row recon-row-restit">
+                        <span class="recon-code">{{ l.produit.code_x3 }}</span>
+                        <span class="recon-libelle">{{ l.produit.libelle }}</span>
+                        <div class="recon-bar-wrap">
+                            <div class="recon-bar-fill {% if l.realise >= l.prevu %}recon-bar-ok{% else %}recon-bar-wip{% endif %}"
+                                 style="width:{% if l.prevu > 0 %}{% widthratio l.realise l.prevu 100 %}{% elif l.realise > 0 %}100{% else %}0{% endif %}%"></div>
+                        </div>
+                        <span class="recon-ratio">{{ l.realise }}<span class="recon-ratio-sep">/</span>{{ l.prevu }}</span>
+                        <span class="ecart-badge {% if l.ecart > 0 %}ecart-pos{% elif l.ecart < 0 %}ecart-neg{% else %}ecart-nul{% endif %}">
+                            {% if l.ecart > 0 %}+{% endif %}{{ l.ecart }}
+                        </span>
+                    </div>
+                    {% else %}
+                    <div class="recon-row recon-row-simple">
+                        <span class="recon-code">{{ l.produit.code_x3 }}</span>
+                        <span class="recon-libelle">{{ l.produit.libelle }}</span>
+                        <span class="recon-qty">{{ l.realise }}</span>
+                    </div>
+                    {% endif %}
+                {% endfor %}
             </div>
             {% else %}
             <p class="etape-note">
@@ -210,14 +219,17 @@
             {% endfor %}
         </div>
 
+        </div>
     </div>
-    {% empty %}
+    {% endfor %}
+    </div>{# /etapes-stepper #}
+    {% else %}
     <div class="empty-state text-center">
         <i class="bi bi-map"></i>
         <p class="empty-title">Aucune étape</p>
         <p class="empty-sub">Ce programme ne contient pas encore d'étapes.</p>
     </div>
-    {% endfor %}
+    {% endif %}
 
 </div>{# /tab-etapes #}
 
@@ -237,7 +249,7 @@
     <div class="tl-card">
         <div class="tl-row">
             <span class="tl-time"><i class="bi bi-clock me-1"></i>{{ item.op.date_heure|date:"H:i" }}</span>
-            <span class="tl-plv">{% if item.op.etape.plv.code_plv %}<span class="plv-code-chip">{{ item.op.etape.plv.code_plv }}</span> {% endif %}{{ item.op.etape.plv.libelle }}</span>
+            <span class="tl-plv"><i class="bi bi-building me-1"></i>{% if item.op.etape.plv.code_plv %}<span class="plv-code-chip">{{ item.op.etape.plv.code_plv }}</span> {% endif %}{{ item.op.etape.plv.libelle }}</span>
             <span class="tl-circuit {% if item.conforme %}tl-circuit-ok{% else %}tl-circuit-warn{% endif %}">
                 #{{ item.op.etape.ordre_prevu }}
             </span>

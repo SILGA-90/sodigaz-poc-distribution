@@ -8,40 +8,51 @@
 {% block title %}Anomalies{% endblock %}
 {% block content %}
 
-<!-- En-tête -->
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
-    <div>
-        <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="pg-icon pg-icon-red"><i class="bi bi-exclamation-triangle"></i></span>
-            <h1 class="page-title mb-0">Anomalies</h1>
-        </div>
-        <p class="page-sub mb-0">Suivi et traitement des incidents terrain</p>
-    </div>
-    <div class="d-flex flex-wrap gap-2 align-items-center">
-        <div class="kpi-pill">
-            <span class="kpi-pill-n">{{ nb_total }}</span>
-            <span class="kpi-pill-l">Résultats</span>
-        </div>
-        <div class="kpi-pill kpi-pill-red">
-            <span class="kpi-pill-n">{{ nb_elevee }}</span>
-            <span class="kpi-pill-l">Élevées</span>
-        </div>
-        <div class="kpi-pill kpi-pill-orange">
-            <span class="kpi-pill-n">{{ nb_moyenne }}</span>
-            <span class="kpi-pill-l">Moyennes</span>
-        </div>
-        <div class="kpi-pill kpi-pill-green">
-            <span class="kpi-pill-n">{{ nb_faible }}</span>
-            <span class="kpi-pill-l">Faibles</span>
+<!-- Hero navy -->
+<div class="anom-hero mb-4">
+
+    <!-- Titre + badge urgentes -->
+    <div class="anom-hero-top">
+        <div class="d-flex align-items-center gap-3">
+            <span class="anom-hero-icon"><i class="bi bi-exclamation-triangle-fill"></i></span>
+            <div>
+                <h1 class="anom-hero-title">Anomalies</h1>
+                <p class="anom-hero-sub">Suivi et traitement des incidents terrain</p>
+            </div>
         </div>
         {% if nb_urgentes > 0 %}
-        <div class="kpi-pill kpi-pill-urgente">
-            <i class="bi bi-alarm me-1"></i>
-            <span class="kpi-pill-n">{{ nb_urgentes }}</span>
-            <span class="kpi-pill-l">Urgentes</span>
-        </div>
+        <span class="anom-hero-urgentes">
+            <i class="bi bi-alarm-fill"></i>
+            {{ nb_urgentes }} urgente{% if nb_urgentes > 1 %}s{% endif %} · en attente depuis +1 jour
+        </span>
         {% endif %}
     </div>
+
+    <!-- KPIs -->
+    <div class="anom-hero-kpis">
+        <div class="anom-kpi-card anom-kpi-red">
+            <div class="anom-kpi-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div>
+                <div class="anom-kpi-label">Élevées</div>
+                <div class="anom-kpi-value anom-kpi-value-red">{{ nb_elevee }}</div>
+            </div>
+        </div>
+        <div class="anom-kpi-card anom-kpi-orange">
+            <div class="anom-kpi-icon"><i class="bi bi-dash-circle-fill"></i></div>
+            <div>
+                <div class="anom-kpi-label">Moyennes</div>
+                <div class="anom-kpi-value anom-kpi-value-orange">{{ nb_moyenne }}</div>
+            </div>
+        </div>
+        <div class="anom-kpi-card anom-kpi-green">
+            <div class="anom-kpi-icon"><i class="bi bi-check-circle-fill"></i></div>
+            <div>
+                <div class="anom-kpi-label">Faibles</div>
+                <div class="anom-kpi-value anom-kpi-value-green">{{ nb_faible }}</div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <!-- Filtres -->
@@ -81,7 +92,7 @@
             <div>
                 <label class="filter-label">N° programme</label>
                 <input type="text" name="programme" value="{{ prog_filter }}"
-                       class="form-control form-control-sm" style="width:auto;" placeholder="ex. PRG-COL-20260610-…">
+                       class="form-control form-control-sm" style="width:auto;" placeholder="ex. PRG-COL-…">
             </div>
             <div>
                 <label class="filter-label">Statut</label>
@@ -222,9 +233,9 @@
     <div class="anom-card-footer">
         <div class="anom-plv-info">
             {% if a.plv %}
-            <i class="bi bi-building me-1"></i>{% if a.plv.code_plv %}<span class="plv-code-chip">{{ a.plv.code_plv }}</span> {% endif %}{{ a.plv.client.raison_sociale }}
+            <i class="bi bi-building me-1"></i>{% if a.plv.code_plv %}<span class="plv-code-chip">{{ a.plv.code_plv }}</span> {% endif %}{{ a.plv.libelle }}
             {% else %}
-            <span class="text-muted">—</span>
+            <span class="text-muted">-</span>
             {% endif %}
         </div>
         <div onclick="event.stopPropagation()">
@@ -276,6 +287,14 @@ flatpickr("#anom-date-fp", {
     locale:        "fr",
     disableMobile: true,
     allowInput:    true
+});
+document.querySelectorAll(".filter-dropdown .dropdown-item").forEach(function(item) {
+    item.addEventListener("click", function(e) {
+        e.preventDefault();
+        var dropdown = this.closest(".filter-dropdown");
+        dropdown.querySelector("input[type=hidden]").value = this.dataset.value;
+        dropdown.querySelector(".filter-dropdown-label").textContent = this.querySelector(".filter-dropdown-option-label").textContent;
+    });
 });
 </script>
 {% endblock %}

@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('numero_x3', models.CharField(max_length=40, unique=True)),
-                ('type_document', models.CharField(choices=[('BCR', 'Bon de Collecte Recharge'), ('BL', 'Bordereau de Livraison')], max_length=10)),
+                ('type_document', models.CharField(choices=[('BCR', 'Bon de Commande Recharge'), ('BL', 'Bordereau de Livraison')], max_length=10)),
                 ('statut', models.CharField(default='SYNCHRONISE', max_length=20)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('bcr', models.ForeignKey(blank=True, help_text='BCR de reference (renseigne uniquement pour un BL).', limit_choices_to={'type_document': 'BCR'}, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='bls', to='mock_x3.documentx3')),

@@ -10,7 +10,7 @@ sur programme_id. C'est 5 requêtes au total (1 programmes + 4 agrégats),
 quel que soit le nombre de livreurs : pas N+4 comme avec des accès ORM naïfs.
 """
 from collections import defaultdict
-from datetime import date as date_cls
+from datetime import date as date_cls, timedelta
 from decimal import Decimal
 
 from django.db.models import Case, Count, DecimalField, IntegerField, Max, Sum, When
@@ -148,8 +148,16 @@ def tableau_bord_livreurs(request):
             "pct":               pct,
         })
 
+    today = date_cls.today()
     return render(request, "supervision/livreurs.html", {
-        "date_filter": date_filter,
-        "is_today":    date_filter == date_cls.today(),
-        "fiches":      fiches,
+        "date_filter":  date_filter,
+        "date_prev":    date_filter - timedelta(days=1),
+        "date_next":    date_filter + timedelta(days=1),
+        "date_today":   today,
+        "is_today":     date_filter == today,
+        "fiches":       fiches,
+        "nb_total":     len(fiches),
+        "nb_en_cours":  sum(1 for f in fiches if f["programme"] and f["programme"].statut == "EN_COURS"),
+        "nb_cloture":   sum(1 for f in fiches if f["programme"] and f["programme"].statut == "CLOTURE"),
+        "nb_sans_prog": sum(1 for f in fiches if not f["programme"]),
     })

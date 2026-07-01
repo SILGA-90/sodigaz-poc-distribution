@@ -6,7 +6,7 @@ RESTITUTION après un push réussi. Il est appelé en best-effort depuis
 sync_api/views.py après traitement du push (non bloquant).
 
        Règles métier :
-         - COLLECTE   -> crée un BCR (Bon de Collecte Recharge)
+         - COLLECTE   -> crée un BCR (Bon de Commande Recharge)
          - RESTITUTION -> crée un BL  (Bordereau de Livraison) rattaché au BCR
            le plus récent sur le même PLV. Si aucun BCR n'existe, le BL est
            exclu et un avertissement est émis.
@@ -77,7 +77,7 @@ def creer_documents_x3(operations: list) -> None:
 
 def _creer_bcr(operation, DocumentX3) -> None:
     """
-    Crée un BCR (Bon de Collecte Recharge) pour une opération COLLECTE.
+    Crée un BCR (Bon de Commande Recharge) pour une opération COLLECTE.
     Voir _numero_x3 : on crée avec TEMP puis on
          met à jour avec le numéro basé sur le pk auto-incrémenté.
     """

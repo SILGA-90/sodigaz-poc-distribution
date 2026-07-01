@@ -103,6 +103,15 @@ def programme_detail(request, programme_id):
         id=programme_id, is_deleted=False,
     )
 
+    # Stats non filtrées (indépendantes de filtre_statut) pour l'anneau de
+    # progression de l'entête : reconciliation plus bas est filtrée par
+    # filtre_statut et ne peut donc pas servir de source à ce total.
+    stats_etapes = programme.etapes.filter(is_deleted=False).aggregate(
+        total_etapes=Count("id"),
+        etapes_visitees=Count("id", filter=Q(statut_visite=StatutVisite.VISITEE)),
+        etapes_echec=Count("id", filter=Q(statut_visite=StatutVisite.ECHEC)),
+    )
+
     filtre_statut = request.GET.get("filtre_statut", "")
     etapes_qs     = programme.etapes.filter(is_deleted=False)
     if filtre_statut in ("A_VISITER", "VISITEE", "ECHEC"):
@@ -168,4 +177,7 @@ def programme_detail(request, programme_id):
         "reconciliation": reconciliation,
         "filtre_statut": filtre_statut,
         "timeline":      timeline,
+        "total_etapes":     stats_etapes["total_etapes"],
+        "etapes_visitees":  stats_etapes["etapes_visitees"],
+        "etapes_echec":     stats_etapes["etapes_echec"],
     })

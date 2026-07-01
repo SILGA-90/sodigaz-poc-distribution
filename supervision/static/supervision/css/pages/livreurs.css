@@ -2,6 +2,146 @@
    TABLEAU DE BORD LIVREURS — SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
+/* ── Hero navy ────────────────────────────────────────── */
+.liv-hero {
+    position: relative;
+    background: #0a1628;
+    border-radius: 18px;
+    padding: 1.4rem 1.75rem 1.35rem;
+    overflow: hidden;
+    background-image:
+        linear-gradient(90deg, #EE7202 0%, #FAB848 45%, #079BD9 100%),
+        radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(160deg, #0a1628 60%, #0d2040 100%);
+    background-size: 100% 3px, 22px 22px, 100% 100%;
+    background-repeat: no-repeat, repeat, no-repeat;
+    background-position: top, 0 0, 0 0;
+}
+.liv-hero::before {
+    content: "";
+    position: absolute; top: -30px; left: -30px;
+    width: 260px; height: 200px;
+    background: radial-gradient(ellipse at center, rgba(7,155,217,.22) 0%, transparent 70%);
+    pointer-events: none;
+}
+.liv-hero::after {
+    content: "";
+    position: absolute; bottom: -30px; right: 40px;
+    width: 220px; height: 180px;
+    background: radial-gradient(ellipse at center, rgba(250,184,72,.12) 0%, transparent 70%);
+    pointer-events: none;
+}
+.liv-hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+.liv-hero-icon {
+    width: 42px; height: 42px; border-radius: 11px;
+    background: rgba(7,155,217,.2);
+    border: 1px solid rgba(7,155,217,.35);
+    display: flex; align-items: center; justify-content: center;
+    color: #5ac8f5; font-size: 1.3rem; flex-shrink: 0;
+}
+.liv-hero-title {
+    font-size: 1.45rem; font-weight: 800; color: #fff;
+    margin: 0; letter-spacing: -.01em;
+}
+.liv-hero-sub {
+    font-size: .82rem; color: rgba(255,255,255,.5);
+    margin: .1rem 0 0;
+}
+.liv-hero-date-wrap {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 9px; padding: .38rem .75rem;
+}
+.liv-hero-date-icon { color: rgba(255,255,255,.5); font-size: .9rem; }
+.liv-hero-date-input {
+    -webkit-appearance: none; appearance: none;
+    background: transparent !important;
+    border: none !important; outline: none !important; box-shadow: none !important;
+    color: #fff !important; font-size: .85rem; font-weight: 600;
+    width: 100px; cursor: pointer;
+}
+.liv-btn-nav {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.8); font-size: .95rem; text-decoration: none;
+    transition: all .15s;
+}
+.liv-btn-nav:hover {
+    background: #079BD9; border-color: #079BD9; color: #fff;
+    box-shadow: 0 3px 10px rgba(7,155,217,.35);
+}
+.liv-btn-today {
+    display: inline-flex; align-items: center;
+    padding: 0 .85rem; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.8); font-size: .8rem; font-weight: 600;
+    text-decoration: none; transition: all .15s;
+}
+.liv-btn-today:hover,
+.liv-btn-today.active {
+    background: #079BD9; border-color: #079BD9; color: #fff;
+    box-shadow: 0 3px 10px rgba(7,155,217,.35);
+}
+
+/* KPI grid 4 colonnes */
+.liv-hero-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .75rem;
+    position: relative; z-index: 1;
+}
+.liv-kpi-hero-card {
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.1);
+    border-left: 4px solid rgba(255,255,255,.2);
+    border-radius: 12px;
+    padding: .85rem 1rem;
+    display: flex; align-items: center; gap: .85rem;
+    transition: background .15s;
+}
+.liv-kpi-hero-card:hover { background: rgba(255,255,255,.11); }
+.liv-kpi-hero-icon {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: rgba(255,255,255,.1);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,.7); font-size: 1rem; flex-shrink: 0;
+}
+.liv-kpi-hero-label {
+    font-size: .68rem; font-weight: 600; color: rgba(255,255,255,.48);
+    text-transform: uppercase; letter-spacing: .05em; margin-bottom: .15rem;
+}
+.liv-kpi-hero-value {
+    font-size: 1.7rem; font-weight: 800; color: #fff; line-height: 1;
+}
+.liv-kpi-hero-blue   { border-left-color: #079BD9; }
+.liv-kpi-hero-green  { border-left-color: #198754; }
+.liv-kpi-hero-gray   { border-left-color: #94a3b8; }
+.liv-kpi-hero-blue   .liv-kpi-hero-icon { background: rgba(7,155,217,.22);  color: #5ac8f5; }
+.liv-kpi-hero-green  .liv-kpi-hero-icon { background: rgba(25,135,84,.22);  color: #52c98b; }
+.liv-kpi-hero-value-blue  { color: #5ac8f5; }
+.liv-kpi-hero-value-green { color: #52c98b; }
+
+@media (max-width: 900px) {
+    .liv-hero-kpis { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+    .liv-hero        { padding: 1.1rem 1.1rem 1rem; }
+    .liv-hero-title  { font-size: 1.2rem; }
+    .liv-hero-kpis   { gap: .5rem; }
+    .liv-kpi-hero-value { font-size: 1.4rem; }
+}
+
 /* Badge "Aujourd'hui" */
 .badge-live {
     display: inline-flex; align-items: center;
@@ -137,8 +277,6 @@
 .liv-bar--good { background: linear-gradient(90deg, #079BD9, #38bdf8); }
 .liv-bar--mid  { background: linear-gradient(90deg, #EE7202, #FAB848); }
 .liv-bar--low  { background: linear-gradient(90deg, #d97706, #fbbf24); }
-.liv-progress-pct { font-size: .68rem; color: #8aa8c0; text-align: right; margin-top: .2rem; }
-
 /* KPI row */
 .liv-kpi-row {
     display: grid; grid-template-columns: 1fr 1fr 1fr;
@@ -162,12 +300,6 @@
 /* Dernière activité */
 .liv-last-activity {
     font-size: .74rem; color: #7a9ab0;
-}
-
-/* Aucun programme */
-.liv-no-prog {
-    font-size: .8rem; color: #94aabf; font-style: italic;
-    text-align: center; padding: .75rem 0;
 }
 
 /* Boutons d'action */

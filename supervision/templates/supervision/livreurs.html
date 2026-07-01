@@ -9,26 +9,73 @@
 
 {% block content %}
 
-<!-- En-tête -->
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-    <div class="d-flex align-items-center gap-2">
-        <span class="pg-icon"><i class="bi bi-people"></i></span>
-        <div>
-            <h1 class="page-title mb-0">Tableau de bord livreurs</h1>
-            <p class="page-sub mb-0">
-                <i class="bi bi-calendar3 me-1"></i>{{ date_filter|date:"l j F Y"|capfirst }}
-                {% if is_today %}<span class="badge-live ms-2">Aujourd'hui</span>{% endif %}
-            </p>
+<!-- Hero navy -->
+<div class="liv-hero mb-4">
+
+    <!-- Titre + navigation date -->
+    <div class="liv-hero-top">
+        <div class="d-flex align-items-center gap-3">
+            <span class="liv-hero-icon"><i class="bi bi-people-fill"></i></span>
+            <div>
+                <h1 class="liv-hero-title">Livreurs</h1>
+                <p class="liv-hero-sub">
+                    {{ date_filter|date:"l j F Y"|capfirst }}
+                    {% if is_today %}&nbsp;·&nbsp;<span class="badge-live">Aujourd'hui</span>{% endif %}
+                </p>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="liv-hero-date-wrap">
+                <i class="bi bi-calendar3 liv-hero-date-icon"></i>
+                <input type="text" id="liv-date-fp"
+                       value="{{ date_filter|date:'Y-m-d' }}"
+                       class="liv-hero-date-input" readonly>
+            </div>
+            <a href="?date={{ date_prev|date:'Y-m-d' }}" class="liv-btn-nav" title="Jour précédent">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+            <a href="?date={{ date_today|date:'Y-m-d' }}"
+               class="liv-btn-today {% if is_today %}active{% endif %}">
+                Aujourd'hui
+            </a>
+            <a href="?date={{ date_next|date:'Y-m-d' }}" class="liv-btn-nav" title="Jour suivant">
+                <i class="bi bi-chevron-right"></i>
+            </a>
         </div>
     </div>
-    <!-- Filtre date -->
-    <div class="filter-card py-2 px-3 d-flex align-items-center gap-2">
-        <label class="filter-label mb-0">Date</label>
-        <input type="text" id="liv-date-fp"
-               value="{{ date_filter|date:'Y-m-d' }}"
-               class="form-control form-control-sm"
-               style="width:auto;">
+
+    <!-- KPIs -->
+    <div class="liv-hero-kpis">
+        <div class="liv-kpi-hero-card">
+            <div class="liv-kpi-hero-icon"><i class="bi bi-people-fill"></i></div>
+            <div>
+                <div class="liv-kpi-hero-label">Livreurs</div>
+                <div class="liv-kpi-hero-value">{{ nb_total }}</div>
+            </div>
+        </div>
+        <div class="liv-kpi-hero-card liv-kpi-hero-blue">
+            <div class="liv-kpi-hero-icon"><i class="bi bi-play-circle-fill"></i></div>
+            <div>
+                <div class="liv-kpi-hero-label">En cours</div>
+                <div class="liv-kpi-hero-value liv-kpi-hero-value-blue">{{ nb_en_cours }}</div>
+            </div>
+        </div>
+        <div class="liv-kpi-hero-card liv-kpi-hero-green">
+            <div class="liv-kpi-hero-icon"><i class="bi bi-check-circle-fill"></i></div>
+            <div>
+                <div class="liv-kpi-hero-label">Clôturés</div>
+                <div class="liv-kpi-hero-value liv-kpi-hero-value-green">{{ nb_cloture }}</div>
+            </div>
+        </div>
+        <div class="liv-kpi-hero-card liv-kpi-hero-gray">
+            <div class="liv-kpi-hero-icon"><i class="bi bi-calendar-x"></i></div>
+            <div>
+                <div class="liv-kpi-hero-label">Sans programme</div>
+                <div class="liv-kpi-hero-value">{{ nb_sans_prog }}</div>
+            </div>
+        </div>
     </div>
+
 </div>
 
 {% if not fiches %}
@@ -108,7 +155,6 @@
                 style="width:{{ fiche.pct }}%;">
             </div>
         </div>
-        <div class="liv-progress-pct">{{ fiche.pct }} %</div>
     </div>
 
     <!-- KPI -->
@@ -155,11 +201,6 @@
         </a>
     </div>
 
-    {% else %}
-    <!-- Aucun programme -->
-    <div class="liv-no-prog">
-        <i class="bi bi-calendar-x me-2"></i>Aucun programme pour cette journée
-    </div>
     {% endif %}
 
 </div>
@@ -187,6 +228,5 @@ flatpickr("#liv-date-fp", {
         window.location.href = url.toString();
     }
 });
-
 </script>
 {% endblock %}

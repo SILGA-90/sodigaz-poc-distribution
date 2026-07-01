@@ -36,9 +36,14 @@ function makePlvIcon(color) {
 }
 const blueIcon  = makePlvIcon('#079BD9');
 const greenIcon = makePlvIcon('#198754');
+const opIcon    = L.divIcon({
+    className: '',
+    html: '<div style="background:#EE7202;width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);"></div>',
+    iconSize: [14, 14], iconAnchor: [7, 7],
+});
 
-// ─── Couleurs par livreur ─────────────────────────────────────────────────────
-const PALETTE = ['#EE7202', '#dc3545', '#6f42c1', '#0dcaf0', '#ffc107'];
+// ─── Couleurs par livreur (parcours uniquement) ───────────────────────────────
+const PALETTE = ['#079BD9', '#6f42c1', '#20c997', '#ffc107', '#fd7e14'];
 const livreurColorMap = {};
 let paletteIdx = 0;
 
@@ -48,14 +53,6 @@ function getLivreurColor(code) {
         paletteIdx++;
     }
     return livreurColorMap[code];
-}
-
-function makeOpIcon(color) {
-    return L.divIcon({
-        className: '',
-        html: `<div style="background:${color};width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);"></div>`,
-        iconSize: [14, 14], iconAnchor: [7, 7],
-    });
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -144,16 +141,15 @@ function refreshCarte() {
             data.operations.forEach(op => {
                 const key   = op.uuid;
                 seenOp.add(key);
-                const color = getLivreurColor(op.livreur);
                 const label = op.type === 'COLLECTE' ? 'Collecte' : 'Restitution';
-                const popup = `<strong style="color:${color}">${esc(label)}</strong>`
+                const popup = `<strong style="color:#EE7202;">${esc(label)}</strong>`
                     + `<br><span style="font-size:.82em;">${esc(op.livreur)} · ${esc(op.plv)}</span>`
                     + `<br><a href="${opUrl(op.uuid)}"
                              style="font-size:.8em;color:#079BD9;font-weight:600;">
                            Voir le détail →</a>`;
                 if (!opMarkers.has(key)) {
                     opMarkers.set(key,
-                        L.marker([op.latitude, op.longitude], { icon: makeOpIcon(color) })
+                        L.marker([op.latitude, op.longitude], { icon: opIcon })
                             .bindPopup(popup).addTo(map)
                     );
                 }

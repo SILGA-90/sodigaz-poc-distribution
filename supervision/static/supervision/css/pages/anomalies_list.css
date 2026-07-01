@@ -2,6 +2,131 @@
    ANOMALIES LIST — SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
+/* ── Hero navy ────────────────────────────────────────── */
+.anom-hero {
+    position: relative;
+    background: #0a1628;
+    border-radius: 18px;
+    padding: 1.4rem 1.75rem 1.35rem;
+    overflow: hidden;
+    background-image:
+        linear-gradient(90deg, #EE7202 0%, #FAB848 45%, #079BD9 100%),
+        radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(160deg, #0a1628 60%, #0d2040 100%);
+    background-size: 100% 3px, 22px 22px, 100% 100%;
+    background-repeat: no-repeat, repeat, no-repeat;
+    background-position: top, 0 0, 0 0;
+}
+/* Glow rouge en haut à gauche (cohérent avec la thématique danger) */
+.anom-hero::before {
+    content: "";
+    position: absolute; top: -30px; left: -30px;
+    width: 260px; height: 200px;
+    background: radial-gradient(ellipse at center, rgba(220,53,69,.18) 0%, transparent 70%);
+    pointer-events: none;
+}
+/* Glow ambre en bas à droite */
+.anom-hero::after {
+    content: "";
+    position: absolute; bottom: -30px; right: 40px;
+    width: 220px; height: 180px;
+    background: radial-gradient(ellipse at center, rgba(250,184,72,.12) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.anom-hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+.anom-hero-icon {
+    width: 42px; height: 42px; border-radius: 11px;
+    background: rgba(220,53,69,.22);
+    border: 1px solid rgba(220,53,69,.4);
+    display: flex; align-items: center; justify-content: center;
+    color: #f87171; font-size: 1.3rem; flex-shrink: 0;
+}
+.anom-hero-title {
+    font-size: 1.45rem; font-weight: 800; color: #fff;
+    margin: 0; letter-spacing: -.01em;
+}
+.anom-hero-sub {
+    font-size: .82rem; color: rgba(255,255,255,.5);
+    margin: .1rem 0 0;
+}
+
+/* Badge urgentes dans l'en-tête hero */
+.anom-hero-urgentes {
+    display: inline-flex; align-items: center; gap: .45rem;
+    padding: .45rem .9rem; border-radius: 10px;
+    background: rgba(220,53,69,.25);
+    border: 1px solid rgba(220,53,69,.45);
+    color: #f87171; font-size: .82rem; font-weight: 700;
+    animation: urgente-hero-pulse 2s ease-in-out infinite;
+}
+@keyframes urgente-hero-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220,53,69,0); }
+    50%       { box-shadow: 0 0 0 5px rgba(220,53,69,.2); }
+}
+
+/* KPI grid — 3 colonnes fixes (Élevées · Moyennes · Faibles) */
+.anom-hero-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .75rem;
+    position: relative; z-index: 1;
+}
+.anom-kpi-card {
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.1);
+    border-left: 4px solid rgba(255,255,255,.2);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: flex; align-items: center; gap: 1rem;
+    transition: background .15s;
+}
+.anom-kpi-card:hover { background: rgba(255,255,255,.11); }
+.anom-kpi-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(255,255,255,.1);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,.7); font-size: 1.1rem; flex-shrink: 0;
+}
+.anom-kpi-label {
+    font-size: .7rem; font-weight: 600; color: rgba(255,255,255,.48);
+    text-transform: uppercase; letter-spacing: .05em; margin-bottom: .2rem;
+}
+.anom-kpi-value {
+    font-size: 2rem; font-weight: 800; color: #fff; line-height: 1;
+}
+
+/* Variantes colorées */
+.anom-kpi-red    { border-left-color: #dc3545; }
+.anom-kpi-orange { border-left-color: #EE7202; }
+.anom-kpi-green  { border-left-color: #198754; }
+
+.anom-kpi-red    .anom-kpi-icon { background: rgba(220,53,69,.22);  color: #f87171; }
+.anom-kpi-orange .anom-kpi-icon { background: rgba(238,114,2,.22);  color: #f4a44e; }
+.anom-kpi-green  .anom-kpi-icon { background: rgba(25,135,84,.22);  color: #52c98b; }
+
+.anom-kpi-value-red    { color: #f87171; }
+.anom-kpi-value-orange { color: #f4a44e; }
+.anom-kpi-value-green  { color: #52c98b; }
+
+/* Responsive */
+@media (max-width: 640px) {
+    .anom-hero       { padding: 1.1rem 1.1rem 1rem; }
+    .anom-hero-title { font-size: 1.2rem; }
+    .anom-hero-kpis  { grid-template-columns: repeat(3, 1fr); gap: .4rem; }
+    .anom-kpi-card   { padding: .7rem .65rem; gap: .6rem; }
+    .anom-kpi-icon   { width: 32px; height: 32px; font-size: .9rem; }
+    .anom-kpi-value  { font-size: 1.5rem; }
+    .anom-kpi-label  { font-size: .62rem; }
+}
+
 /* Liste */
 .anom-list { display: flex; flex-direction: column; gap: 1rem; }
 

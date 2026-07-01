@@ -7,72 +7,80 @@
 
 {% block content %}
 
-<!-- En-tête -->
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-    <div class="d-flex align-items-center gap-2">
-        <span class="pg-icon"><i class="bi bi-graph-up-arrow"></i></span>
-        <div>
-            <h1 class="page-title mb-0">Statistiques &amp; Tendances</h1>
-            <p class="page-sub mb-0">
-                <i class="bi bi-calendar-range me-1"></i>
-                {{ start_date|date:"j F" }} : {{ end_date|date:"j F Y" }}
-            </p>
-        </div>
-    </div>
-    <!-- Sélecteur de période -->
-    <div class="stat-period-toggle">
-        <a href="?periode=aujourd_hui" class="stat-period-btn {% if periode == 'aujourd_hui' %}active{% endif %}">Aujourd'hui</a>
-        <a href="?periode=7"           class="stat-period-btn {% if periode == '7'           %}active{% endif %}">7 jours</a>
-        <a href="?periode=mois"        class="stat-period-btn {% if periode == 'mois'        %}active{% endif %}">Ce mois</a>
-        <a href="?periode=90"          class="stat-period-btn {% if periode == '90'          %}active{% endif %}">90 jours</a>
-    </div>
-</div>
+<!-- Hero Statistiques -->
+<div class="stat-hero">
 
-<!-- KPI résumé -->
-<div class="stat-kpi-row mb-4">
+    <!-- Ligne supérieure : identité + toggle période -->
+    <div class="stat-hero-top">
 
-    <div class="stat-kpi-card">
-        <div class="stat-kpi-icon" style="--kc:#079BD9;">
-            <i class="bi bi-cash-stack"></i>
+        <div class="stat-hero-id">
+            <span class="stat-hero-icon"><i class="bi bi-graph-up-arrow"></i></span>
+            <div>
+                <h1 class="stat-hero-title">Statistiques &amp; Tendances</h1>
+                <p class="stat-hero-sub">
+                    <i class="bi bi-calendar-range me-1"></i>
+                    {{ start_date|date:"j F" }} – {{ end_date|date:"j F Y" }}
+                </p>
+            </div>
         </div>
-        <div>
-            <div class="stat-kpi-val">{{ total_montant|floatformat:0 }}</div>
-            <div class="stat-kpi-label">FCFA encaissés</div>
-            <div class="stat-kpi-sub">Moy. {{ moy_journaliere|floatformat:0 }} / jour</div>
+
+        <!-- Sélecteur de période -->
+        <div class="stat-hero-period">
+            <a href="?periode=aujourd_hui" class="stat-hero-period-btn {% if periode == 'aujourd_hui' %}active{% endif %}">Aujourd'hui</a>
+            <a href="?periode=7"           class="stat-hero-period-btn {% if periode == '7'           %}active{% endif %}">7 jours</a>
+            <a href="?periode=mois"        class="stat-hero-period-btn {% if periode == 'mois'        %}active{% endif %}">Ce mois</a>
+            <a href="?periode=90"          class="stat-hero-period-btn {% if periode == '90'          %}active{% endif %}">90 jours</a>
         </div>
+
     </div>
 
-    <div class="stat-kpi-card">
-        <div class="stat-kpi-icon" style="--kc:#EE7202;">
-            <i class="bi bi-lightning-charge"></i>
-        </div>
-        <div>
-            <div class="stat-kpi-val">{{ total_ops }}</div>
-            <div class="stat-kpi-label">Opérations</div>
-            <div class="stat-kpi-sub">Sur {{ periode }} jours</div>
-        </div>
-    </div>
+    <!-- KPI résumé (dark) -->
+    <div class="stat-hero-kpis">
 
-    <div class="stat-kpi-card">
-        <div class="stat-kpi-icon" style="--kc:#198754;">
-            <i class="bi bi-check2-circle"></i>
+        <div class="stat-hero-kpi-card">
+            <div class="stat-hero-kpi-icon c-blue">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+            <div>
+                <div class="stat-hero-kpi-val">{{ total_montant|floatformat:0 }}</div>
+                <div class="stat-hero-kpi-label">FCFA encaissés</div>
+                <div class="stat-hero-kpi-sub">Moy. {{ moy_journaliere|floatformat:0 }} / jour</div>
+            </div>
         </div>
-        <div>
-            <div class="stat-kpi-val">{{ taux_moyen }}%</div>
-            <div class="stat-kpi-label">Couverture moy.</div>
-            <div class="stat-kpi-sub">Étapes visitées / prévues</div>
-        </div>
-    </div>
 
-    <div class="stat-kpi-card">
-        <div class="stat-kpi-icon" style="--kc:#dc3545;">
-            <i class="bi bi-exclamation-triangle"></i>
+        <div class="stat-hero-kpi-card">
+            <div class="stat-hero-kpi-icon c-orange">
+                <i class="bi bi-lightning-charge"></i>
+            </div>
+            <div>
+                <div class="stat-hero-kpi-val">{{ total_ops }}</div>
+                <div class="stat-hero-kpi-label">Opérations</div>
+                <div class="stat-hero-kpi-sub">Sur la période</div>
+            </div>
         </div>
-        <div>
-            <div class="stat-kpi-val">{{ total_anom }}</div>
-            <div class="stat-kpi-label">Anomalies</div>
-            <div class="stat-kpi-sub">{{ nb_programmes }} programme{{ nb_programmes|pluralize }}</div>
+
+        <div class="stat-hero-kpi-card">
+            <div class="stat-hero-kpi-icon c-green">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <div>
+                <div class="stat-hero-kpi-val">{{ taux_moyen }}%</div>
+                <div class="stat-hero-kpi-label">Couverture moy.</div>
+                <div class="stat-hero-kpi-sub">Étapes visitées / prévues</div>
+            </div>
         </div>
+
+        <div class="stat-hero-kpi-card">
+            <div class="stat-hero-kpi-icon c-red">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <div>
+                <div class="stat-hero-kpi-val">{{ total_anom }}</div>
+                <div class="stat-hero-kpi-label">Anomalies</div>
+                <div class="stat-hero-kpi-sub">{{ nb_programmes }} programme{{ nb_programmes|pluralize }}</div>
+            </div>
+        </div>
+
     </div>
 
 </div>

@@ -2,40 +2,99 @@
    OPÉRATION DETAIL — SODIGAZ
    ══════════════════════════════════════════════════════════ */
 
-/* En-tête */
-.op-header {
+/* ── Hero navy ──────────────────────────────────────────── */
+.op-detail-hero {
+    position: relative;
+    border-radius: 16px;
+    padding: 1.5rem 1.75rem 1.4rem;
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+    background-image:
+        linear-gradient(90deg, #EE7202 0%, #FAB848 45%, #079BD9 100%),
+        radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(160deg, #0a1628 60%, #0d2040 100%);
+    background-size: 100% 3px, 22px 22px, 100% 100%;
+    background-repeat: no-repeat, repeat, no-repeat;
+    background-position: top, 0 0, 0 0;
+}
+/* Glow bleu (Collecte, défaut) */
+.op-detail-hero::before {
+    content: "";
+    position: absolute; top: -30px; left: -30px;
+    width: 260px; height: 180px;
+    background: radial-gradient(ellipse, rgba(7,155,217,.22) 0%, transparent 70%);
+    pointer-events: none;
+}
+/* Glow vert (Restitution) */
+.op-detail-hero.hero-restit::before {
+    background: radial-gradient(ellipse, rgba(25,135,84,.22) 0%, transparent 70%);
+}
+.op-detail-hero::after {
+    content: "";
+    position: absolute; bottom: -30px; right: -20px;
+    width: 200px; height: 140px;
+    background: radial-gradient(ellipse, rgba(250,184,72,.14) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* ── Ligne 1 : identité + montant ───────────────────────── */
+.odh-top {
     display: flex; justify-content: space-between; align-items: flex-start;
     flex-wrap: wrap; gap: 1rem;
-    background: #FFFFFF; border-radius: 14px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.07);
-    border-top:    1px solid #DDE2E6;
-    border-left:   5px solid #079BD9;
-    border-bottom: 1px solid #DDE2E6;
-    border-right:  1px solid #DDE2E6;
-    padding: 1.4rem 1.5rem;
-    margin-bottom: 1.25rem;
+    position: relative; z-index: 1;
 }
-.op-header-RESTITUTION { border-left-color: #198754; }
-.op-header-left { display: flex; align-items: flex-start; gap: 1rem; }
-.op-header-RESTITUTION .pg-icon { background: rgba(25,135,84,.14); color: #198754; }
 
-/* Sous-type chip */
+.odh-id { flex: 1 1 auto; min-width: 0; }
+
+.odh-date {
+    font-size: .78rem; color: rgba(255,255,255,.5);
+    margin: 0;
+}
+
+/* Montant (côté droit) */
+.op-detail-hero .op-amount-block { flex-shrink: 0; }
+.op-detail-hero .op-amount-value { color: #fff; }
+.op-detail-hero .op-amount-devise { color: rgba(255,255,255,.4); }
+
+.op-amount-block {}
+.op-amount-value {
+    font-size: 2.4rem; font-weight: 800; color: #0a1628; line-height: 1;
+    letter-spacing: -.03em;
+}
+.op-amount-devise { font-size: .75rem; font-weight: 700; color: #8aa8c0; }
+
+/* Ligne montant + FCFA + pill + mode de paiement */
+.odh-amount-row {
+    display: flex; align-items: baseline; gap: .5rem;
+    flex-wrap: wrap; justify-content: flex-end;
+}
+
+/* Mode de paiement inline */
+.odh-payment-sub {
+    font-size: .75rem; color: rgba(255,255,255,.5); font-weight: 500;
+}
+
+/* Signataire sous la ligne montant */
+.odh-sig-sub {
+    font-size: .72rem; color: rgba(255,255,255,.4);
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: .25rem; margin-top: .3rem;
+}
+
+/* ── Sous-type chip ─────────────────────────────────────── */
 .sous-type-chip {
     font-size: .7rem; font-weight: 700;
     padding: .2rem .6rem; border-radius: 6px;
     background: #E8EEF2; border: 1px solid #DDE2E6;
     color: #5a7080;
 }
-
-/* Bloc montant */
-.op-amount-block { text-align: right; }
-.op-amount-value {
-    font-size: 2.4rem; font-weight: 800; color: #0a1628; line-height: 1;
-    letter-spacing: -.03em;
+.op-detail-hero .sous-type-chip {
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.7);
 }
-.op-amount-devise { font-size: .75rem; font-weight: 700; color: #8aa8c0; margin-top: .15rem; }
 
-/* Pill encaissement */
+/* ── Pill encaissement ──────────────────────────────────── */
 .enc-pill {
     display: inline-flex; align-items: center; gap: .35rem;
     font-size: .7rem; font-weight: 700;
@@ -46,7 +105,53 @@
 .enc-pill-orange { background: rgba(238,114,2,.12);  color: #c45a00; }
 .enc-pill-gray   { background: rgba(74,104,128,.12); color: #6a8898; }
 
-/* Code X3 */
+/* ── Grille 3 colonnes : Livreur · PLV · GPS ────────────── */
+.odh-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .75rem;
+    margin-top: 1rem;
+    position: relative; z-index: 1;
+}
+
+/* Dark overrides pour les info-card dans le hero */
+.odh-meta-grid .info-card {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.1);
+    box-shadow: none;
+    padding: .85rem 1rem;
+}
+.odh-meta-grid .info-label { color: rgba(255,255,255,.45); }
+.odh-meta-grid .info-value { color: #fff; }
+.odh-meta-grid .info-sub   { color: rgba(255,255,255,.4); }
+.odh-meta-grid .info-gps   { color: rgba(255,255,255,.8); font-size: .82rem; }
+.odh-meta-grid .info-link  { color: #5ac8f5; }
+.odh-meta-grid .info-link:hover { color: #fff; }
+.odh-meta-grid .info-avatar {
+    background: rgba(7,155,217,.2);
+    border: 1px solid rgba(7,155,217,.3);
+    color: #5ac8f5;
+    flex-shrink: 0;
+}
+.odh-meta-grid .info-icon-box {
+    background: rgba(7,155,217,.2);
+    border: 1px solid rgba(7,155,217,.3);
+    color: #5ac8f5;
+    flex-shrink: 0;
+}
+.odh-meta-grid .info-icon-muted {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.1);
+    color: rgba(255,255,255,.35);
+}
+.odh-meta-grid .gps-prec { color: rgba(255,255,255,.4); }
+.odh-meta-grid .plv-code-chip {
+    background: rgba(7,155,217,.2);
+    border: 1px solid rgba(7,155,217,.3);
+    color: #5ac8f5;
+}
+
+/* ── Code X3 ─────────────────────────────────────────────── */
 .code-x3 {
     font-family: 'SFMono-Regular', Consolas, monospace;
     font-size: .76rem; color: #5a7080;
@@ -54,7 +159,7 @@
     padding: .12rem .45rem; border-radius: 5px;
 }
 
-/* Signatures */
+/* ── Signatures ─────────────────────────────────────────── */
 .sig-row   { display: flex; flex-wrap: wrap; gap: 1.5rem; }
 .sig-block { display: flex; flex-direction: column; gap: .5rem; }
 .sig-label {
@@ -70,14 +175,17 @@
 }
 .sig-box svg { max-width: 100%; max-height: 100%; }
 
-/* Commentaire */
+/* ── Commentaire ─────────────────────────────────────────── */
 .section-body p { color: #3a5060; font-size: .9rem; line-height: 1.65; }
 
-/* Responsive */
-@media (max-width: 640px) {
-    .op-header       { flex-direction: column; }
-    .op-amount-block { text-align: left; }
-    .info-row        { flex-direction: column; }
-    .sig-row         { flex-direction: column; }
-    .sig-box         { width: 100%; }
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+    .odh-meta-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 575.98px) {
+    .odh-top             { flex-direction: column; }
+    .odh-amount-row      { justify-content: flex-start; }
+    .odh-sig-sub         { justify-content: flex-start; }
+    .sig-row             { flex-direction: column; }
+    .sig-box             { width: 100%; }
 }

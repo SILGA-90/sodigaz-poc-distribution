@@ -77,8 +77,8 @@ class SousTypeCollecte(models.TextChoices):
     BCR (recharge) et BCT (transport) ont des traitements comptables
     différents dans X3. Le sous-type est obligatoire pour les COLLECTE.
     """
-    BCR = "BCR", "Bon de Collecte Recharge"
-    BCT = "BCT", "Bon de Collecte Transport"
+    BCR = "BCR", "Bon de Commande Recharge"
+    BCT = "BCT", "Bon de Commande Transport"
 
 
 class ModePaiement(models.TextChoices):

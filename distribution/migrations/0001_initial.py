@@ -132,7 +132,7 @@ class Migration(migrations.Migration):
                 ('is_deleted', models.BooleanField(default=False)),
                 ('uuid', models.UUIDField(editable=False, help_text='Genere cote mobile', unique=True)),
                 ('type_operation', models.CharField(choices=[('COLLECTE', 'Collecte'), ('RESTITUTION', 'Restitution'), ('LIVRAISON_DIRECTE', 'Livraison directe'), ('CONSIGNE', 'Consigne')], max_length=30)),
-                ('sous_type', models.CharField(blank=True, choices=[('BCR', 'Bon de Collecte Recharge'), ('BCT', 'Bon de Collecte Transport')], max_length=10, null=True)),
+                ('sous_type', models.CharField(blank=True, choices=[('BCR', 'Bon de Commande Recharge'), ('BCT', 'Bon de Commande Transport')], max_length=10, null=True)),
                 ('date_heure', models.DateTimeField()),
                 ('localisation_saisie', django.contrib.gis.db.models.fields.PointField(blank=True, geography=True, null=True, srid=4326)),
                 ('mode_paiement', models.CharField(blank=True, choices=[('ESPECES', 'Especes'), ('MOBILE_MONEY', 'Mobile Money'), ('CHEQUE', 'Cheque'), ('VIREMENT', 'Virement'), ('CREDIT', 'Credit')], max_length=20, null=True)),

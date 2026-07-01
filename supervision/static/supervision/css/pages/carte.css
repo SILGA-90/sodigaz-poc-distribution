@@ -11,9 +11,99 @@
     .carte-layout { height: calc(100vh - 2rem - 54px); }
 }
 
+/* ── Barre de contrôle compacte (navy, une ligne) ─────── */
+.carte-topbar {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 100;           /* crée un contexte de superposition au-dessus de la carte */
+    background: #0a1628;
+    border-radius: 14px;
+    padding: .7rem 1.25rem;
+    margin-bottom: .75rem;
+    display: flex; align-items: center;
+    flex-wrap: wrap; gap: .75rem;
+    background-image:
+        linear-gradient(90deg, #EE7202 0%, #FAB848 45%, #079BD9 100%),
+        linear-gradient(160deg, #0a1628 60%, #0d2040 100%);
+    background-size: 100% 3px, 100% 100%;
+    background-repeat: no-repeat, no-repeat;
+    background-position: top, 0 0;
+}
+/* Glow bleu discret (z-index négatif : reste sous le contenu, pas besoin d'overflow:hidden) */
+.carte-topbar::before {
+    content: "";
+    position: absolute; top: -20px; left: -20px;
+    width: 180px; height: 120px;
+    background: radial-gradient(ellipse, rgba(7,155,217,.18) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+}
+
+/* Tous les enfants directs au-dessus du glow ::before */
+.carte-topbar > * { position: relative; z-index: 1; }
+
+/* Menu livreur : strategy "fixed" via JS → position:fixed ; corriger min-width:100%
+   (avec position:fixed, 100% = viewport entier → étirement plein écran) */
+.carte-topbar .filter-dropdown-menu {
+    min-width: max-content;
+    z-index: 1100;
+}
+
+/* Identité : icône + titre */
+.carte-topbar-id {
+    display: flex; align-items: center; gap: .65rem; flex-shrink: 0;
+}
+.carte-topbar-icon {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: rgba(7,155,217,.2);
+    border: 1px solid rgba(7,155,217,.35);
+    display: flex; align-items: center; justify-content: center;
+    color: #5ac8f5; font-size: 1rem; flex-shrink: 0;
+}
+.carte-topbar-title {
+    font-size: 1rem; font-weight: 800; color: #fff;
+    margin: 0; white-space: nowrap;
+}
+
+/* Indicateur live (dans la barre) */
+.carte-live-label { font-size: .72rem; color: rgba(255,255,255,.5); }
+.carte-live-sep   { font-size: .72rem; color: rgba(255,255,255,.25); }
+
+/* Séparateur vertical dans la barre */
+.carte-topbar-divider {
+    width: 1px; height: 22px;
+    background: rgba(255,255,255,.12);
+    flex-shrink: 0;
+}
+
+/* Formulaire de filtres dans la barre */
+.carte-topbar-filters {
+    display: flex; align-items: center;
+    flex-wrap: wrap; gap: .5rem; flex: 1;
+}
+
+/* Inputs dans la barre : fond sombre */
+.carte-topbar .form-control,
+.carte-topbar .filter-dropdown-btn {
+    background: rgba(255,255,255,.08) !important;
+    border: 1px solid rgba(255,255,255,.15) !important;
+    color: #fff !important;
+    font-size: .8rem;
+}
+.carte-topbar .form-control::placeholder { color: rgba(255,255,255,.35); }
+.carte-topbar .filter-dropdown-label,
+.carte-topbar .filter-dropdown-caret { color: rgba(255,255,255,.8) !important; }
+.carte-topbar .filter-dropdown-btn:focus { box-shadow: none; }
+
+/* Bouton Filtrer dans la barre */
+.carte-topbar .btn-primary {
+    background: #079BD9; border-color: #079BD9;
+    font-size: .78rem; padding: .32rem .85rem;
+}
+.carte-topbar .btn-primary:hover {
+    background: #0670A0; border-color: #0670A0;
+}
+
 /* Live indicator */
-.carte-live-label { font-size: .76rem; color: #8aa8c0; }
-.carte-live-sep   { font-size: .76rem; color: #b0c4d4; }
 
 /* Bouton parcours */
 .btn-parcours {
