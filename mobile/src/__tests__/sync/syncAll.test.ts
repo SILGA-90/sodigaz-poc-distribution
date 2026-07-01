@@ -56,8 +56,8 @@ const mockApiPost  = (apiClient.post)      as jest.Mock;
 
 const PULL_OK  = { success: true,  timestamp: 1000, counts: {} };
 const PULL_ERR = { success: false, timestamp: 0,    counts: {}, error: 'timeout' };
-const PUSH_OK  = { success: true,  pushed: { operation: 2, ligne_operation: 2, anomalie: 0 } };
-const PUSH_ERR = { success: false, pushed: { operation: 0, ligne_operation: 0, anomalie: 0 }, error: 'timeout' };
+const PUSH_OK  = { success: true,  pushed: { operation: 2, ligne_operation: 2, anomalie: 0 }, photosEchouees: 0 };
+const PUSH_ERR = { success: false, pushed: { operation: 0, ligne_operation: 0, anomalie: 0 }, photosEchouees: 0, error: 'timeout' };
 
 beforeEach(() => {
   jest.clearAllMocks();

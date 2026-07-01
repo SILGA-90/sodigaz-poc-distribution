@@ -22,6 +22,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   StyleSheet,
   Text,
@@ -60,9 +61,14 @@ function statutInfo(statut: string): { color: string; bg: string; border: string
 export default function HistoriqueScreen({ navigation }: Props): React.ReactElement {
   const { numColumns } = useLayout();
   const [programmes, setProgrammes] = useState<ProgrammeAvecProgression[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(false);
 
   useEffect(() => {
-    getTousLesProgrammes().then(setProgrammes);
+    getTousLesProgrammes()
+      .then(setProgrammes)
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
   }, []);
 
   const renderItem = useCallback(({ item }: { item: ProgrammeAvecProgression }): React.ReactElement => {
@@ -132,13 +138,27 @@ export default function HistoriqueScreen({ navigation }: Props): React.ReactElem
         style={styles.flatList}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <View style={styles.emptyIconWrap}>
-              <Ionicons name="calendar-outline" size={32} color={Colors.brandBlue} />
+          loading ? (
+            <View style={styles.empty}>
+              <ActivityIndicator size="large" color={Colors.brandBlue} />
             </View>
-            <Text style={styles.emptyTitle}>Aucun programme clôturé</Text>
-            <Text style={styles.emptyText}>Les programmes terminés apparaissent ici une fois clôturés.</Text>
-          </View>
+          ) : error ? (
+            <View style={styles.empty}>
+              <View style={styles.emptyIconWrap}>
+                <Ionicons name="alert-circle-outline" size={32} color={Colors.danger} />
+              </View>
+              <Text style={styles.emptyTitle}>Erreur de chargement</Text>
+              <Text style={styles.emptyText}>Impossible de lire l'historique local.</Text>
+            </View>
+          ) : (
+            <View style={styles.empty}>
+              <View style={styles.emptyIconWrap}>
+                <Ionicons name="calendar-outline" size={32} color={Colors.brandBlue} />
+              </View>
+              <Text style={styles.emptyTitle}>Aucun programme clôturé</Text>
+              <Text style={styles.emptyText}>Les programmes terminés apparaissent ici une fois clôturés.</Text>
+            </View>
+          )
         }
       />
     </View>

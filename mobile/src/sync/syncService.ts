@@ -50,14 +50,14 @@ export type { PullResult, PushResult };
  * On ne purge QUE si pull ET push ont réussi pour ne pas supprimer des
  * données PENDING qui n'auraient pas encore été envoyées.
  */
-export async function syncAll(): Promise<{ pull: PullResult; push: PushResult }> {
-  await pushClotures();
+export async function syncAll(): Promise<{ pull: PullResult; push: PushResult; clotureEchouee: boolean }> {
+  const clotureEchouee = !(await pushClotures());
   const pullResult = await pull();
   const pushResult = await push();
   if (pullResult.success && pushResult.success) {
     purgerDonneesAnciennes(90).catch(() => {});
   }
-  return { pull: pullResult, push: pushResult };
+  return { pull: pullResult, push: pushResult, clotureEchouee };
 }
 
 /**
@@ -72,13 +72,15 @@ export async function syncAll(): Promise<{ pull: PullResult; push: PushResult }>
  * En cas d'échec réseau, la clôture reste dans la file
  * et sera retentée au prochain syncAll(). Pas de blocage du push principal.
  */
-async function pushClotures(): Promise<void> {
+async function pushClotures(): Promise<boolean> {
   const uuids = await getCloturesPending();
-  if (uuids.length === 0) return;
+  if (uuids.length === 0) return true;
   try {
     await apiClient.post('/api/sync/programmes/cloturer/', { uuids });
     await clearCloturesPending(uuids);
+    return true;
   } catch (e) {
     logger.warn('Push cloture echoue :', e);
+    return false;
   }
 }

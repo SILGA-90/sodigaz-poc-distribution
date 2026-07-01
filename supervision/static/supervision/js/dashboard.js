@@ -20,7 +20,7 @@ const liveStatus = document.getElementById('live-status');
 // =============================================================================
 function refreshBilanProduits() {
     return fetch(BILAN_URL, { credentials: 'same-origin' })
-        .then(r => r.json())
+        .then(checkSessionOrJson)
         .then(d => {
             const rowsC = document.getElementById('bilanCollecteTbody');
             const rowsR = document.getElementById('bilanRestitutionTbody');
@@ -138,7 +138,7 @@ function redessinerParcours(operations) {
 
 function refreshCarte() {
     return fetch(CARTE_URL, { credentials: 'same-origin' })
-        .then(r => r.json())
+        .then(checkSessionOrJson)
         .then(data => {
             const seenPlvIds = new Set();
             data.plvs.forEach(plv => {
@@ -188,7 +188,7 @@ function refreshCarte() {
 // =============================================================================
 function refreshStats() {
     return fetch(STATS_URL, { credentials: 'same-origin' })
-        .then(r => r.json())
+        .then(checkSessionOrJson)
         .then(stats => {
             for (const [key, value] of Object.entries(stats)) {
                 const el = document.querySelector(`[data-stat="${key}"]`);
@@ -229,7 +229,7 @@ function _avatarColor(code) {
 
 function refreshActivite() {
     return fetch(ACTIVITE_URL, { credentials: 'same-origin' })
-        .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(checkSessionOrJson)
         .then(d => {
             const feed  = document.getElementById('activ-feed');
             const label = document.getElementById('activ-refresh-label');
@@ -318,6 +318,39 @@ function escapeHtml(s) {
     return String(s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// =============================================================================
+// Détection de session expirée
+// Quand la session Django expire, @login_required redirige vers /login/.
+// fetch() suit la redirection automatiquement et reçoit le HTML du login
+// au lieu du JSON attendu. On détecte l'URL finale et on avertit l'utilisateur.
+// =============================================================================
+function checkSessionOrJson(r) {
+    if (r.url && r.url.includes('/login')) {
+        stopAutoRefresh();
+        showSessionExpiredBanner();
+        return Promise.reject(new Error('session_expired'));
+    }
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+}
+
+function showSessionExpiredBanner() {
+    if (document.getElementById('session-expired-banner')) return;
+    const b = document.createElement('div');
+    b.id = 'session-expired-banner';
+    Object.assign(b.style, {
+        position: 'fixed', top: '0', left: '0', right: '0', zIndex: '9999',
+        background: '#EE7202', color: '#fff',
+        padding: '.75rem 1.5rem',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        fontWeight: '600', fontSize: '.9rem',
+        boxShadow: '0 2px 8px rgba(0,0,0,.25)',
+    });
+    b.innerHTML = '<span><i class="bi bi-clock-history" style="margin-right:.5rem"></i>Session expirée — reconnexion dans 3 secondes…</span>';
+    document.body.prepend(b);
+    setTimeout(() => { window.location.href = '/supervision/login/'; }, 3000);
 }
 
 // Démarrage

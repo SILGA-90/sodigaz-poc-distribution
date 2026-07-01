@@ -17,14 +17,16 @@ blanche.
 """
 from functools import wraps
 
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.shortcuts import redirect
+from django.urls import reverse
 
 
 def superviseur_required(view_func):
     """
-    Restreint l'acces aux comptes de role SUPERVISEUR ou ADMIN (ou superuser).
-    Un livreur connecte est rejete avec un 403.
+    Restreint l'accès aux comptes de rôle SUPERVISEUR ou ADMIN (ou superuser).
+    Un livreur connecté est déconnecté et renvoyé vers le login avec un message explicite.
     """
     @wraps(view_func)
     @login_required(login_url="supervision:login")
@@ -32,5 +34,6 @@ def superviseur_required(view_func):
         u = request.user
         if u.is_superuser or u.role in ("SUPERVISEUR", "ADMIN"):
             return view_func(request, *args, **kwargs)
-        raise PermissionDenied("Cette interface est reservee aux superviseurs.")
+        logout(request)
+        return redirect(reverse("supervision:login") + "?no_perm=1")
     return wrapped

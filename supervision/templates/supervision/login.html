@@ -40,6 +40,11 @@
                 </div>
             </div>
         </div>
+        {% elif request.GET.no_perm %}
+        <div class="login-error-alert">
+            <i class="bi bi-shield-exclamation"></i>
+            <span>Ce compte n'a pas accès à la supervision. Connectez-vous avec un compte superviseur.</span>
+        </div>
         {% elif form.errors %}
         <div class="login-error-alert">
             <i class="bi bi-exclamation-circle-fill"></i>
@@ -56,7 +61,7 @@
                     <i class="bi bi-person-fill field-icon"></i>
                     <input type="text" name="username" id="id_username"
                            class="field-input" required autofocus
-                           autocomplete="username" placeholder="ex : aminata.s">
+                           autocomplete="username" placeholder="ex : aminata.traore">
                 </div>
             </div>
 
@@ -65,8 +70,12 @@
                 <div class="field-wrap">
                     <i class="bi bi-lock-fill field-icon"></i>
                     <input type="password" name="password" id="id_password"
-                           class="field-input" required
+                           class="field-input field-input--toggle" required
                            autocomplete="current-password" placeholder="••••••••">
+                    <button type="button" class="field-toggle" id="toggle-password"
+                            aria-label="Afficher le mot de passe" tabindex="-1">
+                        <i class="bi bi-eye-fill" id="toggle-icon"></i>
+                    </button>
                 </div>
             </div>
 
@@ -76,11 +85,28 @@
         </form>
 
         <p class="demo-hint">
-            Compte démo&nbsp;: <code>aminata.s</code> / <code>demo1234</code>
+            Compte démo&nbsp;: <code>aminata.traore</code> / <code>demo1234</code>
         </p>
     </div>
 </div>
 
 <p class="login-footer">SODIGAZ APC &nbsp;·&nbsp; Supervision &nbsp;·&nbsp; POC</p>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var btn  = document.getElementById('toggle-password');
+    var inp  = document.getElementById('id_password');
+    var icon = document.getElementById('toggle-icon');
+    if (!btn || !inp) return;
+    btn.addEventListener('click', function () {
+        var hide = inp.type === 'password';
+        inp.type           = hide ? 'text' : 'password';
+        icon.className     = hide ? 'bi bi-eye-slash-fill' : 'bi bi-eye-fill';
+        btn.setAttribute('aria-label', hide ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+    });
+})();
+</script>
 {% endblock %}

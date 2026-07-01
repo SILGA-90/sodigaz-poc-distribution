@@ -130,7 +130,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
   }, []);
 
   useEffect(() => {
-    fetchMe().then(setUser).catch(() => {});
+    fetchMe().then(setUser).catch(() => { setUser(null); });
     loadLocalData();
   }, [loadLocalData]);
 
@@ -143,7 +143,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     if (syncing) return;
     setSyncing(true); setSyncStatus('syncing');
     try {
-      const { pull: pullRes, push: pushRes } = await syncAll();
+      const { pull: pullRes, push: pushRes, clotureEchouee } = await syncAll();
       await loadLocalData();
       if (!pullRes.success || !pushRes.success) {
         setSyncStatus('error');
@@ -157,6 +157,12 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
         envoyes > 0 || recus > 0 ? `Sync OK : ${recus} reçus, ${envoyes} envoyés` : 'Déjà à jour',
         envoyes > 0 || recus > 0 ? 'success' : 'info',
       );
+      if (clotureEchouee) {
+        showToast('Clôture non transmise — réessayez quand vous avez du réseau.', 'error');
+      }
+      if (pushRes.photosEchouees > 0) {
+        showToast(`${pushRes.photosEchouees} photo(s) non envoyée(s) — elles seront retentées.`, 'error');
+      }
     } finally {
       setSyncing(false);
     }

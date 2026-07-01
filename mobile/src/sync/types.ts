@@ -19,5 +19,6 @@ export interface PullResult {
 export interface PushResult {
   success: boolean;
   pushed: { operation: number; ligne_operation: number; anomalie: number };
+  photosEchouees: number;
   error?: string;
 }

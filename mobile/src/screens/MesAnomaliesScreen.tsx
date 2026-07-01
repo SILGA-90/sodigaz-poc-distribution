@@ -72,12 +72,13 @@ export default function MesAnomaliesScreen({ route, navigation }: Props): React.
   const { width } = useWindowDimensions();
   const [anomalies, setAnomalies] = useState<AnomalieLocale[]>([]);
   const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState(false);
 
   useEffect(() => {
-    getAnomaliesDuProgramme(programmeUuid).then((data) => {
-      setAnomalies(data);
-      setLoading(false);
-    });
+    getAnomaliesDuProgramme(programmeUuid)
+      .then((data) => setAnomalies(data))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
   }, [programmeUuid]);
 
   const counts = useMemo(() => ({
@@ -88,6 +89,18 @@ export default function MesAnomaliesScreen({ route, navigation }: Props): React.
 
   if (loading) {
     return <View style={styles.center}><ActivityIndicator size="large" color={Colors.danger} /></View>;
+  }
+
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <View style={styles.empty}>
+          <Ionicons name="alert-circle-outline" size={36} color={TEXT3} style={{ marginBottom: 10 }} />
+          <Text style={styles.emptyTitle}>Erreur de chargement</Text>
+          <Text style={styles.emptyText}>Impossible de lire les anomalies du programme.</Text>
+        </View>
+      </View>
+    );
   }
 
   function renderItem({ item }: { item: AnomalieLocale }): React.ReactElement {

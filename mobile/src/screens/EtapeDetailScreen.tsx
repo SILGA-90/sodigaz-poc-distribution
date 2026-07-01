@@ -72,40 +72,58 @@ export default function EtapeDetailScreen({ route }: Props): React.ReactElement 
   const [lignes, setLignes]       = useState<LigneLocale[]>([]);
   const [plvInfo, setPlvInfo]     = useState<PlvLocale | null>(null);
   const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState(false);
 
   useEffect(() => {
     (async () => {
-      const db = await getDatabase();
-      const [op, plv] = await Promise.all([
-        db.getFirstAsync<OperationLocale>(
-          `SELECT * FROM operation WHERE etape_uuid = ? AND is_deleted = 0 ORDER BY last_modified DESC LIMIT 1;`,
-          [etapeUuid],
-        ),
-        db.getFirstAsync<PlvLocale>(
-          `SELECT p.code_plv AS plv_code, c.raison_sociale AS client_raison_sociale
-           FROM etape e
-           JOIN plv p    ON p.id  = e.plv_id
-           JOIN client c ON c.id  = p.client_id
-           WHERE e.uuid = ?;`,
-          [etapeUuid],
-        ),
-      ]);
-      if (op) {
-        setOperation(op);
-        const ls = await db.getAllAsync<LigneLocale>(
-          `SELECT produit_code_x3, quantite_realisee, montant_ligne
-           FROM ligne_operation WHERE operation_uuid = ? AND is_deleted = 0;`,
-          [op.uuid],
-        );
-        setLignes(ls);
+      try {
+        const db = await getDatabase();
+        const [op, plv] = await Promise.all([
+          db.getFirstAsync<OperationLocale>(
+            `SELECT * FROM operation WHERE etape_uuid = ? AND is_deleted = 0 ORDER BY last_modified DESC LIMIT 1;`,
+            [etapeUuid],
+          ),
+          db.getFirstAsync<PlvLocale>(
+            `SELECT p.code_plv AS plv_code, c.raison_sociale AS client_raison_sociale
+             FROM etape e
+             JOIN plv p    ON p.id  = e.plv_id
+             JOIN client c ON c.id  = p.client_id
+             WHERE e.uuid = ?;`,
+            [etapeUuid],
+          ),
+        ]);
+        if (op) {
+          setOperation(op);
+          const ls = await db.getAllAsync<LigneLocale>(
+            `SELECT produit_code_x3, quantite_realisee, montant_ligne
+             FROM ligne_operation WHERE operation_uuid = ? AND is_deleted = 0;`,
+            [op.uuid],
+          );
+          setLignes(ls);
+        }
+        setPlvInfo(plv ?? null);
+      } catch {
+        setError(true);
+      } finally {
+        setLoading(false);
       }
-      setPlvInfo(plv ?? null);
-      setLoading(false);
     })();
   }, [etapeUuid]);
 
   if (loading) {
     return <View style={styles.center}><ActivityIndicator size="large" color={Colors.brandBlue} /></View>;
+  }
+
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <View style={styles.emptyCard}>
+          <Ionicons name="alert-circle-outline" size={36} color={TEXT3} style={{ marginBottom: 10 }} />
+          <Text style={styles.emptyTitle}>Erreur de chargement</Text>
+          <Text style={styles.emptyText}>Impossible de lire les données de l'étape.</Text>
+        </View>
+      </View>
+    );
   }
 
   if (!operation) {

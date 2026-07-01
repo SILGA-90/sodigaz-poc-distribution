@@ -33,6 +33,7 @@ import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
 import { API_BASE_URL } from '../config/api';
 import { getItem, saveItem, removeItem, STORAGE_KEYS } from '../storage/secureStorage';
+import { navigateToLogin } from '../navigation/navigationRef';
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -117,9 +118,10 @@ apiClient.interceptors.response.use(
       return apiClient(original);
     } catch (refreshErr) {
       flushQueue(refreshErr, null);
-      // Les deux tokens sont invalides : forcer la reconnexion
+      // Les deux tokens sont invalides : vider le stockage et renvoyer vers Login
       await removeItem(STORAGE_KEYS.ACCESS_TOKEN);
       await removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      navigateToLogin();
       return Promise.reject(new Error('Session expirée : reconnectez-vous'));
     } finally {
       isRefreshing = false;

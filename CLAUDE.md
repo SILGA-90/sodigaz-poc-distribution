@@ -330,8 +330,8 @@ article.code_x3, v5 rename produit→article, v6 ajout code_plv sur plv.
 ## 7. Données de démo (seed_demo)
 
 - Mot de passe commun : `demo1234`
-- Livreurs : LIV001 (adama.l), LIV002 (salif.l), LIV003 (moussa.l), LIV004 (awa.l), LIV005 (issouf.l)
-- Superviseur : aminata.s
+- Livreurs : LIV001 (adama.ouedraogo), LIV002 (salif.kabore), LIV003 (moussa.some), LIV004 (awa.diallo), LIV005 (issouf.zongo)
+- Superviseur : aminata.traore
 - 15 clients, 25 PLVs (codes PLVO101–PLVO125) à Ouagadougou
 - 6 articles : 3 emballages vides E\* (E06BI, E1250, E3800) + 3 gaz plein G\* (G06BI, G1250, G3800)
 - Centre de carte : [12.3650, -1.5236]

@@ -42,6 +42,7 @@ import { isAuthenticated } from '../api/authService';
 import { repairCachePhotoUris } from '../db/repositories/photoRepository';
 import { RootStackParamList } from '../types/navigation';
 import { Colors } from '../theme';
+import { navigationRef } from './navigationRef';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -65,7 +66,7 @@ export default function RootNavigator(): React.ReactElement {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
         initialRouteName={initialRoute}
         screenOptions={{ headerShown: false }}

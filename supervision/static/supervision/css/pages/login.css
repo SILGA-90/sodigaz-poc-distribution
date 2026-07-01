@@ -102,6 +102,20 @@
 .field-input:focus + .field-icon,
 .field-wrap:focus-within .field-icon { color: #079BD9; }
 
+/* Bouton œil — afficher/masquer le mot de passe */
+.field-toggle {
+    position: absolute; right: .75rem; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none; padding: 0;
+    color: #94a3b8; font-size: .9rem; cursor: pointer;
+    z-index: 2; line-height: 1;
+    display: flex; align-items: center;
+    transition: color .15s;
+}
+.field-toggle:hover,
+.field-wrap:focus-within .field-toggle { color: #079BD9; }
+.field-input--toggle { padding-right: 2.5rem; }
+
 /* Bouton Se connecter */
 .btn-login {
     display: flex; align-items: center; justify-content: center; gap: .3rem;

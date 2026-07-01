@@ -175,14 +175,17 @@ ou de schéma SQLite.
 
 Tous les comptes créés par `seed_demo` ont le mot de passe **`demo1234`**.
 
-| Identifiant  | Code      | Rôle        | Nom              |
-|--------------|-----------|-------------|------------------|
-| `adama.l`    | LIV001    | Livreur     | Adama OUEDRAOGO  |
-| `salif.l`    | LIV002    | Livreur     | Salif KABORE     |
-| `aminata.s`  | —         | Superviseur | Aminata TRAORE   |
+| Identifiant           | Code      | Rôle        | Nom              |
+|-----------------------|-----------|-------------|------------------|
+| `adama.ouedraogo`     | LIV001    | Livreur     | Adama OUEDRAOGO  |
+| `salif.kabore`        | LIV002    | Livreur     | Salif KABORE     |
+| `moussa.some`         | LIV003    | Livreur     | Moussa SOME      |
+| `awa.diallo`          | LIV004    | Livreur     | Awa DIALLO       |
+| `issouf.zongo`        | LIV005    | Livreur     | Issouf ZONGO     |
+| `aminata.traore`      | —         | Superviseur | Aminata TRAORE   |
 
 Le livreur se connecte sur le **mobile** avec son code (LIV001 / demo1234).
-Le superviseur se connecte sur la **web** (aminata.s / demo1234).
+Le superviseur se connecte sur la **web** (aminata.traore / demo1234).
 
 ---
 

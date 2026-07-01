@@ -66,8 +66,8 @@ export async function push(): Promise<PushResult> {
     anomalies.length === 0 && photosMeta.length === 0 &&
     echecEtapeUuids.length === 0
   ) {
-    await uploaderPhotosBinaires();
-    return { success: true, pushed: empty };
+    const photosEchouees = await uploaderPhotosBinaires();
+    return { success: true, pushed: empty, photosEchouees };
   }
 
   const lastPulledAt = await getLastPulledAt();
@@ -155,6 +155,7 @@ export async function push(): Promise<PushResult> {
     return {
       success: false,
       pushed: empty,
+      photosEchouees: 0,
       error: isAxiosError(e) ? (e.response?.data?.detail ?? e.message ?? 'Erreur reseau') : (e instanceof Error ? e.message : 'Erreur reseau'),
     };
   }
@@ -166,7 +167,7 @@ export async function push(): Promise<PushResult> {
   await markPhotoMetaSynced(photosMeta.map((p) => p.uuid));
 
   // Upload des binaires photos dont la métadonnée vient d'être synchronisée.
-  await uploaderPhotosBinaires();
+  const photosEchouees = await uploaderPhotosBinaires();
 
   return {
     success: true,
@@ -175,6 +176,7 @@ export async function push(): Promise<PushResult> {
       ligne_operation: lignes.length,
       anomalie:        anomalies.length,
     },
+    photosEchouees,
   };
 }
 
@@ -192,11 +194,12 @@ export async function push(): Promise<PushResult> {
  * et l'upload. Si le fichier local n'existe plus, on marque la photo
  * FILE_LOST (distinct de DONE) pour ne pas boucler indéfiniment.
  */
-export async function uploaderPhotosBinaires(): Promise<void> {
+export async function uploaderPhotosBinaires(): Promise<number> {
   const photos = await getPhotosPendingUpload();
-  if (photos.length === 0) return;
+  if (photos.length === 0) return 0;
 
   const token = await getItem(STORAGE_KEYS.ACCESS_TOKEN);
+  let echouees = 0;
 
   for (const photo of photos) {
     try {
@@ -204,6 +207,7 @@ export async function uploaderPhotosBinaires(): Promise<void> {
       if (!info.exists) {
         await markPhotoFileLost(photo.uuid);
         logger.warn('[sync] photo FILE_LOST :', photo.uuid, photo.local_uri);
+        echouees++;
         continue;
       }
 
@@ -216,9 +220,14 @@ export async function uploaderPhotosBinaires(): Promise<void> {
       });
       if (result.status === 200) {
         await markPhotoUploaded(photo.uuid);
+      } else {
+        echouees++;
+        logger.warn('Upload photo statut inattendu :', photo.uuid, result.status);
       }
     } catch (e) {
+      echouees++;
       logger.warn('Upload photo echoue :', photo.uuid, e);
     }
   }
+  return echouees;
 }

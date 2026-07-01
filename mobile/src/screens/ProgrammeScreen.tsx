@@ -52,6 +52,7 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
   const [progression, setProgression] = useState({ visitees: 0, echec: 0, total: 0 });
   const [etapes, setEtapes]   = useState<EtapeAvecPlv[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(false);
   const [triMode, setTriMode] = useState<TriMode>('optimise');
   const { numColumns } = useLayout();
 
@@ -65,15 +66,19 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
   }, [etapes, triMode]);
 
   async function chargerDonnees(): Promise<void> {
-    const p = await getProgrammeById(programmeId);
-    const e = await getEtapesDuProgramme(programmeId);
-    setProgramme(p);
-    setEtapes(e);
-    setProgression({
-      total:    e.length,
-      visitees: e.filter((x) => x.statut_visite === 'VISITEE').length,
-      echec:    e.filter((x) => x.statut_visite === 'ECHEC').length,
-    });
+    try {
+      const p = await getProgrammeById(programmeId);
+      const e = await getEtapesDuProgramme(programmeId);
+      setProgramme(p);
+      setEtapes(e);
+      setProgression({
+        total:    e.length,
+        visitees: e.filter((x) => x.statut_visite === 'VISITEE').length,
+        echec:    e.filter((x) => x.statut_visite === 'ECHEC').length,
+      });
+    } catch {
+      setError(true);
+    }
   }
 
   useEffect(() => {
@@ -93,6 +98,17 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
 
   if (loading) {
     return <View style={styles.center}><ActivityIndicator size="large" color={Colors.brandBlue} /></View>;
+  }
+
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <View style={styles.emptyWrap}>
+          <Text style={styles.emptyText}>Impossible de charger le programme.</Text>
+          <Text style={[styles.emptyText, { marginTop: 4 }]}>Revenez au tableau de bord et réessayez.</Text>
+        </View>
+      </View>
+    );
   }
 
   const listHeader = programme ? (

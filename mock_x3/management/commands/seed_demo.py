@@ -26,7 +26,7 @@ existent déjà, on ne les recrée pas. Pratique pour rejouer partiellement.
 Données de démo (voir CLAUDE.md §7) :
   - Mot de passe commun : demo1234
   - Livreurs : LIV001..LIV005
-  - Superviseur : aminata.s
+  - Superviseur : aminata.traore
   - 25 PLVs à Ouagadougou, 15 clients, 6 articles (3 E* + 3 G*)
   - Centre de carte : [12.3650, -1.5236]
 """
@@ -83,7 +83,7 @@ class Command(BaseCommand):
             Article.objects.all().delete()
             Vehicule.objects.all().delete()
             Utilisateur.objects.filter(code_livreur__startswith="LIV").delete()
-            Utilisateur.objects.filter(username__in=["aminata.s"]).delete()
+            Utilisateur.objects.filter(username__in=["aminata.traore", "aminata.s"]).delete()
 
         with transaction.atomic():
             self._creer_utilisateurs()
@@ -99,21 +99,21 @@ class Command(BaseCommand):
 
     def _creer_utilisateurs(self):
         """
-        Crée les comptes livreurs (LIV001-LIV005) et le superviseur (aminata.s).
+        Crée les comptes livreurs (LIV001-LIV005) et le superviseur (aminata.traore).
         Idempotent : si le compte existe déjà, on ne le recrée pas.
         """
         comptes = [
-            {"username": "adama.l",   "code_livreur": "LIV001",
+            {"username": "adama.ouedraogo",  "code_livreur": "LIV001",
              "nom": "OUEDRAOGO", "prenom": "Adama",   "telephone": "+22670000001", "role": Role.LIVREUR},
-            {"username": "salif.l",   "code_livreur": "LIV002",
+            {"username": "salif.kabore",      "code_livreur": "LIV002",
              "nom": "KABORE",    "prenom": "Salif",   "telephone": "+22670000002", "role": Role.LIVREUR},
-            {"username": "moussa.l",  "code_livreur": "LIV003",
+            {"username": "moussa.some",       "code_livreur": "LIV003",
              "nom": "SOME",      "prenom": "Moussa",  "telephone": "+22670000003", "role": Role.LIVREUR},
-            {"username": "awa.l",     "code_livreur": "LIV004",
+            {"username": "awa.diallo",        "code_livreur": "LIV004",
              "nom": "DIALLO",    "prenom": "Awa",     "telephone": "+22670000004", "role": Role.LIVREUR},
-            {"username": "issouf.l",  "code_livreur": "LIV005",
+            {"username": "issouf.zongo",      "code_livreur": "LIV005",
              "nom": "ZONGO",     "prenom": "Issouf",  "telephone": "+22670000005", "role": Role.LIVREUR},
-            {"username": "aminata.s", "code_livreur": None,
+            {"username": "aminata.traore",    "code_livreur": None,
              "nom": "TRAORE",    "prenom": "Aminata", "telephone": "+22670000010", "role": Role.SUPERVISEUR},
         ]
         for c in comptes:
