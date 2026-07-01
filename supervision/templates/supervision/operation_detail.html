@@ -31,8 +31,7 @@
                 <span class="sous-type-chip">{{ operation.sous_type }}</span>
                 {% endif %}
             </div>
-            <div class="op-uuid-chip">{{ operation.uuid }}</div>
-            <p class="odh-date mt-1 mb-0">
+            <p class="odh-date mt-2 mb-0">
                 <i class="bi bi-calendar3 me-1"></i>
                 {{ operation.date_heure|date:"l j F Y \à H\hi"|capfirst }}
             </p>
@@ -144,13 +143,56 @@
             {% endif %}
             {% endfor %}
             </tbody>
-            <tfoot>
-                <tr class="recon-total-row">
-                    <td colspan="3" class="recon-total-label">Total</td>
-                    <td class="text-end fw-bold">{{ operation.montant_total|floatformat:0 }}&nbsp;<span class="ops-devise">FCFA</span></td>
-                </tr>
-            </tfoot>
         </table>
+    </div>
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- Signatures -->
+{% if operation.signature_livreur or operation.signature_client %}
+<div class="section-card mb-4">
+    <div class="section-header"><i class="bi bi-pen me-2"></i>Signatures</div>
+    <div class="section-body sig-row">
+        {% if operation.signature_livreur %}
+        <div class="sig-block">
+            <div class="sig-label">
+                <i class="bi bi-truck me-1"></i>Livreur : {{ prog.utilisateur.get_full_name }}
+            </div>
+            <div class="sig-box">{{ operation.signature_livreur|safe }}</div>
+        </div>
+        {% endif %}
+        {% if operation.signature_client %}
+        <div class="sig-block">
+            <div class="sig-label">
+                <i class="bi bi-person me-1"></i>Client
+                {% if operation.nom_signataire_client %} · {{ operation.nom_signataire_client }}{% endif %}
+            </div>
+            <div class="sig-box">{{ operation.signature_client|safe }}</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Photos -->
+{% with photos=operation.photos.all %}
+{% if photos %}
+<div class="section-card mb-4">
+    <div class="section-header">
+        <i class="bi bi-images me-2"></i>Photos
+        <span class="section-count">{{ photos|length }}</span>
+    </div>
+    <div class="section-body photo-grid">
+        {% for photo in photos %}
+        {% if not photo.is_deleted and photo.fichier and photo.fichier != "placeholder.bin" %}
+        <a href="{{ photo.fichier.url }}" target="_blank" class="photo-thumb-wrap">
+            <img src="{{ photo.fichier.url }}" class="photo-thumb" alt="{{ photo.get_type_photo_display }}">
+            <div class="photo-label">{{ photo.get_type_photo_display }}</div>
+            <div class="photo-time">{{ photo.date_heure|date:"H:i" }}</div>
+        </a>
+        {% endif %}
+        {% endfor %}
     </div>
 </div>
 {% endif %}
@@ -161,66 +203,14 @@
 <div class="section-card mb-4">
     <div class="section-header"><i class="bi bi-chat-left-text me-2"></i>Commentaire</div>
     <div class="section-body">
-        <p class="commentaire-text mb-0">{{ operation.commentaire }}</p>
+        <p class="mb-0" style="color:#4a5568;font-size:.9rem;line-height:1.6;">
+            {{ operation.commentaire }}
+        </p>
     </div>
 </div>
 {% endif %}
 
-<!-- Validation : Signatures + Photos -->
-{% with photos=operation.photos.all %}
-{% if operation.signature_livreur or operation.signature_client or photos %}
-<div class="section-card mb-4">
-    <div class="section-header"><i class="bi bi-shield-check me-2"></i>Validation</div>
-    <div class="section-body validation-grid">
-
-        {% if operation.signature_livreur or operation.signature_client %}
-        <div class="validation-col">
-            <div class="validation-col-title">Signatures</div>
-            <div class="sig-row">
-                {% if operation.signature_livreur %}
-                <div class="sig-block">
-                    <div class="sig-label">
-                        <i class="bi bi-truck me-1"></i>Livreur · {{ prog.utilisateur.get_full_name }}
-                    </div>
-                    <div class="sig-box">{{ operation.signature_livreur|safe }}</div>
-                </div>
-                {% endif %}
-                {% if operation.signature_client %}
-                <div class="sig-block">
-                    <div class="sig-label">
-                        <i class="bi bi-person me-1"></i>Client{% if operation.nom_signataire_client %} · {{ operation.nom_signataire_client }}{% endif %}
-                    </div>
-                    <div class="sig-box">{{ operation.signature_client|safe }}</div>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
-
-        {% if photos %}
-        <div class="validation-col">
-            <div class="validation-col-title">
-                Photos <span class="section-count">{{ photos|length }}</span>
-            </div>
-            <div class="photo-grid">
-                {% for photo in photos %}
-                {% if not photo.is_deleted and photo.fichier and photo.fichier != "placeholder.bin" %}
-                <a href="{{ photo.fichier.url }}" target="_blank" class="photo-thumb-wrap">
-                    <img src="{{ photo.fichier.url }}" class="photo-thumb" alt="{{ photo.get_type_photo_display }}">
-                    <div class="photo-label">{{ photo.get_type_photo_display }}</div>
-                    <div class="photo-time">{{ photo.date_heure|date:"H:i" }}</div>
-                </a>
-                {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-    </div>
-</div>
-{% endif %}
 {% endwith %}
 
-{% endwith %}
 
 {% endblock %}

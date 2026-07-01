@@ -131,26 +131,59 @@
 </div>{# /anom-hero #}
 
 <!-- Description -->
+{% if anomalie.description %}
 <div class="section-card mb-4">
     <div class="section-header"><i class="bi bi-chat-left-text me-2"></i>Description</div>
     <div class="section-body">
         <p class="mb-0 anom-description">{{ anomalie.description }}</p>
     </div>
 </div>
+{% endif %}
+
+<!-- Photos -->
+{% with photos=anomalie.photos.all %}
+{% if photos %}
+<div class="section-card mb-4">
+    <div class="section-header">
+        <i class="bi bi-images me-2"></i>Photos
+        <span class="section-count">{{ photos|length }}</span>
+    </div>
+    <div class="section-body photo-grid">
+        {% for photo in photos %}
+        {% if "placeholder" in photo.fichier.name %}
+        <div class="photo-pending">
+            <i class="bi bi-hourglass-split"></i>
+            <div>En attente<br>de synchronisation</div>
+        </div>
+        {% else %}
+        <a href="{{ photo.fichier.url }}" target="_blank" class="photo-thumb-wrap">
+            <img src="{{ photo.fichier.url }}" alt="{{ photo.get_type_photo_display }}" class="photo-thumb">
+            <div class="photo-label">{{ photo.get_type_photo_display }}</div>
+        </a>
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- Carte minimap -->
+{% if anomalie.localisation or anomalie.plv and anomalie.plv.localisation %}
+<div class="section-card map-card mb-4">
+    <div class="section-header">
+        <i class="bi bi-map me-2"></i>Localisation
+        {% if not anomalie.localisation %}
+        <span class="minimap-approx-badge ms-2">Position du PLV : GPS non capturé</span>
+        {% endif %}
+    </div>
+    <div id="minimap" style="height:220px;"></div>
+</div>
+{% endif %}
 
 <!-- Classification gravité -->
 <div class="section-card classif-border-{{ anomalie.gravite }} mb-4">
     <div class="section-header">
         <i class="bi bi-sliders me-2"></i>Classification superviseur
-        <div class="ms-auto">
-            {% if anomalie.gravite == "ELEVEE" %}
-            <span class="grav-pill grav-elevee"><i class="bi bi-exclamation-triangle-fill"></i> Élevée</span>
-            {% elif anomalie.gravite == "MOYENNE" %}
-            <span class="grav-pill grav-moyenne"><i class="bi bi-dash-circle-fill"></i> Moyenne</span>
-            {% else %}
-            <span class="grav-pill grav-faible"><i class="bi bi-check-circle-fill"></i> Faible</span>
-            {% endif %}
-        </div>
     </div>
     <div class="section-body">
         <p class="text-muted small mb-3">
@@ -191,47 +224,6 @@
     </div>
 </div>
 
-<!-- Carte minimap -->
-{% if anomalie.localisation or anomalie.plv and anomalie.plv.localisation %}
-<div class="section-card map-card mb-4">
-    <div class="section-header">
-        <i class="bi bi-map me-2"></i>Localisation
-        {% if not anomalie.localisation %}
-        <span class="minimap-approx-badge ms-2">Position du PLV : GPS non capturé</span>
-        {% endif %}
-    </div>
-    <div id="minimap" style="height:220px;"></div>
-</div>
-{% endif %}
-
-<!-- Photos -->
-{% with photos=anomalie.photos.all %}
-{% if photos %}
-<div class="section-card mb-4">
-    <div class="section-header">
-        <i class="bi bi-images me-2"></i>Photos
-        <span class="section-count">{{ photos|length }}</span>
-    </div>
-    <div class="section-body photo-grid">
-        {% for photo in photos %}
-        {% if "placeholder" in photo.fichier.name %}
-        <div class="photo-pending">
-            <i class="bi bi-hourglass-split"></i>
-            <div>En attente<br>de synchronisation</div>
-        </div>
-        {% else %}
-        <a href="{{ photo.fichier.url }}" target="_blank" class="photo-thumb-wrap">
-            <img src="{{ photo.fichier.url }}" alt="{{ photo.get_type_photo_display }}" class="photo-thumb">
-            <div class="photo-label">{{ photo.get_type_photo_display }}</div>
-        </a>
-        {% endif %}
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
-{% endwith %}
-
-
 {% endblock %}
 
 {% block scripts %}
@@ -248,15 +240,21 @@
     function open() {
         var r = toggle.getBoundingClientRect();
         document.body.appendChild(menu);
+        // Rendu hors-écran pour mesurer la hauteur avant de positionner
         Object.assign(menu.style, {
             position: 'fixed',
-            top:      (r.bottom + 4) + 'px',
+            top:      '-9999px',
             left:     r.left + 'px',
             minWidth: Math.max(r.width, 220) + 'px',
             zIndex:   '9999',
             margin:   '0',
             display:  'block'
         });
+        var menuH = menu.offsetHeight;
+        var spaceBelow = window.innerHeight - r.bottom - 8;
+        menu.style.top = (spaceBelow >= menuH || r.top < menuH)
+            ? (r.bottom + 4) + 'px'
+            : (r.top - menuH - 4) + 'px';
         menu.classList.add('show');
         toggle.classList.add('show');
         toggle.setAttribute('aria-expanded', 'true');

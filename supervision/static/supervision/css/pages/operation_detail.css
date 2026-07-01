@@ -175,42 +175,8 @@
 }
 .sig-box svg { max-width: 100%; max-height: 100%; }
 
-/* ── UUID chip ──────────────────────────────────────────── */
-.op-uuid-chip {
-    font-family: 'SFMono-Regular', Consolas, monospace;
-    font-size: .68rem; font-weight: 500;
-    color: rgba(255,255,255,.35);
-    letter-spacing: .02em;
-    margin-top: .3rem;
-}
-
-/* ── Total articles ──────────────────────────────────────── */
-.recon-total-row td {
-    padding: .6rem 1rem;
-    border-top: 1.5px solid #DDE2E6;
-    background: #FAFBFC;
-}
-.recon-total-label {
-    font-size: .78rem; color: #8aa8c0; font-style: italic;
-    text-align: right;
-}
-
 /* ── Commentaire ─────────────────────────────────────────── */
-.commentaire-text { color: #3a5060; font-size: .9rem; line-height: 1.65; }
-
-/* ── Validation : Signatures + Photos ───────────────────── */
-.validation-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-    align-items: flex-start;
-}
-.validation-col { min-width: 260px; }
-.validation-col-title {
-    font-size: .68rem; font-weight: 700; color: #8aa8c0;
-    text-transform: uppercase; letter-spacing: .06em;
-    margin-bottom: .85rem;
-}
+.section-body p { color: #3a5060; font-size: .9rem; line-height: 1.65; }
 
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 767.98px) {
