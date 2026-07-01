@@ -144,7 +144,6 @@
                 <th>Livreur</th>
                 <th>Statut</th>
                 <th style="min-width:160px;">Progression</th>
-                <th class="text-center">Opérations</th>
                 <th class="text-end">Montant total</th>
                 <th class="text-end">Encaissé</th>
                 <th class="text-center">Anomalies</th>
@@ -205,8 +204,6 @@
                 {% endif %}
             </td>
 
-            <td class="text-center rpt-num">{{ prog.nb_operations }}</td>
-
             <td class="text-end">
                 <span class="rpt-montant">{{ prog.montant_total_ops|floatformat:0 }}</span>
                 <span class="rpt-devise"> FCFA</span>
@@ -252,7 +249,6 @@
                 </span>
                 {% endif %}
             </td>
-            <td class="text-center rpt-num fw-bold">{{ totaux.nb_operations }}</td>
             <td class="text-end">
                 <span class="rpt-montant fw-bold">{{ totaux.montant_total|floatformat:0 }}</span>
                 <span class="rpt-devise"> FCFA</span>

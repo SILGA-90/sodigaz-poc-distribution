@@ -90,7 +90,6 @@
     <div class="section-header">
         <span class="section-icon"><i class="bi bi-graph-up"></i></span>
         <span class="section-title">Montant encaissé journalier (FCFA)</span>
-        <span class="stat-chart-period ms-auto">{{ periode }} derniers jours</span>
     </div>
     <div class="stat-chart-wrap">
         <canvas id="chart-montant"></canvas>
@@ -102,7 +101,6 @@
     <div class="section-header">
         <span class="section-icon"><i class="bi bi-box-seam"></i></span>
         <span class="section-title">Quantités par article</span>
-        <span class="stat-chart-period ms-auto">{{ periode }} derniers jours</span>
     </div>
     {% if total_articles > 0 %}
     <div class="stat-chart-wrap stat-chart-wrap--articles">
@@ -121,7 +119,6 @@
     <div class="section-header">
         <span class="section-icon"><i class="bi bi-person-lines-fill"></i></span>
         <span class="section-title">Couverture des tournées par livreur</span>
-        <span class="stat-chart-period ms-auto">{{ periode }} derniers jours</span>
     </div>
     {% if nb_livreurs > 0 %}
     <div class="stat-chart-wrap stat-chart-wrap--perf" id="wrap-perf">
@@ -157,12 +154,12 @@
                     {{ r.taux }}&thinsp;%
                 </td>
                 <td class="text-end">{{ r.montant|floatformat:0 }}</td>
-                <td class="text-center">{% if r.coll_B6 %}{{ r.coll_B6 }}{% else %}&mdash;{% endif %}</td>
-                <td class="text-center">{% if r.coll_B12_5 %}{{ r.coll_B12_5 }}{% else %}&mdash;{% endif %}</td>
-                <td class="text-center">{% if r.coll_B38 %}{{ r.coll_B38 }}{% else %}&mdash;{% endif %}</td>
-                <td class="text-center">{% if r.rest_B6 %}{{ r.rest_B6 }}{% else %}&mdash;{% endif %}</td>
-                <td class="text-center">{% if r.rest_B12_5 %}{{ r.rest_B12_5 }}{% else %}&mdash;{% endif %}</td>
-                <td class="text-center">{% if r.rest_B38 %}{{ r.rest_B38 }}{% else %}&mdash;{% endif %}</td>
+                <td class="text-center">{% if r.coll_B6 %}{{ r.coll_B6 }}{% else %}-{% endif %}</td>
+                <td class="text-center">{% if r.coll_B12_5 %}{{ r.coll_B12_5 }}{% else %}-{% endif %}</td>
+                <td class="text-center">{% if r.coll_B38 %}{{ r.coll_B38 }}{% else %}-{% endif %}</td>
+                <td class="text-center">{% if r.rest_B6 %}{{ r.rest_B6 }}{% else %}-{% endif %}</td>
+                <td class="text-center">{% if r.rest_B12_5 %}{{ r.rest_B12_5 }}{% else %}-{% endif %}</td>
+                <td class="text-center">{% if r.rest_B38 %}{{ r.rest_B38 }}{% else %}-{% endif %}</td>
             </tr>
             {% endfor %}
             </tbody>

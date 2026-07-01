@@ -207,13 +207,6 @@
     width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
 }
 
-/* Libellé période */
-.stat-chart-period {
-    font-size: .72rem; font-weight: 600; color: #8aa8c0;
-    background: #E8EEF2; border: 1px solid #DDE2E6;
-    border-radius: 6px; padding: .18rem .55rem;
-}
-
 /* Graphe articles */
 .stat-chart-wrap--articles { height: 260px; }
 

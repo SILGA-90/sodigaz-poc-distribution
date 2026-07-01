@@ -254,7 +254,6 @@
 .rpt-bar-low  { background: linear-gradient(90deg, #d97706, #fbbf24); }
 
 /* Chiffres */
-.rpt-num           { font-size: .88rem; font-weight: 700; color: #1a2332; }
 .rpt-montant       { font-weight: 700; color: #1a2332; }
 .rpt-montant-green { color: #198754; }
 .rpt-devise        { font-size: .72rem; color: #94a3b8; }
@@ -381,7 +380,6 @@
 
     .rpt-montant { font-size: 7.5pt !important; }
     .rpt-devise  { font-size: 6pt !important; }
-    .rpt-num     { font-size: 7.5pt !important; }
 
     .kpi-strip      { break-inside: avoid; page-break-inside: avoid; }
     .rpt-table-wrap { break-inside: auto; }
