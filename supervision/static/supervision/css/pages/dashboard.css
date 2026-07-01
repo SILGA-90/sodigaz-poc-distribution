@@ -121,29 +121,25 @@
     background: #FFFFFF; border-radius: 14px;
     box-shadow: 0 2px 8px rgba(0,0,0,.07);
     border: 1px solid #DDE2E6;
+    border-left-width: 5px;
     display: flex; align-items: flex-start; gap: 1rem;
-    padding: 1.15rem 1.2rem; overflow: hidden;
+    padding: 1.2rem 1.3rem; overflow: hidden;
     transition: box-shadow .18s, transform .18s;
 }
 .kpi-card-v2:hover {
     box-shadow: 0 6px 20px rgba(0,0,0,.1);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
 }
-/* Barre d'accent colorée en haut */
-.kpi-card-v2::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: #DDE2E6; transition: background .2s;
-}
-.kpi-card-danger::before { background: #dc3545; }
-.kpi-card-blue::before   { background: #079BD9; }
-.kpi-card-navy::before   { background: #0a1628; }
-.kpi-card-orange::before { background: #EE7202; }
-.kpi-card-green::before  { background: #198754; }
+.kpi-card-danger { border-left-color: #dc3545; }
+.kpi-card-blue   { border-left-color: #079BD9; }
+.kpi-card-navy   { border-left-color: #0a1628; }
+.kpi-card-orange { border-left-color: #EE7202; }
+.kpi-card-green  { border-left-color: #198754; }
 
 .kpi-card-icon {
-    width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
+    width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.35rem;
+    font-size: 1.4rem;
 }
 .kpi-icon-blue   { background: #cde9f7;  color: #0670A0; }
 .kpi-icon-navy   { background: #d2dae5;  color: #0a1628; }
@@ -157,8 +153,8 @@
     letter-spacing: .07em; color: #94a3b8; margin-bottom: .35rem;
 }
 .kpi-card-value {
-    font-size: 1.85rem; font-weight: 800; line-height: 1;
-    color: #0a1628; letter-spacing: -.02em;
+    font-size: 2.2rem; font-weight: 800; line-height: 1;
+    color: #0a1628; letter-spacing: -.03em;
 }
 .kpi-value-orange { color: #EE7202; }
 .kpi-value-green  { color: #198754; }
@@ -174,12 +170,12 @@
 
 /* Barre de progression couverture */
 .kpi-progress-bar-wrap {
-    height: 5px; border-radius: 3px; margin-top: .6rem;
+    height: 8px; border-radius: 5px; margin-top: .7rem;
     background: #E8EEF2;
     overflow: hidden;
 }
 .kpi-progress-bar-fill {
-    height: 100%; border-radius: 3px;
+    height: 100%; border-radius: 5px;
     background: linear-gradient(90deg, #198754, #34d399);
     transition: width .7s ease;
 }
@@ -198,12 +194,12 @@
 }
 
 .section-icon {
-    width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+    width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
     background: rgba(7,155,217,.1); color: #079BD9;
     display: flex; align-items: center; justify-content: center;
-    font-size: .95rem;
+    font-size: 1rem;
 }
-.section-title { font-size: .92rem; font-weight: 700; color: #0a1628; }
+.section-title { font-size: .94rem; font-weight: 700; color: #0a1628; }
 
 /* Carte */
 #map { height: 400px; }
@@ -316,11 +312,15 @@
     display: grid;
     grid-template-columns: 46px 22px 68px 1fr auto auto;
     align-items: center; gap: .65rem;
-    padding: .5rem .6rem; border-radius: 8px;
+    padding: .55rem .75rem .55rem .6rem;
+    border-radius: 8px;
+    border-left: 3px solid transparent;
     transition: background .12s; font-size: .82rem;
 }
 .activ-item:hover { background: rgba(7,155,217,.04); }
 .activ-item + .activ-item { border-top: 1px solid #f0f4f7; }
+.activ-item-COLLECTE    { border-left-color: #079BD9; }
+.activ-item-RESTITUTION { border-left-color: #198754; }
 .activ-time {
     font-family: 'SFMono-Regular', Consolas, monospace;
     font-size: .74rem; color: #94a3b8; font-weight: 600; white-space: nowrap;
