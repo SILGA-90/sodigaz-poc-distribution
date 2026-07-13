@@ -154,7 +154,7 @@ export default function LoginScreen({ navigation }: Props): React.ReactElement {
               </View>
             )}
 
-            {/* Bouton principal — orange plein, contraste fort */}
+            {/* Bouton principal orange plein, contraste fort */}
             <TouchableOpacity
               style={[styles.btn, loading && { opacity: 0.55 }]}
               onPress={handleLogin}
