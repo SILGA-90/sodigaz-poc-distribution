@@ -71,8 +71,18 @@ export default function EtapeCard({ etape, programmeCloture, onNavigateDetail, o
                 <Text style={[styles.statutText, { color: badgeText }]}>{badgeLabel}</Text>
               </View>
               {visite && etape.op_sync_status !== null && (
-                <View style={[styles.syncIndicator,
-                  etape.op_sync_status === 'SYNCED' ? styles.syncGreen : styles.syncOrange]} />
+                <View style={[styles.statutBadge, {
+                  backgroundColor: etape.op_sync_status === 'SYNCED' ? Colors.successBg : Colors.warningBg,
+                }]}>
+                  <View style={[styles.statutDot, {
+                    backgroundColor: etape.op_sync_status === 'SYNCED' ? Colors.syncGreen : Colors.syncPending,
+                  }]} />
+                  <Text style={[styles.statutText, {
+                    color: etape.op_sync_status === 'SYNCED' ? Colors.success : Colors.warning,
+                  }]}>
+                    {etape.op_sync_status === 'SYNCED' ? 'Synchronisé' : 'En attente'}
+                  </Text>
+                </View>
               )}
             </View>
           </View>
@@ -135,10 +145,6 @@ const styles = StyleSheet.create({
   statutBadge:  { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   statutDot:    { width: 6, height: 6, borderRadius: 3 },
   statutText:   { fontSize: scale(11), fontWeight: '700' },
-  syncIndicator:{ width: 8, height: 8, borderRadius: 4 },
-  syncGreen:    { backgroundColor: Colors.syncGreen },
-  syncOrange:   { backgroundColor: Colors.syncPending },
-
   itineraireRow: {
     backgroundColor: NEO_IN,
     paddingVertical: 10, paddingHorizontal: 14, alignItems: 'flex-end',

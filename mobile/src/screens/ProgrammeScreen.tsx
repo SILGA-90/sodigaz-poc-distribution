@@ -19,7 +19,7 @@
  * useMemo ne retrie que quand etapes ou triMode change, évitant un recalcul
  * inutile à chaque render sur Android milieu de gamme (10–20 étapes).
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -27,6 +27,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import {
@@ -81,9 +82,16 @@ export default function ProgrammeScreen({ route, navigation }: Props): React.Rea
     }
   }
 
-  useEffect(() => {
-    (async () => { await chargerDonnees(); setLoading(false); })();
-  }, [programmeId]);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        await chargerDonnees();
+        if (active) setLoading(false);
+      })();
+      return () => { active = false; };
+    }, [programmeId]),
+  );
 
   const renderEtape = useCallback(({ item }: { item: EtapeAvecPlv }): React.ReactElement => (
     <View style={numColumns > 1 ? { flex: 1 } : undefined}>
