@@ -5,7 +5,7 @@ Ce module fournit une vue de login protégée contre le brute-force par
 limitation du nombre de tentatives par adresse IP.
 
        Paramètres de configuration :
-         RATE_LIMIT_MAX    : tentatives avant blocage : 5
+         RATE_LIMIT_MAX    : tentatives avant blocage : 3
          RATE_LIMIT_WINDOW : fenêtre de comptage : 5 minutes (300 s)
          RATE_LIMIT_BLOCK  : durée de blocage : 15 minutes (900 s)
 
@@ -34,7 +34,7 @@ import math
 from django.contrib.auth.views import LoginView
 from django.core.cache import cache
 
-RATE_LIMIT_MAX    = 5    # tentatives avant blocage
+RATE_LIMIT_MAX    = 3    # tentatives avant blocage
 RATE_LIMIT_WINDOW = 300  # fenêtre de comptage en secondes (5 min)
 RATE_LIMIT_BLOCK  = 900  # durée de blocage en secondes (15 min)
 
