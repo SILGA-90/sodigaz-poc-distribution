@@ -40,7 +40,7 @@ import { fetchMe, logout, verifyDevAccess } from '../api/authService';
 import { syncAll } from '../sync/syncService';
 import { getProgrammesRecents, ProgrammeAvecProgression } from '../db/repositories/programmeRepository';
 import { countPending } from '../db/repositories/operationRepository';
-import { getLastPulledAt } from '../db/database';
+import { getLastPulledAt, resetDatabase } from '../db/database';
 import { UtilisateurInfo } from '../types/auth';
 import { RootStackParamList } from '../types/navigation';
 import Toast from '../components/Toast';
@@ -253,6 +253,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
         onConfirm={async () => {
           setShowLogoutDialog(false);
           await logout();
+          await resetDatabase();
           navigation.replace('Login');
         }}
       />

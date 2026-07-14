@@ -27,7 +27,7 @@ import {
   UtilisateurInfo,
 } from '../types/auth';
 import { getItem, removeItem, saveItem, STORAGE_KEYS } from '../storage/secureStorage';
-import { resetDatabase, setLastPulledAt } from '../db/database';
+import { setLastPulledAt } from '../db/database';
 
 export async function login(credentials: LoginCredentials): Promise<TokenPair> {
   const response = await apiClient.post<TokenPair>('/api/auth/login/', credentials);
@@ -42,7 +42,6 @@ export async function login(credentials: LoginCredentials): Promise<TokenPair> {
 export async function logout(): Promise<void> {
   await removeItem(STORAGE_KEYS.ACCESS_TOKEN);
   await removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-  await resetDatabase();
 }
 
 export async function fetchMe(): Promise<UtilisateurInfo> {
