@@ -123,8 +123,8 @@ export default function AnomalieScreen({ route, navigation }: Props): React.Reac
         await ajouterPhotoAnomalie(anomalieUuid, ph.uri, ph.tailleOctets, gpsLat, gpsLon);
       }
       setShowSuccessDialog(true);
-    } catch (e: unknown) {
-      setSaveErrorMsg(e instanceof Error ? e.message : String(e));
+    } catch {
+      setSaveErrorMsg("Erreur lors de l'enregistrement. Réessaie ou contacte ton superviseur.");
       setShowErrorDialog(true);
     } finally {
       setSaving(false);

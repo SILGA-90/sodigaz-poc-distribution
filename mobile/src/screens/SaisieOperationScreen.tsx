@@ -238,8 +238,8 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
       isDirty.current = false;
       setSaveOkMsg(`Opération${photos.length > 0 ? ` et ${photos.length} photo(s)` : ''} enregistrée(s) localement. Remontée à la prochaine synchronisation.`);
       setShowSaveOk(true);
-    } catch (e: unknown) {
-      setSaveErrorMsg(e instanceof Error ? e.message : String(e));
+    } catch {
+      setSaveErrorMsg("Erreur lors de l'enregistrement. Réessaie ou contacte ton superviseur.");
       setShowSaveError(true);
     } finally {
       setSaving(false);
@@ -347,8 +347,8 @@ export default function SaisieOperationScreen({ route, navigation }: Props): Rea
             await marquerEtapeEchec(etapeInfo!.uuid);
             isDirty.current = false;
             navigation.goBack();
-          } catch (e: unknown) {
-            setSaveErrorMsg(e instanceof Error ? e.message : String(e));
+          } catch {
+            setSaveErrorMsg("Erreur lors de l'enregistrement. Réessaie ou contacte ton superviseur.");
             setShowSaveError(true);
           }
         }}

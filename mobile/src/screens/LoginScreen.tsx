@@ -46,8 +46,11 @@ export default function LoginScreen({ navigation }: Props): React.ReactElement {
     } catch (error: any) {
       if (error?.response?.status === 429) {
         setLoginError('Trop de tentatives : réessaie dans quelques instants.');
+      } else if (error?.response) {
+        const detail = error.response.data?.detail;
+        setLoginError(detail ?? 'Identifiants invalides ou serveur inaccessible.');
       } else {
-        setLoginError(error?.response?.data?.detail ?? 'Identifiants invalides ou serveur inaccessible.');
+        setLoginError(error?.message ?? 'Serveur inaccessible. Vérifie ta connexion.');
       }
     } finally {
       setLoading(false);

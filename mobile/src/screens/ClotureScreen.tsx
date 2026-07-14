@@ -106,8 +106,8 @@ export default function ClotureScreen({ route, navigation }: Props): React.React
     try {
       await cloturerProgrammeLocal(programme.uuid);
       setClotureReussie(true);
-    } catch (e: unknown) {
-      setErrorMsg(e instanceof Error ? e.message : String(e));
+    } catch {
+      setErrorMsg('Erreur lors de la clôture. Réessaie ou contacte ton superviseur.');
       setShowErrorDialog(true);
     } finally {
       setClosing(false);

@@ -30,18 +30,12 @@ import { getItem, removeItem, saveItem, STORAGE_KEYS } from '../storage/secureSt
 import { setLastPulledAt } from '../db/database';
 
 export async function login(credentials: LoginCredentials): Promise<TokenPair> {
-  const response = await apiClient.post<TokenPair>(
-    '/api/auth/login/',
-    credentials,
-  );
+  const response = await apiClient.post<TokenPair>('/api/auth/login/', credentials);
   await saveItem(STORAGE_KEYS.ACCESS_TOKEN,  response.data.access);
   await saveItem(STORAGE_KEYS.REFRESH_TOKEN, response.data.refresh);
-
   const me = await fetchMe();
   await saveItem(STORAGE_KEYS.USER_ID, String(me.id));
-  // Reset du curseur de sync : pull complet au prochain sync (voir WHY en en-tête)
   await setLastPulledAt(0);
-
   return response.data;
 }
 

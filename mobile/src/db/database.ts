@@ -106,25 +106,32 @@ async function _openAndInit(): Promise<SQLite.SQLiteDatabase> {
   //       (nouveaux IDs après seed) créait des doublons via INSERT OR REPLACE
   //       (le conflit se faisait sur `id`, pas sur `code_x3`, laissant des
   //       lignes orphelines). On recrée la table avec la contrainte.
+  // NOTE : Sur une installation fraîche (APK), CREATE_TABLES_SQL crée déjà
+  //        `article` (pas `produit`), donc cette migration est un no-op dans ce cas.
   if (currentVersion < 4) {
-    await db.execAsync(`
-      CREATE TABLE IF NOT EXISTS produit_v4 (
-        id INTEGER PRIMARY KEY,
-        code_x3 TEXT NOT NULL UNIQUE,
-        libelle TEXT NOT NULL,
-        type_emballage TEXT,
-        prix_unitaire REAL DEFAULT 0,
-        montant_consignation REAL DEFAULT 0,
-        actif INTEGER DEFAULT 1
-      );
-      INSERT OR IGNORE INTO produit_v4 (id, code_x3, libelle, type_emballage, prix_unitaire, montant_consignation, actif)
-        SELECT id, code_x3, libelle, type_emballage, prix_unitaire, montant_consignation, actif
-        FROM produit
-        WHERE id IN (SELECT MAX(id) FROM produit GROUP BY code_x3);
-      DROP TABLE produit;
-      ALTER TABLE produit_v4 RENAME TO produit;
-      PRAGMA user_version = 4;
-    `);
+    const hasProduit4 = await db.getFirstAsync<{ name: string }>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='produit';",
+    );
+    if (hasProduit4) {
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS produit_v4 (
+          id INTEGER PRIMARY KEY,
+          code_x3 TEXT NOT NULL UNIQUE,
+          libelle TEXT NOT NULL,
+          type_emballage TEXT,
+          prix_unitaire REAL DEFAULT 0,
+          montant_consignation REAL DEFAULT 0,
+          actif INTEGER DEFAULT 1
+        );
+        INSERT OR IGNORE INTO produit_v4 (id, code_x3, libelle, type_emballage, prix_unitaire, montant_consignation, actif)
+          SELECT id, code_x3, libelle, type_emballage, prix_unitaire, montant_consignation, actif
+          FROM produit
+          WHERE id IN (SELECT MAX(id) FROM produit GROUP BY code_x3);
+        DROP TABLE produit;
+        ALTER TABLE produit_v4 RENAME TO produit;
+      `);
+    }
+    await db.execAsync('PRAGMA user_version = 4;');
   }
 
   // Migration v4 -> v5 : renommage de la table `produit` en `article`.
@@ -133,11 +140,16 @@ async function _openAndInit(): Promise<SQLite.SQLiteDatabase> {
   //       ligne_operation conserve son nom (renommer nécessiterait de recréer
   //       ces tables ; le gain est cosmétique). Côté Django, db_table="produit"
   //       est conservé -> pas de migration SQL serveur nécessaire.
+  // NOTE : Sur une installation fraîche, `produit` n'existe pas (déjà `article`)
+  //        → on passe directement à PRAGMA user_version = 5.
   if (currentVersion < 5) {
-    await db.execAsync(`
-      ALTER TABLE produit RENAME TO article;
-      PRAGMA user_version = 5;
-    `);
+    const hasProduit5 = await db.getFirstAsync<{ name: string }>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='produit';",
+    );
+    if (hasProduit5) {
+      await db.execAsync('ALTER TABLE produit RENAME TO article;');
+    }
+    await db.execAsync('PRAGMA user_version = 5;');
   }
 
   // Migration v5 -> v6 : ajout de la colonne code_plv dans la table plv.
@@ -146,12 +158,19 @@ async function _openAndInit(): Promise<SQLite.SQLiteDatabase> {
   //       la colonne sur les bases existantes (valeur NULL par défaut).
   //       On remet last_pulled_at à 0 pour forcer un pull complet au prochain
   //       sync et peupler code_plv sur tous les PLV déjà en base.
+  // NOTE : Sur une installation fraîche, CREATE_TABLES_SQL crée déjà code_plv
+  //        dans plv → on saute l'ALTER TABLE pour éviter "duplicate column".
   if (currentVersion < 6) {
-    await db.execAsync(`ALTER TABLE plv ADD COLUMN code_plv TEXT;`);
-    await db.runAsync(
-      'INSERT OR REPLACE INTO sync_meta (cle, valeur) VALUES (?, ?);',
-      ['last_pulled_at', '0'],
+    const hasCodePlv = await db.getFirstAsync<{ count: number }>(
+      "SELECT COUNT(*) as count FROM pragma_table_info('plv') WHERE name='code_plv';",
     );
+    if (!hasCodePlv || hasCodePlv.count === 0) {
+      await db.execAsync('ALTER TABLE plv ADD COLUMN code_plv TEXT;');
+      await db.runAsync(
+        'INSERT OR REPLACE INTO sync_meta (cle, valeur) VALUES (?, ?);',
+        ['last_pulled_at', '0'],
+      );
+    }
     await db.execAsync('PRAGMA user_version = 6;');
   }
 
